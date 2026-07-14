@@ -385,6 +385,8 @@
                         class="w-32 h-32 flex items-center justify-center transition-transform duration-100">
                         <svg viewBox="0 0 100 120" class="w-full h-full" id="monsterSvg"></svg>
                     </div>
+                    <!-- 전투 알림 (몬스터 아래 화면 중앙에 표시) -->
+                    <div id="battleToast" class="mt-1 px-3 py-1 text-[10px] font-bold text-center text-[#ffdd88] opacity-0 transition-opacity duration-300 pointer-events-none max-w-[200px] truncate"></div>
                 </div>
 
                 <!-- Central VS Battle Badge -->
@@ -1121,11 +1123,21 @@ function getMockWordsFallback(grade) {
         </div>
     </div>
 
-    <!-- Toast Message Container -->
+    <!-- Toast Message Container (global UI alerts) -->
     <div id="toastMessage"
         class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-black border border-[#3c3c3c] text-white px-5 py-3 rounded-none-forced text-xs font-bold shadow-2xl flex items-center gap-2 transition-all duration-300 opacity-0 pointer-events-none z-50">
         <i data-lucide="info" class="w-4 h-4 text-[#0066b1]"></i>
         <span id="toastText">안내 메시지</span>
+    </div>
+
+    <!-- Forge Result Overlay (centered full-screen popup for blacksmith results) -->
+    <div id="forgeResultOverlay" class="hidden fixed inset-0 z-[9999] items-center justify-center" style="background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);">
+        <div id="forgeResultBox" class="relative flex flex-col items-center justify-center gap-4 p-10 border-2" style="min-width:300px;max-width:460px;background:#0d0d0d;">
+            <div id="forgeResultIcon" class="text-6xl"></div>
+            <div id="forgeResultTitle" class="text-2xl font-bold tracking-wider"></div>
+            <div id="forgeResultDesc" class="text-sm text-center text-[#bbbbbb] leading-relaxed"></div>
+            <button onclick="document.getElementById('forgeResultOverlay').classList.remove('flex');document.getElementById('forgeResultOverlay').classList.add('hidden')" class="mt-2 px-8 py-2 bg-[#0066b1] hover:bg-[#0088ee] text-white font-bold text-sm tracking-wider transition">확인</button>
+        </div>
     </div>
 
     <script>
@@ -2059,9 +2071,9 @@ function getMockWordsFallback(grade) {
                 // 보스 해금 처치 진도를 10단계로 증가
                 if (gameState.progress < BOSS_UNLOCK_LIMIT) {
                     gameState.progress++;
-                    showToast(`⚔️ 몬스터 처치 성공! 보스 해제도 진입 중 (${gameState.progress}/${BOSS_UNLOCK_LIMIT})`);
+                    showBattleToast(`⚔️ 처치! 보스 진행 (${gameState.progress}/${BOSS_UNLOCK_LIMIT})`);
                 } else {
-                    showToast(`⚔️ 몬스터 처치! 보스전 도전 버튼이 활성화되어 있습니다.`);
+                    showBattleToast(`⚔️ 몬스터 처치! 보스전 도전 가능!`);
                 }
 
                 respawnActiveMonster();
@@ -2077,13 +2089,13 @@ function getMockWordsFallback(grade) {
                 ? BOSS_PROFILES[(gameState.stage - 1) % BOSS_PROFILES.length]
                 : MONSTER_PROFILES[index];
 
-            // Smooth monotonic growth scaling
-            const growthFactor = 1.24;
+            // 급격한 성장 곡선: 스테이지마다 약 42% HP 증가 (강화·펫·스킬 필수 유도)
+            const growthFactor = 1.42;
             if (isBossBattleActive) {
-                const regularHp = Math.floor(15 * Math.pow(growthFactor, gameState.stage - 1));
-                monsterMaxHp = Math.floor(regularHp * 12);
+                const regularHp = Math.floor(20 * Math.pow(growthFactor, gameState.stage - 1));
+                monsterMaxHp = Math.floor(regularHp * 20); // 보스는 일반의 20배
             } else {
-                monsterMaxHp = Math.floor(15 * Math.pow(growthFactor, gameState.stage - 1));
+                monsterMaxHp = Math.floor(20 * Math.pow(growthFactor, gameState.stage - 1));
             }
 
             monsterCurrentHp = monsterMaxHp;
@@ -2722,7 +2734,7 @@ function getMockWordsFallback(grade) {
                 const spellDmg = calculateClickAttackPower() * 12;
                 processCombatDamage(spellDmg);
 
-                showToast(`🔥 단어 비기 해독 성공! 물리 타격 피해(-${spellDmg})와 학습 금화 +${reward}G를 획득했습니다!`);
+                showBattleToast(`🔥 약점 타격! -${spellDmg} 피해 / +${reward}G`);
 
                 setTimeout(() => {
                     generateQuizCard();
@@ -2733,7 +2745,7 @@ function getMockWordsFallback(grade) {
             } else {
                 playSoundEffect('incorrect');
                 buttons[index].className = "choice-btn p-3.5 bg-red-950/80 border-2 border-red-500 text-white font-bold rounded-none-forced text-center transition flex items-center justify-center";
-                showToast("❌ 오답입니다! 몬스터의 교란으로 약점 단어 위치가 재배치(셔플)됩니다.");
+                showBattleToast("❌ 오답! 선택지 위치가 셔플됩니다.");
                 
                 // 700ms 후 선택지 순서를 섞어 무차별 찍기를 방지합니다.
                 setTimeout(() => {
@@ -2783,7 +2795,7 @@ function getMockWordsFallback(grade) {
             isBossBattleActive = true;
             bossTimeRemaining = 30.0;
 
-            showToast("🚨 [WARN] 가공할 학구열의 보스 몬스터가 출현했습니다! 공격 시작!");
+            showBattleToast("🚨 보스 몬스터 출현! 30초 이내 처치!");
             playSoundEffect('levelup');
 
             document.getElementById("bossBattleTimerHeader").classList.remove("hidden");
@@ -2811,7 +2823,7 @@ function getMockWordsFallback(grade) {
 
             document.getElementById("bossBattleTimerHeader").classList.add("hidden");
 
-            showToast("⚠️ 제한 시간이 지났습니다! 보스가 물러갑니다. 훈련을 더 마치고 오세요!");
+            showBattleToast("⚠️ 시간 초과! 보스가 물러갑니다.");
 
             respawnActiveMonster();
             refreshStateVisuals();
@@ -2826,7 +2838,7 @@ function getMockWordsFallback(grade) {
             gameState.stage++;
             gameState.progress = 0;
 
-            showToast(`🏆 스테이지 클리어! 용사는 스테이지 ${gameState.stage}로 승단 도약했습니다!`);
+            showBattleToast(`🏆 스테이지 ${gameState.stage} 클리어!`);
 
             respawnActiveMonster();
             refreshStateVisuals();
@@ -3018,6 +3030,17 @@ function getMockWordsFallback(grade) {
                 toast.classList.remove("opacity-100");
                 toast.classList.add("opacity-0", "pointer-events-none");
             }, 3000);
+        }
+
+        // 전투 전용 알림: 몬스터 바로 아래 화면 내에 표시
+        let _battleToastTimer = null;
+        function showBattleToast(message) {
+            const el = document.getElementById("battleToast");
+            if (!el) { showToast(message); return; }
+            el.innerText = message;
+            el.style.opacity = "1";
+            clearTimeout(_battleToastTimer);
+            _battleToastTimer = setTimeout(() => { el.style.opacity = "0"; }, 2200);
         }
 
         function showForgeResult(isSuccess, title, desc, borderColor) {

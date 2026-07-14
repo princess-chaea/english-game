@@ -314,33 +314,33 @@
             <div class="z-10 flex justify-between items-center bg-[#0d0d0d] border border-[#3c3c3c] px-4 py-2 rounded-none-forced">
                 <span class="font-bold text-xs uppercase tracking-widest text-[#0066b1] flex items-center gap-1.5">
                     <i data-lucide="shield" class="w-4 h-4"></i>
-                    <span id="displayStageNum">STAGE 1-1</span>
+                    <span id="displayStageNum">스테이지 1-1</span>
                 </span>
                 <!-- Active Offline reward flag -->
                 <span id="offlineEarningsBadge"
                     class="hidden bg-[#e22718]/90 text-white border border-[#e22718] px-2 py-0.5 rounded-none-forced text-[9px] font-bold animate-pulse">
-                    OFFLINE GOLD LOADED
+                    오프라인 보상 골드 획득!
                 </span>
             </div>
 
             <!-- Total Currencies Widget -->
             <div class="z-10 text-center my-3">
-                <p class="text-[10px] text-[#7e7e7e] font-bold tracking-widest uppercase">CURRENT ASSETS</p>
+                <p class="text-[10px] text-[#7e7e7e] font-bold tracking-widest uppercase">현재 보유 골드</p>
                 <div class="flex items-center justify-center gap-1.5 my-1">
                     <span class="text-xl">🪙</span>
                     <span id="goldCount" class="text-3xl font-bold tracking-tight text-white">0</span>
-                    <span class="text-[#bbbbbb] font-bold text-xs">G</span>
+                    <span class="text-[#bbbbbb] font-bold text-xs">골드</span>
                 </div>
                 
                 <!-- Telemetry Stats -->
                 <div class="grid grid-cols-2 gap-2 mt-3">
                     <div class="telemetry-cell text-center rounded-none-forced">
-                        <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest">AUTO DPS</p>
-                        <p class="text-sm font-bold text-[#0066b1]">+<span id="dpsCount">0</span> G/s</p>
+                        <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest">초당 자동 골드 획득</p>
+                        <p class="text-sm font-bold text-[#0066b1]">+<span id="dpsCount">0</span> 골드/초</p>
                     </div>
                     <div class="telemetry-cell text-center rounded-none-forced">
-                        <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest">CLICK DAMAGE</p>
-                        <p class="text-sm font-bold text-[#e22718]"><span id="clickPowerCount">1</span> DMG</p>
+                        <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest">마우스 클릭 타격력</p>
+                        <p class="text-sm font-bold text-[#e22718]"><span id="clickPowerCount">1</span> 데미지</p>
                     </div>
                 </div>
             </div>
@@ -363,7 +363,7 @@
 
                 <!-- Monster Combatant Wrapper (Top) -->
                 <div class="flex flex-col items-center w-full z-10">
-                    <span id="monsterNameTag" class="text-[10px] text-[#e22718] font-bold uppercase tracking-widest mb-1.5">SLIME</span>
+                    <span id="monsterNameTag" class="text-[10px] text-[#e22718] font-bold uppercase tracking-widest mb-1.5">슬라임</span>
                     <!-- Monster HP Tracker bar -->
                     <div class="w-1/2 bg-[#0d0d0d] border border-[#3c3c3c] h-2 relative overflow-hidden rounded-none-forced mb-2">
                         <div id="monsterHpBar"
@@ -396,14 +396,14 @@
                             id="heroSvg"></svg>
                     </div>
                     <span id="heroNameTag"
-                        class="text-[9px] bg-[#1a1a1a] border border-[#3c3c3c] px-3 py-0.5 font-bold text-[#bbbbbb] tracking-wider uppercase rounded-none-forced mt-1.5">HERO</span>
+                        class="text-[9px] bg-[#1a1a1a] border border-[#3c3c3c] px-3 py-0.5 font-bold text-[#bbbbbb] tracking-wider uppercase rounded-none-forced mt-1.5">내 영웅</span>
                 </div>
             </div>
 
             <!-- Boss Battle Entry Activator -->
             <div class="z-10 w-full mt-2">
                 <div class="flex justify-between items-center mb-1 text-[10px] font-bold text-[#7e7e7e] uppercase tracking-wider">
-                    <span>BOSS PROGRESS</span>
+                    <span>보스 도전 진행도</span>
                     <span id="bossUnlockRatio">0 / 10</span>
                 </div>
                 <div class="w-full bg-[#1a1a1a] border border-[#3c3c3c] h-3.5 relative overflow-hidden rounded-none-forced">
@@ -415,7 +415,7 @@
                 <button id="bossTriggerBtn" onclick="startBossBattle()"
                     class="w-full mt-3 py-3 bg-transparent hover:bg-[#e22718] border border-[#e22718] text-[#e22718] hover:text-white font-bold text-xs uppercase tracking-widest transition duration-200 shadow-lg hidden items-center justify-center gap-2 rounded-none-forced">
                     <i data-lucide="skull" class="w-4 h-4"></i>
-                    <span>🚨 ENGAGE STAGE BOSS 🚨</span>
+                    <span>🚨 보스 몬스터 소환하기 🚨</span>
                 </button>
             </div>
         </section>
@@ -488,7 +488,7 @@
 
                 <!-- Main Active Question Area -->
                 <div id="quizContainer" class="my-6 text-center">
-                    <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest mb-1.5">WEAKNESS TARGET ELEMENT</p>
+                    <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest mb-1.5">몬스터의 약점 영단어</p>
                     <h2 id="quizWordEng" class="text-4xl font-bold text-white uppercase tracking-wider mb-3">
                         ...</h2>
 
@@ -496,26 +496,26 @@
                     <button onclick="speakTargetWord()"
                         class="inline-flex items-center gap-1.5 text-[10px] bg-transparent hover:bg-white text-white hover:text-black font-bold px-4 py-2 border border-[#3c3c3c] hover:border-white transition rounded-none-forced uppercase tracking-widest">
                         <i data-lucide="volume-2" class="w-3.5 h-3.5 text-[#0066b1] group-hover:text-black"></i>
-                        <span>PRONUNCIATION AUDIO</span>
+                        <span>🔊 원어민 발음 듣기</span>
                     </button>
 
                     <!-- Answer Options Matrix - 정렬 및 번호 제거 개편 -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6" id="choiceButtonsContainer">
                         <button onclick="evaluateAnswer(0)"
                             class="choice-btn p-3.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group">
-                            <span class="choice-text text-center w-full uppercase tracking-wider">Option 1</span>
+                            <span class="choice-text text-center w-full uppercase tracking-wider">선택지 1</span>
                         </button>
                         <button onclick="evaluateAnswer(1)"
                             class="choice-btn p-3.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group">
-                            <span class="choice-text text-center w-full uppercase tracking-wider">Option 2</span>
+                            <span class="choice-text text-center w-full uppercase tracking-wider">선택지 2</span>
                         </button>
                         <button onclick="evaluateAnswer(2)"
                             class="choice-btn p-3.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group">
-                            <span class="choice-text text-center w-full uppercase tracking-wider">Option 3</span>
+                            <span class="choice-text text-center w-full uppercase tracking-wider">선택지 3</span>
                         </button>
                         <button onclick="evaluateAnswer(3)"
                             class="choice-btn p-3.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group">
-                            <span class="choice-text text-center w-full uppercase tracking-wider">Option 4</span>
+                            <span class="choice-text text-center w-full uppercase tracking-wider">선택지 4</span>
                         </button>
                     </div>
                 </div>
@@ -1663,7 +1663,7 @@ function getMockWordsFallback(grade) {
 
             svg.innerHTML = innerHtml;
             document.getElementById("monsterNameTag").innerText = isBossBattleActive
-                ? `⚠️ [STAGE BOSS] ${baseMonster.name}`
+                ? `⚠️ [스테이지 보스] ${baseMonster.name}`
                 : baseMonster.name;
         }
 
@@ -1833,7 +1833,7 @@ function getMockWordsFallback(grade) {
             const rect = event.currentTarget.getBoundingClientRect();
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
-            spawnDamageFloatingText(x, y, `-${clickDmg} HP`);
+            spawnDamageFloatingText(x, y, `-${clickDmg} 체력`);
         }
 
         function spawnDamageFloatingText(x, y, text) {
@@ -2236,7 +2236,7 @@ function getMockWordsFallback(grade) {
             for (let i = 0; i < emptySlots; i++) {
                 html += `
                     <div class="border border-dashed border-[#3c3c3c] rounded-none-forced flex items-center justify-center h-14 text-[9px] text-[#7e7e7e] font-bold uppercase tracking-wider bg-[#0d0d0d]">
-                        SLOT EMPTY
+                        비어있음
                     </div>
                 `;
             }
@@ -2257,7 +2257,7 @@ function getMockWordsFallback(grade) {
 
             const arena = document.getElementById("battleArena");
             const rect = arena.getBoundingClientRect();
-            spawnDamageFloatingText(rect.width / 2 + (Math.random() * 40 - 20), rect.height / 3, `💥 [${gradeInfo.name}] ${skill.word.toUpperCase()}: -${skillDmg} DMG!`);
+            spawnDamageFloatingText(rect.width / 2 + (Math.random() * 40 - 20), rect.height / 3, `💥 [${gradeInfo.name}] ${skill.word.toUpperCase()}: -${skillDmg} 데미지!`);
 
             const mContainer = document.getElementById("monsterContainer");
             mContainer.classList.add("animate-shake");
@@ -2290,7 +2290,7 @@ function getMockWordsFallback(grade) {
                 gameState.gold += reward;
 
                 const arena = document.getElementById("battleArena");
-                spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `✨ CRITICAL IMPACT!`);
+                spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `✨ 약점 치명타 타격!`);
 
                 if (Math.random() < 0.4) {
                     rollAndAcquireSkill(current.word, current.meaning);
@@ -2337,7 +2337,7 @@ function getMockWordsFallback(grade) {
                                 <p class="font-bold text-[#0066b1] font-mono">${item.word.toUpperCase()}</p>
                                 <p class="text-[#bbbbbb] mt-0.5">${item.meaning}</p>
                             </div>
-                            <span class="text-[8px] bg-black text-[#0066b1] border border-[#0066b1] font-bold px-2 py-0.5 rounded-none-forced">CLEAR</span>
+                            <span class="text-[8px] bg-black text-[#0066b1] border border-[#0066b1] font-bold px-2 py-0.5 rounded-none-forced">정복 완료</span>
                         </div>
                     `;
                 }
@@ -2398,7 +2398,7 @@ function getMockWordsFallback(grade) {
             gameState.stage++;
             gameState.progress = 0;
 
-            showToast(`🏆 STAGE CLEAR! 용사는 스테이지 ${gameState.stage}로 승단 도약했습니다!`);
+            showToast(`🏆 스테이지 클리어! 용사는 스테이지 ${gameState.stage}로 승단 도약했습니다!`);
 
             respawnActiveMonster();
             refreshStateVisuals();
@@ -2408,7 +2408,7 @@ function getMockWordsFallback(grade) {
             document.getElementById("goldCount").innerText = Math.floor(gameState.gold).toLocaleString();
             document.getElementById("dpsCount").innerText = calculateDPSPower();
             document.getElementById("clickPowerCount").innerText = calculateClickAttackPower();
-            document.getElementById("displayStageNum").innerText = `STAGE ${gameState.stage}-${gameState.progress + 1}`;
+            document.getElementById("displayStageNum").innerText = `스테이지 ${gameState.stage}-${gameState.progress + 1}`;
 
             const curProg = gameState.progress;
             const progressRatio = Math.min(100, (curProg / BOSS_UNLOCK_LIMIT) * 100);

@@ -917,7 +917,7 @@ function doPost(e) {
     } else if (action === "loadOrCreateStudent") {
       result = loadOrCreateStudent(args[0], args[1], args[2], args[3], args[4], args[5]);
     } else if (action === "saveStudentProgress") {
-      result = saveStudentProgress(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14], args[15], args[16]);
+      result = saveStudentProgress(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14], args[15]);
     }
     
     return ContentService.createTextOutput(JSON.stringify(result))
@@ -1051,7 +1051,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
   }
 }
 
-function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType, helmetLvl, armorLvl, weaponLvl, shieldLvl, shoesLvl, petType, petLvl, stage, progress, skillsInventory, equippedSkills) {
+function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType, helmetLvl, armorLvl, weaponLvl, shieldLvl, shoesLvl, petLevelsStr, stage, progress, skillsInventory, equippedSkills) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName("Students");
@@ -1071,8 +1071,8 @@ function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType
         sheet.getRange(r, 9).setValue(weaponLvl);
         sheet.getRange(r, 10).setValue(shieldLvl);
         sheet.getRange(r, 11).setValue(shoesLvl);
-        sheet.getRange(r, 12).setValue(petType);
-        sheet.getRange(r, 13).setValue(petLvl);
+        sheet.getRange(r, 12).setValue(petLevelsStr);
+        sheet.getRange(r, 13).setValue("");
         sheet.getRange(r, 14).setValue(stage);
         sheet.getRange(r, 15).setValue(progress);
         sheet.getRange(r, 16).setValue(Date.now());
@@ -1641,7 +1641,7 @@ function getMockWordsFallback(grade) {
                 gameState.weaponLvl = 1;
                 gameState.shieldLvl = 1;
                 gameState.shoesLvl = 1;
-                gameState.petLevels = { slime: 0, dragon: 0, fairy: 0 };
+                gameState.petLevels = {};
                 gameState.stage = 1;
                 gameState.progress = 0;
                 gameState.totalQuizTries = 0;
@@ -1670,7 +1670,6 @@ function getMockWordsFallback(grade) {
             gameState.shoesLvl = data.shoesLvl || 1;
             gameState.petType = data.petType || "none";
             gameState.petLvl = data.petLvl || 0;
-            gameState.petLevels = data.petData || { slime: 0, dragon: 0, fairy: 0 };
             gameState.stage = data.stage || 1;
             gameState.progress = data.progress || 0;
             gameState.lastSaved = data.lastSaved;
@@ -1785,7 +1784,7 @@ function getMockWordsFallback(grade) {
 
         function drawPetCompanion() {
             if (!gameState.petLevels) {
-                gameState.petLevels = { slime: 0, dragon: 0, fairy: 0 };
+                gameState.petLevels = {};
             }
 
             const petKeys = ['slime', 'dragon', 'fairy'];
@@ -1956,7 +1955,11 @@ function getMockWordsFallback(grade) {
             if (!gameState.skillsInventory) gameState.skillsInventory = [];
             if (!gameState.equippedSkills) gameState.equippedSkills = [];
             if (!gameState.petLevels) {
-                gameState.petLevels = { slime: 0, dragon: 0, fairy: 0 };
+                gameState.petLevels = {
+                    slime: gameState.petType === 'slime' ? (gameState.petLvl || 0) : 0,
+                    dragon: gameState.petType === 'dragon' ? (gameState.petLvl || 0) : 0,
+                    fairy: gameState.petType === 'fairy' ? (gameState.petLvl || 0) : 0
+                };
             }
 
             drawHeroAvatar();
@@ -2914,8 +2917,7 @@ function getMockWordsFallback(grade) {
                         gameState.weaponLvl,
                         gameState.shieldLvl,
                         gameState.shoesLvl,
-                        JSON.stringify(gameState.petLevels || { slime: 0, dragon: 0, fairy: 0 }),
-                        0,
+                        JSON.stringify(gameState.petLevels || {}),
                         gameState.stage,
                         gameState.progress,
                         gameState.skillsInventory,
@@ -2959,7 +2961,8 @@ function getMockWordsFallback(grade) {
                 gameState.weaponLvl = 1;
                 gameState.shieldLvl = 1;
                 gameState.shoesLvl = 1;
-                gameState.petLevels = { slime: 0, dragon: 0, fairy: 0 };
+                gameState.petType = "none";
+                gameState.petLvl = 0;
                 gameState.stage = 1;
                 gameState.progress = 0;
                 gameState.totalQuizTries = 0;

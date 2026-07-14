@@ -197,24 +197,12 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
           parsedEquipped = [];
         }
 
-        var parsedPets = {};
-        try {
-          var pData = String(data[i][11]).trim();
-          if (pData.startsWith('{')) {
-            parsedPets = JSON.parse(pData);
-          } else {
-            var oldType = pData || "none";
-            var oldLvl = Number(data[i][12]) || 0;
-            if (oldType !== "none" && oldLvl > 0) {
-              parsedPets[oldType] = oldLvl;
-            }
-          }
-        } catch(e) {
-          var oldType = String(data[i][11]).trim() || "none";
-          var oldLvl = Number(data[i][12]) || 0;
-          if (oldType !== "none" && oldLvl > 0) {
-            parsedPets[oldType] = oldLvl;
-          }
+        var loadedPetLevels = {};
+        var petCol = String(data[i][11]).trim();
+        if (petCol.startsWith('{')) {
+           try { loadedPetLevels = JSON.parse(petCol); } catch(e) {}
+        } else if (petCol && petCol !== "none" && petCol !== "") {
+           loadedPetLevels[petCol] = Number(data[i][12]) || 0;
         }
 
         return {
@@ -229,9 +217,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
           weaponLvl: Number(data[i][8]) || 1,
           shieldLvl: Number(data[i][9]) || 1,
           shoesLvl: Number(data[i][10]) || 1,
-          petData: parsedPets,
-          petType: String(data[i][11]) || "none",
-          petLvl: Number(data[i][12]) || 0,
+          petLevels: loadedPetLevels,
           stage: Number(data[i][13]) || 1,
           progress: Number(data[i][14]) || 0,
           lastSaved: Number(data[i][15]) || Date.now(),
@@ -247,7 +233,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
     
     var newRow = [
       Number(grade), Number(classNum), Number(studentNum), String(name), 
-      0, String(defaultAvatar), 1, 1, 1, 1, 1, "{}", 0, 1, 0, Date.now(),
+      0, String(defaultAvatar), 1, 1, 1, 1, 1, "{}", "", 1, 0, Date.now(),
       defaultInvStr, defaultEqStr, String(password)
     ];
     
@@ -257,7 +243,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
       grade: newRow[0], classNum: newRow[1], studentNum: newRow[2], name: newRow[3],
       gold: newRow[4], avatarType: newRow[5], helmetLvl: newRow[6], armorLvl: newRow[7],
       weaponLvl: newRow[8], shieldLvl: newRow[9], shoesLvl: newRow[10],
-      petData: {}, petType: newRow[11], petLvl: newRow[12], stage: newRow[13], progress: newRow[14], 
+      petLevels: {}, stage: newRow[13], progress: newRow[14], 
       lastSaved: newRow[15], skillsInventory: [], equippedSkills: []
     };
   } catch(e) {
@@ -266,7 +252,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
 }
 
 // 5. 플레이어 진행도 보존 실시간 업로드 동기화
-function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType, helmetLvl, armorLvl, weaponLvl, shieldLvl, shoesLvl, petType, petLvl, stage, progress, skillsInventory, equippedSkills) {
+function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType, helmetLvl, armorLvl, weaponLvl, shieldLvl, shoesLvl, petLevelsStr, stage, progress, skillsInventory, equippedSkills) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName("Students");
@@ -294,8 +280,8 @@ function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType
         sheet.getRange(targetRow, 9).setValue(weaponLvl);
         sheet.getRange(targetRow, 10).setValue(shieldLvl);
         sheet.getRange(targetRow, 11).setValue(shoesLvl);
-        sheet.getRange(targetRow, 12).setValue(petType);
-        sheet.getRange(targetRow, 13).setValue(petLvl);
+        sheet.getRange(targetRow, 12).setValue(petLevelsStr);
+        sheet.getRange(targetRow, 13).setValue("");
         sheet.getRange(targetRow, 14).setValue(stage);
         sheet.getRange(targetRow, 15).setValue(progress);
         sheet.getRange(targetRow, 16).setValue(Date.now());

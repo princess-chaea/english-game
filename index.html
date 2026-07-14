@@ -713,21 +713,26 @@
                     </select>
                 </div>
 
-                <!-- Room / Name / Number grid -->
-                <div class="grid grid-cols-3 gap-2">
+                <!-- Room / Name / Number / Password grid -->
+                <div class="grid grid-cols-4 gap-2">
                     <div>
-                        <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">반 입력</label>
+                        <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">반</label>
                         <input type="number" id="inputClass" placeholder="반"
                             class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced">
                     </div>
                     <div>
-                        <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">번호 입력</label>
+                        <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">번호</label>
                         <input type="number" id="inputNumber" placeholder="번호"
                             class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced">
                     </div>
                     <div>
-                        <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">이름 입력</label>
+                        <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">이름</label>
                         <input type="text" id="inputName" placeholder="이름"
+                            class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">암호(4자리)</label>
+                        <input type="password" id="inputPassword" maxlength="4" placeholder="암호"
                             class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced">
                     </div>
                 </div>
@@ -843,7 +848,7 @@ function doPost(e) {
     if (action === "getWordsFromSheet") {
       result = getWordsFromSheet(args[0]);
     } else if (action === "loadOrCreateStudent") {
-      result = loadOrCreateStudent(args[0], args[1], args[2], args[3], args[4]);
+      result = loadOrCreateStudent(args[0], args[1], args[2], args[3], args[4], args[5]);
     } else if (action === "saveStudentProgress") {
       result = saveStudentProgress(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14], args[15], args[16]);
     }
@@ -879,13 +884,13 @@ function getWordsFromSheet(grade) {
   }
 }
 
-function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar) {
+function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, password) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName("Students");
     if (!sheet) {
       sheet = ss.insertSheet("Students");
-      sheet.appendRow(["Grade", "Class", "Number", "Name", "Gold", "AvatarType", "HelmetLvl", "ArmorLvl", "WeaponLvl", "ShieldLvl", "ShoesLvl", "PetType", "PetLvl", "Stage", "Progress", "LastSaved", "SkillsInventory", "EquippedSkills"]);
+      sheet.appendRow(["Grade", "Class", "Number", "Name", "Gold", "AvatarType", "HelmetLvl", "ArmorLvl", "WeaponLvl", "ShieldLvl", "ShoesLvl", "PetType", "PetLvl", "Stage", "Progress", "LastSaved", "SkillsInventory", "EquippedSkills", "Password"]);
     }
     
     var data = sheet.getDataRange().getValues();
@@ -895,6 +900,15 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar) {
           String(data[i][2]) === String(studentNum) && 
           String(data[i][3]) === String(name)) {
         
+        var savedPassword = data[i][18] ? String(data[i][18]) : "";
+        if (savedPassword !== "" && savedPassword !== String(password)) {
+          return { error: "password_mismatch" };
+        }
+        
+        if (savedPassword === "" && password) {
+          sheet.getRange(i + 1, 19).setValue(String(password));
+        }
+
         var parsedInv = [];
         var parsedEq = [];
         try {
@@ -931,7 +945,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar) {
     var newRow = [
       Number(grade), Number(classNum), Number(studentNum), String(name), 
       0, String(defaultAvatar), 1, 1, 1, 1, 1, "none", 0, 1, 0, Date.now(),
-      "[]", "[]"
+      "[]", "[]", String(password)
     ];
     sheet.appendRow(newRow);
     return {
@@ -1325,9 +1339,15 @@ function getMockWordsFallback(grade) {
             const classNum = parseInt(document.getElementById("inputClass").value);
             const studentNum = parseInt(document.getElementById("inputNumber").value);
             const name = document.getElementById("inputName").value.trim();
+            const password = document.getElementById("inputPassword").value.trim();
 
-            if (!classNum || !studentNum || !name) {
-                showToast("⚠️ 학급 번호와 영웅 명칭을 올바르게 기입하세요!");
+            if (!classNum || !studentNum || !name || !password) {
+                showToast("⚠️ 학급, 번호, 이름, 암호(4자리)를 모두 입력하세요!");
+                return;
+            }
+
+            if (password.length !== 4 || isNaN(password)) {
+                showToast("⚠️ 암호는 4자리 숫자로 입력해야 합니다!");
                 return;
             }
 
@@ -1338,34 +1358,46 @@ function getMockWordsFallback(grade) {
             if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
                 runGas(
                     "loadOrCreateStudent",
-                    [grade, classNum, studentNum, name, gameState.avatarType],
+                    [grade, classNum, studentNum, name, gameState.avatarType, password],
                     function (response) {
                         if (response) {
+                            if (response.error === "password_mismatch") {
+                                showToast("❌ 비밀번호가 틀렸습니다! 학번이나 암호를 다시 확인하세요.");
+                                return;
+                            }
                             syncStateFromServer(response);
                             closeModal("loginModal");
                             showToast("🏰 원정대 클라우드 계정 로드 성공!");
                         } else {
-                            loadLocalSimulation(grade, classNum, studentNum, name);
-                            closeModal("loginModal");
+                            if (loadLocalSimulation(grade, classNum, studentNum, name, password)) {
+                                closeModal("loginModal");
+                            }
                         }
                     },
                     function () {
-                        loadLocalSimulation(grade, classNum, studentNum, name);
-                        closeModal("loginModal");
+                        if (loadLocalSimulation(grade, classNum, studentNum, name, password)) {
+                            closeModal("loginModal");
+                        }
                     }
                 );
             } else {
-                loadLocalSimulation(grade, classNum, studentNum, name);
-                closeModal("loginModal");
+                if (loadLocalSimulation(grade, classNum, studentNum, name, password)) {
+                    closeModal("loginModal");
+                }
             }
         }
 
-        function loadLocalSimulation(grade, classNum, studentNum, name) {
+        function loadLocalSimulation(grade, classNum, studentNum, name, password) {
             const cacheKey = `vocahero_${grade}_${classNum}_${studentNum}_${name}`;
             const cached = localStorage.getItem(cacheKey);
 
             if (cached) {
-                gameState = JSON.parse(cached);
+                const parsed = JSON.parse(cached);
+                if (parsed.password && String(parsed.password) !== String(password)) {
+                    showToast("❌ 비밀번호가 틀렸습니다! 학번이나 암호를 다시 확인하세요.");
+                    return false;
+                }
+                gameState = parsed;
                 if (!gameState.skillsInventory) gameState.skillsInventory = [];
                 if (!gameState.equippedSkills) gameState.equippedSkills = [];
             } else {
@@ -1373,6 +1405,7 @@ function getMockWordsFallback(grade) {
                 gameState.classNum = classNum;
                 gameState.studentNum = studentNum;
                 gameState.name = name;
+                gameState.password = password;
                 gameState.gold = 0;
                 gameState.helmetLvl = 1;
                 gameState.armorLvl = 1;
@@ -1392,6 +1425,7 @@ function getMockWordsFallback(grade) {
 
             gameState.wordsPool = MOCK_WORDS[String(gameState.grade)] || MOCK_WORDS["3"];
             initGameEngine();
+            return true;
         }
 
         function syncStateFromServer(data) {

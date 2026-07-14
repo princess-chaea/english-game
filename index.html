@@ -345,48 +345,58 @@
                 </div>
             </div>
 
-            <!-- Interactive Combat Arena Viewport -->
+            <!-- Interactive Combat Arena Viewport (Vertical Racetrack) -->
             <div id="battleArena"
-                class="relative z-10 w-full h-64 border border-[#3c3c3c] bg-[#0d0d0d] flex items-center justify-between px-6 cursor-pointer select-none overflow-hidden my-2 rounded-none-forced"
+                class="relative z-10 w-full h-[400px] border border-[#3c3c3c] bg-[#000000] flex flex-col items-center justify-between py-4 cursor-pointer select-none overflow-hidden my-2 rounded-none-forced"
                 onclick="handleArenaClick(event)">
 
-                <!-- Hero Render Component Wrapper -->
-                <div class="flex flex-col items-center justify-end h-full pb-4 w-1/3 relative">
+                <!-- Racetrack vertical center stripes in the background -->
+                <div class="absolute inset-y-0 w-1 border-r border-dashed border-[#262626] left-1/2 transform -translate-x-1/2 pointer-events-none opacity-50"></div>
+                <!-- M-Tricolor track edge lines on the sides -->
+                <div class="absolute left-0 inset-y-0 w-1 bg-[#0066b1] opacity-35 pointer-events-none"></div>
+                <div class="absolute left-1 inset-y-0 w-1 bg-[#1c69d4] opacity-35 pointer-events-none"></div>
+                <div class="absolute left-2 inset-y-0 w-1 bg-[#e22718] opacity-35 pointer-events-none"></div>
+                
+                <div class="absolute right-0 inset-y-0 w-1 bg-[#e22718] opacity-35 pointer-events-none"></div>
+                <div class="absolute right-1 inset-y-0 w-1 bg-[#1c69d4] opacity-35 pointer-events-none"></div>
+                <div class="absolute right-2 inset-y-0 w-1 bg-[#0066b1] opacity-35 pointer-events-none"></div>
+
+                <!-- Monster Combatant Wrapper (Top) -->
+                <div class="flex flex-col items-center w-full z-10">
+                    <span id="monsterNameTag" class="text-[10px] text-[#e22718] font-bold uppercase tracking-widest mb-1.5">SLIME</span>
+                    <!-- Monster HP Tracker bar -->
+                    <div class="w-1/2 bg-[#0d0d0d] border border-[#3c3c3c] h-2 relative overflow-hidden rounded-none-forced mb-2">
+                        <div id="monsterHpBar"
+                            class="bg-[#e22718] h-full transition-all duration-100"
+                            style="width: 100%"></div>
+                    </div>
+                    <div id="monsterContainer"
+                        class="w-32 h-32 flex items-center justify-center transition-transform duration-100">
+                        <svg viewBox="0 0 100 120" class="w-full h-full" id="monsterSvg"></svg>
+                    </div>
+                </div>
+
+                <!-- Central VS Battle Badge -->
+                <div class="flex flex-col items-center justify-center z-10 opacity-30 pointer-events-none my-1">
+                    <span class="text-xs font-bold tracking-widest text-[#bbbbbb] italic">--- VS ---</span>
+                </div>
+
+                <!-- Hero Render Component Wrapper (Bottom) -->
+                <div class="flex flex-col items-center w-full z-10 relative">
                     <!-- Floating Pet Companion -->
                     <div id="companionPetContainer"
-                        class="absolute -top-1 left-2 w-14 h-14 z-20 animate-hover-pet hidden">
+                        class="absolute top-0 left-[62%] w-16 h-16 z-20 animate-hover-pet hidden">
                         <!-- Dynamic Companion SVG inside -->
                         <svg viewBox="0 0 100 100" class="w-full h-full" id="petSvg"></svg>
                     </div>
 
                     <!-- Character Body Avatar -->
-                    <div id="heroCharacter" class="w-24 h-40 relative flex items-end">
+                    <div id="heroCharacter" class="w-32 h-36 relative flex items-end justify-center">
                         <svg viewBox="0 0 100 120" class="w-full h-full transition-transform duration-100"
                             id="heroSvg"></svg>
                     </div>
                     <span id="heroNameTag"
-                        class="text-[9px] bg-[#1a1a1a] border border-[#3c3c3c] px-2 py-0.5 font-bold text-[#bbbbbb] tracking-wider uppercase rounded-none-forced mt-1">HERO</span>
-                </div>
-
-                <!-- Central VS Battle Badge -->
-                <div class="flex flex-col items-center justify-center z-10 opacity-30 pointer-events-none">
-                    <span class="text-xl font-bold tracking-widest text-[#e22718] italic uppercase">VS</span>
-                </div>
-
-                <!-- Monster Combatant Wrapper -->
-                <div class="flex flex-col items-center justify-end h-full pb-4 w-1/3">
-                    <div id="monsterContainer"
-                        class="w-24 h-36 flex items-end justify-center transition-transform duration-100">
-                        <svg viewBox="0 0 100 120" class="w-full h-full" id="monsterSvg"></svg>
-                    </div>
-                    <!-- Monster HP Tracker bar -->
-                    <div
-                        class="w-full bg-[#1a1a1a] border border-[#3c3c3c] h-2 mt-2 relative overflow-hidden rounded-none-forced">
-                        <div id="monsterHpBar"
-                            class="bg-[#e22718] h-full transition-all duration-100"
-                            style="width: 100%"></div>
-                    </div>
-                    <span id="monsterNameTag" class="text-[9px] text-[#e22718] font-bold uppercase tracking-wider mt-1">SLIME</span>
+                        class="text-[9px] bg-[#1a1a1a] border border-[#3c3c3c] px-3 py-0.5 font-bold text-[#bbbbbb] tracking-wider uppercase rounded-none-forced mt-1.5">HERO</span>
                 </div>
             </div>
 
@@ -1113,6 +1123,7 @@ function getMockWordsFallback(grade) {
 
         let isGoogleScriptActive = false;
         let isBossBattleActive = false;
+        let ENABLE_PET_STAGES = false; // 펫 레벨별 10개 성장 이미지 준비 완료 시 true로 설정
         let bossTimeRemaining = 30.0;
         let bossTimerInterval = null;
         let gameLoopInterval = null;
@@ -1196,16 +1207,16 @@ function getMockWordsFallback(grade) {
 
             if (typeof google !== 'undefined' && google.script && google.script.run) {
                 isGoogleScriptActive = true;
-                statusDot.className = "w-2 h-2 rounded-full bg-green-400 inline-block animate-pulse";
-                statusText.innerText = "구글 시트 다이렉트 모드";
+                if (statusDot) statusDot.className = "w-2 h-2 rounded-full bg-green-400 inline-block animate-pulse";
+                if (statusText) statusText.innerText = "구글 시트 다이렉트 모드";
             } else if (savedUrl && savedUrl.trim() !== "") {
                 isGoogleScriptActive = false;
-                statusDot.className = "w-2 h-2 rounded-full bg-sky-400 inline-block animate-pulse";
-                statusText.innerText = "Vercel 연동 모드";
+                if (statusDot) statusDot.className = "w-2 h-2 rounded-full bg-sky-400 inline-block animate-pulse";
+                if (statusText) statusText.innerText = "Vercel 연동 모드";
             } else {
                 isGoogleScriptActive = false;
-                statusDot.className = "w-2 h-2 rounded-full bg-yellow-500 inline-block animate-bounce";
-                statusText.innerText = "로컬 저장소 모드";
+                if (statusDot) statusDot.className = "w-2 h-2 rounded-full bg-yellow-500 inline-block animate-bounce";
+                if (statusText) statusText.innerText = "로컬 저장소 모드";
             }
         }
 
@@ -1506,9 +1517,13 @@ function getMockWordsFallback(grade) {
             let imageUrl = "";
 
             if (type !== 'none') {
-                const level = gameState.petLvl;
-                const stage = Math.min(10, Math.floor(level / 10) + 1); // 1 to 10 stages
-                imageUrl = `media/pet_${type}_${stage}.png`;
+                if (ENABLE_PET_STAGES) {
+                    const level = gameState.petLvl;
+                    const stage = Math.min(10, Math.floor(level / 10) + 1); // 1 to 10 stages
+                    imageUrl = `media/pet_${type}_${stage}.png`;
+                } else {
+                    imageUrl = `media/pet_${type}.png`;
+                }
             }
 
             if (imageUrl) {
@@ -1597,7 +1612,7 @@ function getMockWordsFallback(grade) {
 
                 svg.innerHTML = `
                     ${backgroundSvg}
-                    <image href="${imageUrl}" onerror="this.setAttribute('href', 'media/pet_${type}.png')" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet" style="${filterStyle}" />
+                    <image href="${imageUrl}" onerror="this.setAttribute('href', 'media/pet_${type}.png')" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet" style="${filterStyle} mix-blend-mode: screen;" />
                     ${foregroundSvg}
                 `;
                 container.classList.remove("hidden");
@@ -1644,7 +1659,7 @@ function getMockWordsFallback(grade) {
                 }
             }
 
-            const innerHtml = `<image href="${imageUrl}" x="0" y="0" width="100" height="120" preserveAspectRatio="xMidYMid meet" />`;
+            const innerHtml = `<image href="${imageUrl}" x="0" y="0" width="100" height="120" preserveAspectRatio="xMidYMid meet" style="mix-blend-mode: screen;" />`;
 
             svg.innerHTML = innerHtml;
             document.getElementById("monsterNameTag").innerText = isBossBattleActive

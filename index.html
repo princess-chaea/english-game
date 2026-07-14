@@ -686,6 +686,7 @@
     </main>
 
     <!-- MODAL 1: Character Creation & Class Number Setup -->
+    <!-- MODAL 1: Character Login Info Setup -->
     <div id="loginModal"
         class="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 transition-opacity duration-300">
         <div
@@ -713,8 +714,8 @@
                     </select>
                 </div>
 
-                <!-- Room / Name / Number / Password grid -->
-                <div class="grid grid-cols-4 gap-2">
+                <!-- Room / Name / Number grid -->
+                <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">반</label>
                         <input type="number" id="inputClass" placeholder="반"
@@ -730,36 +731,93 @@
                         <input type="text" id="inputName" placeholder="이름"
                             class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced">
                     </div>
-                    <div>
-                        <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">암호(4자리)</label>
-                        <input type="password" id="inputPassword" maxlength="4" placeholder="암호"
-                            class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced">
-                    </div>
-                </div>
-
-                <!-- Choose Avatar Gender type -->
-                <div>
-                    <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-2.5">용사 아바타 성별 결정 (첫 출격 시 적용)</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="selectStartingAvatar('male')" id="genderMaleBtn"
-                            class="py-3.5 bg-[#1a1a1a] border-2 border-white text-white font-bold rounded-none-forced text-xs flex flex-col items-center gap-1 transition">
-                            <span class="text-xl">⚔️</span>
-                            <span class="uppercase tracking-wider">남자 용사 (M)</span>
-                        </button>
-                        <button onclick="selectStartingAvatar('female')" id="genderFemaleBtn"
-                            class="py-3.5 bg-[#0d0d0d] border border-[#3c3c3c] text-[#7e7e7e] font-bold rounded-none-forced text-xs flex flex-col items-center gap-1 hover:text-white transition">
-                            <span class="text-xl">🪄</span>
-                            <span class="uppercase tracking-wider">여자 용사 (F)</span>
-                        </button>
-                    </div>
                 </div>
             </div>
 
-            <button onclick="commitAvatarAndLaunch()"
+            <button onclick="checkStudentAccount()"
                 class="w-full py-4 bg-transparent hover:bg-white text-white hover:text-black border border-white font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 mt-2 rounded-none-forced">
                 <i data-lucide="swords" class="w-4 h-4"></i>
                 <span>전설의 원정 출격하기!</span>
             </button>
+        </div>
+    </div>
+
+    <!-- MODAL 1B: Returning User PIN Verification -->
+    <div id="pinVerifyModal"
+        class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-50 transition-opacity duration-300">
+        <div
+            class="bg-black text-white max-w-sm w-full p-8 shadow-2xl border border-[#3c3c3c] flex flex-col gap-5 rounded-none-forced">
+            <div class="text-center">
+                <div
+                    class="w-12 h-12 bg-[#0d0d0d] border border-[#3c3c3c] text-[#0066b1] flex items-center justify-center mx-auto mb-2 rounded-none-forced">
+                    <i data-lucide="lock" class="w-6 h-6 animate-pulse"></i>
+                </div>
+                <h2 class="text-md font-bold uppercase tracking-wider text-white">기존 원정대원 인증</h2>
+                <p class="text-[9px] text-[#7e7e7e] uppercase tracking-widest mt-1">이전에 등록된 캐릭터가 있습니다.<br>출격용 PIN 암호(4자리)를 입력하세요.</p>
+            </div>
+
+            <div>
+                <input type="password" id="verifyPinInput" maxlength="4" placeholder="암호 4자리 입력"
+                    class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced tracking-widest">
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="closeModal('pinVerifyModal'); openModal('loginModal');" class="flex-1 py-3 bg-[#1a1a1a] border border-[#3c3c3c] text-white font-bold text-xs uppercase rounded-none-forced">
+                    뒤로가기
+                </button>
+                <button onclick="submitVerifyPin()" class="flex-1 py-3 bg-[#e22718] hover:bg-[#b91c1c] text-white font-bold text-xs uppercase rounded-none-forced">
+                    출격 승인!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 1C: New User Character Creation -->
+    <div id="newUserRegisterModal"
+        class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-50 transition-opacity duration-300">
+        <div
+            class="bg-black text-white max-w-md w-full p-8 shadow-2xl border border-[#3c3c3c] flex flex-col gap-5 rounded-none-forced">
+            <div class="text-center">
+                <div
+                    class="w-12 h-12 bg-[#0d0d0d] border border-[#3c3c3c] text-green-500 flex items-center justify-center mx-auto mb-2 rounded-none-forced">
+                    <i data-lucide="user-plus" class="w-6 h-6"></i>
+                </div>
+                <h2 class="text-md font-bold uppercase tracking-wider text-white">신규 원정대원 등록</h2>
+                <p class="text-[9px] text-[#7e7e7e] uppercase tracking-widest mt-1">처음 출격하시는 용사님을 환영합니다!<br>성별을 선택하고 비밀번호를 설정하세요.</p>
+            </div>
+
+            <!-- Avatar Selection -->
+            <div>
+                <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-2.5">용사 아바타 성별 결정</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="selectStartingAvatar('male')" id="genderMaleBtn"
+                        class="py-3.5 bg-[#1a1a1a] border-2 border-white text-white font-bold rounded-none-forced text-xs flex flex-col items-center gap-1 transition">
+                        <span class="text-xl">⚔️</span>
+                        <span class="uppercase tracking-wider">남자 용사 (M)</span>
+                    </button>
+                    <button onclick="selectStartingAvatar('female')" id="genderFemaleBtn"
+                        class="py-3.5 bg-[#0d0d0d] border border-[#3c3c3c] text-[#7e7e7e] font-bold rounded-none-forced text-xs flex flex-col items-center gap-1 hover:text-white transition">
+                        <span class="text-xl">🪄</span>
+                        <span class="uppercase tracking-wider">여자 용사 (F)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Password PIN Input -->
+            <div>
+                <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">새로 사용할 PIN 암호 설정 (숫자 4자리)</label>
+                <input type="password" id="newPinInput" maxlength="4" placeholder="설정할 암호 4자리 입력"
+                    class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced tracking-widest">
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="closeModal('newUserRegisterModal'); openModal('loginModal');" class="flex-1 py-3 bg-[#1a1a1a] border border-[#3c3c3c] text-white font-bold text-xs uppercase rounded-none-forced">
+                    뒤로가기
+                </button>
+                <button onclick="submitNewUserRegister()" class="flex-1 py-3 bg-green-700 hover:bg-green-600 text-white font-bold text-xs uppercase rounded-none-forced">
+                    등록 완료 & 출격!
+                </button>
+            </div>
         </div>
     </div>
 
@@ -847,6 +905,8 @@ function doPost(e) {
     
     if (action === "getWordsFromSheet") {
       result = getWordsFromSheet(args[0]);
+    } else if (action === "checkStudentExists") {
+      result = checkStudentExists(args[0], args[1], args[2], args[3]);
     } else if (action === "loadOrCreateStudent") {
       result = loadOrCreateStudent(args[0], args[1], args[2], args[3], args[4], args[5]);
     } else if (action === "saveStudentProgress") {
@@ -881,6 +941,27 @@ function getWordsFromSheet(grade) {
     return words.length > 0 ? words : getMockWordsFallback(grade);
   } catch (err) {
     return getMockWordsFallback(grade);
+  }
+}
+
+function checkStudentExists(grade, classNum, studentNum, name) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName("Students");
+    if (!sheet) return { exists: false };
+    
+    var data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(grade) && 
+          String(data[i][1]) === String(classNum) && 
+          String(data[i][2]) === String(studentNum) && 
+          String(data[i][3]) === String(name)) {
+        return { exists: true };
+      }
+    }
+    return { exists: false };
+  } catch(e) {
+    return { exists: false };
   }
 }
 
@@ -1062,6 +1143,12 @@ function getMockWordsFallback(grade) {
         // ==========================================
         // 1. ADVANCED GAME STATE DECLARATION
         // ==========================================
+        let tempCredentials = {
+            grade: 4,
+            classNum: 1,
+            studentNum: 1,
+            name: ""
+        };
         let gameState = {
             grade: 4,
             classNum: 1,
@@ -1334,25 +1421,70 @@ function getMockWordsFallback(grade) {
             }
         }
 
-        function commitAvatarAndLaunch() {
+        function checkStudentAccount() {
             const grade = parseInt(document.getElementById("inputGrade").value);
             const classNum = parseInt(document.getElementById("inputClass").value);
             const studentNum = parseInt(document.getElementById("inputNumber").value);
             const name = document.getElementById("inputName").value.trim();
-            const password = document.getElementById("inputPassword").value.trim();
 
-            if (!classNum || !studentNum || !name || !password) {
-                showToast("⚠️ 학급, 번호, 이름, 암호(4자리)를 모두 입력하세요!");
+            if (!classNum || !studentNum || !name) {
+                showToast("⚠️ 학급, 번호, 이름을 올바르게 입력하세요!");
                 return;
             }
 
+            tempCredentials = { grade, classNum, studentNum, name };
+            showToast("⏳ 계정 정보 확인 중...");
+
+            const savedUrl = getGasUrl();
+
+            if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
+                runGas(
+                    "checkStudentExists",
+                    [grade, classNum, studentNum, name],
+                    function (response) {
+                        if (response && response.exists) {
+                            closeModal("loginModal");
+                            openModal("pinVerifyModal");
+                            document.getElementById("verifyPinInput").value = "";
+                            document.getElementById("verifyPinInput").focus();
+                        } else {
+                            closeModal("loginModal");
+                            openModal("newUserRegisterModal");
+                            document.getElementById("newPinInput").value = "";
+                        }
+                    },
+                    function () {
+                        proceedWithLocalCheck(grade, classNum, studentNum, name);
+                    }
+                );
+            } else {
+                proceedWithLocalCheck(grade, classNum, studentNum, name);
+            }
+        }
+
+        function proceedWithLocalCheck(grade, classNum, studentNum, name) {
+            const cacheKey = `vocahero_${grade}_${classNum}_${studentNum}_${name}`;
+            const cached = localStorage.getItem(cacheKey);
+            closeModal("loginModal");
+            if (cached) {
+                openModal("pinVerifyModal");
+                document.getElementById("verifyPinInput").value = "";
+                document.getElementById("verifyPinInput").focus();
+            } else {
+                openModal("newUserRegisterModal");
+                document.getElementById("newPinInput").value = "";
+            }
+        }
+
+        function submitVerifyPin() {
+            const password = document.getElementById("verifyPinInput").value.trim();
             if (password.length !== 4 || isNaN(password)) {
-                showToast("⚠️ 암호는 4자리 숫자로 입력해야 합니다!");
+                showToast("⚠️ PIN 암호는 4자리 숫자로 입력해야 합니다!");
                 return;
             }
 
-            showToast("⏳ 원정 정보 동기화 중...");
-
+            showToast("⏳ PIN 인증 중...");
+            const { grade, classNum, studentNum, name } = tempCredentials;
             const savedUrl = getGasUrl();
 
             if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
@@ -1362,28 +1494,69 @@ function getMockWordsFallback(grade) {
                     function (response) {
                         if (response) {
                             if (response.error === "password_mismatch") {
-                                showToast("❌ 비밀번호가 틀렸습니다! 학번이나 암호를 다시 확인하세요.");
+                                showToast("❌ 비밀번호가 틀렸습니다! 암호를 다시 확인해 주세요.");
                                 return;
                             }
                             syncStateFromServer(response);
-                            closeModal("loginModal");
+                            closeModal("pinVerifyModal");
                             showToast("🏰 원정대 클라우드 계정 로드 성공!");
                         } else {
-                            if (loadLocalSimulation(grade, classNum, studentNum, name, password)) {
-                                closeModal("loginModal");
-                            }
+                            handleLocalVerify(grade, classNum, studentNum, name, password);
                         }
                     },
                     function () {
-                        if (loadLocalSimulation(grade, classNum, studentNum, name, password)) {
-                            closeModal("loginModal");
-                        }
+                        handleLocalVerify(grade, classNum, studentNum, name, password);
                     }
                 );
             } else {
-                if (loadLocalSimulation(grade, classNum, studentNum, name, password)) {
-                    closeModal("loginModal");
-                }
+                handleLocalVerify(grade, classNum, studentNum, name, password);
+            }
+        }
+
+        function handleLocalVerify(grade, classNum, studentNum, name, password) {
+            if (loadLocalSimulation(grade, classNum, studentNum, name, password)) {
+                closeModal("pinVerifyModal");
+                showToast("🏰 로컬 원정대 계정 로드 성공!");
+            }
+        }
+
+        function submitNewUserRegister() {
+            const password = document.getElementById("newPinInput").value.trim();
+            if (password.length !== 4 || isNaN(password)) {
+                showToast("⚠️ 설정할 암호는 4자리 숫자로 입력해야 합니다!");
+                return;
+            }
+
+            showToast("⏳ 신규 대원 생성 중...");
+            const { grade, classNum, studentNum, name } = tempCredentials;
+            const savedUrl = getGasUrl();
+
+            if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
+                runGas(
+                    "loadOrCreateStudent",
+                    [grade, classNum, studentNum, name, gameState.avatarType, password],
+                    function (response) {
+                        if (response) {
+                            syncStateFromServer(response);
+                            closeModal("newUserRegisterModal");
+                            showToast("✨ 새로운 전설의 모험이 시작되었습니다! 환영합니다!");
+                        } else {
+                            handleLocalRegister(grade, classNum, studentNum, name, password);
+                        }
+                    },
+                    function () {
+                        handleLocalRegister(grade, classNum, studentNum, name, password);
+                    }
+                );
+            } else {
+                handleLocalRegister(grade, classNum, studentNum, name, password);
+            }
+        }
+
+        function handleLocalRegister(grade, classNum, studentNum, name, password) {
+            if (loadLocalSimulation(grade, classNum, studentNum, name, password)) {
+                closeModal("newUserRegisterModal");
+                showToast("✨ 로컬 원정대에 새로운 대원이 등록되었습니다!");
             }
         }
 

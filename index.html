@@ -1980,7 +1980,8 @@ function getMockWordsFallback(grade) {
         }
 
         function calculateClickAttackPower() {
-            return gameState.weaponLvl * 2 + gameState.shoesLvl;
+            // 무기: 클릭당 +3, 갑옷: +1, 방패: +1, 기본 신발: +1
+            return (gameState.weaponLvl * 3) + (gameState.armorLvl * 1) + (gameState.shieldLvl * 1) + gameState.shoesLvl;
         }
 
         function calculateOfflineGains() {
@@ -2135,38 +2136,49 @@ function getMockWordsFallback(grade) {
                 const cost = isMax ? 0 : Math.floor(info.base * Math.pow(GROWTH_RATE, currentLvl));
                 const chanceInfo = isMax ? null : getGearUpgradeInfo(currentLvl);
 
+                const dpsBonusMap = { helmet: 5, armor: 15, weapon: 10, shield: 8, shoes: 6 };
+                const clickBonusMap = { weapon: 3, armor: 1, shield: 1 };
+                const dpsBonus = dpsBonusMap[gearKey] || 0;
+                const clickBonus = clickBonusMap[gearKey] || 0;
+
                 let rateHtml = "";
                 if (isMax) {
                     rateHtml = `<span class="text-[#0066b1] font-bold">최대 강화 완료 (10강)</span>`;
                 } else {
+                    const bonusLine = clickBonus > 0
+                        ? `자동 DPS +${dpsBonus} &nbsp;|&nbsp; 클릭 타격 +${clickBonus}`
+                        : `자동 DPS +${dpsBonus}`;
                     rateHtml = `
-                        <div class="flex items-center gap-2">
-                            <span class="text-2xs text-[#7e7e7e]">Lv.${currentLvl} ➔ Lv.${currentLvl + 1}</span>
-                            <span class="text-[9px] text-[#bbbbbb] font-mono">(전투 DPS +${gearKey === 'helmet' ? 5 : (gearKey === 'armor' ? 15 : (gearKey === 'weapon' ? 10 : (gearKey === 'shield' ? 8 : 6)))})</span>
+                        <div class="text-[10px] text-[#7e7e7e] mb-0.5">
+                            <span class="font-bold text-white">Lv.${currentLvl}</span>
+                            <span class="mx-1">→</span>
+                            <span class="font-bold text-[#0066b1]">Lv.${currentLvl + 1}</span>
                         </div>
-                        <div class="text-[9px] text-[#bbbbbb] mt-0.5 flex flex-col gap-0.5">
-                            <span>성공 확률: <span class="text-green-500 font-bold">${chanceInfo.success}%</span></span>
-                            ${chanceInfo.dropChance > 0 ? `<span>실패 패널티: <span class="text-[#e22718] font-bold">하락 ${chanceInfo.dropChance}% 확률 (1~3강)</span></span>` : '<span class="text-green-500 font-bold">실패 패널티 없음</span>'}
+                        <div class="text-[9px] text-[#bbbbbb] font-mono">${bonusLine}</div>
+                        <div class="text-[9px] mt-0.5 flex flex-col gap-0.5">
+                            <span>성공: <span class="text-green-500 font-bold">${chanceInfo.success}%</span></span>
+                            ${chanceInfo.dropChance > 0
+                                ? `<span class="text-[#e22718] font-bold">실패 시 ${chanceInfo.dropChance}% 확률 하락</span>`
+                                : '<span class="text-green-500">실패해도 강 유지</span>'}
                         </div>
                     `;
                 }
 
                 html += `
-                    <div class="flex items-center justify-between p-3.5 bg-[#0d0d0d] border border-[#262626] rounded-none-forced">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-[#1a1a1a] border border-[#3c3c3c] rounded-none-forced flex items-center justify-center text-[#0066b1]">
-                                <i data-lucide="${getGearIcon(gearKey)}" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-white text-xs uppercase tracking-wider">${info.name}</h4>
-                                <div class="mt-1">${rateHtml}</div>
-                            </div>
+                    <div class="flex items-stretch gap-0 bg-[#0d0d0d] border border-[#262626] rounded-none-forced overflow-hidden">
+                        <div class="flex items-center justify-center w-11 bg-[#111] border-r border-[#262626] flex-shrink-0">
+                            <i data-lucide="${getGearIcon(gearKey)}" class="w-5 h-5 text-[#0066b1]"></i>
                         </div>
-                        <button onclick="${isMax ? '' : `upgradeGearItem('${gearKey}')`}" ${isMax ? 'disabled' : ''} class="bmw-btn-primary py-2 px-3 flex flex-col items-center justify-center min-w-[100px] ${isMax ? 'opacity-50 cursor-not-allowed' : ''}">
-                            ${isMax ? '<span class="text-white text-[9px] font-bold">MAX</span>' : `
-                                <span class="text-[#e22718] text-[9px] font-bold">🪙 ${cost}G</span>
-                                <span class="text-[8px] opacity-70">강화 시도</span>
-                            `}
+                        <div class="flex flex-col justify-center px-3 py-2.5 flex-1 min-w-0">
+                            <h4 class="font-bold text-white text-[11px] uppercase tracking-wider leading-tight">${info.name}</h4>
+                            <div class="mt-1">${rateHtml}</div>
+                        </div>
+                        <button onclick="${isMax ? '' : `upgradeGearItem('${gearKey}')`}" ${isMax ? 'disabled' : ''}
+                            class="flex-shrink-0 flex flex-col items-center justify-center w-20 ${isMax ? 'bg-[#1a1a1a] opacity-50 cursor-not-allowed' : 'bg-[#0066b1] hover:bg-[#0088ee] cursor-pointer'} transition px-2 py-3 border-l border-[#262626]">
+                            ${isMax
+                                ? '<span class="text-white text-[10px] font-bold">MAX</span>'
+                                : `<span class="text-yellow-300 text-[11px] font-bold">🪙 ${cost}G</span>
+                                   <span class="text-white text-[9px] mt-0.5 opacity-80">강화 시도</span>`}
                         </button>
                     </div>
                 `;
@@ -2203,18 +2215,27 @@ function getMockWordsFallback(grade) {
                 if (roll <= chanceInfo.success) {
                     gameState[info.key]++;
                     playSoundEffect('levelup');
-                    showToast(`🛠️ [대장간] 강화 성공! ${info.name}이 Lv.${gameState[info.key]}로 강화되었습니다! 🎉`);
+                    showForgeResult(true,
+                        '⚔️ 강화 성공!',
+                        `${info.name}이(가) <strong class="text-[#0066b1]">Lv.${gameState[info.key]}</strong>로 강화되었습니다!`,
+                        '#22c55e');
                 } else {
                     playSoundEffect('hit');
                     const dropRoll = Math.random() * 100;
                     if (chanceInfo.dropChance > 0 && dropRoll <= chanceInfo.dropChance) {
-                        const dropAmt = Math.floor(Math.random() * 3) + 1; // 1~3 levels
+                        const dropAmt = Math.floor(Math.random() * 3) + 1;
                         const newLvl = Math.max(1, currentLvl - dropAmt);
                         const loss = currentLvl - newLvl;
                         gameState[info.key] = newLvl;
-                        showToast(`❌ 강화 실패! 장비의 흔들림으로 등급이 Lv.${newLvl}로 하락했습니다. (-${loss}강)`);
+                        showForgeResult(false,
+                            '💥 강화 실패!',
+                            `장비 기운이 흔들려 <strong class="text-[#e22718]">Lv.${newLvl}</strong>로 <strong class="text-[#e22718]">-${loss}강</strong> 하락했습니다.`,
+                            '#e22718');
                     } else {
-                        showToast(`⚠️ 강화 실패! 다행히 기운이 온전하여 등급이 유지되었습니다.`);
+                        showForgeResult(false,
+                            '⚠️ 강화 실패',
+                            `다행히 기운이 온전하여 <strong class="text-yellow-400">등급이 유지</strong>되었습니다.`,
+                            '#f59e0b');
                     }
                 }
 
@@ -2967,6 +2988,31 @@ function getMockWordsFallback(grade) {
             setTimeout(() => {
                 toast.classList.remove("opacity-100");
                 toast.classList.add("opacity-0", "pointer-events-none");
+            }, 3000);
+        }
+
+        function showForgeResult(isSuccess, title, desc, borderColor) {
+            const overlay = document.getElementById("forgeResultOverlay");
+            const box = document.getElementById("forgeResultBox");
+            const icon = document.getElementById("forgeResultIcon");
+            const titleEl = document.getElementById("forgeResultTitle");
+            const descEl = document.getElementById("forgeResultDesc");
+
+            icon.innerText = isSuccess ? "🎉" : "💔";
+            titleEl.innerText = title;
+            titleEl.style.color = borderColor;
+            descEl.innerHTML = desc;
+            box.style.borderColor = borderColor;
+            box.style.boxShadow = `0 0 32px ${borderColor}55`;
+
+            overlay.classList.remove("hidden");
+            overlay.classList.add("flex");
+
+            // 3초 후 자동 닫기
+            clearTimeout(overlay._autoClose);
+            overlay._autoClose = setTimeout(() => {
+                overlay.classList.add("hidden");
+                overlay.classList.remove("flex");
             }, 3000);
         }
 

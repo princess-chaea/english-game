@@ -1215,10 +1215,26 @@ function getMockWordsFallback(grade) {
 
         // Companion pet details
         const PET_PARAMS = {
-            slime: { name: "아기 젤리 슬라임", cost: 100, dps: 3, bonus: 0.1, desc: "초당 추가 타격을 돕는 귀여운 물방울" },
-            dragon: { name: "화염의 드래곤베이비", cost: 350, dps: 12, bonus: 0.3, desc: "브레스를 내뿜어 높은 DPS 누적 지원" },
-            fairy: { name: "황금 축복 마법요정", cost: 800, dps: 30, bonus: 0.6, desc: "마법 버프로 퀴즈 수당 곱배율을 제공" }
+            slime: {
+                name: "아기 젤리 슬라임",
+                cost: 100,
+                goldBonus: 0.05,   // 레벨당 퀴즈 골드 획득 +5%
+                desc: "🪙 골드 획득 특화 — 레벨당 퀴즈 골드 수당 +5%"
+            },
+            dragon: {
+                name: "화염의 드래곤베이비",
+                cost: 350,
+                dps: 15,           // 레벨당 자동 공격 DPS +15
+                desc: "⚔️ 공격 특화 — 레벨당 자동 공격 DPS +15"
+            },
+            fairy: {
+                name: "황금 축복 마법요정",
+                cost: 800,
+                forgeBonus: 1,     // 레벨당 대장간 강화 성공률 +1%
+                desc: "🔨 강화 특화 — 레벨당 대장간 강화 성공률 +1%"
+            }
         };
+
 
         // Simulated Stage Monsters list (cycled by stage ID)
         const MONSTER_PROFILES = [
@@ -1975,16 +1991,12 @@ function getMockWordsFallback(grade) {
         }
 
         function calculateDPSPower() {
+            // 자동 DPS = 대장간 장비 DPS + 드래곤 펫 DPS (슬라임=골드, 요정=강화 전용)
             let totalDps = calculateGearDPS();
             if (gameState.petLevels) {
-                for (let petKey in gameState.petLevels) {
-                    const petLvl = gameState.petLevels[petKey] || 0;
-                    if (petLvl > 0) {
-                        const pInfo = PET_PARAMS[petKey];
-                        if (pInfo) {
-                            totalDps += pInfo.dps * petLvl;
-                        }
-                    }
+                const dragonLvl = gameState.petLevels['dragon'] || 0;
+                if (dragonLvl > 0) {
+                    totalDps += PET_PARAMS['dragon'].dps * dragonLvl;
                 }
             }
             return totalDps;
@@ -2116,16 +2128,24 @@ function getMockWordsFallback(grade) {
         function getGearUpgradeInfo(currentLvl) {
             const config = {
                 1: { success: 100, dropChance: 0 },
-                2: { success: 95, dropChance: 0 },
-                3: { success: 90, dropChance: 0 },
-                4: { success: 80, dropChance: 0 },
-                5: { success: 70, dropChance: 10 },
-                6: { success: 50, dropChance: 25 },
-                7: { success: 35, dropChance: 40 },
-                8: { success: 20, dropChance: 50 },
-                9: { success: 5, dropChance: 60 }
+                2: { success: 95,  dropChance: 0 },
+                3: { success: 90,  dropChance: 0 },
+                4: { success: 80,  dropChance: 0 },
+                5: { success: 70,  dropChance: 10 },
+                6: { success: 50,  dropChance: 25 },
+                7: { success: 35,  dropChance: 40 },
+                8: { success: 20,  dropChance: 50 },
+                9: { success: 5,   dropChance: 60 }
             };
-            return config[currentLvl] || { success: 100, dropChance: 0 };
+            const base = config[currentLvl] || { success: 100, dropChance: 0 };
+
+            // 요정 펫 레벨당 강화 성공률 +1% 보정 (최대 95%까지)
+            const fairyLvl = (gameState.petLevels && gameState.petLevels['fairy']) || 0;
+            const fairyBonus = fairyLvl * PET_PARAMS['fairy'].forgeBonus;
+            return {
+                success: Math.min(95, base.success + fairyBonus),
+                dropChance: base.dropChance
+            };
         }
 
         function calculateGearDPS() {
@@ -2313,8 +2333,12 @@ function getMockWordsFallback(grade) {
                         
                         <div class="mt-4 flex flex-col gap-1">
                             <div class="flex justify-between text-[9px] text-[#bbbbbb]">
-                                <span>자동 DPS: +${info.dps * Math.max(1, petLevel)}</span>
-                                <span>수당: +${Math.round(info.bonus * Math.max(1, petLevel) * 100)}%</span>
+                                ${petKey === 'slime'
+                                    ? `<span>🪙 골드 배율: +${Math.round((info.goldBonus || 0) * Math.max(1, petLevel) * 100)}%</span>`
+                                    : petKey === 'dragon'
+                                    ? `<span>⚔️ 자동 DPS: +${(info.dps || 0) * Math.max(1, petLevel)}</span>`
+                                    : `<span>🔨 강화 성공률: +${(info.forgeBonus || 0) * Math.max(1, petLevel)}%</span>`
+                                }
                             </div>
                             <button onclick="${isMax ? '' : `interactUpgradePet('${petKey}')`}" ${isMax ? 'disabled' : ''} class="w-full mt-2 bmw-btn-primary py-2.5 flex flex-col items-center justify-center ${isMax ? 'opacity-50 cursor-not-allowed' : ''}">
                                 ${isMax ? '<span class="text-white font-bold text-[9px]">진화 최종 도달 (Lv.100)</span>' : `
@@ -2679,16 +2703,10 @@ function getMockWordsFallback(grade) {
                 gameState.totalQuizCorrect++;
 
                 const baseReward = 200 * gameState.grade;
-                let petMultiplier = 1.0;
-                if (gameState.petLevels) {
-                    for (let petKey in gameState.petLevels) {
-                        const petLvl = gameState.petLevels[petKey] || 0;
-                        if (petLvl > 0) {
-                            petMultiplier += PET_PARAMS[petKey].bonus * petLvl;
-                        }
-                    }
-                }
-                const reward = Math.floor(baseReward * petMultiplier);
+                // 슬라임 펫 골드 배율 적용 (레벨당 +5%)
+                const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
+                const goldMultiplier = 1.0 + (slimeLvl * PET_PARAMS['slime'].goldBonus);
+                const reward = Math.floor(baseReward * goldMultiplier);
 
                 gameState.gold += reward;
 

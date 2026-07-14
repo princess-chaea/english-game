@@ -1,0 +1,2580 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voca Hero! 영단어 용사 키우기</title>
+    <!-- Suppress Tailwind CDN production warning -->
+    <script>
+        (function() {
+            const originalWarn = console.warn;
+            console.warn = function(...args) {
+                if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) {
+                    return;
+                }
+                originalWarn.apply(console, args);
+            };
+        })();
+    </script>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @font-face {
+            font-family: 'Hakgyoansim_PosterB';
+            src: url('media/Hakgyoansim_PosterB.ttf') format('truetype');
+            font-weight: bold;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'KERISBAEUM_B';
+            src: url('media/KERISBAEUM_B.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body {
+            font-family: 'KERISBAEUM_B', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #000000; /* canvas */
+            color: #ffffff; /* on-dark */
+            font-weight: normal;
+        }
+
+        /* Typography utility classes */
+        .bmw-display-xl {
+            font-family: 'Hakgyoansim_PosterB', sans-serif;
+            font-size: 3rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+            line-height: 1;
+        }
+
+        .bmw-display-lg {
+            font-family: 'Hakgyoansim_PosterB', sans-serif;
+            font-size: 2.25rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+            line-height: 1.05;
+        }
+
+        .bmw-display-md {
+            font-family: 'Hakgyoansim_PosterB', sans-serif;
+            font-size: 1.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+            line-height: 1.1;
+        }
+
+        .bmw-display-sm {
+            font-family: 'Hakgyoansim_PosterB', sans-serif;
+            font-size: 1.25rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+            line-height: 1.15;
+        }
+
+        .bmw-label-uppercase {
+            font-family: 'Hakgyoansim_PosterB', sans-serif;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            line-height: 1.3;
+        }
+
+        .bmw-body-md {
+            font-family: 'KERISBAEUM_B', sans-serif;
+            font-size: 0.95rem;
+            font-weight: normal;
+            color: #bbbbbb;
+            line-height: 1.5;
+        }
+
+        .bmw-body-sm {
+            font-family: 'KERISBAEUM_B', sans-serif;
+            font-size: 0.8rem;
+            font-weight: normal;
+            color: #bbbbbb;
+            line-height: 1.5;
+        }
+
+        /* Border radius forced to 0px */
+        .rounded-none-forced {
+            border-radius: 0px !important;
+        }
+
+        /* Buttons & Forms */
+        .bmw-btn-primary {
+            background-color: transparent;
+            color: #ffffff;
+            border: 1px solid #ffffff;
+            border-radius: 0px !important;
+            padding: 12px 24px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .bmw-btn-primary:hover:not(:disabled) {
+            background-color: #ffffff;
+            color: #000000;
+        }
+
+        .bmw-btn-primary:disabled {
+            border-color: #3c3c3c;
+            color: #7e7e7e;
+            cursor: not-allowed;
+        }
+
+        .bmw-btn-secondary {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            border: 1px solid #3c3c3c;
+            border-radius: 0px !important;
+            padding: 12px 24px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .bmw-btn-secondary:hover:not(:disabled) {
+            background-color: #262626;
+            border-color: #ffffff;
+        }
+
+        .bmw-btn-danger {
+            background-color: transparent;
+            color: #e22718;
+            border: 1px solid #e22718;
+            border-radius: 0px !important;
+            padding: 12px 24px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .bmw-btn-danger:hover {
+            background-color: #e22718;
+            color: #ffffff;
+        }
+
+        .bmw-input {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            border: 1px solid #3c3c3c;
+            border-radius: 0px !important;
+            padding: 12px 16px;
+            font-weight: 300;
+            transition: border-color 0.2s ease;
+        }
+
+        .bmw-input:focus {
+            border-color: #ffffff;
+            outline: none;
+        }
+
+        /* Card and surface elevation */
+        .bmw-card {
+            background-color: #1a1a1a; /* surface-card */
+            border: 1px solid #262626; /* hairline-strong */
+            border-radius: 0px !important;
+            padding: 24px;
+        }
+
+        /* M Tricolor Divider */
+        .m-stripe-divider {
+            height: 4px;
+            background: linear-gradient(to right, #0066b1 33.3%, #1c69d4 33.3% 66.6%, #e22718 66.6%);
+            width: 100%;
+        }
+
+        /* Telemetry theme for battle logs & stats */
+        .telemetry-cell {
+            background-color: #0d0d0d; /* surface-soft */
+            border: 1px solid #262626;
+            padding: 16px;
+            font-family: 'KERISBAEUM_B', monospace;
+        }
+
+        /* Hit particle animation */
+        @keyframes damageFloat {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-80px) scale(0.8);
+                opacity: 0;
+            }
+        }
+
+        .damage-particle {
+            position: absolute;
+            pointer-events: none;
+            animation: damageFloat 0.7s ease-out forwards;
+        }
+
+        /* Floating animation for companion pet */
+        @keyframes hoverPet {
+            0%, 100% {
+                transform: translateY(0) rotate(-2deg);
+            }
+            50% {
+                transform: translateY(-10px) rotate(3deg);
+            }
+        }
+
+        .animate-hover-pet {
+            animation: hoverPet 2.5s infinite ease-in-out;
+        }
+
+        /* Hero slash swing animation */
+        @keyframes slashAttack {
+            0% {
+                transform: scale(1) translateX(0);
+            }
+            20% {
+                transform: scale(1.05) translateX(15px) rotate(5deg);
+            }
+            100% {
+                transform: scale(1) translateX(0);
+            }
+        }
+
+        .animate-slash {
+            animation: slashAttack 0.2s ease-out;
+        }
+
+        /* Monster hit shake animation */
+        @keyframes monsterShake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-8px) rotate(-3deg);
+            }
+            75% {
+                transform: translateX(8px) rotate(3deg);
+            }
+        }
+
+        .animate-shake {
+            animation: monsterShake 0.15s ease-in-out;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+    <!-- Top Navigation / Status Header -->
+    <header class="bg-black text-white p-4 sticky top-0 z-50 border-b border-[#3c3c3c]">
+        <div class="max-w-6xl mx-auto flex flex-wrap justify-between items-center gap-2">
+            <div class="flex items-center space-x-2 cursor-pointer select-none" onclick="handleTeacherSecretClick()">
+                <i data-lucide="sword" class="w-6 h-6 text-white animate-pulse"></i>
+                <h1 class="text-xl font-bold uppercase tracking-wider" style="letter-spacing: -0.5px;">Voca Hero!</h1>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <!-- User Status Info -->
+                <div id="userInfoDisplay"
+                    class="hidden bg-[#1a1a1a] border border-[#3c3c3c] px-4 py-1.5 rounded-none-forced text-xs font-bold flex items-center gap-1.5 text-[#e6e6e6] tracking-wider uppercase">
+                    <i data-lucide="user" class="w-4 h-4 text-white"></i>
+                    <span id="displayStudentName">불러오는 중...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div class="m-stripe-divider"></div>
+
+    <!-- Main RPG Arena & Upgrade Panel Container -->
+    <main class="max-w-6xl w-full mx-auto p-4 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+
+        <!-- LEFT PANEL: Dynamic RPG Battle Arena (5 Cols) -->
+        <section
+            class="lg:col-span-5 bg-black border border-[#3c3c3c] p-5 flex flex-col justify-between relative overflow-hidden min-h-[520px] rounded-none-forced">
+            
+            <!-- Stage Header & Progress -->
+            <div class="z-10 flex justify-between items-center bg-[#0d0d0d] border border-[#3c3c3c] px-4 py-2 rounded-none-forced">
+                <span class="font-bold text-xs uppercase tracking-widest text-[#0066b1] flex items-center gap-1.5">
+                    <i data-lucide="shield" class="w-4 h-4"></i>
+                    <span id="displayStageNum">STAGE 1-1</span>
+                </span>
+                <!-- Active Offline reward flag -->
+                <span id="offlineEarningsBadge"
+                    class="hidden bg-[#e22718]/90 text-white border border-[#e22718] px-2 py-0.5 rounded-none-forced text-[9px] font-bold animate-pulse">
+                    OFFLINE GOLD LOADED
+                </span>
+            </div>
+
+            <!-- Total Currencies Widget -->
+            <div class="z-10 text-center my-3">
+                <p class="text-[10px] text-[#7e7e7e] font-bold tracking-widest uppercase">CURRENT ASSETS</p>
+                <div class="flex items-center justify-center gap-1.5 my-1">
+                    <span class="text-xl">🪙</span>
+                    <span id="goldCount" class="text-3xl font-bold tracking-tight text-white">0</span>
+                    <span class="text-[#bbbbbb] font-bold text-xs">G</span>
+                </div>
+                
+                <!-- Telemetry Stats -->
+                <div class="grid grid-cols-2 gap-2 mt-3">
+                    <div class="telemetry-cell text-center rounded-none-forced">
+                        <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest">AUTO DPS</p>
+                        <p class="text-sm font-bold text-[#0066b1]">+<span id="dpsCount">0</span> G/s</p>
+                    </div>
+                    <div class="telemetry-cell text-center rounded-none-forced">
+                        <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest">CLICK DAMAGE</p>
+                        <p class="text-sm font-bold text-[#e22718]"><span id="clickPowerCount">1</span> DMG</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Combat Arena Viewport -->
+            <div id="battleArena"
+                class="relative z-10 w-full h-64 border border-[#3c3c3c] bg-[#0d0d0d] flex items-center justify-between px-6 cursor-pointer select-none overflow-hidden my-2 rounded-none-forced"
+                onclick="handleArenaClick(event)">
+
+                <!-- Hero Render Component Wrapper -->
+                <div class="flex flex-col items-center justify-end h-full pb-4 w-1/3 relative">
+                    <!-- Floating Pet Companion -->
+                    <div id="companionPetContainer"
+                        class="absolute -top-1 left-2 w-14 h-14 z-20 animate-hover-pet hidden">
+                        <!-- Dynamic Companion SVG inside -->
+                        <svg viewBox="0 0 100 100" class="w-full h-full" id="petSvg"></svg>
+                    </div>
+
+                    <!-- Character Body Avatar -->
+                    <div id="heroCharacter" class="w-24 h-40 relative flex items-end">
+                        <svg viewBox="0 0 100 120" class="w-full h-full transition-transform duration-100"
+                            id="heroSvg"></svg>
+                    </div>
+                    <span id="heroNameTag"
+                        class="text-[9px] bg-[#1a1a1a] border border-[#3c3c3c] px-2 py-0.5 font-bold text-[#bbbbbb] tracking-wider uppercase rounded-none-forced mt-1">HERO</span>
+                </div>
+
+                <!-- Central VS Battle Badge -->
+                <div class="flex flex-col items-center justify-center z-10 opacity-30 pointer-events-none">
+                    <span class="text-xl font-bold tracking-widest text-[#e22718] italic uppercase">VS</span>
+                </div>
+
+                <!-- Monster Combatant Wrapper -->
+                <div class="flex flex-col items-center justify-end h-full pb-4 w-1/3">
+                    <div id="monsterContainer"
+                        class="w-24 h-36 flex items-end justify-center transition-transform duration-100">
+                        <svg viewBox="0 0 100 120" class="w-full h-full" id="monsterSvg"></svg>
+                    </div>
+                    <!-- Monster HP Tracker bar -->
+                    <div
+                        class="w-full bg-[#1a1a1a] border border-[#3c3c3c] h-2 mt-2 relative overflow-hidden rounded-none-forced">
+                        <div id="monsterHpBar"
+                            class="bg-[#e22718] h-full transition-all duration-100"
+                            style="width: 100%"></div>
+                    </div>
+                    <span id="monsterNameTag" class="text-[9px] text-[#e22718] font-bold uppercase tracking-wider mt-1">SLIME</span>
+                </div>
+            </div>
+
+            <!-- Boss Battle Entry Activator -->
+            <div class="z-10 w-full mt-2">
+                <div class="flex justify-between items-center mb-1 text-[10px] font-bold text-[#7e7e7e] uppercase tracking-wider">
+                    <span>BOSS PROGRESS</span>
+                    <span id="bossUnlockRatio">0 / 10</span>
+                </div>
+                <div class="w-full bg-[#1a1a1a] border border-[#3c3c3c] h-3.5 relative overflow-hidden rounded-none-forced">
+                    <div id="bossProgressBar"
+                        class="bg-[#0066b1] h-full transition-all duration-300"
+                        style="width: 0%"></div>
+                </div>
+
+                <button id="bossTriggerBtn" onclick="startBossBattle()"
+                    class="w-full mt-3 py-3 bg-transparent hover:bg-[#e22718] border border-[#e22718] text-[#e22718] hover:text-white font-bold text-xs uppercase tracking-widest transition duration-200 shadow-lg hidden items-center justify-center gap-2 rounded-none-forced">
+                    <i data-lucide="skull" class="w-4 h-4"></i>
+                    <span>🚨 ENGAGE STAGE BOSS 🚨</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- RIGHT PANEL: Action Quiz, Equipment Upgrades, Pets (7 Cols) -->
+        <section class="lg:col-span-7 flex flex-col gap-4">
+
+            <!-- Dynamic Navigation Tab Bar -->
+            <div
+                class="bg-black border border-[#3c3c3c] p-1 grid grid-cols-3 sm:grid-cols-5 gap-1 z-10 rounded-none-forced">
+                <button onclick="switchTab('quizTab')" id="quizTabBtn"
+                    class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-black bg-white rounded-none-forced flex items-center justify-center gap-1">
+                    <i data-lucide="sword" class="w-3.5 h-3.5"></i>
+                    <span>전투</span>
+                </button>
+                <button onclick="switchTab('gearTab')" id="gearTabBtn"
+                    class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition">
+                    <i data-lucide="hammer" class="w-3.5 h-3.5"></i>
+                    <span>대장간</span>
+                </button>
+                <button onclick="switchTab('petTab')" id="petTabBtn"
+                    class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition">
+                    <i data-lucide="cat" class="w-3.5 h-3.5"></i>
+                    <span>펫 소환</span>
+                </button>
+                <button onclick="switchTab('skillTab')" id="skillTabBtn"
+                    class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                    <span>스킬</span>
+                </button>
+                <button onclick="switchTab('statsTab')" id="statsTabBtn"
+                    class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 col-span-3 sm:col-span-1 transition">
+                    <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+                    <span>서고</span>
+                </button>
+            </div>
+
+            <!-- TAB 1: Combat Learning Quiz View -->
+            <div id="quizTab"
+                class="bg-black border border-[#3c3c3c] p-6 flex-grow flex flex-col justify-between min-h-[440px] rounded-none-forced">
+
+                <!-- Boss Timer Visualizer (Visible during Boss Combat) -->
+                <div id="bossBattleTimerHeader"
+                    class="hidden bg-[#0d0d0d] border border-[#e22718] p-3 flex flex-col gap-1 mb-3 animate-pulse rounded-none-forced">
+                    <div class="flex justify-between text-xs text-[#e22718] font-bold uppercase tracking-wider">
+                        <span class="flex items-center gap-1.5">
+                            <i data-lucide="timer" class="w-4 h-4"></i>
+                            <span>보스 퇴치 제한시간</span>
+                        </span>
+                        <span id="bossTimeLimitCount">30.0초</span>
+                    </div>
+                    <div class="w-full bg-[#1a1a1a] border border-[#3c3c3c] h-2 overflow-hidden rounded-none-forced">
+                        <div id="bossTimerBar"
+                            class="bg-[#e22718] h-full transition-all duration-100"
+                            style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <!-- Learning Mode Label Header -->
+                <div class="flex justify-between items-center pb-3 border-b border-[#3c3c3c]">
+                    <span class="text-[#0066b1] font-bold text-xs uppercase tracking-widest flex items-center gap-1.5">
+                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                        <span id="gradeLevelBadge">교과 영단어 3학년</span>
+                    </span>
+                    <span
+                        class="text-[9px] bg-[#1a1a1a] text-[#ffffff] border border-[#3c3c3c] px-3 py-1 font-bold uppercase tracking-widest rounded-none-forced">
+                        정복한 단어: <span id="masteredTotalText" class="text-[#0066b1]">0</span>개
+                    </span>
+                </div>
+
+                <!-- Main Active Question Area -->
+                <div id="quizContainer" class="my-6 text-center">
+                    <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest mb-1.5">WEAKNESS TARGET ELEMENT</p>
+                    <h2 id="quizWordEng" class="text-4xl font-bold text-white uppercase tracking-wider mb-3">
+                        ...</h2>
+
+                    <!-- Sound Synthesizer Button -->
+                    <button onclick="speakTargetWord()"
+                        class="inline-flex items-center gap-1.5 text-[10px] bg-transparent hover:bg-white text-white hover:text-black font-bold px-4 py-2 border border-[#3c3c3c] hover:border-white transition rounded-none-forced uppercase tracking-widest">
+                        <i data-lucide="volume-2" class="w-3.5 h-3.5 text-[#0066b1] group-hover:text-black"></i>
+                        <span>PRONUNCIATION AUDIO</span>
+                    </button>
+
+                    <!-- Answer Options Matrix - 정렬 및 번호 제거 개편 -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6" id="choiceButtonsContainer">
+                        <button onclick="evaluateAnswer(0)"
+                            class="choice-btn p-3.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group">
+                            <span class="choice-text text-center w-full uppercase tracking-wider">Option 1</span>
+                        </button>
+                        <button onclick="evaluateAnswer(1)"
+                            class="choice-btn p-3.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group">
+                            <span class="choice-text text-center w-full uppercase tracking-wider">Option 2</span>
+                        </button>
+                        <button onclick="evaluateAnswer(2)"
+                            class="choice-btn p-3.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group">
+                            <span class="choice-text text-center w-full uppercase tracking-wider">Option 3</span>
+                        </button>
+                        <button onclick="evaluateAnswer(3)"
+                            class="choice-btn p-3.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group">
+                            <span class="choice-text text-center w-full uppercase tracking-wider">Option 4</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ACTIVE SKILLS SECTION: Displays Equipped English Skills -->
+                <div class="mt-4 border-t border-[#3c3c3c] pt-4">
+                    <p
+                        class="text-[9px] text-[#0066b1] font-bold uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        <span>🔥 장착된 영단어 비기 스킬 (전투 슬롯)</span>
+                    </p>
+                    <div id="skillsContainer" class="grid grid-cols-2 gap-2">
+                        <!-- Instantiated Dynamically via renderSkillsUI() -->
+                    </div>
+                </div>
+
+                <!-- Tip Informational Panel -->
+                <div
+                    class="bg-[#0d0d0d] p-3 flex items-start gap-2 border border-[#3c3c3c] text-[10px] text-[#bbbbbb] mt-4 rounded-none-forced">
+                    <i data-lucide="swords" class="w-4 h-4 text-[#e22718] flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <p class="font-bold text-[#e6e6e6] uppercase tracking-wider">약점 퀴즈 격파 및 스킬 장착 가이드</p>
+                        <p class="text-[#7e7e7e] mt-0.5">퀴즈를 풀면 무작위 등급의 <span class="text-white font-bold">마법 스킬</span>을 획득하며, <span
+                                class="text-white font-bold">[스킬] 탭</span>에서 직접 장착해야 전투에서 수동으로 시전할 수 있습니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: RPG Equipment Blacksmith Upgrade Shop -->
+            <div id="gearTab"
+                class="bg-black border border-[#3c3c3c] p-6 flex-grow hidden flex-col justify-between min-h-[440px] rounded-none-forced">
+                <div>
+                    <h3 class="bmw-label-uppercase text-white flex items-center gap-2 mb-4">
+                        <i data-lucide="anvil" class="text-[#0066b1]"></i>
+                        <span>대장간 무구 연마 & 캐릭터 외형 변환</span>
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5" id="gearShopContainer">
+                        <!-- Upgrades generated dynamically to handle visual levels changes -->
+                    </div>
+                </div>
+                <p class="text-[9px] text-[#7e7e7e] uppercase tracking-widest mt-4 text-center">※ 강화할 때마다 용사의 외형 일러스트가 점차 화려한 하이엔드 수호 성기사 형태로 무장됩니다.
+                </p>
+            </div>
+
+            <!-- TAB 3: Companion Pet Lab & Multipliers -->
+            <div id="petTab"
+                class="bg-black border border-[#3c3c3c] p-6 flex-grow hidden flex-col justify-between min-h-[440px] rounded-none-forced">
+                <div>
+                    <h3 class="bmw-label-uppercase text-white flex items-center gap-2 mb-4">
+                        <i data-lucide="paw-print" class="text-[#0066b1]"></i>
+                        <span>소환수 소환 및 친밀도 연구실</span>
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="petListContainer">
+                        <!-- Dynamic Companion Pet inventory listing -->
+                    </div>
+                </div>
+                <div
+                    class="bg-[#0d0d0d] p-3.5 border border-[#3c3c3c] mt-4 text-[10px] text-[#bbbbbb] flex items-start gap-2 rounded-none-forced">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-[#e22718]"></i>
+                    <p><strong>활성화 버프 가이드:</strong> 소유 중인 가장 레벨이 높은 펫이 전장에 동반하며, 펫이 가해주는 추가 자동 공격 피해와 학습 수당 곱연산 혜택은 누적 적용됩니다.</p>
+                </div>
+            </div>
+
+            <!-- TAB 4: Skill Custom Equip Lab (신규 추가된 스킬 연구소 탭) -->
+            <div id="skillTab"
+                class="bg-black border border-[#3c3c3c] p-6 flex-grow hidden flex-col justify-between min-h-[440px] rounded-none-forced">
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="bmw-label-uppercase text-white flex items-center gap-2">
+                            <i data-lucide="sparkles" class="text-[#0066b1] animate-pulse"></i>
+                            <span>영단어 마법 비기 연구소</span>
+                        </h3>
+                        <span
+                            class="text-[9px] bg-[#1a1a1a] text-[#ffffff] border border-[#3c3c3c] px-2 py-0.5 rounded-none-forced font-bold uppercase tracking-wider">확률 기반 획득</span>
+                    </div>
+                    <p class="text-[10px] text-[#7e7e7e] uppercase tracking-wider mb-4">학습 퀴즈를 풀고 흡수한 영단어 스킬을 전투 슬롯(최대 4개)에 배치해보세요.</p>
+
+                    <!-- Equipped Slots (4 slots) -->
+                    <div class="mb-5 bg-[#0d0d0d] p-3.5 border border-[#3c3c3c] rounded-none-forced">
+                        <h4
+                            class="bmw-label-uppercase text-[#0066b1] mb-2 flex items-center gap-1.5">
+                            <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+                            <span>장착된 마법 스킬 (전투용 슬롯)</span>
+                        </h4>
+                        <div class="grid grid-cols-4 gap-2" id="equippedSkillsGrid">
+                            <!-- Filled dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Acquired Skills Inventory list -->
+                    <div>
+                        <h4
+                            class="bmw-label-uppercase text-[#0066b1] mb-2 flex items-center gap-1.5">
+                            <i data-lucide="archive" class="w-3.5 h-3.5"></i>
+                            <span>보유한 영단어 스킬 마법 보관함</span>
+                        </h4>
+                        <div class="bg-black border border-[#3c3c3c] p-3 max-h-48 overflow-y-auto grid grid-cols-1 gap-2 rounded-none-forced"
+                            id="skillsInventoryGrid">
+                            <!-- Filled dynamically -->
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="grid grid-cols-4 gap-2 text-center text-[9px] font-bold mt-4 bg-[#0d0d0d] p-2 border border-[#3c3c3c] rounded-none-forced">
+                    <div class="text-[#bbbbbb] font-light">일반 (60%): ×15</div>
+                    <div class="text-[#0066b1] font-bold">희귀 (25%): ×25</div>
+                    <div class="text-[#1c69d4] font-bold">영웅 (12%): ×40</div>
+                    <div class="text-[#e22718] font-bold">전설 (3%): ×70</div>
+                </div>
+            </div>
+
+            <!-- TAB 5: Core Educational Logs -->
+            <div id="statsTab"
+                class="bg-black border border-[#3c3c3c] p-6 flex-grow hidden flex-col justify-between min-h-[440px] rounded-none-forced">
+                <div>
+                    <h3 class="bmw-label-uppercase text-white flex items-center gap-2 mb-3">
+                        <i data-lucide="bookmark-check" class="text-[#0066b1]"></i>
+                        <span>용사가 격파하고 해독한 고대 마법 단어 목록</span>
+                    </h3>
+
+                    <!-- Dynamic Vocab Mastered Grid list -->
+                    <div class="bg-[#0d0d0d] border border-[#3c3c3c] p-4 max-h-56 overflow-y-auto mb-4 rounded-none-forced"
+                        id="masteredVocabularyCatalog">
+                        <p class="text-xs text-[#7e7e7e] text-center py-10 uppercase tracking-wider">아직 학습을 정복한 영단어 목록이 비어 있습니다.</p>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="telemetry-cell text-center rounded-none-forced">
+                            <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest">누적 정답 수</p>
+                            <span id="statCorrectCount" class="text-lg font-bold text-white">0</span>
+                        </div>
+                        <div class="telemetry-cell text-center rounded-none-forced">
+                            <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest">오답 도전 횟수</p>
+                            <span id="statIncorrectCount" class="text-lg font-bold text-[#7e7e7e]">0</span>
+                        </div>
+                        <div class="telemetry-cell text-center rounded-none-forced">
+                            <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest">정답 격파 비율</p>
+                            <span id="statSuccessRatio" class="text-lg font-bold text-[#e22718]">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 mt-4">
+                    <button onclick="saveSessionToCloud()"
+                        class="flex-1 bmw-btn-primary py-3.5 flex items-center justify-center gap-1.5 shadow-md">
+                        <i data-lucide="cloud-lightning" class="w-4 h-4 text-[#0066b1]"></i>
+                        <span>구글 스프레드시트에 영구 동기화</span>
+                    </button>
+                    <button onclick="resetFullSession()"
+                        class="bmw-btn-danger text-xs px-3.5">
+                        영웅 은퇴 (초기화)
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL 1: Character Creation & Class Number Setup -->
+    <div id="loginModal"
+        class="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 transition-opacity duration-300">
+        <div
+            class="bg-black text-white max-w-md w-full p-8 shadow-2xl border border-[#3c3c3c] flex flex-col gap-5 rounded-none-forced">
+            <div class="text-center">
+                <div
+                    class="w-14 h-14 bg-[#0d0d0d] border border-[#3c3c3c] text-[#0066b1] flex items-center justify-center mx-auto mb-2 rounded-none-forced">
+                    <i data-lucide="sparkles" class="w-8 h-8"></i>
+                </div>
+                <h2 class="text-xl font-bold uppercase tracking-wider text-white" style="letter-spacing: -0.5px;">영단어 원정대 가입</h2>
+                <p class="text-[10px] text-[#7e7e7e] uppercase tracking-widest mt-1">학번과 용사의 형태를 결정하여 여정을 준비하세요.</p>
+            </div>
+
+            <!-- Profile Info Setup forms -->
+            <div class="space-y-4">
+                <!-- Class Selection -->
+                <div>
+                    <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">학년 설정</label>
+                    <select id="inputGrade"
+                        class="w-full bg-[#1a1a1a] border border-[#3c3c3c] focus:border-white p-3 font-bold text-white text-xs outline-none rounded-none-forced">
+                        <option value="3">초등학교 3학년</option>
+                        <option value="4" selected>초등학교 4학년</option>
+                        <option value="5">초등학교 5학년</option>
+                        <option value="6">초등학교 6학년</option>
+                    </select>
+                </div>
+
+                <!-- Room / Name / Number grid -->
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">반 입력</label>
+                        <input type="number" id="inputClass" placeholder="반"
+                            class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">번호 입력</label>
+                        <input type="number" id="inputNumber" placeholder="번호"
+                            class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">이름 입력</label>
+                        <input type="text" id="inputName" placeholder="성함"
+                            class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced">
+                    </div>
+                </div>
+
+                <!-- Choose Avatar Gender type -->
+                <div>
+                    <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-2.5">용사 아바타 성별 결정</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="selectStartingAvatar('male')" id="genderMaleBtn"
+                            class="py-3.5 bg-[#1a1a1a] border-2 border-white text-white font-bold rounded-none-forced text-xs flex flex-col items-center gap-1 transition">
+                            <span class="text-xl">⚔️</span>
+                            <span class="uppercase tracking-wider">남자 용사 (M)</span>
+                        </button>
+                        <button onclick="selectStartingAvatar('female')" id="genderFemaleBtn"
+                            class="py-3.5 bg-[#0d0d0d] border border-[#3c3c3c] text-[#7e7e7e] font-bold rounded-none-forced text-xs flex flex-col items-center gap-1 hover:text-white transition">
+                            <span class="text-xl">🪄</span>
+                            <span class="uppercase tracking-wider">여자 용사 (F)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="commitAvatarAndLaunch()"
+                class="w-full py-4 bg-transparent hover:bg-white text-white hover:text-black border border-white font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 mt-2 rounded-none-forced">
+                <i data-lucide="swords" class="w-4 h-4"></i>
+                <span>전설의 원정 출격하기!</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Advanced Spreadsheet Setup Guide (With API input slot added) -->
+    <!-- MODAL 2: Advanced Spreadsheet Setup Guide (With API input slot added) -->
+    <div id="teacherModal"
+        class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+        <div
+            class="bg-black rounded-none-forced max-w-3xl w-full p-8 shadow-2xl border border-[#3c3c3c] flex flex-col gap-4 max-h-[85vh] overflow-hidden">
+            <div class="flex justify-between items-center border-b border-[#3c3c3c] pb-3">
+                <div class="flex items-center gap-2 text-[#0066b1] bmw-label-uppercase">
+                    <i data-lucide="graduation-cap" class="w-6 h-6"></i>
+                    <h2 class="text-base font-bold">초등학교 교사용 설정 & 구글 백엔드 구축 가이드</h2>
+                </div>
+                <button onclick="closeModal('teacherModal')" class="text-[#bbbbbb] hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="overflow-y-auto space-y-4 text-xs text-[#bbbbbb] pr-2 leading-relaxed">
+
+                <!-- NEW: Google Apps Script Web App URL input for Vercel/External deployment -->
+                <div class="bg-[#0d0d0d] p-4 border border-[#3c3c3c] rounded-none-forced">
+                    <h3 class="font-bold text-[#e22718] text-xs mb-1.5 flex items-center gap-1.5 uppercase tracking-wider">
+                        <i data-lucide="cloud-lightning" class="w-4 h-4 text-white"></i>
+                        <span>[필수 설정] 외부 배포(Vercel 등) 통신용 API 주소 등록</span>
+                    </h3>
+                    <p class="text-[10px] text-[#7e7e7e] mb-2 uppercase tracking-wide">
+                        Vercel 등 외부에서 단독 배포할 시, 구글 앱스스크립트에서 배포한 <strong>웹 앱 URL(Web App URL)</strong>을 복사하여 아래에 등록해 주세요.
+                        <br>
+                        <span class="text-[#0066b1]">※ Vercel 업로드 전에 HTML 파일 내부 코드의 <code
+                                class="bg-black px-1 py-0.5 border border-[#262626] rounded-none-forced text-white font-mono text-[9px]">GOOGLE_SCRIPT_URL</code>
+                            상수를 직접 채워 배포하면 이 창에서 입력할 필요가 없습니다!</span>
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input type="text" id="apiEndpointInput"
+                            placeholder="https://script.google.com/macros/s/배포키/exec"
+                            class="flex-1 bg-[#1a1a1a] border border-[#3c3c3c] p-2.5 rounded-none-forced text-[11px] font-mono text-white outline-none focus:border-white">
+                        <button onclick="saveApiEndpoint()"
+                            class="bmw-btn-primary py-2.5 text-[10px] flex-shrink-0">
+                            주소 저장하기
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-white text-xs mb-1.5 uppercase tracking-wider">📌 1단계: 스프레드시트 테이블 이름 및 열 매핑</h3>
+                    <p class="mb-1.5">새 구글 스프레드시트 문서를 열고 하단 시트 탭의 이름을 다음 두 개로 각각 변경해 주세요.</p>
+                    <ul
+                        class="list-disc pl-5 space-y-1 bg-[#0d0d0d] p-3 rounded-none-forced border border-[#3c3c3c] font-mono text-[10px]">
+                        <li><strong>시트 1: <span class="text-[#0066b1] font-bold">Students</span></strong>
+                            <br>열(Column) 구성: A[Grade] | B[Class] | C[Number] | D[Name] | E[Gold] | F[AvatarType] |
+                            G[HelmetLvl] | H[ArmorLvl] | I[WeaponLvl] | J[ShieldLvl] | K[ShoesLvl] | L[PetType] |
+                            M[PetLvl] | N[Stage] | O[Progress] | P[LastSaved] | Q[SkillsInventory] | R[EquippedSkills]
+                        </li>
+                        <li><strong>시트 2: <span class="text-[#e22718] font-bold">Words</span></strong>
+                            <br>열(Column) 구성: A[Grade] | B[Word] | C[Meaning]
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-white text-xs mb-1.5 uppercase tracking-wider">🔗 2단계: 앱스스크립트(Apps Script) 복사 및 붙여넣기 (Vercel 연동 완벽 호환 버전)</h3>
+                    <p class="mb-2">스프레드시트 내의 <strong>[확장 프로그램] > [Apps Script]</strong>를 누른 후, 아래 코드를 복사하여 그대로 적용하세요.
+                    </p>
+
+                    <div class="relative">
+                        <textarea readonly id="appsScriptCode"
+                            class="w-full h-36 bg-[#0d0d0d] text-[#0066b1] p-3 rounded-none-forced font-mono text-[10px] border border-[#3c3c3c] focus:outline-none"
+                            onclick="this.select()">/* Apps Script RPG Database Connector (CORS & Vercel API Support) */
+function doGet(e) {
+  return HtmlService.createHtmlOutputFromFile('index')
+    .setTitle('Voca Hero!')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+// 외부 배포(Vercel) API 허용을 위한 포스트 리퀘스트 리시버
+function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var action = data.action;
+    var args = data.args || [];
+    var result;
+    
+    if (action === "getWordsFromSheet") {
+      result = getWordsFromSheet(args[0]);
+    } else if (action === "loadOrCreateStudent") {
+      result = loadOrCreateStudent(args[0], args[1], args[2], args[3], args[4]);
+    } else if (action === "saveStudentProgress") {
+      result = saveStudentProgress(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14], args[15], args[16]);
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ error: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function getWordsFromSheet(grade) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName("Words");
+    if (!sheet) return getMockWordsFallback(grade);
+    
+    var data = sheet.getDataRange().getValues();
+    var words = [];
+    for (var i = 1; i < data.length; i++) {
+      var rowGrade = String(data[i][0]).replace(/[^0-9]/g, '');
+      if (rowGrade === String(grade)) {
+        words.push({
+          word: String(data[i][1]).trim(),
+          meaning: String(data[i][2]).trim()
+        });
+      }
+    }
+    return words.length > 0 ? words : getMockWordsFallback(grade);
+  } catch (err) {
+    return getMockWordsFallback(grade);
+  }
+}
+
+function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName("Students");
+    if (!sheet) {
+      sheet = ss.insertSheet("Students");
+      sheet.appendRow(["Grade", "Class", "Number", "Name", "Gold", "AvatarType", "HelmetLvl", "ArmorLvl", "WeaponLvl", "ShieldLvl", "ShoesLvl", "PetType", "PetLvl", "Stage", "Progress", "LastSaved", "SkillsInventory", "EquippedSkills"]);
+    }
+    
+    var data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(grade) && 
+          String(data[i][1]) === String(classNum) && 
+          String(data[i][2]) === String(studentNum) && 
+          String(data[i][3]) === String(name)) {
+        
+        var parsedInv = [];
+        var parsedEq = [];
+        try {
+          if (data[i][16]) parsedInv = JSON.parse(data[i][16]);
+          if (data[i][17]) parsedEq = JSON.parse(data[i][17]);
+        } catch(e) {
+          parsedInv = [];
+          parsedEq = [];
+        }
+
+        return {
+          grade: Number(data[i][0]),
+          classNum: Number(data[i][1]),
+          studentNum: Number(data[i][2]),
+          name: String(data[i][3]),
+          gold: Number(data[i][4]) || 0,
+          avatarType: String(data[i][5]) || "male",
+          helmetLvl: Number(data[i][6]) || 1,
+          armorLvl: Number(data[i][7]) || 1,
+          weaponLvl: Number(data[i][8]) || 1,
+          shieldLvl: Number(data[i][9]) || 1,
+          shoesLvl: Number(data[i][10]) || 1,
+          petType: String(data[i][11]) || "none",
+          petLvl: Number(data[i][12]) || 0,
+          stage: Number(data[i][13]) || 1,
+          progress: Number(data[i][14]) || 0,
+          lastSaved: Number(data[i][15]) || Date.now(),
+          skillsInventory: parsedInv,
+          equippedSkills: parsedEq
+        };
+      }
+    }
+    
+    var newRow = [
+      Number(grade), Number(classNum), Number(studentNum), String(name), 
+      0, String(defaultAvatar), 1, 1, 1, 1, 1, "none", 0, 1, 0, Date.now(),
+      "[]", "[]"
+    ];
+    sheet.appendRow(newRow);
+    return {
+      grade: newRow[0], classNum: newRow[1], studentNum: newRow[2], name: newRow[3],
+      gold: newRow[4], avatarType: newRow[5], helmetLvl: newRow[6], armorLvl: newRow[7],
+      weaponLvl: newRow[8], shieldLvl: newRow[9], shoesLvl: newRow[10],
+      petType: newRow[11], petLvl: newRow[12], stage: newRow[13], progress: newRow[14], 
+      lastSaved: newRow[15], skillsInventory: [], equippedSkills: []
+    };
+  } catch(e) {
+    return null;
+  }
+}
+
+function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType, helmetLvl, armorLvl, weaponLvl, shieldLvl, shoesLvl, petType, petLvl, stage, progress, skillsInventory, equippedSkills) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName("Students");
+    if (!sheet) return false;
+    
+    var data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(grade) && 
+          String(data[i][1]) === String(classNum) && 
+          String(data[i][2]) === String(studentNum) && 
+          String(data[i][3]) === String(name)) {
+        var r = i + 1;
+        sheet.getRange(r, 5).setValue(gold);
+        sheet.getRange(r, 6).setValue(avatarType);
+        sheet.getRange(r, 7).setValue(helmetLvl);
+        sheet.getRange(r, 8).setValue(armorLvl);
+        sheet.getRange(r, 9).setValue(weaponLvl);
+        sheet.getRange(r, 10).setValue(shieldLvl);
+        sheet.getRange(r, 11).setValue(shoesLvl);
+        sheet.getRange(r, 12).setValue(petType);
+        sheet.getRange(r, 13).setValue(petLvl);
+        sheet.getRange(r, 14).setValue(stage);
+        sheet.getRange(r, 15).setValue(progress);
+        sheet.getRange(r, 16).setValue(Date.now());
+        sheet.getRange(r, 17).setValue(JSON.stringify(skillsInventory || []));
+        sheet.getRange(r, 18).setValue(JSON.stringify(equippedSkills || []));
+        return true;
+      }
+    }
+    return false;
+  } catch(e) {
+    return false;
+  }
+}
+
+function getMockWordsFallback(grade) {
+  var map = {
+    "3": [{word:"apple", meaning:"사과"}, {word:"banana", meaning:"바나나"}, {word:"pencil", meaning:"연필"}, {word:"cat", meaning:"고양이"}, {word:"school", meaning:"학교"}],
+    "4": [{word:"doctor", meaning:"의사"}, {word:"english", meaning:"영어"}, {word:"winter", meaning:"겨울"}, {word:"teacher", meaning:"선생님"}, {word:"yellow", meaning:"노란색"}],
+    "5": [{word:"beautiful", meaning:"아름다운"}, {word:"important", meaning:"중요한"}, {word:"weather", meaning:"날씨"}, {word:"country", meaning:"나라"}, {word:"picture", meaning:"사진"}],
+    "6": [{word:"experience", meaning:"경험"}, {word:"challenge", meaning:"도전"}, {word:"information", meaning:"정보"}, {word:"language", meaning:"언어"}, {word:"protect", meaning:"보호하다"}]
+  };
+  return map[String(grade)] || map["3"];
+}</textarea>
+                        <button onclick="copyAppsScriptCode()"
+                            class="absolute top-2 right-2 bg-transparent hover:bg-white text-white hover:text-black border border-[#3c3c3c] hover:border-white text-[10px] font-bold px-3 py-1.5 rounded-none-forced transition">
+                            복사하기
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-white text-xs mb-1.5 uppercase tracking-wider">🚀 3단계: 웹 앱 배포 완료하기</h3>
+                    <ul class="list-decimal pl-5 space-y-1">
+                        <li>앱스스크립트 우측 상단 <strong>[배포] > [새 배포]</strong> 클릭</li>
+                        <li><strong>기어 모양 아이콘</strong>에서 '웹 앱'을 선택한 후 실행 사용자를 <span
+                                class="font-bold text-[#e22718]">'나'</span>로 설정, 액세스 권한자를 <span
+                                class="font-bold text-[#e22718]">'모든 사람(Anyone)'</span>으로 설정해 완료합니다.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-[#3c3c3c] pt-3 flex justify-end">
+                <button onclick="closeModal('teacherModal')"
+                    class="bmw-btn-secondary px-6 py-2.5">
+                    확인완료
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Message Container -->
+    <div id="toastMessage"
+        class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-black border border-[#3c3c3c] text-white px-5 py-3 rounded-none-forced text-xs font-bold shadow-2xl flex items-center gap-2 transition-all duration-300 opacity-0 pointer-events-none z-50">
+        <i data-lucide="info" class="w-4 h-4 text-[#0066b1]"></i>
+        <span id="toastText">안내 메시지</span>
+    </div>
+
+    <script>
+        // Secret trigger for Teacher Settings
+        let teacherClickCount = 0;
+        function handleTeacherSecretClick() {
+            teacherClickCount++;
+            if (teacherClickCount >= 5) {
+                teacherClickCount = 0;
+                openModal('teacherModal');
+                showToast("🔓 교사용 설정 모드가 활성화되었습니다.");
+            }
+        }
+
+        // ==========================================
+        // 0. GOOGLE APPS SCRIPT WEB APP API ENDPOINT (HARDCODED CONFIG)
+        // ==========================================
+        // Vercel 등 외부 호스팅 서버에 독립 배포를 진행할 시, 
+        // 아래의 빈 따옴표("") 안에 본인의 구글 웹 앱 URL 주소를 그대로 넣고 저장하세요!
+        // 예: const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycb.../exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzOA1zWlZDE95dhbiVbnQfN8K9yH8xz4zUF4RXwpcsXwYYJfmhvIdrgCtCkgA0HJHpkGg/exec";
+
+        // ==========================================
+        // 1. ADVANCED GAME STATE DECLARATION
+        // ==========================================
+        let gameState = {
+            grade: 4,
+            classNum: 1,
+            studentNum: 1,
+            name: "방문자",
+            avatarType: "male",
+            gold: 0,
+
+            // Equipment Levels
+            helmetLvl: 1,
+            armorLvl: 1,
+            weaponLvl: 1,
+            shieldLvl: 1,
+            shoesLvl: 1,
+
+            // Pet System
+            petType: "none",
+            petLvl: 0,
+
+            stage: 1,
+            progress: 0, // Word clear points (maxes out at 10 for stage BOSS trigger)
+            lastSaved: Date.now(),
+
+            // Internal Combat stats
+            totalQuizTries: 0,
+            totalQuizCorrect: 0,
+            wordsPool: [],
+            currentQuizIndex: 0,
+            currentQuizCorrectAnswer: 0,
+
+            // Upgraded Advanced Skill Customization System
+            skillsInventory: [], // Unlocked skills: { id, word, meaning, grade, cooldownRemaining, maxCooldown }
+            equippedSkills: [] // Array storing up to 4 skill ids currently placed in combat slots
+        };
+
+        const BOSS_UNLOCK_LIMIT = 10; // Capped at 10 monster defeats as requested
+
+        // Upgrade parameters mapping for Shop
+        const GEAR_PARAMS = {
+            helmet: { name: "전사의 투구", base: 15, key: "helmetLvl" },
+            armor: { name: "강철의 갑옷", base: 25, key: "armorLvl" },
+            weapon: { name: "수호자의 검", base: 35, key: "weaponLvl" },
+            shield: { name: "기사의 방패", base: 30, key: "shieldLvl" },
+            shoes: { name: "신속의 장화", base: 20, key: "shoesLvl" }
+        };
+
+        const GROWTH_RATE = 1.15;
+
+        // Skill Grade Configs (색상 코드 및 배율 계수)
+        const SKILL_GRADES = {
+            normal: { name: "일반", multiplier: 15, prob: 0.60, colorClass: "border-[#3c3c3c] bg-black text-[#bbbbbb] rounded-none-forced" },
+            rare: { name: "희귀", multiplier: 25, prob: 0.25, colorClass: "border-[#0066b1] bg-black text-white rounded-none-forced" },
+            hero: { name: "영웅", multiplier: 40, prob: 0.12, colorClass: "border-[#1c69d4] bg-black text-white rounded-none-forced" },
+            legendary: { name: "전설", multiplier: 70, prob: 0.03, colorClass: "border-[#e22718] bg-black text-white rounded-none-forced animate-pulse" }
+        };
+
+        // Companion pet details
+        const PET_PARAMS = {
+            slime: { name: "아기 젤리 슬라임", cost: 100, dps: 3, bonus: 0.1, desc: "초당 추가 타격을 돕는 귀여운 물방울" },
+            dragon: { name: "화염의 드래곤베이비", cost: 350, dps: 12, bonus: 0.3, desc: "브레스를 내뿜어 높은 DPS 누적 지원" },
+            fairy: { name: "황금 축복 마법요정", cost: 800, dps: 30, bonus: 0.6, desc: "마법 버프로 퀴즈 수당 곱배율을 제공" }
+        };
+
+        // Simulated Stage Monsters list (cycled by stage ID)
+        const MONSTER_PROFILES = [
+            { name: "진흙 구덩이 슬라임", color: "#10b981", hp: 15, isBoss: false },
+            { name: "길 잃은 아기 고블린", color: "#a855f7", hp: 35, isBoss: false },
+            { name: "심술궂은 협곡 트롤", color: "#b45309", hp: 65, isBoss: false },
+            { name: "강철 껍질 스톤골렘", color: "#64748b", hp: 110, isBoss: false },
+            { name: "유적의 낡은 해골전사", color: "#94a3b8", hp: 180, isBoss: false },
+            { name: "동굴 속 독니 거미", color: "#0653b6", hp: 280, isBoss: false },
+            { name: "외딴 성의 떠돌이 유령", color: "#38bdf8", hp: 420, isBoss: false }
+        ];
+
+        const BOSS_PROFILES = [
+            { name: "지하 영지의 가르고일 로드", color: "#475569", hp: 300 },
+            { name: "분노한 용암 벌레", color: "#ef4444", hp: 700 },
+            { name: "차원의 종말 고대 드래곤", color: "#fbbf24", hp: 1500 },
+            { name: "타락한 심연의 가르고일 킹", color: "#1e293b", hp: 3200 },
+            { name: "지옥 연옥의 화염 고대 웜", color: "#dc2626", hp: 6500 },
+            { name: "신화 속 파멸의 종언 흑룡", color: "#0f172a", hp: 13000 }
+        ];
+
+        let isGoogleScriptActive = false;
+        let isBossBattleActive = false;
+        let bossTimeRemaining = 30.0;
+        let bossTimerInterval = null;
+        let gameLoopInterval = null;
+        let monsterCurrentHp = 10;
+        let monsterMaxHp = 10;
+
+        // Custom Synthesizer using Web Audio API
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSoundEffect(type) {
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    osc.frequency.setValueAtTime(320, now);
+                    osc.frequency.exponentialRampToValueAtTime(80, now + 0.12);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                } else if (type === 'hit') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.setValueAtTime(50, now + 0.15);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.setValueAtTime(554.37, now + 0.08);
+                    osc.frequency.setValueAtTime(659.25, now + 0.16);
+                    osc.frequency.setValueAtTime(880, now + 0.24);
+                    gain.gain.setValueAtTime(0.18, now);
+                    gain.gain.exponentialRampToValueAtTime(0.02, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                } else if (type === 'incorrect') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.setValueAtTime(120, now + 0.25);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'levelup') {
+                    osc.frequency.setValueAtTime(261.63, now);
+                    osc.frequency.setValueAtTime(392, now + 0.06);
+                    osc.frequency.setValueAtTime(523.25, now + 0.12);
+                    osc.frequency.setValueAtTime(783.99, now + 0.18);
+                    osc.frequency.setValueAtTime(1046.50, now + 0.24);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                }
+            } catch (err) { }
+        }
+
+        // ==========================================
+        // HYBRID API CONNECTION DETERMINATOR
+        // ==========================================
+        function getGasUrl() {
+            // 하드코딩된 변수(GOOGLE_SCRIPT_URL)가 채워져 있으면 그것을 최우선으로 사용하고, 
+            // 그렇지 않은 경우 기존 로컬 스토리지에 저장된 주소를 예비 수단으로 사용합니다.
+            if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL.trim() !== "") {
+                return GOOGLE_SCRIPT_URL.trim();
+            }
+            return localStorage.getItem("vocahero_gas_url") || "";
+        }
+
+        function checkConnectionState() {
+            const savedUrl = getGasUrl();
+            const statusDot = document.getElementById("statusDot");
+            const statusText = document.getElementById("statusText");
+
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                isGoogleScriptActive = true;
+                statusDot.className = "w-2 h-2 rounded-full bg-green-400 inline-block animate-pulse";
+                statusText.innerText = "구글 시트 다이렉트 모드";
+            } else if (savedUrl && savedUrl.trim() !== "") {
+                isGoogleScriptActive = false;
+                statusDot.className = "w-2 h-2 rounded-full bg-sky-400 inline-block animate-pulse";
+                statusText.innerText = "Vercel 연동 모드";
+            } else {
+                isGoogleScriptActive = false;
+                statusDot.className = "w-2 h-2 rounded-full bg-yellow-500 inline-block animate-bounce";
+                statusText.innerText = "로컬 저장소 모드";
+            }
+        }
+
+        // Vercel 브릿지를 지원하는 하이브리드 비동기 API 핸들러
+        async function runGas(action, args, successHandler, errorHandler) {
+            if (isGoogleScriptActive) {
+                // 구글 시트 내부 실행 상태
+                google.script.run
+                    .withSuccessHandler(successHandler)
+                    .withFailureHandler(errorHandler)[action](...args);
+            } else {
+                // Vercel 등 외부 배포처 실행 상태
+                const savedUrl = getGasUrl();
+                if (!savedUrl || savedUrl.trim() === "") {
+                    if (errorHandler) errorHandler("API URL 미등록");
+                    return;
+                }
+
+                try {
+                    const response = await fetch(savedUrl, {
+                        method: "POST",
+                        mode: "cors",
+                        headers: {
+                            "Content-Type": "text/plain" // Redirect 이슈 방지용 plain
+                        },
+                        body: JSON.stringify({ action: action, args: args })
+                    });
+                    const data = await response.json();
+                    if (successHandler) successHandler(data);
+                } catch (err) {
+                    console.error("Vercel REST API Bridge Error:", err);
+                    if (errorHandler) errorHandler(err);
+                }
+            }
+        }
+
+        function saveApiEndpoint() {
+            const endpoint = document.getElementById("apiEndpointInput").value.trim();
+            if (endpoint === "") {
+                localStorage.removeItem("vocahero_gas_url");
+                showToast("🗑️ 연동 주소가 초기화되었습니다. 로컬 모드로 동작합니다.");
+            } else {
+                if (!endpoint.startsWith("https://script.google.com/")) {
+                    showToast("⚠️ 올바른 구글 앱스스크립트 주소 형식이 아닙니다.");
+                    return;
+                }
+                localStorage.setItem("vocahero_gas_url", endpoint);
+                showToast("💾 API 연동 주소가 성공적으로 보존되었습니다!");
+            }
+            checkConnectionState();
+        }
+
+        const MOCK_WORDS = {
+            "3": [
+                { word: "apple", meaning: "사과" }, { word: "banana", meaning: "바나나" }, { word: "pencil", meaning: "연필" },
+                { word: "desk", meaning: "책상" }, { word: "cat", meaning: "고양이" }, { word: "dog", meaning: "개" },
+                { word: "school", meaning: "학교" }, { word: "friend", meaning: "친구" }, { word: "mother", meaning: "어머니" },
+                { word: "happy", meaning: "행복한" }
+            ],
+            "4": [
+                { word: "doctor", meaning: "의사" }, { word: "english", meaning: "영어" }, { word: "orange", meaning: "오렌지" },
+                { word: "window", meaning: "창문" }, { word: "family", meaning: "가족" }, { word: "summer", meaning: "여름" },
+                { word: "winter", meaning: "겨울" }, { word: "teacher", meaning: "선생님" }, { word: "morning", meaning: "아침" },
+                { word: "yellow", meaning: "노란색" }
+            ],
+            "5": [
+                { word: "beautiful", meaning: "아름다운" }, { word: "different", meaning: "다른" }, { word: "important", meaning: "중요한" },
+                { word: "remember", meaning: "기억하다" }, { word: "tomorrow", meaning: "내일" }, { word: "station", meaning: "역" },
+                { word: "weather", meaning: "날씨" }, { word: "subject", meaning: "과목" }, { word: "country", meaning: "나라" },
+                { word: "picture", meaning: "사진" }
+            ],
+            "6": [
+                { word: "experience", meaning: "경험" }, { word: "challenge", meaning: "도전" }, { word: "environment", meaning: "환경" },
+                { word: "volunteer", meaning: "자원봉사자" }, { word: "information", meaning: "정보" }, { word: "traditional", meaning: "전통적인" },
+                { word: "international", meaning: "국제의" }, { word: "language", meaning: "언어" }, { word: "understand", meaning: "이해하다" },
+                { word: "protect", meaning: "보호하다" }
+            ]
+        };
+
+        function selectStartingAvatar(gender) {
+            gameState.avatarType = gender;
+            const maleBtn = document.getElementById("genderMaleBtn");
+            const femaleBtn = document.getElementById("genderFemaleBtn");
+
+            if (gender === 'male') {
+                maleBtn.className = "py-3 bg-indigo-950 border-2 border-indigo-500 text-white font-extrabold rounded-xl text-xs flex flex-col items-center gap-1 transition shadow-lg shadow-indigo-950";
+                femaleBtn.className = "py-3 bg-slate-950 border border-slate-800 text-slate-400 font-extrabold rounded-xl text-xs flex flex-col items-center gap-1 hover:bg-indigo-950 transition";
+            } else {
+                femaleBtn.className = "py-3 bg-indigo-950 border-2 border-indigo-500 text-white font-extrabold rounded-xl text-xs flex flex-col items-center gap-1 transition shadow-lg shadow-indigo-950";
+                maleBtn.className = "py-3 bg-slate-950 border border-slate-800 text-slate-400 font-extrabold rounded-xl text-xs flex flex-col items-center gap-1 hover:bg-indigo-950 transition";
+            }
+        }
+
+        function commitAvatarAndLaunch() {
+            const grade = parseInt(document.getElementById("inputGrade").value);
+            const classNum = parseInt(document.getElementById("inputClass").value);
+            const studentNum = parseInt(document.getElementById("inputNumber").value);
+            const name = document.getElementById("inputName").value.trim();
+
+            if (!classNum || !studentNum || !name) {
+                showToast("⚠️ 학급 번호와 영웅 명칭을 올바르게 기입하세요!");
+                return;
+            }
+
+            showToast("⏳ 원정 정보 동기화 중...");
+
+            const savedUrl = getGasUrl();
+
+            if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
+                runGas(
+                    "loadOrCreateStudent",
+                    [grade, classNum, studentNum, name, gameState.avatarType],
+                    function (response) {
+                        if (response) {
+                            syncStateFromServer(response);
+                            closeModal("loginModal");
+                            showToast("🏰 원정대 클라우드 계정 로드 성공!");
+                        } else {
+                            loadLocalSimulation(grade, classNum, studentNum, name);
+                            closeModal("loginModal");
+                        }
+                    },
+                    function () {
+                        loadLocalSimulation(grade, classNum, studentNum, name);
+                        closeModal("loginModal");
+                    }
+                );
+            } else {
+                loadLocalSimulation(grade, classNum, studentNum, name);
+                closeModal("loginModal");
+            }
+        }
+
+        function loadLocalSimulation(grade, classNum, studentNum, name) {
+            const cacheKey = `vocahero_${grade}_${classNum}_${studentNum}_${name}`;
+            const cached = localStorage.getItem(cacheKey);
+
+            if (cached) {
+                gameState = JSON.parse(cached);
+                if (!gameState.skillsInventory) gameState.skillsInventory = [];
+                if (!gameState.equippedSkills) gameState.equippedSkills = [];
+            } else {
+                gameState.grade = grade;
+                gameState.classNum = classNum;
+                gameState.studentNum = studentNum;
+                gameState.name = name;
+                gameState.gold = 0;
+                gameState.helmetLvl = 1;
+                gameState.armorLvl = 1;
+                gameState.weaponLvl = 1;
+                gameState.shieldLvl = 1;
+                gameState.shoesLvl = 1;
+                gameState.petType = "none";
+                gameState.petLvl = 0;
+                gameState.stage = 1;
+                gameState.progress = 0;
+                gameState.totalQuizTries = 0;
+                gameState.totalQuizCorrect = 0;
+                gameState.currentQuizIndex = 0;
+                gameState.skillsInventory = [];
+                gameState.equippedSkills = [];
+            }
+
+            gameState.wordsPool = MOCK_WORDS[String(gameState.grade)] || MOCK_WORDS["3"];
+            initGameEngine();
+        }
+
+        function syncStateFromServer(data) {
+            gameState.grade = data.grade;
+            gameState.classNum = data.classNum;
+            gameState.studentNum = data.studentNum;
+            gameState.name = data.name;
+            gameState.gold = data.gold;
+            gameState.avatarType = data.avatarType || "male";
+            gameState.helmetLvl = data.helmetLvl || 1;
+            gameState.armorLvl = data.armorLvl || 1;
+            gameState.weaponLvl = data.weaponLvl || 1;
+            gameState.shieldLvl = data.shieldLvl || 1;
+            gameState.shoesLvl = data.shoesLvl || 1;
+            gameState.petType = data.petType || "none";
+            gameState.petLvl = data.petLvl || 0;
+            gameState.stage = data.stage || 1;
+            gameState.progress = data.progress || 0;
+            gameState.lastSaved = data.lastSaved;
+
+            gameState.skillsInventory = data.skillsInventory || [];
+            gameState.equippedSkills = data.equippedSkills || [];
+
+            fetchWordsFromSpreadsheet();
+        }
+
+        function fetchWordsFromSpreadsheet() {
+            const savedUrl = getGasUrl();
+            if (!isGoogleScriptActive && (!savedUrl || savedUrl.trim() === "")) return;
+
+            runGas(
+                "getWordsFromSheet",
+                [gameState.grade],
+                function (words) {
+                    gameState.wordsPool = words;
+                    gameState.currentQuizIndex = gameState.progress % (words.length || 1);
+                    initGameEngine();
+                },
+                function () {
+                    gameState.wordsPool = MOCK_WORDS[String(gameState.grade)] || MOCK_WORDS["4"];
+                    initGameEngine();
+                }
+            );
+        }
+
+        function drawHeroAvatar() {
+            const h = gameState;
+            const isMale = h.avatarType === "male";
+            const svg = document.getElementById("heroSvg");
+
+            // AI로 생성된 고품질 픽셀 아트 이미지 경로
+            const imageUrl = isMale ? "media/male_warrior.png" : "media/female_warrior.png";
+
+            let overlays = "";
+
+            // 1. Helmet Overlay (Level >= 2)
+            // Visor colors: level 2-3 is M-LightBlue, 4-6 is M-DarkBlue, 7+ is M-Red
+            if (h.helmetLvl > 1) {
+                const helmetColor = h.helmetLvl >= 7 ? "#e22718" : (h.helmetLvl >= 4 ? "#1c69d4" : "#0066b1");
+                overlays += `
+                    <!-- Motorsport Carbon Helmet -->
+                    <path d="M36 32 C36 12, 64 12, 64 32 C64 36, 36 36, 36 32 Z" fill="#111111" stroke="#3c3c3c" stroke-width="1.5" />
+                    <!-- Visor glow -->
+                    <rect x="42" y="22" width="16" height="5" fill="${helmetColor}" rx="1" class="animate-pulse" />
+                    <!-- Helmet stripe details -->
+                    <path d="M49 14 L51 14 L51 22 L49 22 Z" fill="#e22718" />
+                    <path d="M46 15 L48 15 L48 22 L46 22 Z" fill="#1c69d4" />
+                    <path d="M52 15 L54 15 L54 22 L52 22 Z" fill="#0066b1" />
+                `;
+            }
+
+            // 2. Armor Overlay (Level >= 2)
+            if (h.armorLvl > 1) {
+                const armorGlow = h.armorLvl >= 7 ? "#e22718" : (h.armorLvl >= 4 ? "#1c69d4" : "#0066b1");
+                overlays += `
+                    <!-- Motorsport Suit Chest Plate -->
+                    <rect x="34" y="44" width="32" height="30" fill="#151515" stroke="#3c3c3c" stroke-width="1.5" rx="0" />
+                    <!-- M Motorsport Tri-Color Accents -->
+                    <path d="M38 44 L41 44 L45 74 L42 74 Z" fill="#0066b1" />
+                    <path d="M41 44 L44 44 L48 74 L45 74 Z" fill="#1c69d4" />
+                    <path d="M44 44 L47 44 L51 74 L48 74 Z" fill="#e22718" />
+                    <!-- Reactor core -->
+                    <circle cx="50" cy="56" r="4" fill="${armorGlow}" class="animate-pulse" />
+                `;
+            }
+
+            // 3. Weapon Overlay (Level >= 2)
+            if (h.weaponLvl > 1) {
+                const weaponColor = h.weaponLvl >= 7 ? "#e22718" : (h.weaponLvl >= 4 ? "#1c69d4" : "#0066b1");
+                overlays += `
+                    <!-- High-tech Exhaust Beam Blade -->
+                    <line x1="20" y1="75" x2="3" y2="40" stroke="#ffffff" stroke-width="4" stroke-linecap="round" />
+                    <line x1="20" y1="75" x2="3" y2="40" stroke="${weaponColor}" stroke-width="2.5" stroke-linecap="round" class="animate-pulse" />
+                    <circle cx="20" cy="75" r="3.5" fill="#333333" stroke="#ffffff" stroke-width="1" />
+                `;
+            }
+
+            // 4. Shield Overlay (Level >= 2)
+            if (h.shieldLvl > 1) {
+                const shieldColor = h.shieldLvl >= 7 ? "#e22718" : (h.shieldLvl >= 4 ? "#1c69d4" : "#0066b1");
+                overlays += `
+                    <!-- Aerodynamic Aero-Diffuser Shield -->
+                    <path d="M72 58 L88 54 L92 78 L80 88 L72 74 Z" fill="#1a1a1a" stroke="#ffffff" stroke-width="1.5" />
+                    <path d="M75 60 L85 57 L88 76 L78 84 Z" fill="${shieldColor}" opacity="0.4" />
+                    <!-- Racing decal -->
+                    <line x1="76" y1="68" x2="86" y2="78" stroke="#ffffff" stroke-width="1.5" />
+                    <line x1="79" y1="65" x2="89" y2="75" stroke="#e22718" stroke-width="1" />
+                `;
+            }
+
+            // 5. Shoes/Boots Overlay (Level >= 2)
+            if (h.shoesLvl > 1) {
+                const shoeGlow = h.shoesLvl >= 7 ? "#e22718" : (h.shoesLvl >= 4 ? "#1c69d4" : "#0066b1");
+                overlays += `
+                    <!-- Dynamic Motorsport Boots -->
+                    <rect x="33" y="103" width="13" height="6" fill="#1a1a1a" stroke="${shoeGlow}" stroke-width="1" />
+                    <rect x="54" y="103" width="13" height="6" fill="#1a1a1a" stroke="${shoeGlow}" stroke-width="1" />
+                `;
+            }
+
+            const innerHtml = `
+                <image href="${imageUrl}" x="0" y="0" width="100" height="120" preserveAspectRatio="xMidYMid meet" />
+                ${overlays}
+            `;
+
+            svg.innerHTML = innerHtml;
+        }
+
+        function drawPetCompanion() {
+            const svg = document.getElementById("petSvg");
+            const container = document.getElementById("companionPetContainer");
+            const type = gameState.petType;
+            let imageUrl = "";
+
+            if (type !== 'none') {
+                const level = gameState.petLvl;
+                const stage = Math.min(10, Math.floor(level / 10) + 1); // 1 to 10 stages
+                imageUrl = `media/pet_${type}_${stage}.png`;
+            }
+
+            if (imageUrl) {
+                const level = gameState.petLvl;
+
+                // 1. Level-based physical size scaling
+                let width = 50;
+                let height = 60;
+                let x = 25;
+                let y = 30;
+
+                if (level >= 70) {
+                    width = 100;
+                    height = 120;
+                    x = 0;
+                    y = 0;
+                } else if (level >= 40) {
+                    width = 85;
+                    height = 102;
+                    x = 7;
+                    y = 9;
+                } else if (level >= 20) {
+                    width = 68;
+                    height = 82;
+                    x = 16;
+                    y = 19;
+                }
+
+                // 2. Evolutionary color shifts
+                let filterStyle = "";
+                if (level >= 90) {
+                    filterStyle = "filter: hue-rotate(270deg) contrast(1.5) drop-shadow(0 0 6px #e22718);";
+                } else if (level >= 80) {
+                    filterStyle = "filter: hue-rotate(240deg) contrast(1.4) drop-shadow(0 0 5px #1c69d4);";
+                } else if (level >= 70) {
+                    filterStyle = "filter: hue-rotate(210deg) brightness(1.3) drop-shadow(0 0 4px #0066b1);";
+                } else if (level >= 60) {
+                    filterStyle = "filter: hue-rotate(180deg) brightness(1.2);";
+                } else if (level >= 50) {
+                    filterStyle = "filter: hue-rotate(150deg) brightness(1.1);";
+                } else if (level >= 40) {
+                    filterStyle = "filter: hue-rotate(120deg);";
+                } else if (level >= 30) {
+                    filterStyle = "filter: hue-rotate(90deg);";
+                } else if (level >= 20) {
+                    filterStyle = "filter: hue-rotate(60deg);";
+                } else if (level >= 10) {
+                    filterStyle = "filter: hue-rotate(30deg);";
+                }
+
+                // 3. Accessory SVG overlays
+                let backgroundSvg = "";
+                let foregroundSvg = "";
+
+                // Evolutionary wings appear behind the pet (Level >= 70)
+                if (level >= 70) {
+                    const wingColor = level >= 90 ? "#e22718" : (level >= 80 ? "#1c69d4" : "#0066b1");
+                    backgroundSvg += `
+                        <!-- Evolutionary Wings -->
+                        <path d="M25 65 L2 35 L15 80 Z" fill="${wingColor}" opacity="0.75" class="animate-pulse" />
+                        <path d="M75 65 L98 35 L85 80 Z" fill="${wingColor}" opacity="0.75" class="animate-pulse" />
+                        <line x1="25" y1="65" x2="2" y2="35" stroke="#ffffff" stroke-width="1.5" />
+                        <line x1="75" y1="65" x2="98" y2="35" stroke="#ffffff" stroke-width="1.5" />
+                    `;
+                }
+
+                // Carbon Helmet / Visor fits on top of the scaled pet (Level >= 40)
+                if (level >= 40) {
+                    const visorColor = level >= 90 ? "#e22718" : (level >= 80 ? "#1c69d4" : "#0066b1");
+                    foregroundSvg += `
+                        <!-- Mini carbon helmet / visor -->
+                        <path d="M${x + width*0.3} ${y + height*0.35} C${x + width*0.3} ${y + height*0.1}, ${x + width*0.7} ${y + height*0.1}, ${x + width*0.7} ${y + height*0.35} Z" fill="#111111" stroke="#3c3c3c" stroke-width="1" />
+                        <rect x="${x + width*0.38}" y="${y + height*0.22}" width="${width*0.24}" height="${height*0.06}" fill="${visorColor}" rx="1" class="animate-pulse" />
+                    `;
+                }
+
+                // Orbit rings appear in front (Level >= 90)
+                if (level >= 90) {
+                    foregroundSvg += `
+                        <!-- Transcendent Orbit Rings -->
+                        <circle cx="50" cy="60" r="48" fill="none" stroke="#e22718" stroke-width="1" stroke-dasharray="8,8" class="animate-spin" style="transform-origin: 50px 60px; animation-duration: 6s;" />
+                        <circle cx="50" cy="60" r="44" fill="none" stroke="#1c69d4" stroke-width="1" stroke-dasharray="6,6" class="animate-spin" style="transform-origin: 50px 60px; animation-duration: 4s; animation-direction: reverse;" />
+                        <circle cx="50" cy="60" r="40" fill="none" stroke="#0066b1" stroke-width="1" stroke-dasharray="4,4" class="animate-spin" style="transform-origin: 50px 60px; animation-duration: 2s;" />
+                    `;
+                }
+
+                svg.innerHTML = `
+                    ${backgroundSvg}
+                    <image href="${imageUrl}" onerror="this.setAttribute('href', 'media/pet_${type}.png')" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet" style="${filterStyle}" />
+                    ${foregroundSvg}
+                `;
+                container.classList.remove("hidden");
+            } else {
+                svg.innerHTML = "";
+                container.classList.add("hidden");
+            }
+        }
+
+        function drawTargetMonster() {
+            const svg = document.getElementById("monsterSvg");
+            const index = (gameState.stage - 1) % MONSTER_PROFILES.length;
+            const baseMonster = isBossBattleActive
+                ? BOSS_PROFILES[(gameState.stage - 1) % BOSS_PROFILES.length]
+                : MONSTER_PROFILES[index];
+
+            let imageUrl = "";
+
+            if (isBossBattleActive) {
+                const bossIndex = (gameState.stage - 1) % BOSS_PROFILES.length;
+                if (bossIndex === 0 || bossIndex === 3) {
+                    imageUrl = "media/boss_gargoyle.png";
+                } else if (bossIndex === 1 || bossIndex === 4) {
+                    imageUrl = "media/boss_lavaworm.png";
+                } else {
+                    imageUrl = "media/boss_dragon.png";
+                }
+            } else {
+                const monsterIndex = (gameState.stage - 1) % MONSTER_PROFILES.length;
+                if (monsterIndex === 0) {
+                    imageUrl = "media/monster_slime.png";
+                } else if (monsterIndex === 1) {
+                    imageUrl = "media/monster_goblin.png";
+                } else if (monsterIndex === 2) {
+                    imageUrl = "media/monster_troll.png";
+                } else if (monsterIndex === 3) {
+                    imageUrl = "media/monster_golem.png";
+                } else if (monsterIndex === 4) {
+                    imageUrl = "media/monster_skeleton.png";
+                } else if (monsterIndex === 5) {
+                    imageUrl = "media/monster_spider.png";
+                } else {
+                    imageUrl = "media/monster_ghost.png";
+                }
+            }
+
+            const innerHtml = `<image href="${imageUrl}" x="0" y="0" width="100" height="120" preserveAspectRatio="xMidYMid meet" />`;
+
+            svg.innerHTML = innerHtml;
+            document.getElementById("monsterNameTag").innerText = isBossBattleActive
+                ? `⚠️ [STAGE BOSS] ${baseMonster.name}`
+                : baseMonster.name;
+        }
+
+        function initGameEngine() {
+            document.getElementById("userInfoDisplay").classList.remove("hidden");
+            document.getElementById("displayStudentName").innerText = `${gameState.grade}학년 ${gameState.classNum}반 ${gameState.studentNum}번 - [${gameState.name}]`;
+            document.getElementById("gradeLevelBadge").innerText = `교과 영단어 ${gameState.grade}학년`;
+
+            if (!gameState.skillsInventory) gameState.skillsInventory = [];
+            if (!gameState.equippedSkills) gameState.equippedSkills = [];
+
+            drawHeroAvatar();
+            drawPetCompanion();
+            respawnActiveMonster();
+
+            calculateOfflineGains();
+
+            // Core tick loop 100ms
+            if (gameLoopInterval) clearInterval(gameLoopInterval);
+            let lastTick = Date.now();
+            gameLoopInterval = setInterval(() => {
+                const now = Date.now();
+                const delta = (now - lastTick) / 1000;
+                lastTick = now;
+
+                const dps = calculateDPSPower();
+                if (dps > 0) {
+                    processCombatDamage(dps * delta);
+                }
+
+                // 스킬의 재사용 대기시간(쿨타임) 감소
+                let skillsChanged = false;
+                if (gameState.skillsInventory) {
+                    gameState.skillsInventory.forEach(skill => {
+                        if (skill.cooldownRemaining > 0) {
+                            skill.cooldownRemaining = Math.max(0, skill.cooldownRemaining - delta);
+                            skillsChanged = true;
+                        }
+                    });
+                }
+                if (skillsChanged) {
+                    renderSkillsUI();
+                    if (!document.getElementById("skillTab").classList.contains("hidden")) {
+                        buildSkillTabUI();
+                    }
+                }
+            }, 100);
+
+            buildUpgradeblacksmith();
+            buildCompanionPetLab();
+            buildSkillTabUI();
+            generateQuizCard();
+            renderSkillsUI();
+            populateMasteredVocabulary();
+            refreshStateVisuals();
+        }
+
+        function calculateDPSPower() {
+            let baseDps = 0;
+            if (gameState.petType !== "none" && gameState.petLvl > 0) {
+                const pInfo = PET_PARAMS[gameState.petType];
+                if (pInfo) {
+                    baseDps = pInfo.dps * gameState.petLvl;
+                }
+            }
+            return baseDps;
+        }
+
+        function calculateClickAttackPower() {
+            return gameState.weaponLvl * 2 + gameState.shoesLvl;
+        }
+
+        function calculateOfflineGains() {
+            const now = Date.now();
+            const deltaSeconds = Math.floor((now - gameState.lastSaved) / 1000);
+            const dps = calculateDPSPower();
+
+            if (deltaSeconds > 15 && dps > 0) {
+                const maxSeconds = 3600 * 8;
+                const eligible = Math.min(deltaSeconds, maxSeconds);
+                const goldGained = Math.floor(dps * eligible * 0.5);
+
+                if (goldGained > 0) {
+                    gameState.gold += goldGained;
+                    const badge = document.getElementById("offlineEarningsBadge");
+                    badge.classList.remove("hidden");
+                    badge.innerText = `💤 오프라인 자동 사냥 수당 +${goldGained}G 획득!`;
+                    showToast(`💤 수면 자동 훈련기 작동 완료! 용사단이 부재중에 ${goldGained}G를 축적했습니다.`);
+
+                    setTimeout(() => { badge.classList.add("hidden"); }, 8000);
+                }
+            }
+            saveLocalCache();
+        }
+
+        function processCombatDamage(dmg) {
+            monsterCurrentHp -= dmg;
+            if (monsterCurrentHp <= 0) {
+                defeatActiveMonster();
+            } else {
+                updateArenaHpBars();
+            }
+        }
+
+        function updateArenaHpBars() {
+            const pct = Math.max(0, (monsterCurrentHp / monsterMaxHp) * 100);
+            document.getElementById("monsterHpBar").style.width = `${pct}%`;
+        }
+
+        function defeatActiveMonster() {
+            let reward = 0;
+            if (isBossBattleActive) {
+                reward = gameState.stage * 150;
+                gameState.gold += reward;
+                playSoundEffect('levelup');
+                concludeBossSuccess();
+            } else {
+                reward = gameState.stage * 8 + Math.floor(Math.random() * 5);
+                gameState.gold += reward;
+                playSoundEffect('hit');
+
+                // 보스 해금 처치 진도를 10단계로 증가
+                if (gameState.progress < BOSS_UNLOCK_LIMIT) {
+                    gameState.progress++;
+                    showToast(`⚔️ 몬스터 처치 성공! 보스 해제도 진입 중 (${gameState.progress}/${BOSS_UNLOCK_LIMIT})`);
+                } else {
+                    showToast(`⚔️ 몬스터 처치! 보스전 도전 버튼이 활성화되어 있습니다.`);
+                }
+
+                respawnActiveMonster();
+            }
+
+            refreshStateVisuals();
+            saveLocalCache();
+        }
+
+        function respawnActiveMonster() {
+            const index = (gameState.stage - 1) % MONSTER_PROFILES.length;
+            const profile = isBossBattleActive
+                ? BOSS_PROFILES[(gameState.stage - 1) % BOSS_PROFILES.length]
+                : MONSTER_PROFILES[index];
+
+            const scaleFactor = 1.35;
+            monsterMaxHp = isBossBattleActive
+                ? profile.hp
+                : Math.floor(profile.hp * Math.pow(scaleFactor, gameState.stage - 1));
+
+            monsterCurrentHp = monsterMaxHp;
+
+            drawTargetMonster();
+            updateArenaHpBars();
+        }
+
+        function handleArenaClick(event) {
+            const hAvatar = document.getElementById("heroCharacter");
+            hAvatar.classList.add("animate-slash");
+            setTimeout(() => { hAvatar.classList.remove("animate-slash"); }, 200);
+
+            const mContainer = document.getElementById("monsterContainer");
+            mContainer.classList.add("animate-shake");
+            setTimeout(() => { mContainer.classList.remove("animate-shake"); }, 150);
+
+            const clickDmg = calculateClickAttackPower();
+            processCombatDamage(clickDmg);
+            playSoundEffect('click');
+
+            const rect = event.currentTarget.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            spawnDamageFloatingText(x, y, `-${clickDmg} HP`);
+        }
+
+        function spawnDamageFloatingText(x, y, text) {
+            const arena = document.getElementById("battleArena");
+            const particle = document.createElement("span");
+            particle.className = "damage-particle text-red-500 font-extrabold text-sm fancy-title select-none z-30";
+            particle.style.left = `${x}px`;
+            particle.style.top = `${y}px`;
+            particle.innerText = text;
+            arena.appendChild(particle);
+            setTimeout(() => { particle.remove(); }, 700);
+        }
+
+        // ==========================================
+        // SHOP & ACQUISITIONS
+        // ==========================================
+        function buildUpgradeblacksmith() {
+            const container = document.getElementById("gearShopContainer");
+            let html = "";
+
+            for (let gearKey in GEAR_PARAMS) {
+                const info = GEAR_PARAMS[gearKey];
+                const currentLvl = gameState[info.key];
+                const cost = Math.floor(info.base * Math.pow(GROWTH_RATE, currentLvl));
+
+                html += `
+                    <div class="flex items-center justify-between p-3.5 bg-[#0d0d0d] border border-[#262626] rounded-none-forced">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-[#1a1a1a] border border-[#3c3c3c] rounded-none-forced flex items-center justify-center text-[#0066b1]">
+                                <i data-lucide="${getGearIcon(gearKey)}" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-white text-xs uppercase tracking-wider">${info.name}</h4>
+                                <p class="text-[9px] text-[#7e7e7e] mt-0.5">강화 레벨: <span class="text-[#0066b1] font-bold">Lv.${currentLvl}</span></p>
+                            </div>
+                        </div>
+                        <button onclick="upgradeGearItem('${gearKey}')" class="bmw-btn-primary py-2 px-3 flex flex-col items-center justify-center min-w-[80px]">
+                            <span class="text-[#e22718] text-[9px] font-bold">🪙 ${cost}G</span>
+                            <span class="text-[8px] opacity-70">강화하기</span>
+                        </button>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function getGearIcon(key) {
+            if (key === 'helmet') return 'shield-alert';
+            if (key === 'armor') return 'shirt';
+            if (key === 'weapon') return 'sword';
+            if (key === 'shield') return 'shield';
+            return 'footprints';
+        }
+
+        function upgradeGearItem(gearKey) {
+            const info = GEAR_PARAMS[gearKey];
+            const currentLvl = gameState[info.key];
+            const cost = Math.floor(info.base * Math.pow(GROWTH_RATE, currentLvl));
+
+            if (gameState.gold >= cost) {
+                gameState.gold -= cost;
+                gameState[info.key]++;
+                playSoundEffect('levelup');
+                showToast(`🛠️ [대장간] ${info.name}이 성공적으로 훈련 연마되었습니다!`);
+
+                drawHeroAvatar();
+                buildUpgradeblacksmith();
+                refreshStateVisuals();
+                saveLocalCache();
+            } else {
+                showToast("🪙 금화가 부족합니다. 영단어 약점 타격으로 자금을 입수하세요!");
+            }
+        }
+
+        function getPetEvolutionName(petKey, level) {
+            const baseName = PET_PARAMS[petKey].name;
+            const stage = Math.floor(level / 10);
+            const prefixes = [
+                "아기",     // 0-9
+                "성장기",   // 10-19
+                "훈련된",   // 20-29
+                "성체",     // 30-39
+                "용맹한",   // 40-49
+                "정예",     // 50-59
+                "챔피언",   // 60-69
+                "영웅",     // 70-79
+                "전설의",   // 80-89
+                "초월신"    // 90-100
+            ];
+            const prefix = prefixes[Math.min(stage, 9)];
+
+            if (petKey === "slime") {
+                return `${prefix} 젤리 슬라임`;
+            } else if (petKey === "dragon") {
+                return `${prefix} 화염 드래곤`;
+            } else {
+                return `${prefix} 황금 축복 요정`;
+            }
+        }
+
+        function buildCompanionPetLab() {
+            const container = document.getElementById("petListContainer");
+            let html = "";
+
+            for (let petKey in PET_PARAMS) {
+                const info = PET_PARAMS[petKey];
+                const isActive = gameState.petType === petKey;
+                const petLevel = isActive ? gameState.petLvl : 0;
+                const isMax = isActive && petLevel >= 100;
+                const cost = isMax ? 0 : Math.floor(info.cost * Math.pow(1.5, petLevel));
+                const evolvedName = getPetEvolutionName(petKey, petLevel);
+
+                html += `
+                    <div class="bg-[#0d0d0d] border ${isActive ? 'border-white' : 'border-[#262626]'} p-4 rounded-none-forced flex flex-col justify-between items-stretch">
+                        <div class="text-center">
+                            <span class="text-3xl block mb-2">${getPetEmoji(petKey)}</span>
+                            <h4 class="font-bold text-white text-xs uppercase tracking-wider">${evolvedName}</h4>
+                            <p class="text-[9px] text-[#7e7e7e] my-1.5 min-h-[28px]">${info.desc}</p>
+                            <p class="text-[9px] text-[#0066b1] font-bold bg-black py-1 border border-[#3c3c3c] rounded-none-forced uppercase tracking-widest">
+                                친밀 레벨: ${isMax ? 'MAX' : `Lv.${petLevel}`}
+                            </p>
+                        </div>
+                        
+                        <div class="mt-4 flex flex-col gap-1">
+                            <div class="flex justify-between text-[9px] text-[#bbbbbb]">
+                                <span>자동 DPS: +${info.dps * Math.max(1, petLevel)}</span>
+                                <span>수당: +${Math.round(info.bonus * Math.max(1, petLevel) * 100)}%</span>
+                            </div>
+                            <button onclick="${isMax ? '' : `interactUpgradePet('${petKey}')`}" ${isMax ? 'disabled' : ''} class="w-full mt-2 bmw-btn-primary py-2.5 flex flex-col items-center justify-center ${isMax ? 'opacity-50 cursor-not-allowed' : ''}">
+                                ${isMax ? '<span class="text-white font-bold text-[9px]">진화 최종 도달 (Lv.100)</span>' : `
+                                    <span class="text-[#e22718] font-bold text-[9px]">🪙 ${cost}G</span>
+                                    <span class="text-[8px] opacity-70">연구 & 진화</span>
+                                `}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function getPetEmoji(key) {
+            if (key === 'slime') return "👾";
+            if (key === 'dragon') return "🐲";
+            return "🧚";
+        }
+
+        function interactUpgradePet(petKey) {
+            const info = PET_PARAMS[petKey];
+            const isCurrentlyActive = gameState.petType === petKey;
+            const currentPetLvl = isCurrentlyActive ? gameState.petLvl : 0;
+            const cost = Math.floor(info.cost * Math.pow(1.5, currentPetLvl));
+
+            if (isCurrentlyActive && gameState.petLvl >= 100) {
+                showToast("⭐ 이 동반 펫은 이미 100레벨 초월 최고 단계에 도달했습니다!");
+                return;
+            }
+
+            if (gameState.gold >= cost) {
+                gameState.gold -= cost;
+
+                if (!isCurrentlyActive) {
+                    gameState.petType = petKey;
+                    gameState.petLvl = 1;
+                } else {
+                    gameState.petLvl++;
+                }
+
+                const evolvedName = getPetEvolutionName(petKey, gameState.petLvl);
+                playSoundEffect('levelup');
+                showToast(`💖 [소환소] ${evolvedName}과(와) 동반 모험을 개시했습니다!`);
+
+                document.getElementById("companionPetContainer").classList.remove("hidden");
+
+                drawPetCompanion();
+                buildCompanionPetLab();
+                refreshStateVisuals();
+                saveLocalCache();
+            } else {
+                showToast("🪙 연구 지원 골드가 부족합니다.");
+            }
+        }
+
+        // ==========================================
+        // QUIZ, SKILLS & SPELLS
+        // ==========================================
+        function speakTargetWord() {
+            if (!gameState.wordsPool || gameState.wordsPool.length === 0) return;
+            const word = gameState.wordsPool[gameState.currentQuizIndex].word;
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(word);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.85;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                showToast("🔊 단어 발음 합성 기능이 이 장치에서 거부되었습니다.");
+            }
+        }
+
+        function generateQuizCard() {
+            if (!gameState.wordsPool || gameState.wordsPool.length === 0) {
+                document.getElementById("quizWordEng").innerText = "마법 성역의 단어가 고갈되었습니다";
+                return;
+            }
+
+            const current = gameState.wordsPool[gameState.currentQuizIndex];
+            document.getElementById("quizWordEng").innerText = current.word;
+
+            let choices = [current.meaning];
+            let listMeanings = [];
+
+            for (let gradeKey in MOCK_WORDS) {
+                MOCK_WORDS[gradeKey].forEach(v => {
+                    if (v.meaning !== current.meaning && !listMeanings.includes(v.meaning)) {
+                        listMeanings.push(v.meaning);
+                    }
+                });
+            }
+
+            listMeanings.sort(() => 0.5 - Math.random());
+            for (let i = 0; i < Math.min(3, listMeanings.length); i++) {
+                choices.push(listMeanings[i]);
+            }
+
+            choices.sort(() => 0.5 - Math.random());
+            gameState.currentQuizCorrectAnswer = choices.indexOf(current.meaning);
+
+            const buttons = document.getElementsByClassName("choice-btn");
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].querySelector(".choice-text").innerText = choices[i];
+                buttons[i].className = "choice-btn p-3.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group";
+            }
+        }
+
+        function rollAndAcquireSkill(word, meaning) {
+            if (!gameState.skillsInventory) gameState.skillsInventory = [];
+
+            if (gameState.skillsInventory.some(s => s.word === word)) return;
+
+            const roll = Math.random();
+            let rolledGrade = "normal";
+
+            if (roll < 0.03) {
+                rolledGrade = "legendary";
+            } else if (roll < 0.15) {
+                rolledGrade = "hero";
+            } else if (roll < 0.40) {
+                rolledGrade = "rare";
+            }
+
+            const gradeInfo = SKILL_GRADES[rolledGrade];
+            const newSkill = {
+                id: 'skill_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+                word: word,
+                meaning: meaning,
+                grade: rolledGrade,
+                cooldownRemaining: 0,
+                maxCooldown: 30
+            };
+
+            gameState.skillsInventory.push(newSkill);
+            showToast(`✨ [${gradeInfo.name} 등급] 영단어 비기 스킬 획득: [${word.toUpperCase()}]!`);
+
+            buildSkillTabUI();
+            saveLocalCache();
+        }
+
+        function equipSkill(skillId) {
+            if (!gameState.equippedSkills) gameState.equippedSkills = [];
+
+            if (gameState.equippedSkills.includes(skillId)) {
+                showToast("⚠️ 이미 장착된 고대 마법 스킬입니다.");
+                return;
+            }
+
+            if (gameState.equippedSkills.length >= 4) {
+                showToast("⚠️ 장착 슬롯(최대 4개)이 가득 찼습니다! 기존 스킬을 해제하고 시도하세요.");
+                return;
+            }
+
+            gameState.equippedSkills.push(skillId);
+            showToast("🔮 스킬 장착 슬롯 배치가 완료되었습니다!");
+            buildSkillTabUI();
+            renderSkillsUI();
+            saveLocalCache();
+        }
+
+        function unequipSkill(skillId) {
+            if (!gameState.equippedSkills) return;
+            gameState.equippedSkills = gameState.equippedSkills.filter(id => id !== skillId);
+            showToast("🔮 스킬 장착이 해제되었습니다.");
+            buildSkillTabUI();
+            renderSkillsUI();
+            saveLocalCache();
+        }
+
+        function buildSkillTabUI() {
+            const eqGrid = document.getElementById("equippedSkillsGrid");
+            let eqHtml = "";
+
+            for (let i = 0; i < 4; i++) {
+                const id = gameState.equippedSkills[i];
+                if (id && gameState.skillsInventory) {
+                    const skill = gameState.skillsInventory.find(s => s.id === id);
+                    if (skill) {
+                        const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
+                        eqHtml += `
+                            <div class="border-2 ${gradeInfo.colorClass} rounded-none-forced p-2 text-center relative flex flex-col justify-between min-h-[75px] group">
+                                <button onclick="unequipSkill('${skill.id}')" class="absolute -top-1.5 -right-1.5 bg-[#e22718] hover:bg-[#b91c1c] text-white w-4.5 h-4.5 rounded-full flex items-center justify-center text-4xs transition opacity-0 group-hover:opacity-100 font-bold shadow-sm">
+                                    ×
+                                </button>
+                                <div>
+                                    <span class="text-[8px] block font-bold uppercase tracking-wider text-[#7e7e7e]">${gradeInfo.name}</span>
+                                    <p class="text-[10px] font-bold font-mono truncate text-white mt-0.5">${skill.word.toUpperCase()}</p>
+                                </div>
+                                <span class="text-[8px] text-[#bbbbbb] truncate mt-1 block">${skill.meaning}</span>
+                            </div>
+                        `;
+                    } else {
+                        eqHtml += `<div class="border border-dashed border-[#3c3c3c] rounded-none-forced p-2 text-center flex items-center justify-center min-h-[75px] text-[8px] text-[#7e7e7e] font-bold uppercase tracking-wider">슬롯 비어있음</div>`;
+                    }
+                } else {
+                    eqHtml += `<div class="border border-dashed border-[#3c3c3c] rounded-none-forced p-2 text-center flex items-center justify-center min-h-[75px] text-[8px] text-[#7e7e7e] font-bold uppercase tracking-wider">슬롯 비어있음</div>`;
+                }
+            }
+            eqGrid.innerHTML = eqHtml;
+
+            const invGrid = document.getElementById("skillsInventoryGrid");
+            if (!gameState.skillsInventory || gameState.skillsInventory.length === 0) {
+                invGrid.innerHTML = `<p class="text-xs text-[#7e7e7e] text-center py-8 col-span-2 uppercase tracking-wider">아직 정복하여 흡수한 고대 비기가 없습니다. 퀴즈를 풀어보세요!</p>`;
+                return;
+            }
+
+            let invHtml = "";
+            gameState.skillsInventory.forEach(skill => {
+                const isEquipped = gameState.equippedSkills.includes(skill.id);
+                const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
+
+                invHtml += `
+                    <div class="border ${isEquipped ? 'border-white' : 'border-[#262626]'} bg-[#0d0d0d] rounded-none-forced p-3 flex items-center justify-between text-left">
+                        <div class="min-w-0 flex-grow pr-1.5">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[8px] font-bold px-1.5 py-0.5 rounded-none-forced uppercase tracking-widest ${getGradeBgClass(skill.grade)}">${gradeInfo.name}</span>
+                                <p class="text-xs font-bold font-mono text-white truncate">${skill.word.toUpperCase()}</p>
+                            </div>
+                            <p class="text-[10px] text-[#bbbbbb] truncate mt-1">${skill.meaning} (피해 배율 ×${gradeInfo.multiplier}배)</p>
+                        </div>
+                        <button onclick="${isEquipped ? `unequipSkill('${skill.id}')` : `equipSkill('${skill.id}')`}" class="flex-shrink-0 text-[9px] font-bold px-3 py-1.5 rounded-none-forced transition ${isEquipped ? 'bg-transparent border border-[#e22718] text-[#e22718] hover:bg-[#e22718] hover:text-white' : 'bg-transparent border border-white text-white hover:bg-white hover:text-black'}">
+                            ${isEquipped ? 'UNEQUIP' : 'EQUIP'}
+                        </button>
+                    </div>
+                `;
+            });
+            invGrid.innerHTML = invHtml;
+        }
+
+        function getGradeBgClass(grade) {
+            if (grade === 'legendary') return "bg-[#e22718] text-white";
+            if (grade === 'hero') return "bg-[#1c69d4] text-white";
+            if (grade === 'rare') return "bg-[#0066b1] text-white";
+            return "bg-[#3c3c3c] text-white";
+        }
+
+        function renderSkillsUI() {
+            const container = document.getElementById("skillsContainer");
+            if (!container) return;
+
+            if (!gameState.equippedSkills || gameState.equippedSkills.length === 0) {
+                container.innerHTML = `<p class="text-[10px] text-[#7e7e7e] text-center py-4 col-span-2 uppercase tracking-wider">장착된 마법 비기가 없습니다. [스킬] 연구소에서 마법을 선택해 장착하세요!</p>`;
+                return;
+            }
+
+            let html = "";
+            gameState.equippedSkills.forEach((id) => {
+                if (!gameState.skillsInventory) return;
+                const skill = gameState.skillsInventory.find(s => s.id === id);
+                if (skill) {
+                    const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
+                    const isOnCooldown = skill.cooldownRemaining > 0;
+                    const pct = isOnCooldown ? Math.round((skill.cooldownRemaining / skill.maxCooldown) * 100) : 0;
+
+                    html += `
+                        <button onclick="castWordSkill('${skill.id}')" ${isOnCooldown ? 'disabled' : ''} class="relative overflow-hidden p-2.5 ${gradeInfo.colorClass} border text-left rounded-none-forced transition duration-150 flex flex-col justify-between h-14 group">
+                            ${isOnCooldown ? `<div class="absolute bottom-0 left-0 h-1 bg-[#e22718] transition-all" style="width: ${100 - pct}%"></div>` : ''}
+                            
+                            <div class="flex justify-between items-center w-full z-10">
+                                <span class="text-xs font-bold font-mono tracking-wider">${skill.word.toUpperCase()}</span>
+                                <span class="text-[9px] ${isOnCooldown ? 'text-[#e22718] font-bold' : 'text-[#0066b1] font-bold'}">
+                                    ${isOnCooldown ? `${Math.ceil(skill.cooldownRemaining)}s` : `${gradeInfo.name}`}
+                                </span>
+                            </div>
+                            <span class="text-[9px] font-light truncate w-full z-10 opacity-90">${skill.meaning}</span>
+                        </button>
+                    `;
+                }
+            });
+
+            const emptySlots = 4 - gameState.equippedSkills.length;
+            for (let i = 0; i < emptySlots; i++) {
+                html += `
+                    <div class="border border-dashed border-[#3c3c3c] rounded-none-forced flex items-center justify-center h-14 text-[9px] text-[#7e7e7e] font-bold uppercase tracking-wider bg-[#0d0d0d]">
+                        SLOT EMPTY
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function castWordSkill(skillId) {
+            if (!gameState.skillsInventory) return;
+            const skill = gameState.skillsInventory.find(s => s.id === skillId);
+            if (!skill || skill.cooldownRemaining > 0) return;
+
+            const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
+
+            const skillDmg = calculateClickAttackPower() * gradeInfo.multiplier;
+            processCombatDamage(skillDmg);
+            playSoundEffect('levelup');
+
+            const arena = document.getElementById("battleArena");
+            const rect = arena.getBoundingClientRect();
+            spawnDamageFloatingText(rect.width / 2 + (Math.random() * 40 - 20), rect.height / 3, `💥 [${gradeInfo.name}] ${skill.word.toUpperCase()}: -${skillDmg} DMG!`);
+
+            const mContainer = document.getElementById("monsterContainer");
+            mContainer.classList.add("animate-shake");
+            setTimeout(() => { mContainer.classList.remove("animate-shake"); }, 150);
+
+            skill.cooldownRemaining = skill.maxCooldown;
+            renderSkillsUI();
+            buildSkillTabUI();
+            saveLocalCache();
+        }
+
+        function evaluateAnswer(index) {
+            gameState.totalQuizTries++;
+            const buttons = document.getElementsByClassName("choice-btn");
+            const current = gameState.wordsPool[gameState.currentQuizIndex];
+
+            if (index === gameState.currentQuizCorrectAnswer) {
+                playSoundEffect('correct');
+                buttons[index].className = "choice-btn p-3.5 bg-green-950/80 border-2 border-green-500 text-white font-bold rounded-none-forced text-center transition flex items-center justify-center";
+                gameState.totalQuizCorrect++;
+
+                const baseReward = 200 * gameState.grade;
+                let petMultiplier = 1.0;
+
+                if (gameState.petType !== "none" && gameState.petLvl > 0) {
+                    petMultiplier += PET_PARAMS[gameState.petType].bonus * gameState.petLvl;
+                }
+                const reward = Math.floor(baseReward * petMultiplier);
+
+                gameState.gold += reward;
+
+                const arena = document.getElementById("battleArena");
+                spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `✨ CRITICAL IMPACT!`);
+
+                if (Math.random() < 0.4) {
+                    rollAndAcquireSkill(current.word, current.meaning);
+                }
+
+                gameState.currentQuizIndex = (gameState.currentQuizIndex + 1) % gameState.wordsPool.length;
+
+                const spellDmg = calculateClickAttackPower() * 12;
+                processCombatDamage(spellDmg);
+
+                showToast(`🔥 단어 비기 해독 성공! 물리 타격 피해(-${spellDmg})와 학습 금화 +${reward}G를 획득했습니다!`);
+
+                setTimeout(() => {
+                    generateQuizCard();
+                    populateMasteredVocabulary();
+                    refreshStateVisuals();
+                }, 1000);
+
+            } else {
+                playSoundEffect('incorrect');
+                buttons[index].className = "choice-btn p-3.5 bg-red-950/80 border-2 border-red-500 text-white font-bold rounded-none-forced text-center transition flex items-center justify-center";
+                showToast("❌ 보호 마법진 가해 실패! 몬스터가 교란 신호를 파악했습니다.");
+            }
+            saveLocalCache();
+        }
+
+        function populateMasteredVocabulary() {
+            const listDiv = document.getElementById("masteredVocabularyCatalog");
+            const count = gameState.totalQuizCorrect;
+
+            if (count === 0) {
+                listDiv.innerHTML = `<p class="text-xs text-[#7e7e7e] text-center py-10 uppercase tracking-wider">아직 학습을 정복한 영단어 목록이 비어 있습니다.</p>`;
+                return;
+            }
+
+            let html = `<div class="grid grid-cols-2 gap-2">`;
+            const maxCap = Math.min(count, gameState.wordsPool.length);
+            for (let i = 0; i < maxCap; i++) {
+                const item = gameState.wordsPool[i];
+                if (item) {
+                    html += `
+                        <div class="bg-[#0d0d0d] p-2.5 border border-[#3c3c3c] rounded-none-forced flex items-center justify-between text-2xs">
+                            <div>
+                                <p class="font-bold text-[#0066b1] font-mono">${item.word.toUpperCase()}</p>
+                                <p class="text-[#bbbbbb] mt-0.5">${item.meaning}</p>
+                            </div>
+                            <span class="text-[8px] bg-black text-[#0066b1] border border-[#0066b1] font-bold px-2 py-0.5 rounded-none-forced">CLEAR</span>
+                        </div>
+                    `;
+                }
+            }
+            html += `</div>`;
+            listDiv.innerHTML = html;
+        }
+
+        // ==========================================
+        // STAGE BOSS SYSTEM
+        // ==========================================
+        function startBossBattle() {
+            if (isBossBattleActive) return;
+
+            isBossBattleActive = true;
+            bossTimeRemaining = 30.0;
+
+            showToast("🚨 [WARN] 가공할 학구열의 보스 몬스터가 출현했습니다! 공격 시작!");
+            playSoundEffect('levelup');
+
+            document.getElementById("bossBattleTimerHeader").classList.remove("hidden");
+            document.getElementById("bossTriggerBtn").classList.add("hidden");
+
+            respawnActiveMonster();
+
+            if (bossTimerInterval) clearInterval(bossTimerInterval);
+
+            bossTimerInterval = setInterval(() => {
+                bossTimeRemaining -= 0.1;
+                if (bossTimeRemaining <= 0) {
+                    failBossBattle();
+                } else {
+                    const pct = (bossTimeRemaining / 30.0) * 100;
+                    document.getElementById("bossTimerBar").style.width = `${pct}%`;
+                    document.getElementById("bossTimeLimitCount").innerText = `${bossTimeRemaining.toFixed(1)}초`;
+                }
+            }, 100);
+        }
+
+        function failBossBattle() {
+            clearInterval(bossTimerInterval);
+            isBossBattleActive = false;
+
+            document.getElementById("bossBattleTimerHeader").classList.add("hidden");
+
+            showToast("⚠️ 제한 시간이 지났습니다! 보스가 물러갑니다. 훈련을 더 마치고 오세요!");
+
+            respawnActiveMonster();
+            refreshStateVisuals();
+        }
+
+        function concludeBossSuccess() {
+            clearInterval(bossTimerInterval);
+            isBossBattleActive = false;
+
+            document.getElementById("bossBattleTimerHeader").classList.add("hidden");
+
+            gameState.stage++;
+            gameState.progress = 0;
+
+            showToast(`🏆 STAGE CLEAR! 용사는 스테이지 ${gameState.stage}로 승단 도약했습니다!`);
+
+            respawnActiveMonster();
+            refreshStateVisuals();
+        }
+
+        function refreshStateVisuals() {
+            document.getElementById("goldCount").innerText = Math.floor(gameState.gold).toLocaleString();
+            document.getElementById("dpsCount").innerText = calculateDPSPower();
+            document.getElementById("clickPowerCount").innerText = calculateClickAttackPower();
+            document.getElementById("displayStageNum").innerText = `STAGE ${gameState.stage}-${gameState.progress + 1}`;
+
+            const curProg = gameState.progress;
+            const progressRatio = Math.min(100, (curProg / BOSS_UNLOCK_LIMIT) * 100);
+
+            document.getElementById("bossProgressBar").style.width = `${progressRatio}%`;
+            document.getElementById("bossUnlockRatio").innerText = `${curProg} / ${BOSS_UNLOCK_LIMIT}`;
+
+            if (curProg >= BOSS_UNLOCK_LIMIT && !isBossBattleActive) {
+                document.getElementById("bossTriggerBtn").classList.remove("hidden");
+                document.getElementById("bossTriggerBtn").classList.add("flex");
+            } else {
+                document.getElementById("bossTriggerBtn").classList.add("hidden");
+            }
+
+            document.getElementById("statCorrectCount").innerText = gameState.totalQuizCorrect;
+            document.getElementById("statIncorrectCount").innerText = gameState.totalQuizTries - gameState.totalQuizCorrect;
+
+            const ratio = gameState.totalQuizTries > 0
+                ? Math.round((gameState.totalQuizCorrect / gameState.totalQuizTries) * 100)
+                : 0;
+            document.getElementById("statSuccessRatio").innerText = `${ratio}%`;
+            document.getElementById("masteredTotalText").innerText = gameState.totalQuizCorrect;
+        }
+
+        // ==========================================
+        // DATA SYNC & STORAGE
+        // ==========================================
+        function saveLocalCache() {
+            gameState.lastSaved = Date.now();
+            const cacheKey = `vocahero_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+            localStorage.setItem(cacheKey, JSON.stringify(gameState));
+        }
+
+        function saveSessionToCloud() {
+            showToast("⏳ 스프레드시트에 영웅 데이터를 보존하는 중...");
+            saveLocalCache();
+
+            const savedUrl = getGasUrl();
+
+            if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
+                runGas(
+                    "saveStudentProgress",
+                    [
+                        gameState.grade,
+                        gameState.classNum,
+                        gameState.studentNum,
+                        gameState.name,
+                        gameState.gold,
+                        gameState.avatarType,
+                        gameState.helmetLvl,
+                        gameState.armorLvl,
+                        gameState.weaponLvl,
+                        gameState.shieldLvl,
+                        gameState.shoesLvl,
+                        gameState.petType,
+                        gameState.petLvl,
+                        gameState.stage,
+                        gameState.progress,
+                        gameState.skillsInventory,
+                        gameState.equippedSkills
+                    ],
+                    function (response) {
+                        if (response) {
+                            showToast("☁️ 구글 원격 저장소에 완벽 동기화되었습니다!");
+                        } else {
+                            showToast("⚠️ 스프레드시트 기록 실패. 세션 캐시를 사용합니다.");
+                        }
+                    },
+                    function () {
+                        showToast("❌ 구글 서비스 응답 지연. 로컬 브라우저에 임시 정착됩니다.");
+                    }
+                );
+            } else {
+                setTimeout(() => {
+                    showToast("💾 [가상 동기화] 로컬 캐시 스토리지에 세이브 완료!");
+                }, 800);
+            }
+        }
+
+        function resetFullSession() {
+            if (confirm("정말로 캐릭터 상태와 보물을 완전히 지우고 처음부터 출발하시겠습니까?")) {
+                const cacheKey = `vocahero_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+                localStorage.removeItem(cacheKey);
+
+                gameState.gold = 0;
+                gameState.helmetLvl = 1;
+                gameState.armorLvl = 1;
+                gameState.weaponLvl = 1;
+                gameState.shieldLvl = 1;
+                gameState.shoesLvl = 1;
+                gameState.petType = "none";
+                gameState.petLvl = 0;
+                gameState.stage = 1;
+                gameState.progress = 0;
+                gameState.totalQuizTries = 0;
+                gameState.totalQuizCorrect = 0;
+                gameState.skillsInventory = [];
+                gameState.equippedSkills = [];
+
+                saveLocalCache();
+                initGameEngine();
+                showToast("🧹 용사단이 기지를 완전히 비웠습니다.");
+            }
+        }
+
+        setInterval(() => {
+            if (gameState.name !== "방문자") {
+                saveSessionToCloud();
+            }
+        }, 20000);
+
+        function switchTab(tabId) {
+            document.getElementById("quizTab").classList.add("hidden");
+            document.getElementById("gearTab").classList.add("hidden");
+            document.getElementById("petTab").classList.add("hidden");
+            document.getElementById("skillTab").classList.add("hidden");
+            document.getElementById("statsTab").classList.add("hidden");
+
+            document.getElementById(tabId).classList.remove("hidden");
+
+            const tabButtons = ["quizTabBtn", "gearTabBtn", "petTabBtn", "skillTabBtn", "statsTabBtn"];
+            tabButtons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                const isStats = btnId === "statsTabBtn";
+                btn.className = "py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition" + (isStats ? " col-span-3 sm:col-span-1" : "");
+            });
+
+            const activeBtn = document.getElementById(`${tabId}Btn`);
+            const isActiveStats = tabId === "statsTab";
+            activeBtn.className = "py-2.5 text-center font-bold text-xs uppercase tracking-widest text-black bg-white rounded-none-forced flex items-center justify-center gap-1" + (isActiveStats ? " col-span-3 sm:col-span-1" : "");
+
+            if (tabId === 'skillTab') {
+                buildSkillTabUI();
+            }
+        }
+
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+
+            // 교사용 창을 열었을 때 현재 저장된 API URL 세팅
+            if (modalId === 'teacherModal') {
+                const savedUrl = getGasUrl();
+                if (savedUrl) {
+                    document.getElementById("apiEndpointInput").value = savedUrl;
+                }
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById("toastMessage");
+            document.getElementById("toastText").innerText = message;
+            toast.classList.remove("opacity-0", "pointer-events-none");
+            toast.classList.add("opacity-100");
+
+            setTimeout(() => {
+                toast.classList.remove("opacity-100");
+                toast.classList.add("opacity-0", "pointer-events-none");
+            }, 3000);
+        }
+
+        function copyAppsScriptCode() {
+            const codeBox = document.getElementById("appsScriptCode");
+            codeBox.select();
+            document.execCommand('copy');
+            showToast("📋 구글 Apps Script 소스 코드가 완벽하게 복사되었습니다!");
+        }
+
+        window.onload = function () {
+            lucide.createIcons();
+            checkConnectionState();
+            openModal("loginModal");
+        };
+    </script>
+</body>
+
+</html>

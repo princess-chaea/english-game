@@ -1140,6 +1140,17 @@ function getMockWordsFallback(grade) {
         </div>
     </div>
 
+    <!-- Skill Acquisition Modal -->
+    <div id="skillAcquireModal" class="hidden fixed inset-0 z-[10000] items-center justify-center" style="background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);">
+        <div id="skillAcquireBox" class="relative flex flex-col items-center justify-center p-10 border-2 rounded-none-forced" style="min-width:320px;max-width:400px;background:#0d0d0d;box-shadow: 0 0 40px rgba(0,0,0,0.8);">
+            <div id="skillAcquireGrade" class="text-xs font-bold px-3 py-1 mb-4 uppercase tracking-widest border"></div>
+            <div id="skillAcquireWord" class="text-4xl font-bold font-mono tracking-wider mb-2 text-center"></div>
+            <div id="skillAcquireMeaning" class="text-sm text-center text-[#bbbbbb] mb-6"></div>
+            <div id="skillAcquireDesc" class="text-[10px] text-center text-[#7e7e7e] mb-6"></div>
+            <button onclick="document.getElementById('skillAcquireModal').classList.remove('flex');document.getElementById('skillAcquireModal').classList.add('hidden')" class="px-10 py-3 bg-white text-black font-bold text-sm tracking-wider transition hover:bg-gray-200">확인</button>
+        </div>
+    </div>
+
     <script>
         // Secret trigger for Teacher Settings
         let teacherClickCount = 0;
@@ -1219,10 +1230,10 @@ function getMockWordsFallback(grade) {
 
         // Skill Grade Configs (색상 코드 및 배율 계수)
         const SKILL_GRADES = {
-            normal: { name: "일반", multiplier: 15, prob: 0.60, colorClass: "border-[#3c3c3c] bg-black text-[#bbbbbb] rounded-none-forced" },
-            rare: { name: "희귀", multiplier: 25, prob: 0.25, colorClass: "border-[#0066b1] bg-black text-white rounded-none-forced" },
-            hero: { name: "영웅", multiplier: 40, prob: 0.12, colorClass: "border-[#1c69d4] bg-black text-white rounded-none-forced" },
-            legendary: { name: "전설", multiplier: 70, prob: 0.03, colorClass: "border-[#e22718] bg-black text-white rounded-none-forced animate-pulse" }
+            normal: { name: "일반", multiplier: 15, prob: 0.60, colorClass: "border-[#3c3c3c] bg-black text-[#bbbbbb] rounded-none-forced", rank: 1 },
+            rare: { name: "희귀", multiplier: 25, prob: 0.25, colorClass: "border-[#0066b1] bg-[#001f3f] text-[#66b3ff] rounded-none-forced shadow-[0_0_8px_rgba(0,102,177,0.4)]", rank: 2 },
+            hero: { name: "영웅", multiplier: 40, prob: 0.12, colorClass: "border-[#1c69d4] bg-[#0a244d] text-[#66a3ff] rounded-none-forced shadow-[0_0_12px_rgba(28,105,212,0.6)]", rank: 3 },
+            legendary: { name: "전설", multiplier: 70, prob: 0.03, colorClass: "border-[#e22718] bg-[#3f0f0f] text-[#ff8080] rounded-none-forced animate-pulse shadow-[0_0_15px_rgba(226,39,24,0.8)]", rank: 4 }
         };
 
         // Companion pet details
@@ -2487,7 +2498,7 @@ function getMockWordsFallback(grade) {
             };
 
             gameState.skillsInventory.push(newSkill);
-            showToast(`✨ [${gradeInfo.name} 등급] 영단어 비기 스킬 획득: [${word.toUpperCase()}]!`);
+            showSkillModal(newSkill, gradeInfo);
 
             buildSkillTabUI();
             saveLocalCache();
@@ -2534,14 +2545,14 @@ function getMockWordsFallback(grade) {
                         const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
                         eqHtml += `
                             <div class="border-2 ${gradeInfo.colorClass} rounded-none-forced p-2 text-center relative flex flex-col justify-between min-h-[75px] group">
-                                <button onclick="unequipSkill('${skill.id}')" class="absolute -top-1.5 -right-1.5 bg-[#e22718] hover:bg-[#b91c1c] text-white w-4.5 h-4.5 rounded-full flex items-center justify-center text-4xs transition opacity-0 group-hover:opacity-100 font-bold shadow-sm">
+                                <button onclick="unequipSkill('${skill.id}')" class="absolute -top-1.5 -right-1.5 bg-[#e22718] hover:bg-[#b91c1c] text-white w-4.5 h-4.5 rounded-full flex items-center justify-center text-4xs transition opacity-0 group-hover:opacity-100 font-bold shadow-sm z-20">
                                     ×
                                 </button>
-                                <div>
-                                    <span class="text-[8px] block font-bold uppercase tracking-wider text-[#7e7e7e]">${gradeInfo.name}</span>
-                                    <p class="text-[10px] font-bold font-mono truncate text-white mt-0.5">${skill.word.toUpperCase()}</p>
+                                <div class="z-10">
+                                    <span class="text-[8px] block font-bold uppercase tracking-wider ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : 'text-[#7e7e7e]'}">${gradeInfo.name}</span>
+                                    <p class="text-[10px] font-bold font-mono truncate text-white mt-0.5 ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : ''}">${skill.word.toUpperCase()}</p>
                                 </div>
-                                <span class="text-[8px] text-[#bbbbbb] truncate mt-1 block">${skill.meaning}</span>
+                                <span class="text-[8px] truncate mt-1 block z-10 ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-white' : 'text-[#bbbbbb]'}">${skill.meaning}</span>
                             </div>
                         `;
                     } else {
@@ -2559,21 +2570,29 @@ function getMockWordsFallback(grade) {
                 return;
             }
 
+            // 희귀도(rank 내림차순) 정렬 후 생성일자 내림차순
+            const sortedInventory = [...gameState.skillsInventory].sort((a, b) => {
+                const rankA = (SKILL_GRADES[a.grade] || SKILL_GRADES.normal).rank;
+                const rankB = (SKILL_GRADES[b.grade] || SKILL_GRADES.normal).rank;
+                if (rankB !== rankA) return rankB - rankA;
+                return b.id.localeCompare(a.id);
+            });
+
             let invHtml = "";
-            gameState.skillsInventory.forEach(skill => {
+            sortedInventory.forEach(skill => {
                 const isEquipped = gameState.equippedSkills.includes(skill.id);
                 const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
 
                 invHtml += `
-                    <div class="border ${isEquipped ? 'border-white' : 'border-[#262626]'} bg-[#0d0d0d] rounded-none-forced p-3 flex items-center justify-between text-left">
+                    <div class="border-2 ${isEquipped ? 'border-white' : 'border-[#262626]'} bg-[#0d0d0d] rounded-none-forced p-3 flex items-center justify-between text-left transition hover:bg-[#1a1a1a]">
                         <div class="min-w-0 flex-grow pr-1.5">
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-[8px] font-bold px-1.5 py-0.5 rounded-none-forced uppercase tracking-widest ${getGradeBgClass(skill.grade)}">${gradeInfo.name}</span>
-                                <p class="text-xs font-bold font-mono text-white truncate">${skill.word.toUpperCase()}</p>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-none-forced uppercase tracking-widest ${gradeInfo.colorClass}">${gradeInfo.name}</span>
+                                <p class="text-sm font-bold font-mono text-white truncate ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : ''}">${skill.word.toUpperCase()}</p>
                             </div>
-                            <p class="text-[10px] text-[#bbbbbb] truncate mt-1">${skill.meaning} (피해 배율 ×${gradeInfo.multiplier}배)</p>
+                            <p class="text-xs text-[#bbbbbb] truncate">${skill.meaning} (피해 배율 ×${gradeInfo.multiplier}배)</p>
                         </div>
-                        <button onclick="${isEquipped ? `unequipSkill('${skill.id}')` : `equipSkill('${skill.id}')`}" class="flex-shrink-0 text-[9px] font-bold px-3 py-1.5 rounded-none-forced transition ${isEquipped ? 'bg-transparent border border-[#e22718] text-[#e22718] hover:bg-[#e22718] hover:text-white' : 'bg-transparent border border-white text-white hover:bg-white hover:text-black'}">
+                        <button onclick="${isEquipped ? `unequipSkill('${skill.id}')` : `equipSkill('${skill.id}')`}" class="flex-shrink-0 text-[10px] font-bold px-4 py-2 rounded-none-forced transition ${isEquipped ? 'bg-transparent border border-[#e22718] text-[#e22718] hover:bg-[#e22718] hover:text-white' : 'bg-transparent border border-white text-white hover:bg-white hover:text-black'}">
                             ${isEquipped ? 'UNEQUIP' : 'EQUIP'}
                         </button>
                     </div>
@@ -2582,12 +2601,6 @@ function getMockWordsFallback(grade) {
             invGrid.innerHTML = invHtml;
         }
 
-        function getGradeBgClass(grade) {
-            if (grade === 'legendary') return "bg-[#e22718] text-white";
-            if (grade === 'hero') return "bg-[#1c69d4] text-white";
-            if (grade === 'rare') return "bg-[#0066b1] text-white";
-            return "bg-[#3c3c3c] text-white";
-        }
 
         function renderSkillsUI() {
             const container = document.getElementById("skillsContainer");
@@ -2608,16 +2621,16 @@ function getMockWordsFallback(grade) {
                     const pct = isOnCooldown ? Math.round((skill.cooldownRemaining / skill.maxCooldown) * 100) : 0;
 
                     html += `
-                        <button id="btn-skill-${skill.id}" onclick="castWordSkill('${skill.id}')" ${isOnCooldown ? 'disabled' : ''} class="relative overflow-hidden p-2.5 ${gradeInfo.colorClass} border text-left rounded-none-forced transition duration-150 flex flex-col justify-between h-14 group">
-                            ${isOnCooldown ? `<div class="cooldown-bar absolute bottom-0 left-0 h-1 bg-[#e22718] transition-all" style="width: ${100 - pct}%"></div>` : ''}
+                        <button id="btn-skill-${skill.id}" onclick="castWordSkill('${skill.id}')" ${isOnCooldown ? 'disabled' : ''} class="relative overflow-hidden p-2.5 ${gradeInfo.colorClass} border-2 text-left rounded-none-forced transition duration-150 flex flex-col justify-between h-14 group">
+                            ${isOnCooldown ? `<div class="cooldown-bar absolute bottom-0 left-0 h-1.5 bg-[#e22718] transition-all" style="width: ${100 - pct}%"></div>` : ''}
                             
                             <div class="flex justify-between items-center w-full z-10">
-                                <span class="text-xs font-bold font-mono tracking-wider">${skill.word.toUpperCase()}</span>
-                                <span class="cooldown-timer text-[9px] ${isOnCooldown ? 'text-[#e22718] font-bold' : 'text-[#0066b1] font-bold'}">
+                                <span class="text-xs font-bold font-mono tracking-wider ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : ''}">${skill.word.toUpperCase()}</span>
+                                <span class="cooldown-timer text-[9px] ${isOnCooldown ? 'text-[#e22718] font-bold' : 'font-bold opacity-80'}">
                                     ${isOnCooldown ? `${Math.ceil(skill.cooldownRemaining)}s` : `${gradeInfo.name}`}
                                 </span>
                             </div>
-                            <span class="text-[9px] font-light truncate w-full z-10 opacity-90">${skill.meaning}</span>
+                            <span class="text-[9px] font-light truncate w-full z-10 opacity-90 ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-white' : ''}">${skill.meaning}</span>
                         </button>
                     `;
                 }
@@ -3041,6 +3054,26 @@ function getMockWordsFallback(grade) {
             el.style.opacity = "1";
             clearTimeout(_battleToastTimer);
             _battleToastTimer = setTimeout(() => { el.style.opacity = "0"; }, 2200);
+        }
+
+        function showSkillModal(skill, gradeInfo) {
+            const modal = document.getElementById("skillAcquireModal");
+            const box = document.getElementById("skillAcquireBox");
+            const gradeEl = document.getElementById("skillAcquireGrade");
+            
+            gradeEl.innerText = gradeInfo.name;
+            gradeEl.className = `text-xs font-bold px-3 py-1 mb-4 uppercase tracking-widest ${gradeInfo.colorClass}`;
+            
+            document.getElementById("skillAcquireWord").innerText = skill.word.toUpperCase();
+            document.getElementById("skillAcquireWord").className = `text-4xl font-bold font-mono tracking-wider mb-2 ${gradeInfo.colorClass.includes('animate-pulse') ? 'animate-pulse text-[#ff8080]' : 'text-white'} text-center`;
+            document.getElementById("skillAcquireMeaning").innerText = skill.meaning;
+            document.getElementById("skillAcquireDesc").innerText = `피해 배율: 물리 공격력의 ×${gradeInfo.multiplier}배`;
+            
+            box.className = `relative flex flex-col items-center justify-center p-10 border-2 rounded-none-forced transition-all duration-500 scale-100 ${gradeInfo.colorClass}`;
+            
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+            playSoundEffect('levelup');
         }
 
         function showForgeResult(isSuccess, title, desc, borderColor) {

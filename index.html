@@ -318,10 +318,15 @@
             
             <!-- Stage Header & Progress -->
             <div class="z-10 flex justify-between items-center bg-[#0d0d0d] border border-[#3c3c3c] px-4 py-2 rounded-none-forced">
-                <span class="font-bold text-xs uppercase tracking-widest text-[#0066b1] flex items-center gap-1.5">
-                    <i data-lucide="shield" class="w-4 h-4"></i>
-                    <span id="displayStageNum">스테이지 1-1</span>
-                </span>
+                <div class="flex items-center gap-3">
+                    <span class="font-bold text-xs uppercase tracking-widest text-[#0066b1] flex items-center gap-1.5">
+                        <i data-lucide="shield" class="w-4 h-4"></i>
+                        <span id="displayStageNum">스테이지 1-1</span>
+                    </span>
+                    <span class="text-[9px] text-[#7e7e7e] font-mono border-l border-[#3c3c3c] pl-3">
+                        권장 DPS: <span id="recommendedDpsDisplay" class="text-orange-500 font-bold">0</span>
+                    </span>
+                </div>
                 <!-- Active Offline reward flag -->
                 <span id="offlineEarningsBadge"
                     class="hidden bg-[#e22718]/90 text-white border border-[#e22718] px-2 py-0.5 rounded-none-forced text-[9px] font-bold animate-pulse">
@@ -1240,6 +1245,7 @@ function getMockWordsFallback(grade) {
         let gameLoopInterval = null;
         let monsterCurrentHp = 10;
         let monsterMaxHp = 10;
+        let currentQuizChoices = [];
 
         // Custom Synthesizer using Web Audio API
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1958,7 +1964,7 @@ function getMockWordsFallback(grade) {
         }
 
         function calculateDPSPower() {
-            let totalDps = 0;
+            let totalDps = calculateGearDPS();
             if (gameState.petLevels) {
                 for (let petKey in gameState.petLevels) {
                     const petLvl = gameState.petLevels[petKey] || 0;
@@ -2047,10 +2053,14 @@ function getMockWordsFallback(grade) {
                 ? BOSS_PROFILES[(gameState.stage - 1) % BOSS_PROFILES.length]
                 : MONSTER_PROFILES[index];
 
-            const scaleFactor = 1.35;
-            monsterMaxHp = isBossBattleActive
-                ? profile.hp
-                : Math.floor(profile.hp * Math.pow(scaleFactor, gameState.stage - 1));
+            // Smooth monotonic growth scaling
+            const growthFactor = 1.24;
+            if (isBossBattleActive) {
+                const regularHp = Math.floor(15 * Math.pow(growthFactor, gameState.stage - 1));
+                monsterMaxHp = Math.floor(regularHp * 12);
+            } else {
+                monsterMaxHp = Math.floor(15 * Math.pow(growthFactor, gameState.stage - 1));
+            }
 
             monsterCurrentHp = monsterMaxHp;
 
@@ -2342,6 +2352,18 @@ function getMockWordsFallback(grade) {
             }
         }
 
+        function renderChoices(choices, correctMeaning) {
+            currentQuizChoices = [...choices];
+            currentQuizChoices.sort(() => 0.5 - Math.random());
+            gameState.currentQuizCorrectAnswer = currentQuizChoices.indexOf(correctMeaning);
+
+            const buttons = document.getElementsByClassName("choice-btn");
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].querySelector(".choice-text").innerText = currentQuizChoices[i];
+                buttons[i].className = "choice-btn p-3.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group";
+            }
+        }
+
         function generateQuizCard() {
             if (!gameState.wordsPool || gameState.wordsPool.length === 0) {
                 document.getElementById("quizWordEng").innerText = "마법 성역의 단어가 고갈되었습니다";
@@ -2367,14 +2389,7 @@ function getMockWordsFallback(grade) {
                 choices.push(listMeanings[i]);
             }
 
-            choices.sort(() => 0.5 - Math.random());
-            gameState.currentQuizCorrectAnswer = choices.indexOf(current.meaning);
-
-            const buttons = document.getElementsByClassName("choice-btn");
-            for (let i = 0; i < buttons.length; i++) {
-                buttons[i].querySelector(".choice-text").innerText = choices[i];
-                buttons[i].className = "choice-btn p-3.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group";
-            }
+            renderChoices(choices, current.meaning);
         }
 
         function rollAndAcquireSkill(word, meaning) {
@@ -2668,7 +2683,14 @@ function getMockWordsFallback(grade) {
             } else {
                 playSoundEffect('incorrect');
                 buttons[index].className = "choice-btn p-3.5 bg-red-950/80 border-2 border-red-500 text-white font-bold rounded-none-forced text-center transition flex items-center justify-center";
-                showToast("❌ 보호 마법진 가해 실패! 몬스터가 교란 신호를 파악했습니다.");
+                showToast("❌ 오답입니다! 몬스터의 교란으로 약점 단어 위치가 재배치(셔플)됩니다.");
+                
+                // 700ms 후 선택지 순서를 섞어 무차별 찍기를 방지합니다.
+                setTimeout(() => {
+                    if (current) {
+                        renderChoices(currentQuizChoices, current.meaning);
+                    }
+                }, 700);
             }
             saveLocalCache();
         }
@@ -2764,7 +2786,13 @@ function getMockWordsFallback(grade) {
             document.getElementById("goldCount").innerText = Math.floor(gameState.gold).toLocaleString();
             document.getElementById("dpsCount").innerText = calculateDPSPower();
             document.getElementById("clickPowerCount").innerText = calculateClickAttackPower();
-            document.getElementById("displayStageNum").innerText = `스테이지 ${gameState.stage}-${gameState.progress + 1}`;
+            document.getElementById("displayStageNum").innerText = isBossBattleActive 
+                ? `보스 스테이지 ${gameState.stage}`
+                : `스테이지 ${gameState.stage}-${gameState.progress + 1}`;
+
+            // 권장 DPS 계산 (일반 몬스터는 8초 이내, 보스는 30초 이내 처치 목표)
+            const recommendedDps = Math.ceil(monsterMaxHp / (isBossBattleActive ? 30 : 8));
+            document.getElementById("recommendedDpsDisplay").innerText = recommendedDps.toLocaleString();
 
             const curProg = gameState.progress;
             const progressRatio = Math.min(100, (curProg / BOSS_UNLOCK_LIMIT) * 100);

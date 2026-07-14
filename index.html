@@ -1705,7 +1705,7 @@ function getMockWordsFallback(grade) {
                     });
                 }
                 if (skillsChanged) {
-                    renderSkillsUI();
+                    updateSkillsCooldownVisuals();
                     if (!document.getElementById("skillTab").classList.contains("hidden")) {
                         buildSkillTabUI();
                     }
@@ -2217,12 +2217,12 @@ function getMockWordsFallback(grade) {
                     const pct = isOnCooldown ? Math.round((skill.cooldownRemaining / skill.maxCooldown) * 100) : 0;
 
                     html += `
-                        <button onclick="castWordSkill('${skill.id}')" ${isOnCooldown ? 'disabled' : ''} class="relative overflow-hidden p-2.5 ${gradeInfo.colorClass} border text-left rounded-none-forced transition duration-150 flex flex-col justify-between h-14 group">
-                            ${isOnCooldown ? `<div class="absolute bottom-0 left-0 h-1 bg-[#e22718] transition-all" style="width: ${100 - pct}%"></div>` : ''}
+                        <button id="btn-skill-${skill.id}" onclick="castWordSkill('${skill.id}')" ${isOnCooldown ? 'disabled' : ''} class="relative overflow-hidden p-2.5 ${gradeInfo.colorClass} border text-left rounded-none-forced transition duration-150 flex flex-col justify-between h-14 group">
+                            ${isOnCooldown ? `<div class="cooldown-bar absolute bottom-0 left-0 h-1 bg-[#e22718] transition-all" style="width: ${100 - pct}%"></div>` : ''}
                             
                             <div class="flex justify-between items-center w-full z-10">
                                 <span class="text-xs font-bold font-mono tracking-wider">${skill.word.toUpperCase()}</span>
-                                <span class="text-[9px] ${isOnCooldown ? 'text-[#e22718] font-bold' : 'text-[#0066b1] font-bold'}">
+                                <span class="cooldown-timer text-[9px] ${isOnCooldown ? 'text-[#e22718] font-bold' : 'text-[#0066b1] font-bold'}">
                                     ${isOnCooldown ? `${Math.ceil(skill.cooldownRemaining)}s` : `${gradeInfo.name}`}
                                 </span>
                             </div>
@@ -2242,6 +2242,50 @@ function getMockWordsFallback(grade) {
             }
 
             container.innerHTML = html;
+        }
+
+        function updateSkillsCooldownVisuals() {
+            if (!gameState.equippedSkills) return;
+            gameState.equippedSkills.forEach(id => {
+                if (!gameState.skillsInventory) return;
+                const skill = gameState.skillsInventory.find(s => s.id === id);
+                if (skill) {
+                    const btn = document.getElementById(`btn-skill-${id}`);
+                    if (btn) {
+                        const isOnCooldown = skill.cooldownRemaining > 0;
+                        
+                        if (isOnCooldown) {
+                            btn.setAttribute('disabled', 'true');
+                        } else {
+                            btn.removeAttribute('disabled');
+                        }
+                        
+                        const timerSpan = btn.querySelector('.cooldown-timer');
+                        if (timerSpan) {
+                            const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
+                            timerSpan.innerText = isOnCooldown ? `${Math.ceil(skill.cooldownRemaining)}s` : gradeInfo.name;
+                            if (isOnCooldown) {
+                                timerSpan.className = 'cooldown-timer text-[9px] text-[#e22718] font-bold';
+                            } else {
+                                timerSpan.className = 'cooldown-timer text-[9px] text-[#0066b1] font-bold';
+                            }
+                        }
+                        
+                        let bar = btn.querySelector('.cooldown-bar');
+                        const pct = isOnCooldown ? Math.round((skill.cooldownRemaining / skill.maxCooldown) * 100) : 0;
+                        if (isOnCooldown) {
+                            if (!bar) {
+                                bar = document.createElement('div');
+                                bar.className = 'cooldown-bar absolute bottom-0 left-0 h-1 bg-[#e22718] transition-all';
+                                btn.appendChild(bar);
+                            }
+                            bar.style.width = `${100 - pct}%`;
+                        } else if (bar) {
+                            bar.remove();
+                        }
+                    }
+                }
+            });
         }
 
         function castWordSkill(skillId) {

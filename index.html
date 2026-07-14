@@ -298,6 +298,12 @@
                     <i data-lucide="user" class="w-4 h-4 text-white"></i>
                     <span id="displayStudentName">불러오는 중...</span>
                 </div>
+                <!-- Save & Exit Button -->
+                <button onclick="saveAndExit()" 
+                    class="bg-[#e22718] hover:bg-[#b91c1c] border border-[#e22718] text-white px-3 py-1.5 rounded-none-forced text-xs font-bold transition flex items-center gap-1.5 tracking-wider uppercase">
+                    <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                    <span>저장하고 나가기</span>
+                </button>
             </div>
         </div>
     </header>
@@ -667,8 +673,8 @@
                 <div class="flex gap-2 mt-4">
                     <button onclick="saveSessionToCloud()"
                         class="flex-1 bmw-btn-primary py-3.5 flex items-center justify-center gap-1.5 shadow-md">
-                        <i data-lucide="cloud-lightning" class="w-4 h-4 text-[#0066b1]"></i>
-                        <span>구글 스프레드시트에 영구 동기화</span>
+                        <i data-lucide="save" class="w-4 h-4 text-[#0066b1]"></i>
+                        <span>저장하기</span>
                     </button>
                     <button onclick="resetFullSession()"
                         class="bmw-btn-danger text-xs px-3.5">
@@ -2629,6 +2635,15 @@ function getMockWordsFallback(grade) {
                     showToast("💾 [가상 동기화] 로컬 캐시 스토리지에 세이브 완료!");
                 }, 800);
             }
+        }
+
+        function saveAndExit() {
+            saveSessionToCloud();
+            showToast("💾 데이터 저장 완료! 잠시 후 창을 안전하게 닫습니다...");
+            setTimeout(() => {
+                window.close();
+                alert("💾 데이터가 완벽하게 저장되었습니다! 이제 브라우저 창을 닫으셔도 좋습니다.");
+            }, 1200);
         }
 
         function resetFullSession() {

@@ -26,6 +26,8 @@ function doPost(e) {
     
     if (action === "getWordsFromSheet") {
       result = getWordsFromSheet.apply(null, args);
+    } else if (action === "checkStudentExists") {
+      result = checkStudentExists.apply(null, args);
     } else if (action === "loadOrCreateStudent") {
       result = loadOrCreateStudent.apply(null, args);
     } else if (action === "saveStudentProgress") {
@@ -55,7 +57,7 @@ function initDatabaseSheets() {
       "Grade", "Class", "Number", "Name", "Gold", 
       "AvatarType", "HelmetLvl", "ArmorLvl", "WeaponLvl", "ShieldLvl", "ShoesLvl", 
       "PetType", "PetLvl", "Stage", "Progress", "LastSaved", 
-      "SkillsInventory", "EquippedSkills"
+      "SkillsInventory", "EquippedSkills", "Password"
     ];
     studentSheet.appendRow(studentHeaders);
     
@@ -131,7 +133,28 @@ function getWordsFromSheet(grade) {
 }
 
 // 4. 용사 생성 또는 학적 매칭 및 기존 로드
-function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar) {
+function checkStudentExists(grade, classNum, studentNum, name) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName("Students");
+    if (!sheet) return { exists: false };
+    
+    var data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(grade) && 
+          String(data[i][1]) === String(classNum) && 
+          String(data[i][2]) === String(studentNum) && 
+          String(data[i][3]) === String(name)) {
+        return { exists: true };
+      }
+    }
+    return { exists: false };
+  } catch(e) {
+    return { exists: false };
+  }
+}
+
+function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, password) {
   initDatabaseSheets(); // 구동 전 자동 그리드 점검
   
   try {
@@ -146,6 +169,15 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar) {
           String(data[i][2]) === String(studentNum) && 
           String(data[i][3]) === String(name)) {
         
+        var savedPassword = data[i][18] ? String(data[i][18]) : "";
+        if (savedPassword !== "" && savedPassword !== String(password)) {
+          return { error: "password_mismatch" };
+        }
+        
+        if (savedPassword === "" && password) {
+          sheet.getRange(i + 1, 19).setValue(String(password));
+        }
+
         // 직렬화되어 문자열 상태로 적재된 JSON 스킬 필드 안전 파싱
         var parsedInventory = [];
         var parsedEquipped = [];
@@ -188,7 +220,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar) {
     var newRow = [
       Number(grade), Number(classNum), Number(studentNum), String(name), 
       0, String(defaultAvatar), 1, 1, 1, 1, 1, "none", 0, 1, 0, Date.now(),
-      defaultInvStr, defaultEqStr
+      defaultInvStr, defaultEqStr, String(password)
     ];
     
     sheet.appendRow(newRow);

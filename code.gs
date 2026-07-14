@@ -197,6 +197,26 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
           parsedEquipped = [];
         }
 
+        var parsedPets = {};
+        try {
+          var pData = String(data[i][11]).trim();
+          if (pData.startsWith('{')) {
+            parsedPets = JSON.parse(pData);
+          } else {
+            var oldType = pData || "none";
+            var oldLvl = Number(data[i][12]) || 0;
+            if (oldType !== "none" && oldLvl > 0) {
+              parsedPets[oldType] = oldLvl;
+            }
+          }
+        } catch(e) {
+          var oldType = String(data[i][11]).trim() || "none";
+          var oldLvl = Number(data[i][12]) || 0;
+          if (oldType !== "none" && oldLvl > 0) {
+            parsedPets[oldType] = oldLvl;
+          }
+        }
+
         return {
           grade: Number(data[i][0]),
           classNum: Number(data[i][1]),
@@ -209,6 +229,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
           weaponLvl: Number(data[i][8]) || 1,
           shieldLvl: Number(data[i][9]) || 1,
           shoesLvl: Number(data[i][10]) || 1,
+          petData: parsedPets,
           petType: String(data[i][11]) || "none",
           petLvl: Number(data[i][12]) || 0,
           stage: Number(data[i][13]) || 1,
@@ -226,7 +247,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
     
     var newRow = [
       Number(grade), Number(classNum), Number(studentNum), String(name), 
-      0, String(defaultAvatar), 1, 1, 1, 1, 1, "none", 0, 1, 0, Date.now(),
+      0, String(defaultAvatar), 1, 1, 1, 1, 1, "{}", 0, 1, 0, Date.now(),
       defaultInvStr, defaultEqStr, String(password)
     ];
     
@@ -236,7 +257,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
       grade: newRow[0], classNum: newRow[1], studentNum: newRow[2], name: newRow[3],
       gold: newRow[4], avatarType: newRow[5], helmetLvl: newRow[6], armorLvl: newRow[7],
       weaponLvl: newRow[8], shieldLvl: newRow[9], shoesLvl: newRow[10],
-      petType: newRow[11], petLvl: newRow[12], stage: newRow[13], progress: newRow[14], 
+      petData: {}, petType: newRow[11], petLvl: newRow[12], stage: newRow[13], progress: newRow[14], 
       lastSaved: newRow[15], skillsInventory: [], equippedSkills: []
     };
   } catch(e) {

@@ -961,7 +961,8 @@ function checkStudentExists(grade, classNum, studentNum, name) {
           String(data[i][1]) === String(classNum) && 
           String(data[i][2]) === String(studentNum) && 
           String(data[i][3]) === String(name)) {
-        return { exists: true };
+        var storedPw = data[i][18] ? String(data[i][18]).trim() : "";
+        return { exists: true, hasPassword: storedPw !== "" };
       }
     }
     return { exists: false };
@@ -986,13 +987,15 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
           String(data[i][2]) === String(studentNum) && 
           String(data[i][3]) === String(name)) {
         
-        var savedPassword = data[i][18] ? String(data[i][18]) : "";
-        if (savedPassword !== "" && savedPassword !== String(password)) {
-          return { error: "password_mismatch" };
-        }
-        
-        if (savedPassword === "" && password) {
-          sheet.getRange(i + 1, 19).setValue(String(password));
+        var savedPassword = data[i][18] ? String(data[i][18]).trim() : "";
+        if (savedPassword !== "") {
+          if (String(password).trim() !== savedPassword) {
+            return { error: "password_mismatch" };
+          }
+        } else {
+          if (password && String(password).trim() !== "") {
+            sheet.getRange(i + 1, 19).setValue(String(password).trim());
+          }
         }
 
         var parsedInv = [];
@@ -1448,13 +1451,21 @@ function getMockWordsFallback(grade) {
                     "checkStudentExists",
                     [grade, classNum, studentNum, name],
                     function (response) {
+                        closeModal("loginModal");
                         if (response && response.exists) {
-                            closeModal("loginModal");
-                            openModal("pinVerifyModal");
-                            document.getElementById("verifyPinInput").value = "";
-                            document.getElementById("verifyPinInput").focus();
+                            if (response.hasPassword) {
+                                // 기존 계정 + PIN 있음 → PIN 확인 모달
+                                openModal("pinVerifyModal");
+                                document.getElementById("verifyPinInput").value = "";
+                                document.getElementById("verifyPinInput").focus();
+                            } else {
+                                // 기존 계정이지만 PIN 미등록 → 신규 PIN 설정 모달
+                                openModal("newUserRegisterModal");
+                                document.getElementById("newPinInput").value = "";
+                                showToast("🔑 첫 접속입니다. 사용할 PIN 4자리를 설정하세요!");
+                            }
                         } else {
-                            closeModal("loginModal");
+                            // 신규 계정 → 아바타·PIN 설정 모달
                             openModal("newUserRegisterModal");
                             document.getElementById("newPinInput").value = "";
                         }

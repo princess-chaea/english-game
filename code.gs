@@ -132,7 +132,7 @@ function getWordsFromSheet(grade) {
   }
 }
 
-// 4. 용사 생성 또는 학적 매칭 및 기존 로드
+// 4-A. 계정 존재 여부 확인 + PIN 설정 여부 반환
 function checkStudentExists(grade, classNum, studentNum, name) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -145,7 +145,9 @@ function checkStudentExists(grade, classNum, studentNum, name) {
           String(data[i][1]) === String(classNum) && 
           String(data[i][2]) === String(studentNum) && 
           String(data[i][3]) === String(name)) {
-        return { exists: true };
+        // hasPassword: PIN이 이미 시트에 저장되어 있는지 여부
+        var storedPw = data[i][18] ? String(data[i][18]).trim() : "";
+        return { exists: true, hasPassword: storedPw !== "" };
       }
     }
     return { exists: false };
@@ -169,13 +171,18 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
           String(data[i][2]) === String(studentNum) && 
           String(data[i][3]) === String(name)) {
         
-        var savedPassword = data[i][18] ? String(data[i][18]) : "";
-        if (savedPassword !== "" && savedPassword !== String(password)) {
-          return { error: "password_mismatch" };
-        }
+        var savedPassword = data[i][18] ? String(data[i][18]).trim() : "";
         
-        if (savedPassword === "" && password) {
-          sheet.getRange(i + 1, 19).setValue(String(password));
+        // PIN이 이미 저장된 계정: 반드시 일치해야 통과
+        if (savedPassword !== "") {
+          if (String(password).trim() !== savedPassword) {
+            return { error: "password_mismatch" };
+          }
+        } else {
+          // PIN이 비어있는 구계정: 최초 PIN 등록으로 처리 (저장)
+          if (password && String(password).trim() !== "") {
+            sheet.getRange(i + 1, 19).setValue(String(password).trim());
+          }
         }
 
         // 직렬화되어 문자열 상태로 적재된 JSON 스킬 필드 안전 파싱

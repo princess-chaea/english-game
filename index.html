@@ -1301,12 +1301,16 @@ function getMockWordsFallback(grade) {
         ];
 
         const BOSS_PROFILES = [
-            { name: "지하 영지의 가르고일 로드", color: "#475569", hp: 300 },
-            { name: "분노한 용암 벌레", color: "#ef4444", hp: 700 },
-            { name: "차원의 종말 고대 드래곤", color: "#fbbf24", hp: 1500 },
-            { name: "타락한 심연의 가르고일 킹", color: "#1e293b", hp: 3200 },
-            { name: "지옥 연옥의 화염 고대 웜", color: "#dc2626", hp: 6500 },
-            { name: "신화 속 파멸의 종언 흑룡", color: "#0f172a", hp: 13000 }
+            { name: "지하 영지의 가르고일 로드", color: "#475569", hp: 300, image: "boss_gargoyle.png" },
+            { name: "분노한 용암 벌레", color: "#ef4444", hp: 700, image: "boss_lavaworm.png" },
+            { name: "심해의 악몽 크라켄", color: "#0ea5e9", hp: 1200, image: "boss_kraken.png" },
+            { name: "불사 군주 리치 킹", color: "#a855f7", hp: 2000, image: "boss_lich.png" },
+            { name: "대지의 거수 베히모스", color: "#84cc16", hp: 3500, image: "boss_behemoth.png" },
+            { name: "불멸의 화염 불사조", color: "#f97316", hp: 6000, image: "boss_phoenix.png" },
+            { name: "맹독의 거대 히드라", color: "#22c55e", hp: 10000, image: "boss_hydra.png" },
+            { name: "고대 병기 콜로서스 타이탄", color: "#cbd5e1", hp: 16000, image: "boss_titan.png" },
+            { name: "차원의 종말 고대 드래곤", color: "#fbbf24", hp: 25000, image: "boss_dragon.png" },
+            { name: "파멸의 군주 마왕 데몬 로드", color: "#dc2626", hp: 40000, image: "boss_demon_lord.png" }
         ];
 
         let isGoogleScriptActive = false;
@@ -1991,13 +1995,7 @@ function getMockWordsFallback(grade) {
 
             if (isBossBattleActive) {
                 const bossIndex = (gameState.stage - 1) % BOSS_PROFILES.length;
-                if (bossIndex === 0 || bossIndex === 3) {
-                    imageUrl = "media/bose/boss_gargoyle.png";
-                } else if (bossIndex === 1 || bossIndex === 4) {
-                    imageUrl = "media/bose/boss_lavaworm.png";
-                } else {
-                    imageUrl = "media/bose/boss_dragon.png";
-                }
+                imageUrl = `media/bose/${BOSS_PROFILES[bossIndex].image}`;
             } else {
                 const monsterIndex = (gameState.stage - 1) % MONSTER_PROFILES.length;
                 if (monsterIndex === 0) {

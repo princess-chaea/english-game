@@ -1144,6 +1144,7 @@ function getMockWordsFallback(grade) {
             <div id="skillAcquireGrade" class="text-xs font-bold px-3 py-1 mb-4 uppercase tracking-widest border"></div>
             <div id="skillAcquireWord" class="text-4xl font-bold font-mono tracking-wider mb-2 text-center"></div>
             <div id="skillAcquireMeaning" class="text-sm text-center text-[#bbbbbb] mb-6"></div>
+            <div class="text-xs text-sky-400 font-bold mb-4 text-center">✨ 스킬을 획득했습니다. 서고에서 장착 후 사용해보세요. ✨</div>
             <div id="skillAcquireDesc" class="text-[10px] text-center text-[#7e7e7e] mb-6"></div>
             <button onclick="document.getElementById('skillAcquireModal').classList.remove('flex');document.getElementById('skillAcquireModal').classList.add('hidden')" class="px-10 py-3 bg-white text-black font-bold text-sm tracking-wider transition hover:bg-gray-200">확인</button>
         </div>
@@ -1276,8 +1277,8 @@ function getMockWordsFallback(grade) {
             dragon: {
                 name: "화염의 드래곤베이비",
                 cost: 350,
-                dps: 15,           // 레벨당 자동 공격 DPS +15
-                desc: "⚔️ 공격 특화 — 레벨당 자동 공격 DPS +15"
+                dps: 3,           // 레벨당 자동 공격 DPS +3
+                desc: "⚔️ 공격 특화 — 레벨당 자동 공격 DPS +3"
             },
             fairy: {
                 name: "황금 축복 마법요정",
@@ -2200,15 +2201,6 @@ function getMockWordsFallback(grade) {
         }
 
         function handleArenaClick(event) {
-            // 3% 확률로 몬스터의 크리티컬 기습 공격 방어 팝업 발동 (단어풀이 있을때만)
-            if (Math.random() < 0.03 && gameState.wordsPool && gameState.wordsPool.length > 0) {
-                const current = gameState.wordsPool[gameState.currentQuizIndex];
-                if (current) {
-                    triggerCriticalAttack(current.word, current.meaning);
-                    return; // 방어가 발동되면 일반 공격 취소
-                }
-            }
-
             const hAvatar = document.getElementById("heroCharacter");
             hAvatar.classList.add("animate-slash");
             setTimeout(() => { hAvatar.classList.remove("animate-slash"); }, 200);

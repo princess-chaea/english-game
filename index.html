@@ -1166,6 +1166,10 @@ function getMockWordsFallback(grade) {
                     <span id="criticalDefenseMeaning" class="text-xl font-bold text-white"></span>
                 </div>
                 <div class="space-y-4">
+                    <div class="w-full bg-black h-2 rounded-none-forced overflow-hidden border border-[#3c3c3c]">
+                        <div id="criticalDefenseTimerBar" class="h-full bg-red-500 w-full" style="transition: width 0.1s linear;"></div>
+                    </div>
+                    <p id="criticalDefenseTimeText" class="text-xs text-red-400 font-bold tracking-widest uppercase text-left">제한시간: 10초</p>
                     <input type="text" id="criticalDefenseInput" class="bmw-input w-full text-center text-xl font-mono uppercase bg-black border-red-500/50 focus:border-red-500 text-white placeholder-[#3c3c3c]" placeholder="영어 단어 입력" style="ime-mode: inactive;" onkeydown="if(event.key === 'Enter') submitCriticalDefense()">
                     <p id="criticalDefenseError" class="text-xs text-red-500 font-bold hidden"></p>
                 </div>
@@ -2834,10 +2838,14 @@ function getMockWordsFallback(grade) {
             } else {
                 playSoundEffect('incorrect');
                 buttons[index].className = "choice-btn p-3.5 bg-red-950/80 border-2 border-red-500 text-white font-bold rounded-none-forced text-center transition flex items-center justify-center";
-                showBattleToast("❌ 오답! 몬스터의 크리티컬 공격 발동!");
                 
-                // 크리티컬 공격 방어 모달 강제 띄우기
-                triggerCriticalAttack(current.word, current.meaning);
+                // 25% 확률로 기습 공격 발동
+                if (Math.random() < 0.25) {
+                    showBattleToast("❌ 오답! 몬스터의 크리티컬 공격 발동!");
+                    triggerCriticalAttack(current.word, current.meaning);
+                } else {
+                    showBattleToast("❌ 오답! 선택지 위치가 셔플됩니다.");
+                }
                 
                 // 700ms 후 선택지 순서를 섞어 무차별 찍기를 방지합니다.
                 setTimeout(() => {
@@ -2850,6 +2858,7 @@ function getMockWordsFallback(grade) {
         }
 
         let currentCriticalWord = "";
+        let criticalTimerInterval = null;
 
         function triggerCriticalAttack(word, meaning) {
             currentCriticalWord = word.toLowerCase();
@@ -2861,25 +2870,69 @@ function getMockWordsFallback(grade) {
             modal.classList.remove("hidden");
             modal.classList.add("flex");
             document.getElementById("criticalDefenseInput").focus();
+
+            startCriticalTimer();
+        }
+
+        function startCriticalTimer() {
+            if (criticalTimerInterval) clearInterval(criticalTimerInterval);
+            let timeLeft = 100; // 10.0 seconds
+            const bar = document.getElementById("criticalDefenseTimerBar");
+            const text = document.getElementById("criticalDefenseTimeText");
+            
+            criticalTimerInterval = setInterval(() => {
+                timeLeft -= 1;
+                bar.style.width = `${Math.max(0, timeLeft)}%`;
+                text.innerText = `제한시간: ${(timeLeft / 10).toFixed(1)}초`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(criticalTimerInterval);
+                    punishCriticalFailure("시간 초과");
+                }
+            }, 100);
+        }
+
+        function punishCriticalFailure(reason) {
+            if (criticalTimerInterval) clearInterval(criticalTimerInterval);
+            playSoundEffect('incorrect');
+            const errorEl = document.getElementById("criticalDefenseError");
+            
+            if (gameState.armorLvl > 1) {
+                gameState.armorLvl -= 1;
+                errorEl.innerText = `❌ 방어 실패 (${reason})! 갑옷 강화 단계 하락!`;
+                showBattleToast("💥 방어구(갑옷) 손상! -1강 하락!");
+            } else {
+                errorEl.innerText = `❌ 방어 실패 (${reason})! 큰 피해를 입었습니다!`;
+                showBattleToast("💥 크리티컬 피격!");
+            }
+            errorEl.classList.remove("hidden");
+            
+            const box = document.getElementById("criticalDefenseBox");
+            box.classList.add("animate-shake");
+            setTimeout(() => { box.classList.remove("animate-shake"); }, 150);
+
+            setTimeout(() => {
+                const modal = document.getElementById("criticalDefenseModal");
+                modal.classList.remove("flex");
+                modal.classList.add("hidden");
+                drawHeroAvatar();
+                buildUpgradeblacksmith();
+                refreshStateVisuals();
+                saveLocalCache();
+            }, 1500);
         }
 
         function submitCriticalDefense() {
             const inputVal = document.getElementById("criticalDefenseInput").value.trim().toLowerCase();
             if (inputVal === currentCriticalWord) {
+                if (criticalTimerInterval) clearInterval(criticalTimerInterval);
                 playSoundEffect('correct');
                 const modal = document.getElementById("criticalDefenseModal");
                 modal.classList.remove("flex");
                 modal.classList.add("hidden");
                 showBattleToast("🛡️ 크리티컬 방어 성공!");
             } else {
-                playSoundEffect('incorrect');
-                const errorEl = document.getElementById("criticalDefenseError");
-                errorEl.innerText = "❌ 스펠링이 틀렸습니다. 다시 입력하세요!";
-                errorEl.classList.remove("hidden");
-                
-                const box = document.getElementById("criticalDefenseBox");
-                box.classList.add("animate-shake");
-                setTimeout(() => { box.classList.remove("animate-shake"); }, 150);
+                punishCriticalFailure("스펠링 오답");
             }
         }
 

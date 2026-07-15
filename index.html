@@ -735,7 +735,7 @@
                     </div>
                     <div>
                         <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">이름</label>
-                        <input type="text" id="inputName" placeholder="이름" style="ime-mode: active;"
+                        <input type="text" id="inputName" placeholder="이름" style="ime-mode: active;" oninput="if(/[a-zA-Z]/.test(this.value)){ this.value=this.value.replace(/[a-zA-Z]/g,''); showToast('⚠️ 영문 키보드 상태입니다. 한/영 키를 눌러 한글로 입력해주세요!'); }"
                             class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced">
                     </div>
                 </div>

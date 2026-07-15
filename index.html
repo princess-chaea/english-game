@@ -1169,7 +1169,7 @@ function getMockWordsFallback(grade) {
                     <div class="w-full bg-black h-2 rounded-none-forced overflow-hidden border border-[#3c3c3c]">
                         <div id="criticalDefenseTimerBar" class="h-full bg-red-500 w-full" style="transition: width 0.1s linear;"></div>
                     </div>
-                    <p id="criticalDefenseTimeText" class="text-xs text-red-400 font-bold tracking-widest uppercase text-left">제한시간: 10초</p>
+                    <p id="criticalDefenseTimeText" class="text-xs text-red-400 font-bold tracking-widest uppercase text-left">제한시간: 30초</p>
                     <input type="text" id="criticalDefenseInput" class="bmw-input w-full text-center text-xl font-mono uppercase bg-black border-red-500/50 focus:border-red-500 text-white placeholder-[#3c3c3c]" placeholder="영어 단어 입력" style="ime-mode: inactive;" onkeydown="if(event.key === 'Enter') submitCriticalDefense()">
                     <p id="criticalDefenseError" class="text-xs text-red-500 font-bold hidden"></p>
                 </div>
@@ -2876,13 +2876,13 @@ function getMockWordsFallback(grade) {
 
         function startCriticalTimer() {
             if (criticalTimerInterval) clearInterval(criticalTimerInterval);
-            let timeLeft = 100; // 10.0 seconds
+            let timeLeft = 300; // 30.0 seconds
             const bar = document.getElementById("criticalDefenseTimerBar");
             const text = document.getElementById("criticalDefenseTimeText");
             
             criticalTimerInterval = setInterval(() => {
                 timeLeft -= 1;
-                bar.style.width = `${Math.max(0, timeLeft)}%`;
+                bar.style.width = `${Math.max(0, (timeLeft / 300) * 100)}%`;
                 text.innerText = `제한시간: ${(timeLeft / 10).toFixed(1)}초`;
                 
                 if (timeLeft <= 0) {

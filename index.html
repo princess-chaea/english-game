@@ -1833,9 +1833,9 @@ function getMockWordsFallback(grade) {
                 if (level > 0) {
                     if (ENABLE_PET_STAGES) {
                         const stage = Math.min(10, Math.floor(level / 10) + 1); // 1 to 10 stages
-                        imageUrl = `media/pet_${type}_${stage}.png`;
+                        imageUrl = type === 'dragon' ? `media/pet_dragon/pet_dragon_${stage}.png` : `media/pet_${type}_${stage}.png`;
                     } else {
-                        imageUrl = `media/pet_${type}.png`;
+                        imageUrl = type === 'dragon' ? `media/pet_dragon/pet_dragon_1.png` : `media/pet_${type}.png`;
                     }
                 }
 
@@ -1923,9 +1923,10 @@ function getMockWordsFallback(grade) {
                         `;
                     }
 
+                    const fallbackUrl = type === 'dragon' ? `media/pet_dragon/pet_dragon_1.png` : `media/pet_${type}.png`;
                     svg.innerHTML = `
                         ${backgroundSvg}
-                        <image href="${imageUrl}" onerror="this.setAttribute('href', 'media/pet_${type}.png')" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet" style="${filterStyle} mix-blend-mode: screen;" />
+                        <image href="${imageUrl}" onerror="this.setAttribute('href', '${fallbackUrl}')" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet" style="${filterStyle} mix-blend-mode: screen;" />
                         ${foregroundSvg}
                     `;
                     container.classList.remove("hidden");

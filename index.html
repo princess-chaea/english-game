@@ -1752,15 +1752,16 @@ function getMockWordsFallback(grade) {
             if (h.helmetLvl >= 1) {
                 const colors = getRankColor(h.helmetLvl);
                 let extra = "";
-                if (h.helmetLvl >= 4) extra += `<path d="M49 14 L51 14 L51 22 L49 22 Z" fill="${colors.glow}" />`;
-                if (h.helmetLvl >= 7) extra += `<path d="M46 10 L48 10 L48 15 L46 15 Z" fill="${colors.stroke}" class="animate-pulse" /><path d="M52 10 L54 10 L54 15 L52 15 Z" fill="${colors.stroke}" class="animate-pulse" />`;
-                if (h.helmetLvl >= 10) extra += `<polygon points="40,5 45,15 50,5 55,15 60,5 50,18" fill="#ff4d4d" class="animate-pulse" opacity="0.8" />`;
+                if (h.helmetLvl >= 7) extra += `<path d="M50 8 L50 20" stroke="${colors.stroke}" stroke-width="2" class="animate-pulse" />`;
+                if (h.helmetLvl >= 10) extra += `<path d="M45 5 C45 0, 55 0, 55 5 C55 12, 50 18, 50 18 C50 18, 45 12, 45 5 Z" fill="#ff4d4d" class="animate-pulse" opacity="0.9" />`;
                 
                 overlays += `
-                    <!-- Pixel Art Helmet Base -->
-                    <path d="M38 30 C38 15, 62 15, 62 30 C62 35, 38 35, 38 30 Z" fill="${colors.main}" stroke="#222" stroke-width="1.5" />
-                    <!-- Visor -->
-                    <rect x="43" y="23" width="14" height="4" fill="${colors.glow}" rx="0" class="${h.helmetLvl >= 8 ? 'animate-pulse' : ''}" />
+                    <!-- High-quality Helmet Base -->
+                    <path d="M40 33 C40 12, 60 12, 60 33 L62 38 L38 38 Z" fill="${colors.main}" stroke="#111" stroke-width="1.5" stroke-linejoin="round"/>
+                    <path d="M43 22 L57 22 L54 35 L46 35 Z" fill="#111" />
+                    <!-- Visor Slits -->
+                    <rect x="46" y="24" width="8" height="2" fill="${colors.glow}" class="${h.helmetLvl >= 8 ? 'animate-pulse' : ''}" />
+                    <rect x="46" y="28" width="8" height="2" fill="${colors.glow}" class="${h.helmetLvl >= 8 ? 'animate-pulse' : ''}" />
                     ${extra}
                 `;
             }
@@ -1769,14 +1770,18 @@ function getMockWordsFallback(grade) {
             if (h.armorLvl >= 1) {
                 const colors = getRankColor(h.armorLvl);
                 let extra = "";
-                if (h.armorLvl >= 4) extra += `<path d="M38 44 L42 44 L46 72 L42 72 Z" fill="${colors.glow}" />`;
-                if (h.armorLvl >= 7) extra += `<path d="M58 44 L54 44 L50 72 L54 72 Z" fill="${colors.glow}" />`;
-                if (h.armorLvl >= 10) extra += `<circle cx="50" cy="55" r="5" fill="#ff4d4d" class="animate-pulse" /><circle cx="50" cy="55" r="2" fill="#fff" class="animate-pulse" />`;
-                else if (h.armorLvl >= 2) extra += `<circle cx="50" cy="55" r="3" fill="${colors.stroke}" />`;
+                if (h.armorLvl >= 7) extra += `<path d="M50 48 L50 64" stroke="${colors.stroke}" stroke-width="2" class="animate-pulse" />`;
+                if (h.armorLvl >= 10) extra += `<circle cx="50" cy="55" r="5" fill="#ff4d4d" class="animate-pulse" /><circle cx="50" cy="55" r="2" fill="#fff" />`;
 
                 overlays += `
-                    <!-- Pixel Art Armor Body -->
-                    <path d="M34 44 L66 44 L62 76 L38 76 Z" fill="${colors.main}" stroke="#222" stroke-width="1.5" />
+                    <!-- Pauldrons -->
+                    <path d="M32 42 C32 38, 40 38, 40 46 Z" fill="${colors.glow}" stroke="#111" stroke-width="1.5" />
+                    <path d="M68 42 C68 38, 60 38, 60 46 Z" fill="${colors.glow}" stroke="#111" stroke-width="1.5" />
+                    <!-- Chestplate -->
+                    <path d="M38 44 C38 38, 62 38, 62 44 L64 56 C64 70, 50 78, 50 78 C50 78, 36 70, 36 56 Z" fill="${colors.main}" stroke="#111" stroke-width="1.5" stroke-linejoin="round"/>
+                    <!-- Belt -->
+                    <rect x="40" y="66" width="20" height="4" fill="#333" stroke="#111" stroke-width="1.5" />
+                    <rect x="47" y="64" width="6" height="8" fill="${colors.stroke}" stroke="#111" stroke-width="1.5" />
                     ${extra}
                 `;
             }
@@ -1785,23 +1790,27 @@ function getMockWordsFallback(grade) {
             if (h.weaponLvl >= 1) {
                 const colors = getRankColor(h.weaponLvl);
                 let extra = "";
-                let length = 40;
-                if (h.weaponLvl >= 4) length = 35;
-                if (h.weaponLvl >= 7) length = 30;
-                if (h.weaponLvl >= 10) length = 20;
+                let tipY = 30; // base length
+                if (h.weaponLvl >= 4) tipY = 20;
+                if (h.weaponLvl >= 7) tipY = 10;
+                if (h.weaponLvl >= 10) tipY = 0;
 
-                if (h.weaponLvl >= 5) {
-                    extra += `<line x1="18" y1="72" x2="${length-3}" y2="${length+32}" stroke="${colors.stroke}" stroke-width="1.5" stroke-linecap="square" class="animate-pulse" />`;
-                }
                 if (h.weaponLvl >= 10) {
-                    extra += `<polygon points="2,18 8,24 2,30 -4,24" fill="#ff4d4d" class="animate-pulse" />`;
+                    extra += `<circle cx="20" cy="72" r="3" fill="#ff4d4d" class="animate-pulse" />`;
                 }
 
                 overlays += `
-                    <!-- Pixel Art Sword -->
-                    <line x1="20" y1="75" x2="${length}" y2="${length+35}" stroke="#222" stroke-width="4" stroke-linecap="square" />
-                    <line x1="20" y1="75" x2="${length}" y2="${length+35}" stroke="${colors.main}" stroke-width="2" stroke-linecap="square" />
-                    <circle cx="20" cy="75" r="3" fill="#444" stroke="${colors.stroke}" stroke-width="1" />
+                    <!-- High-quality Sword -->
+                    <!-- Blade -->
+                    <path d="M17 70 L23 70 L22 ${tipY+10} L20 ${tipY} L18 ${tipY+10} Z" fill="${colors.main}" stroke="#111" stroke-width="1.5" stroke-linejoin="round" />
+                    <!-- Crossguard -->
+                    <rect x="10" y="70" width="20" height="4" fill="${colors.glow}" stroke="#111" stroke-width="1.5" rx="2" />
+                    <!-- Hilt -->
+                    <rect x="18" y="74" width="4" height="12" fill="#5c4033" stroke="#111" stroke-width="1.5" />
+                    <!-- Pommel -->
+                    <circle cx="20" cy="88" r="4" fill="${colors.stroke}" stroke="#111" stroke-width="1.5" />
+                    <!-- Edge highlight -->
+                    <line x1="20" y1="70" x2="20" y2="${tipY+10}" stroke="#fff" stroke-width="1" opacity="0.6" />
                     ${extra}
                 `;
             }
@@ -1810,13 +1819,13 @@ function getMockWordsFallback(grade) {
             if (h.shieldLvl >= 1) {
                 const colors = getRankColor(h.shieldLvl);
                 let extra = "";
-                if (h.shieldLvl >= 5) extra += `<circle cx="80" cy="65" r="6" fill="${colors.glow}" opacity="0.6" class="animate-pulse" />`;
-                if (h.shieldLvl >= 10) extra += `<path d="M72 65 A8 8 0 0 1 88 65 A8 8 0 0 1 72 65" fill="none" stroke="#ff4d4d" stroke-width="2" class="animate-spin" style="transform-origin: 80px 65px;" />`;
+                if (h.shieldLvl >= 5) extra += `<circle cx="80" cy="65" r="5" fill="${colors.glow}" class="animate-pulse" stroke="#111" stroke-width="1" />`;
+                if (h.shieldLvl >= 10) extra += `<path d="M80 50 L80 80 M70 65 L90 65" stroke="#ff4d4d" stroke-width="2" class="animate-pulse" />`;
 
                 overlays += `
-                    <!-- Pixel Art Shield -->
-                    <path d="M70 55 L90 55 L90 68 L80 82 L70 68 Z" fill="${colors.main}" stroke="#222" stroke-width="1.5" />
-                    <path d="M74 58 L86 58 L86 66 L80 75 L74 66 Z" fill="${colors.stroke}" opacity="0.5" />
+                    <!-- High-quality Kite Shield -->
+                    <path d="M68 55 C68 50, 92 50, 92 55 C92 70, 80 85, 80 85 C80 85, 68 70, 68 55 Z" fill="${colors.main}" stroke="#111" stroke-width="1.5" stroke-linejoin="round" />
+                    <path d="M72 57 C72 54, 88 54, 88 57 C88 68, 80 79, 80 79 C80 79, 72 68, 72 57 Z" fill="none" stroke="${colors.stroke}" stroke-width="1.5" opacity="0.9" />
                     ${extra}
                 `;
             }
@@ -1826,13 +1835,17 @@ function getMockWordsFallback(grade) {
             if (shoesLvl >= 1) {
                 const colors = getRankColor(shoesLvl);
                 let extra = "";
-                if (shoesLvl >= 5) extra += `<line x1="35" y1="110" x2="45" y2="110" stroke="${colors.glow}" stroke-width="1" class="animate-pulse" /><line x1="55" y1="110" x2="65" y2="110" stroke="${colors.glow}" stroke-width="1" class="animate-pulse" />`;
                 if (shoesLvl >= 10) extra += `<polygon points="35,112 40,118 45,112" fill="#ff4d4d" class="animate-pulse" /><polygon points="55,112 60,118 65,112" fill="#ff4d4d" class="animate-pulse" />`;
 
                 overlays += `
-                    <!-- Pixel Art Boots -->
-                    <rect x="34" y="103" width="12" height="8" fill="${colors.main}" stroke="#222" stroke-width="1" />
-                    <rect x="54" y="103" width="12" height="8" fill="${colors.main}" stroke="#222" stroke-width="1" />
+                    <!-- High-quality Boots -->
+                    <!-- Left Boot -->
+                    <path d="M33 100 L44 100 L45 110 L47 114 L33 114 Z" fill="${colors.main}" stroke="#111" stroke-width="1.5" stroke-linejoin="round" />
+                    <!-- Right Boot -->
+                    <path d="M56 100 L67 100 L67 114 L53 114 L55 110 Z" fill="${colors.main}" stroke="#111" stroke-width="1.5" stroke-linejoin="round" />
+                    <!-- Knee guards -->
+                    <circle cx="39" cy="100" r="3" fill="${colors.glow}" stroke="#111" stroke-width="1" />
+                    <circle cx="61" cy="100" r="3" fill="${colors.glow}" stroke="#111" stroke-width="1" />
                     ${extra}
                 `;
             }

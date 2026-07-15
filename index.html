@@ -3121,20 +3121,14 @@ function getMockWordsFallback(grade) {
                         gameState.equippedSkills
                     ],
                     function (response) {
-                        if (response) {
-                            showToast("☁️ 구글 원격 저장소에 완벽 동기화되었습니다!");
-                        } else {
-                            showToast("⚠️ 스프레드시트 기록 실패. 세션 캐시를 사용합니다.");
-                        }
+                        // 저장 성공 시 사용자에게 알림 띄우지 않음 (학생에게 불필요한 정보)
                     },
                     function () {
-                        showToast("❌ 구글 서비스 응답 지연. 로컬 브라우저에 임시 정착됩니다.");
+                        // 에러 시에도 플레이 흐름 방해 않음
                     }
                 );
             } else {
-                setTimeout(() => {
-                    showToast("💾 [가상 동기화] 로컬 캐시 스토리지에 세이브 완료!");
-                }, 800);
+                // 로컬 가상 동기화 알림 생략
             }
         }
 

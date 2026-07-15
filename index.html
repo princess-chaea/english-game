@@ -24,14 +24,14 @@
     <style>
         @font-face {
             font-family: 'Hakgyoansim_PosterB';
-            src: url('media/Hakgyoansim_PosterB.ttf') format('truetype');
+            src: url('media/font/Hakgyoansim_PosterB.ttf') format('truetype');
             font-weight: bold;
             font-style: normal;
         }
 
         @font-face {
             font-family: 'KERISBAEUM_B';
-            src: url('media/KERISBAEUM_B.ttf') format('truetype');
+            src: url('media/font/KERISBAEUM_B.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
         }
@@ -1115,8 +1115,7 @@ function getMockWordsFallback(grade) {
             </div>
 
             <div class="border-t border-[#3c3c3c] pt-3 flex justify-end">
-                <button onclick="closeModal('teacherModal')"
-                    class="bmw-btn-secondary px-6 py-2.5">
+                <button onclick="closeModal('teacherModal')" class="bmw-btn-secondary px-6 py-2.5">
                     확인완료
                 </button>
             </div>
@@ -1124,8 +1123,7 @@ function getMockWordsFallback(grade) {
     </div>
 
     <!-- Toast Message Container (global UI alerts) -->
-    <div id="toastMessage"
-        class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-black border border-[#3c3c3c] text-white px-5 py-3 rounded-none-forced text-xs font-bold shadow-2xl flex items-center gap-2 transition-all duration-300 opacity-0 pointer-events-none z-50">
+    <div id="toastMessage" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-black border border-[#3c3c3c] text-white px-5 py-3 rounded-none-forced text-xs font-bold shadow-2xl flex items-center gap-2 transition-all duration-300 opacity-0 pointer-events-none z-50">
         <i data-lucide="info" class="w-4 h-4 text-[#0066b1]"></i>
         <span id="toastText">안내 메시지</span>
     </div>
@@ -1148,6 +1146,33 @@ function getMockWordsFallback(grade) {
             <div id="skillAcquireMeaning" class="text-sm text-center text-[#bbbbbb] mb-6"></div>
             <div id="skillAcquireDesc" class="text-[10px] text-center text-[#7e7e7e] mb-6"></div>
             <button onclick="document.getElementById('skillAcquireModal').classList.remove('flex');document.getElementById('skillAcquireModal').classList.add('hidden')" class="px-10 py-3 bg-white text-black font-bold text-sm tracking-wider transition hover:bg-gray-200">확인</button>
+        </div>
+    </div>
+
+    <!-- Critical Attack Defense Modal -->
+    <div id="criticalDefenseModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4">
+        <div id="criticalDefenseBox" class="bg-[#0d0d0d] border border-red-500 max-w-sm w-full rounded-none-forced shadow-2xl overflow-hidden flex flex-col transform scale-95 transition-all">
+            <div class="bg-red-950/80 border-b border-red-500 p-4">
+                <h2 class="text-lg font-bold text-red-500 uppercase tracking-widest flex items-center gap-2">
+                    <span class="animate-pulse">⚠️</span> 몬스터의 기습 공격!
+                </h2>
+            </div>
+            <div class="p-6 text-center">
+                <p class="text-sm text-[#bbbbbb] mb-6 leading-relaxed">
+                    치명적인 일격이 날아옵니다! 방어하려면 영단어 스펠링을 정확히 입력하세요.
+                </p>
+                <div class="mb-4">
+                    <span class="text-[10px] text-[#7e7e7e] font-bold uppercase tracking-wider block mb-1">방어 주문 (한글 뜻)</span>
+                    <span id="criticalDefenseMeaning" class="text-xl font-bold text-white"></span>
+                </div>
+                <div class="space-y-4">
+                    <input type="text" id="criticalDefenseInput" class="bmw-input w-full text-center text-xl font-mono uppercase bg-black border-red-500/50 focus:border-red-500 text-white placeholder-[#3c3c3c]" placeholder="영어 단어 입력" style="ime-mode: inactive;" onkeydown="if(event.key === 'Enter') submitCriticalDefense()">
+                    <p id="criticalDefenseError" class="text-xs text-red-500 font-bold hidden"></p>
+                </div>
+            </div>
+            <div class="p-5 border-t border-red-900/30 flex justify-end bg-black">
+                <button onclick="submitCriticalDefense()" class="px-8 py-3 bg-red-600 text-white font-bold text-sm tracking-wider transition hover:bg-red-500">방어 시도</button>
+            </div>
         </div>
     </div>
 
@@ -1705,7 +1730,7 @@ function getMockWordsFallback(grade) {
             const svg = document.getElementById("heroSvg");
 
             // AI 생성 픽셀 아트 이미지 베이스
-            const imageUrl = isMale ? "media/male_warrior.png" : "media/female_warrior.png";
+            const imageUrl = isMale ? "media/player/male_warrior.png" : "media/player/female_warrior.png";
 
             let overlays = "";
 
@@ -1833,9 +1858,9 @@ function getMockWordsFallback(grade) {
                 if (level > 0) {
                     if (ENABLE_PET_STAGES) {
                         const stage = Math.min(10, Math.floor(level / 10) + 1); // 1 to 10 stages
-                        imageUrl = type === 'dragon' ? `media/pet_dragon/pet_dragon_${stage}.png` : `media/pet_${type}_${stage}.png`;
+                        imageUrl = type === 'dragon' ? `media/pet_dragon/pet_dragon_${stage}.png` : `media/pet_${type}/pet_${type}_${stage}.png`;
                     } else {
-                        imageUrl = type === 'dragon' ? `media/pet_dragon/pet_dragon_1.png` : `media/pet_${type}.png`;
+                        imageUrl = type === 'dragon' ? `media/pet_dragon/pet_dragon_1.png` : `media/pet_${type}/pet_${type}.png`;
                     }
                 }
 
@@ -1923,7 +1948,7 @@ function getMockWordsFallback(grade) {
                         `;
                     }
 
-                    const fallbackUrl = type === 'dragon' ? `media/pet_dragon/pet_dragon_1.png` : `media/pet_${type}.png`;
+                    const fallbackUrl = type === 'dragon' ? `media/pet_dragon/pet_dragon_1.png` : `media/pet_${type}/pet_${type}.png`;
                     svg.innerHTML = `
                         ${backgroundSvg}
                         <image href="${imageUrl}" onerror="this.setAttribute('href', '${fallbackUrl}')" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet" style="${filterStyle} mix-blend-mode: screen;" />
@@ -1949,28 +1974,28 @@ function getMockWordsFallback(grade) {
             if (isBossBattleActive) {
                 const bossIndex = (gameState.stage - 1) % BOSS_PROFILES.length;
                 if (bossIndex === 0 || bossIndex === 3) {
-                    imageUrl = "media/boss_gargoyle.png";
+                    imageUrl = "media/bose/boss_gargoyle.png";
                 } else if (bossIndex === 1 || bossIndex === 4) {
-                    imageUrl = "media/boss_lavaworm.png";
+                    imageUrl = "media/bose/boss_lavaworm.png";
                 } else {
-                    imageUrl = "media/boss_dragon.png";
+                    imageUrl = "media/bose/boss_dragon.png";
                 }
             } else {
                 const monsterIndex = (gameState.stage - 1) % MONSTER_PROFILES.length;
                 if (monsterIndex === 0) {
-                    imageUrl = "media/monster_slime.png";
+                    imageUrl = "media/monster/monster_slime.png";
                 } else if (monsterIndex === 1) {
-                    imageUrl = "media/monster_goblin.png";
+                    imageUrl = "media/monster/monster_goblin.png";
                 } else if (monsterIndex === 2) {
-                    imageUrl = "media/monster_troll.png";
+                    imageUrl = "media/monster/monster_troll.png";
                 } else if (monsterIndex === 3) {
-                    imageUrl = "media/monster_golem.png";
+                    imageUrl = "media/monster/monster_golem.png";
                 } else if (monsterIndex === 4) {
-                    imageUrl = "media/monster_skeleton.png";
+                    imageUrl = "media/monster/monster_skeleton.png";
                 } else if (monsterIndex === 5) {
-                    imageUrl = "media/monster_spider.png";
+                    imageUrl = "media/monster/monster_spider.png";
                 } else {
-                    imageUrl = "media/monster_ghost.png";
+                    imageUrl = "media/monster/monster_ghost.png";
                 }
             }
 
@@ -2142,13 +2167,13 @@ function getMockWordsFallback(grade) {
                 ? BOSS_PROFILES[(gameState.stage - 1) % BOSS_PROFILES.length]
                 : MONSTER_PROFILES[index];
 
-            // 급격한 성장 곡선: 스테이지마다 약 42% HP 증가 (강화·펫·스킬 필수 유도)
-            const growthFactor = 1.42;
+            // 급격한 성장 곡선: 스테이지마다 약 45% HP 증가 (강화·펫·스킬 필수 유도)
+            const growthFactor = 1.45;
             if (isBossBattleActive) {
-                const regularHp = Math.floor(20 * Math.pow(growthFactor, gameState.stage - 1));
+                const regularHp = Math.floor(50 * Math.pow(growthFactor, gameState.stage - 1));
                 monsterMaxHp = Math.floor(regularHp * 20); // 보스는 일반의 20배
             } else {
-                monsterMaxHp = Math.floor(20 * Math.pow(growthFactor, gameState.stage - 1));
+                monsterMaxHp = Math.floor(50 * Math.pow(growthFactor, gameState.stage - 1));
             }
 
             monsterCurrentHp = monsterMaxHp;
@@ -2158,6 +2183,15 @@ function getMockWordsFallback(grade) {
         }
 
         function handleArenaClick(event) {
+            // 3% 확률로 몬스터의 크리티컬 기습 공격 방어 팝업 발동 (단어풀이 있을때만)
+            if (Math.random() < 0.03 && gameState.wordsPool && gameState.wordsPool.length > 0) {
+                const current = gameState.wordsPool[gameState.currentQuizIndex];
+                if (current) {
+                    triggerCriticalAttack(current.word, current.meaning);
+                    return; // 방어가 발동되면 일반 공격 취소
+                }
+            }
+
             const hAvatar = document.getElementById("heroCharacter");
             hAvatar.classList.add("animate-slash");
             setTimeout(() => { hAvatar.classList.remove("animate-slash"); }, 200);
@@ -2769,7 +2803,7 @@ function getMockWordsFallback(grade) {
                 buttons[index].className = "choice-btn p-3.5 bg-green-950/80 border-2 border-green-500 text-white font-bold rounded-none-forced text-center transition flex items-center justify-center";
                 gameState.totalQuizCorrect++;
 
-                const baseReward = 200 * gameState.grade;
+                const baseReward = 50 * gameState.grade;
                 // 슬라임 펫 골드 배율 적용 (레벨당 +5%)
                 const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
                 const goldMultiplier = 1.0 + (slimeLvl * PET_PARAMS['slime'].goldBonus);
@@ -2800,7 +2834,10 @@ function getMockWordsFallback(grade) {
             } else {
                 playSoundEffect('incorrect');
                 buttons[index].className = "choice-btn p-3.5 bg-red-950/80 border-2 border-red-500 text-white font-bold rounded-none-forced text-center transition flex items-center justify-center";
-                showBattleToast("❌ 오답! 선택지 위치가 셔플됩니다.");
+                showBattleToast("❌ 오답! 몬스터의 크리티컬 공격 발동!");
+                
+                // 크리티컬 공격 방어 모달 강제 띄우기
+                triggerCriticalAttack(current.word, current.meaning);
                 
                 // 700ms 후 선택지 순서를 섞어 무차별 찍기를 방지합니다.
                 setTimeout(() => {
@@ -2810,6 +2847,40 @@ function getMockWordsFallback(grade) {
                 }, 700);
             }
             saveLocalCache();
+        }
+
+        let currentCriticalWord = "";
+
+        function triggerCriticalAttack(word, meaning) {
+            currentCriticalWord = word.toLowerCase();
+            document.getElementById("criticalDefenseMeaning").innerText = meaning;
+            document.getElementById("criticalDefenseInput").value = "";
+            document.getElementById("criticalDefenseError").classList.add("hidden");
+            
+            const modal = document.getElementById("criticalDefenseModal");
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+            document.getElementById("criticalDefenseInput").focus();
+        }
+
+        function submitCriticalDefense() {
+            const inputVal = document.getElementById("criticalDefenseInput").value.trim().toLowerCase();
+            if (inputVal === currentCriticalWord) {
+                playSoundEffect('correct');
+                const modal = document.getElementById("criticalDefenseModal");
+                modal.classList.remove("flex");
+                modal.classList.add("hidden");
+                showBattleToast("🛡️ 크리티컬 방어 성공!");
+            } else {
+                playSoundEffect('incorrect');
+                const errorEl = document.getElementById("criticalDefenseError");
+                errorEl.innerText = "❌ 스펠링이 틀렸습니다. 다시 입력하세요!";
+                errorEl.classList.remove("hidden");
+                
+                const box = document.getElementById("criticalDefenseBox");
+                box.classList.add("animate-shake");
+                setTimeout(() => { box.classList.remove("animate-shake"); }, 150);
+            }
         }
 
         function populateMasteredVocabulary() {

@@ -1248,14 +1248,14 @@ function getMockWordsFallback(grade) {
 
         // Upgrade parameters mapping for Shop
         const GEAR_PARAMS = {
-            helmet: { name: "전사의 투구", base: 15, key: "helmetLvl" },
-            armor: { name: "강철의 갑옷", base: 25, key: "armorLvl" },
-            weapon: { name: "수호자의 검", base: 35, key: "weaponLvl" },
-            shield: { name: "기사의 방패", base: 30, key: "shieldLvl" },
-            shoes: { name: "신속의 장화", base: 20, key: "shoesLvl" }
+            helmet: { name: "전사의 투구", base: 300, key: "helmetLvl" },
+            armor: { name: "강철의 갑옷", base: 500, key: "armorLvl" },
+            weapon: { name: "수호자의 검", base: 700, key: "weaponLvl" },
+            shield: { name: "기사의 방패", base: 600, key: "shieldLvl" },
+            shoes: { name: "신속의 장화", base: 400, key: "shoesLvl" }
         };
 
-        const GROWTH_RATE = 1.15;
+        const GROWTH_RATE = 1.5;
 
         // Skill Grade Configs (색상 코드 및 배율 계수)
         const SKILL_GRADES = {
@@ -2420,7 +2420,7 @@ function getMockWordsFallback(grade) {
                 const petLevel = gameState.petLevels[petKey] || 0;
                 const isActive = petLevel > 0;
                 const isMax = petLevel >= 100;
-                const cost = isMax ? 0 : Math.floor(info.cost * Math.pow(1.5, petLevel));
+                const cost = isMax ? 0 : Math.floor(info.cost * Math.pow(1.12, petLevel));
                 const evolvedName = getPetEvolutionName(petKey, petLevel);
 
                 html += `
@@ -2468,7 +2468,7 @@ function getMockWordsFallback(grade) {
                 gameState.petLevels = { slime: 0, dragon: 0, fairy: 0 };
             }
             const currentPetLvl = gameState.petLevels[petKey] || 0;
-            const cost = Math.floor(info.cost * Math.pow(1.5, currentPetLvl));
+            const cost = Math.floor(info.cost * Math.pow(1.12, currentPetLvl));
 
             if (currentPetLvl >= 100) {
                 showToast("⭐ 이 동반 펫은 이미 100레벨 초월 최고 단계에 도달했습니다!");

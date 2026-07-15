@@ -397,13 +397,13 @@
                 <!-- Hero Render Component Wrapper (Bottom) -->
                 <div class="flex flex-col items-center w-full z-10 relative">
                     <!-- Floating Pet Companions (Up to 3) -->
-                    <div id="petContainer_slime" class="absolute top-12 right-[calc(50%+3.5rem)] w-14 h-14 z-20 animate-hover-pet hidden">
+                    <div id="petContainer_slime" class="absolute top-12 right-[calc(50%+5rem)] w-14 h-14 z-20 animate-hover-pet hidden">
                         <svg viewBox="0 0 100 100" class="w-full h-full" id="petSvg_slime"></svg>
                     </div>
-                    <div id="petContainer_dragon" class="absolute top-6 left-[calc(50%+3.5rem)] w-14 h-14 z-20 animate-hover-pet hidden" style="animation-delay: -0.5s;">
+                    <div id="petContainer_dragon" class="absolute top-6 left-[calc(50%+5rem)] w-14 h-14 z-20 animate-hover-pet hidden" style="animation-delay: -0.5s;">
                         <svg viewBox="0 0 100 100" class="w-full h-full" id="petSvg_dragon"></svg>
                     </div>
-                    <div id="petContainer_fairy" class="absolute -top-4 left-[calc(50%-1.75rem)] w-14 h-14 z-20 animate-hover-pet hidden" style="animation-delay: -1s;">
+                    <div id="petContainer_fairy" class="absolute -top-8 left-[calc(50%-1.75rem)] w-14 h-14 z-20 animate-hover-pet hidden" style="animation-delay: -1s;">
                         <svg viewBox="0 0 100 100" class="w-full h-full" id="petSvg_fairy"></svg>
                     </div>
 
@@ -735,7 +735,7 @@
                     </div>
                     <div>
                         <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">이름</label>
-                        <input type="text" id="inputName" placeholder="이름"
+                        <input type="text" id="inputName" placeholder="이름" style="ime-mode: active;"
                             class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced">
                     </div>
                 </div>
@@ -1704,73 +1704,107 @@ function getMockWordsFallback(grade) {
             const isMale = h.avatarType === "male";
             const svg = document.getElementById("heroSvg");
 
-            // AI로 생성된 고품질 픽셀 아트 이미지 경로
+            // AI 생성 픽셀 아트 이미지 베이스
             const imageUrl = isMale ? "media/male_warrior.png" : "media/female_warrior.png";
 
             let overlays = "";
 
-            // 1. Helmet Overlay (Level >= 2)
-            // Visor colors: level 2-3 is M-LightBlue, 4-6 is M-DarkBlue, 7+ is M-Red
-            if (h.helmetLvl > 1) {
-                const helmetColor = h.helmetLvl >= 7 ? "#e22718" : (h.helmetLvl >= 4 ? "#1c69d4" : "#0066b1");
+            // 색상 등급: 1:무광철, 2-3:청동, 4-5:은, 6-7:금, 8-9:블루크리스탈, 10:적색화염
+            const getRankColor = (lvl) => {
+                if (lvl >= 10) return { main: "#e22718", glow: "#ff4d4d", stroke: "#ffaaaa" };
+                if (lvl >= 8) return { main: "#0066b1", glow: "#3399ff", stroke: "#aaddff" };
+                if (lvl >= 6) return { main: "#d4af37", glow: "#ffdf00", stroke: "#fff5cc" };
+                if (lvl >= 4) return { main: "#c0c0c0", glow: "#e6e6e6", stroke: "#ffffff" };
+                if (lvl >= 2) return { main: "#cd7f32", glow: "#e6a15c", stroke: "#ffcc99" };
+                return { main: "#7a7a7a", glow: "#999999", stroke: "#cccccc" };
+            };
+
+            // 1. Helmet Overlay (Level >= 1)
+            if (h.helmetLvl >= 1) {
+                const colors = getRankColor(h.helmetLvl);
+                let extra = "";
+                if (h.helmetLvl >= 4) extra += `<path d="M49 14 L51 14 L51 22 L49 22 Z" fill="${colors.glow}" />`;
+                if (h.helmetLvl >= 7) extra += `<path d="M46 10 L48 10 L48 15 L46 15 Z" fill="${colors.stroke}" class="animate-pulse" /><path d="M52 10 L54 10 L54 15 L52 15 Z" fill="${colors.stroke}" class="animate-pulse" />`;
+                if (h.helmetLvl >= 10) extra += `<polygon points="40,5 45,15 50,5 55,15 60,5 50,18" fill="#ff4d4d" class="animate-pulse" opacity="0.8" />`;
+                
                 overlays += `
-                    <!-- Motorsport Carbon Helmet -->
-                    <path d="M36 32 C36 12, 64 12, 64 32 C64 36, 36 36, 36 32 Z" fill="#111111" stroke="#3c3c3c" stroke-width="1.5" />
-                    <!-- Visor glow -->
-                    <rect x="42" y="22" width="16" height="5" fill="${helmetColor}" rx="1" class="animate-pulse" />
-                    <!-- Helmet stripe details -->
-                    <path d="M49 14 L51 14 L51 22 L49 22 Z" fill="#e22718" />
-                    <path d="M46 15 L48 15 L48 22 L46 22 Z" fill="#1c69d4" />
-                    <path d="M52 15 L54 15 L54 22 L52 22 Z" fill="#0066b1" />
+                    <!-- Pixel Art Helmet Base -->
+                    <path d="M38 30 C38 15, 62 15, 62 30 C62 35, 38 35, 38 30 Z" fill="${colors.main}" stroke="#222" stroke-width="1.5" />
+                    <!-- Visor -->
+                    <rect x="43" y="23" width="14" height="4" fill="${colors.glow}" rx="0" class="${h.helmetLvl >= 8 ? 'animate-pulse' : ''}" />
+                    ${extra}
                 `;
             }
 
-            // 2. Armor Overlay (Level >= 2)
-            if (h.armorLvl > 1) {
-                const armorGlow = h.armorLvl >= 7 ? "#e22718" : (h.armorLvl >= 4 ? "#1c69d4" : "#0066b1");
+            // 2. Armor Overlay (Level >= 1)
+            if (h.armorLvl >= 1) {
+                const colors = getRankColor(h.armorLvl);
+                let extra = "";
+                if (h.armorLvl >= 4) extra += `<path d="M38 44 L42 44 L46 72 L42 72 Z" fill="${colors.glow}" />`;
+                if (h.armorLvl >= 7) extra += `<path d="M58 44 L54 44 L50 72 L54 72 Z" fill="${colors.glow}" />`;
+                if (h.armorLvl >= 10) extra += `<circle cx="50" cy="55" r="5" fill="#ff4d4d" class="animate-pulse" /><circle cx="50" cy="55" r="2" fill="#fff" class="animate-pulse" />`;
+                else if (h.armorLvl >= 2) extra += `<circle cx="50" cy="55" r="3" fill="${colors.stroke}" />`;
+
                 overlays += `
-                    <!-- Motorsport Suit Chest Plate -->
-                    <rect x="34" y="44" width="32" height="30" fill="#151515" stroke="#3c3c3c" stroke-width="1.5" rx="0" />
-                    <!-- M Motorsport Tri-Color Accents -->
-                    <path d="M38 44 L41 44 L45 74 L42 74 Z" fill="#0066b1" />
-                    <path d="M41 44 L44 44 L48 74 L45 74 Z" fill="#1c69d4" />
-                    <path d="M44 44 L47 44 L51 74 L48 74 Z" fill="#e22718" />
-                    <!-- Reactor core -->
-                    <circle cx="50" cy="56" r="4" fill="${armorGlow}" class="animate-pulse" />
+                    <!-- Pixel Art Armor Body -->
+                    <path d="M34 44 L66 44 L62 76 L38 76 Z" fill="${colors.main}" stroke="#222" stroke-width="1.5" />
+                    ${extra}
                 `;
             }
 
-            // 3. Weapon Overlay (Level >= 2)
-            if (h.weaponLvl > 1) {
-                const weaponColor = h.weaponLvl >= 7 ? "#e22718" : (h.weaponLvl >= 4 ? "#1c69d4" : "#0066b1");
+            // 3. Weapon Overlay (Level >= 1)
+            if (h.weaponLvl >= 1) {
+                const colors = getRankColor(h.weaponLvl);
+                let extra = "";
+                let length = 40;
+                if (h.weaponLvl >= 4) length = 35;
+                if (h.weaponLvl >= 7) length = 30;
+                if (h.weaponLvl >= 10) length = 20;
+
+                if (h.weaponLvl >= 5) {
+                    extra += `<line x1="18" y1="72" x2="${length-3}" y2="${length+32}" stroke="${colors.stroke}" stroke-width="1.5" stroke-linecap="square" class="animate-pulse" />`;
+                }
+                if (h.weaponLvl >= 10) {
+                    extra += `<polygon points="2,18 8,24 2,30 -4,24" fill="#ff4d4d" class="animate-pulse" />`;
+                }
+
                 overlays += `
-                    <!-- High-tech Exhaust Beam Blade -->
-                    <line x1="20" y1="75" x2="3" y2="40" stroke="#ffffff" stroke-width="4" stroke-linecap="round" />
-                    <line x1="20" y1="75" x2="3" y2="40" stroke="${weaponColor}" stroke-width="2.5" stroke-linecap="round" class="animate-pulse" />
-                    <circle cx="20" cy="75" r="3.5" fill="#333333" stroke="#ffffff" stroke-width="1" />
+                    <!-- Pixel Art Sword -->
+                    <line x1="20" y1="75" x2="${length}" y2="${length+35}" stroke="#222" stroke-width="4" stroke-linecap="square" />
+                    <line x1="20" y1="75" x2="${length}" y2="${length+35}" stroke="${colors.main}" stroke-width="2" stroke-linecap="square" />
+                    <circle cx="20" cy="75" r="3" fill="#444" stroke="${colors.stroke}" stroke-width="1" />
+                    ${extra}
                 `;
             }
 
-            // 4. Shield Overlay (Level >= 2)
-            if (h.shieldLvl > 1) {
-                const shieldColor = h.shieldLvl >= 7 ? "#e22718" : (h.shieldLvl >= 4 ? "#1c69d4" : "#0066b1");
+            // 4. Shield Overlay (Level >= 1)
+            if (h.shieldLvl >= 1) {
+                const colors = getRankColor(h.shieldLvl);
+                let extra = "";
+                if (h.shieldLvl >= 5) extra += `<circle cx="80" cy="65" r="6" fill="${colors.glow}" opacity="0.6" class="animate-pulse" />`;
+                if (h.shieldLvl >= 10) extra += `<path d="M72 65 A8 8 0 0 1 88 65 A8 8 0 0 1 72 65" fill="none" stroke="#ff4d4d" stroke-width="2" class="animate-spin" style="transform-origin: 80px 65px;" />`;
+
                 overlays += `
-                    <!-- Aerodynamic Aero-Diffuser Shield -->
-                    <path d="M72 58 L88 54 L92 78 L80 88 L72 74 Z" fill="#1a1a1a" stroke="#ffffff" stroke-width="1.5" />
-                    <path d="M75 60 L85 57 L88 76 L78 84 Z" fill="${shieldColor}" opacity="0.4" />
-                    <!-- Racing decal -->
-                    <line x1="76" y1="68" x2="86" y2="78" stroke="#ffffff" stroke-width="1.5" />
-                    <line x1="79" y1="65" x2="89" y2="75" stroke="#e22718" stroke-width="1" />
+                    <!-- Pixel Art Shield -->
+                    <path d="M70 55 L90 55 L90 68 L80 82 L70 68 Z" fill="${colors.main}" stroke="#222" stroke-width="1.5" />
+                    <path d="M74 58 L86 58 L86 66 L80 75 L74 66 Z" fill="${colors.stroke}" opacity="0.5" />
+                    ${extra}
                 `;
             }
 
-            // 5. Shoes/Boots Overlay (Level >= 2)
-            if (h.shoesLvl > 1) {
-                const shoeGlow = h.shoesLvl >= 7 ? "#e22718" : (h.shoesLvl >= 4 ? "#1c69d4" : "#0066b1");
+            // 5. Shoes/Boots Overlay (Level >= 1)
+            let shoesLvl = h.shoesLvl || h.armorLvl; // Fallback to armorLvl if shoesLvl doesn't exist separately
+            if (shoesLvl >= 1) {
+                const colors = getRankColor(shoesLvl);
+                let extra = "";
+                if (shoesLvl >= 5) extra += `<line x1="35" y1="110" x2="45" y2="110" stroke="${colors.glow}" stroke-width="1" class="animate-pulse" /><line x1="55" y1="110" x2="65" y2="110" stroke="${colors.glow}" stroke-width="1" class="animate-pulse" />`;
+                if (shoesLvl >= 10) extra += `<polygon points="35,112 40,118 45,112" fill="#ff4d4d" class="animate-pulse" /><polygon points="55,112 60,118 65,112" fill="#ff4d4d" class="animate-pulse" />`;
+
                 overlays += `
-                    <!-- Dynamic Motorsport Boots -->
-                    <rect x="33" y="103" width="13" height="6" fill="#1a1a1a" stroke="${shoeGlow}" stroke-width="1" />
-                    <rect x="54" y="103" width="13" height="6" fill="#1a1a1a" stroke="${shoeGlow}" stroke-width="1" />
+                    <!-- Pixel Art Boots -->
+                    <rect x="34" y="103" width="12" height="8" fill="${colors.main}" stroke="#222" stroke-width="1" />
+                    <rect x="54" y="103" width="12" height="8" fill="${colors.main}" stroke="#222" stroke-width="1" />
+                    ${extra}
                 `;
             }
 

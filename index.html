@@ -2023,6 +2023,15 @@ function getMockWordsFallback(grade) {
             document.getElementById("monsterNameTag").innerText = isBossBattleActive
                 ? `⚠️ [스테이지 보스] ${baseMonster.name}`
                 : baseMonster.name;
+
+            const mContainer = document.getElementById("monsterContainer");
+            if (isBossBattleActive) {
+                mContainer.classList.remove("w-32", "h-32");
+                mContainer.classList.add("w-56", "h-56");
+            } else {
+                mContainer.classList.remove("w-56", "h-56");
+                mContainer.classList.add("w-32", "h-32");
+            }
         }
 
         function initGameEngine() {
@@ -2083,9 +2092,6 @@ function getMockWordsFallback(grade) {
                 }
                 if (skillsChanged) {
                     updateSkillsCooldownVisuals();
-                    if (!document.getElementById("skillTab").classList.contains("hidden")) {
-                        buildSkillTabUI();
-                    }
                 }
             }, 100);
 

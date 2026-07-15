@@ -1986,8 +1986,15 @@ function getMockWordsFallback(grade) {
             document.getElementById("displayStudentName").innerText = `${gameState.grade}학년 ${gameState.classNum}반 ${gameState.studentNum}번 - [${gameState.name}]`;
             document.getElementById("gradeLevelBadge").innerText = `교과 영단어 ${gameState.grade}학년`;
 
-            if (!gameState.skillsInventory) gameState.skillsInventory = [];
-            if (!gameState.equippedSkills) gameState.equippedSkills = [];
+            if (typeof gameState.skillsInventory === 'string') {
+                try { gameState.skillsInventory = JSON.parse(gameState.skillsInventory); } catch(e) { gameState.skillsInventory = []; }
+            }
+            if (!Array.isArray(gameState.skillsInventory)) gameState.skillsInventory = [];
+
+            if (typeof gameState.equippedSkills === 'string') {
+                try { gameState.equippedSkills = JSON.parse(gameState.equippedSkills); } catch(e) { gameState.equippedSkills = []; }
+            }
+            if (!Array.isArray(gameState.equippedSkills)) gameState.equippedSkills = [];
             if (!gameState.petLevels) {
                 gameState.petLevels = {
                     slime: gameState.petType === 'slime' ? (gameState.petLvl || 0) : 0,
@@ -2018,8 +2025,13 @@ function getMockWordsFallback(grade) {
                 // 스킬의 재사용 대기시간(쿨타임) 감소
                 let skillsChanged = false;
                 if (gameState.skillsInventory) {
+                    if (typeof gameState.skillsInventory === 'string') {
+                        try { gameState.skillsInventory = JSON.parse(gameState.skillsInventory); } catch(e) { gameState.skillsInventory = []; }
+                    }
+                    if (!Array.isArray(gameState.skillsInventory)) gameState.skillsInventory = [];
+                    
                     gameState.skillsInventory.forEach(skill => {
-                        if (skill.cooldownRemaining > 0) {
+                        if (skill && skill.cooldownRemaining > 0) {
                             skill.cooldownRemaining = Math.max(0, skill.cooldownRemaining - delta);
                             skillsChanged = true;
                         }

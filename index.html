@@ -1012,7 +1012,9 @@
             shoes: { name: "신속의 장화", base: 400, key: "shoesLvl" }
         };
 
-        const GROWTH_RATE = 1.5;
+        const GROWTH_RATE = 1.15;
+        const MAX_GEAR_LEVEL = 50;
+        const MAX_PET_LEVEL = 50;
 
         // Skill Grade Configs (색상 코드 및 배율 계수)
         const SKILL_GRADES = {
@@ -1993,25 +1995,20 @@
         // SHOP & ACQUISITIONS
         // ==========================================
         function getGearUpgradeInfo(currentLvl) {
-            const config = {
-                1: { success: 100, dropChance: 0 },
-                2: { success: 95,  dropChance: 0 },
-                3: { success: 90,  dropChance: 0 },
-                4: { success: 80,  dropChance: 0 },
-                5: { success: 70,  dropChance: 10 },
-                6: { success: 50,  dropChance: 25 },
-                7: { success: 35,  dropChance: 40 },
-                8: { success: 20,  dropChance: 50 },
-                9: { success: 5,   dropChance: 60 }
-            };
-            const base = config[currentLvl] || { success: 100, dropChance: 0 };
+            let success = 100;
+            let dropChance = 0;
+
+            if (currentLvl >= 5) {
+                success = Math.max(5, 100 - Math.floor((currentLvl - 4) * 2.5));
+                dropChance = Math.min(60, Math.floor((currentLvl - 4) * 2));
+            }
 
             // 요정 펫 레벨당 강화 성공률 +1% 보정 (최대 95%까지)
             const fairyLvl = (gameState.petLevels && gameState.petLevels['fairy']) || 0;
             const fairyBonus = fairyLvl * PET_PARAMS['fairy'].forgeBonus;
             return {
-                success: Math.min(95, base.success + fairyBonus),
-                dropChance: base.dropChance
+                success: Math.max(5, Math.min(95, success + fairyBonus)),
+                dropChance: dropChance
             };
         }
 
@@ -2030,7 +2027,7 @@
             for (let gearKey in GEAR_PARAMS) {
                 const info = GEAR_PARAMS[gearKey];
                 const currentLvl = gameState[info.key];
-                const isMax = currentLvl >= 10;
+                const isMax = currentLvl >= MAX_GEAR_LEVEL;
                 const cost = isMax ? 0 : Math.floor(info.base * Math.pow(GROWTH_RATE, currentLvl));
                 const chanceInfo = isMax ? null : getGearUpgradeInfo(currentLvl);
 
@@ -2041,7 +2038,7 @@
 
                 let rateHtml = "";
                 if (isMax) {
-                    rateHtml = `<span class="text-[#0066b1] font-bold">최대 강화 완료 (10강)</span>`;
+                    rateHtml = `<span class="text-[#0066b1] font-bold">최대 강화 완료 (${MAX_GEAR_LEVEL}강)</span>`;
                 } else {
                     const bonusLine = clickBonus > 0
                         ? `자동 DPS +${dpsBonus} &nbsp;|&nbsp; 클릭 타격 +${clickBonus}`
@@ -2057,7 +2054,7 @@
                             <span>성공: <span class="text-green-500 font-bold">${chanceInfo.success}%</span></span>
                             ${chanceInfo.dropChance > 0
                                 ? `<span class="text-[#e22718] font-bold">실패 시 ${chanceInfo.dropChance}% 확률 하락</span>`
-                                : '<span class="text-green-500">실패해도 강 유지</span>'}
+                                : '<span class="text-green-500">실패해도 강화 유지</span>'}
                         </div>
                     `;
                 }
@@ -2097,8 +2094,8 @@
             const info = GEAR_PARAMS[gearKey];
             const currentLvl = gameState[info.key];
 
-            if (currentLvl >= 10) {
-                showToast("⭐ 이미 최대 강화 단계(10강)에 도달한 장비입니다!");
+            if (currentLvl >= MAX_GEAR_LEVEL) {
+                showToast(`⭐ 이미 최대 강화 단계(${MAX_GEAR_LEVEL}강)에 도달한 장비입니다!`);
                 return;
             }
 
@@ -2183,7 +2180,7 @@
                 }
                 const petLevel = gameState.petLevels[petKey] || 0;
                 const isActive = petLevel > 0;
-                const isMax = petLevel >= 100;
+                const isMax = petLevel >= MAX_PET_LEVEL;
                 const cost = isMax ? 0 : Math.floor(info.cost * Math.pow(1.12, petLevel));
                 const evolvedName = getPetEvolutionName(petKey, petLevel);
 
@@ -2234,8 +2231,8 @@
             const currentPetLvl = gameState.petLevels[petKey] || 0;
             const cost = Math.floor(info.cost * Math.pow(1.12, currentPetLvl));
 
-            if (currentPetLvl >= 100) {
-                showToast("⭐ 이 동반 펫은 이미 100레벨 초월 최고 단계에 도달했습니다!");
+            if (currentPetLvl >= MAX_PET_LEVEL) {
+                showToast(`⭐ 이 동반 펫은 이미 ${MAX_PET_LEVEL}레벨 최고 단계에 도달했습니다!`);
                 return;
             }
 

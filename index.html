@@ -2576,24 +2576,7 @@
             saveLocalCache();
         }
 
-        let quizClickTimestamps = [];
-
         function evaluateAnswer(index) {
-            const now = Date.now();
-            quizClickTimestamps.push(now);
-            quizClickTimestamps = quizClickTimestamps.filter(t => now - t < 2000);
-            
-            if (quizClickTimestamps.length >= 4) {
-                showToast("⚠️ 무작위로 찍지 마세요! 3초간 입력이 정지됩니다.");
-                const buttons = document.getElementsByClassName("choice-btn");
-                for (let btn of buttons) btn.disabled = true;
-                setTimeout(() => {
-                    for (let btn of buttons) btn.disabled = false;
-                }, 3000);
-                quizClickTimestamps = [];
-                return;
-            }
-
             gameState.totalQuizTries++;
             const buttons = document.getElementsByClassName("choice-btn");
             const current = gameState.wordsPool[gameState.currentQuizIndex];
@@ -2689,13 +2672,13 @@
 
         function startCriticalTimer() {
             if (criticalTimerInterval) clearInterval(criticalTimerInterval);
-            let timeLeft = 70; // 7.0 seconds
+            let timeLeft = 200; // 20.0 seconds
             const bar = document.getElementById("criticalDefenseTimerBar");
             const text = document.getElementById("criticalDefenseTimeText");
             
             criticalTimerInterval = setInterval(() => {
                 timeLeft -= 1;
-                bar.style.width = `${Math.max(0, (timeLeft / 70) * 100)}%`;
+                bar.style.width = `${Math.max(0, (timeLeft / 200) * 100)}%`;
                 text.innerText = `제한시간: ${(timeLeft / 10).toFixed(1)}초`;
                 
                 if (timeLeft <= 0) {

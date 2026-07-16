@@ -32,6 +32,8 @@ function doPost(e) {
       result = loadOrCreateStudent.apply(null, args);
     } else if (action === "saveStudentProgress") {
       result = saveStudentProgress.apply(null, args);
+    } else if (action === "uploadWordsBatch") {
+      result = uploadWordsBatch.apply(null, args);
     } else {
       throw new Error("Unknown action: " + action);
     }
@@ -297,7 +299,29 @@ function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType
   }
 }
 
-// 6. 예외 보호용 복원 백업 단어 매핑 테이블
+// 6. CSV 업로드를 통해 단어 일괄 추가 (교사용)
+function uploadWordsBatch(wordsArray) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName("Words");
+    if (!sheet) {
+      initDatabaseSheets();
+      sheet = ss.getSheetByName("Words");
+    }
+    
+    for (var i = 0; i < wordsArray.length; i++) {
+      var row = wordsArray[i];
+      if (row && row.length >= 3) {
+        sheet.appendRow([row[0], row[1], row[2]]);
+      }
+    }
+    return { success: true, count: wordsArray.length };
+  } catch(e) {
+    return { error: e.toString() };
+  }
+}
+
+// 7. 예외 보호용 복원 백업 단어 매핑 테이블
 function getMockWordsFallback(grade) {
   var wordMap = {
     "3": [

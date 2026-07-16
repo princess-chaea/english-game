@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=1152">
     <title>Voca Hero! 영단어 용사 키우기</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0a0a0a">
@@ -2597,7 +2597,11 @@
                 gameState.gold += reward;
 
                 const arena = document.getElementById("battleArena");
-                spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `✨ 약점 치명타 타격!`);
+                
+                // 단어 정답 시 강력한 공격 데미지 적용 (클릭 데미지의 30배 + 초당 DPS의 5배)
+                const quizDmg = (calculateClickAttackPower() * 30) + (calculateDPSPower() * 5);
+                processCombatDamage(quizDmg);
+                spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `✨ 퀴즈 치명타! -${quizDmg}`);
 
                 if (Math.random() < 0.4) {
                     rollAndAcquireSkill(current.word, current.meaning);

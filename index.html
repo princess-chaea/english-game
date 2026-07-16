@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voca Hero! 영단어 용사 키우기</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0a0a0a">
+    <link rel="apple-touch-icon" href="media/pet_dragon/1.png">
     <!-- Suppress Tailwind CDN production warning -->
     <script>
         (function() {
@@ -745,6 +748,11 @@
                 class="w-full py-4 bg-transparent hover:bg-white text-white hover:text-black border border-white font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 mt-2 rounded-none-forced">
                 <i data-lucide="swords" class="w-4 h-4"></i>
                 <span>전설의 원정 출격하기!</span>
+            </button>
+            <button id="pwaInstallBtn" style="display: none;"
+                class="w-full py-3 bg-[#0066b1] hover:bg-[#005599] text-white font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 rounded-none-forced">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>태블릿 홈 화면에 게임 앱 설치하기</span>
             </button>
         </div>
     </div>
@@ -3129,6 +3137,33 @@
             checkConnectionState();
             openModal("loginModal");
         };
+        // PWA Install & Service Worker Logic
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const installBtn = document.getElementById('pwaInstallBtn');
+            if (installBtn) {
+                installBtn.style.display = 'flex';
+                installBtn.addEventListener('click', async () => {
+                    installBtn.style.display = 'none';
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`User response to the install prompt: ${outcome}`);
+                    deferredPrompt = null;
+                });
+            }
+        });
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then((registration) => {
+                    console.log('ServiceWorker registration successful');
+                }, (err) => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
     </script>
 </body>
 

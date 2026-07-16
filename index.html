@@ -2701,11 +2701,15 @@
 
             if (gameState[targetGear] > 1) {
                 gameState[targetGear] -= 1;
-                errorEl.innerText = `❌ 방어 실패 (${reason})! ${targetName} 강화 단계 1 하락!`;
+                const msg = `❌ 방어 실패! ${targetName}의 강화 수치가 -1 되었습니다.`;
+                errorEl.innerText = msg;
                 showBattleToast(`💥 방어 실패! ${targetName} -1강 하락!`);
+                showDamageOverlay(msg);
             } else {
-                errorEl.innerText = `❌ 방어 실패 (${reason})! 큰 피해를 입었습니다!`;
+                const msg = `❌ 방어 실패! 치명적인 공격을 받았습니다!`;
+                errorEl.innerText = msg;
                 showBattleToast("💥 크리티컬 피격!");
+                showDamageOverlay(msg);
             }
             errorEl.classList.remove("hidden");
             
@@ -3185,8 +3189,34 @@
                     console.log('ServiceWorker registration failed: ', err);
                 });
             });
+        function showDamageOverlay(text) {
+            const overlay = document.getElementById("damageOverlay");
+            const overlayText = document.getElementById("damageOverlayText");
+            overlayText.innerText = text;
+            overlay.classList.remove("hidden");
+            overlay.classList.add("flex");
+            
+            document.body.classList.add("animate-shake");
+            
+            setTimeout(() => {
+                overlay.classList.remove("flex");
+                overlay.classList.add("hidden");
+                document.body.classList.remove("animate-shake");
+            }, 3000);
         }
     </script>
+
+    <!-- Damage Overlay (Scratch & Flash) -->
+    <div id="damageOverlay" class="fixed inset-0 pointer-events-none hidden z-[100] flex-col items-center justify-center bg-red-900/60 transition-opacity duration-300">
+        <h2 id="damageOverlayText" class="text-3xl font-extrabold text-white bg-black/80 px-8 py-4 rounded-none-forced mb-12 shadow-[0_0_30px_rgba(255,0,0,1)] border-2 border-red-500 text-center animate-bounce"></h2>
+        
+        <!-- Claw mark SVG -->
+        <svg class="w-80 h-80 text-red-500 drop-shadow-[0_0_25px_rgba(220,38,38,1)] opacity-90 transform -rotate-12 animate-pulse" viewBox="0 0 100 100" fill="none" stroke="currentColor">
+            <path d="M20 10 Q 30 50, 15 90" stroke-width="4" stroke-linecap="round"/>
+            <path d="M50 5 Q 60 45, 45 95" stroke-width="6" stroke-linecap="round"/>
+            <path d="M80 15 Q 85 55, 75 85" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+    </div>
 </body>
 
 </html>

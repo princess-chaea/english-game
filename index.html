@@ -1957,13 +1957,14 @@
                 ? BOSS_PROFILES[(gameState.stage - 1) % BOSS_PROFILES.length]
                 : MONSTER_PROFILES[index];
 
-            // 완만한 성장 곡선: 스테이지마다 약 15% HP 증가 (강화·펫·스킬 등과 밸런스 유지)
-            const growthFactor = 1.15;
+            // 성장 곡선 조정: 초기 체력을 올리고 스테이지당 20% 증가로 상향 (너무 쉬운 초반 난이도 완화)
+            const growthFactor = 1.20;
+            const baseHp = 100;
             if (isBossBattleActive) {
-                const regularHp = Math.floor(50 * Math.pow(growthFactor, gameState.stage - 1));
-                monsterMaxHp = Math.floor(regularHp * 20); // 보스는 일반의 20배
+                const regularHp = Math.floor(baseHp * Math.pow(growthFactor, gameState.stage - 1));
+                monsterMaxHp = Math.floor(regularHp * 15); // 보스는 일반의 15배 (너무 큰 통곡의 벽 방지)
             } else {
-                monsterMaxHp = Math.floor(50 * Math.pow(growthFactor, gameState.stage - 1));
+                monsterMaxHp = Math.floor(baseHp * Math.pow(growthFactor, gameState.stage - 1));
             }
 
             monsterCurrentHp = monsterMaxHp;
@@ -2585,7 +2586,9 @@
                 buttons[index].className = "choice-btn p-3.5 bg-green-950/80 border-2 border-green-500 text-white font-bold rounded-none-forced text-center transition flex items-center justify-center";
                 gameState.totalQuizCorrect++;
 
-                const baseReward = Math.floor((50 * gameState.grade) * Math.pow(1.10, Math.max(0, gameState.stage - 1)));
+                // 초반에 골드가 너무 많이 풀려 강화가 너무 쉬워지는 현상을 방지하기 위해 기본급을 낮추고, 
+                // 대신 스테이지 진행에 따른 복리 증가율을 1.15로 상향 조정
+                const baseReward = Math.floor((15 * gameState.grade) * Math.pow(1.15, Math.max(0, gameState.stage - 1)));
                 // 슬라임 펫 골드 배율 적용 (레벨당 +5%)
                 const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
                 const goldMultiplier = 1.0 + (slimeLvl * PET_PARAMS['slime'].goldBonus);

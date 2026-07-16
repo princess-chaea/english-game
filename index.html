@@ -2576,7 +2576,24 @@
             saveLocalCache();
         }
 
+        let quizClickTimestamps = [];
+
         function evaluateAnswer(index) {
+            const now = Date.now();
+            quizClickTimestamps.push(now);
+            quizClickTimestamps = quizClickTimestamps.filter(t => now - t < 2000);
+            
+            if (quizClickTimestamps.length >= 4) {
+                showToast("⚠️ 무작위로 찍지 마세요! 3초간 입력이 정지됩니다.");
+                const buttons = document.getElementsByClassName("choice-btn");
+                for (let btn of buttons) btn.disabled = true;
+                setTimeout(() => {
+                    for (let btn of buttons) btn.disabled = false;
+                }, 3000);
+                quizClickTimestamps = [];
+                return;
+            }
+
             gameState.totalQuizTries++;
             const buttons = document.getElementsByClassName("choice-btn");
             const current = gameState.wordsPool[gameState.currentQuizIndex];
@@ -2672,13 +2689,13 @@
 
         function startCriticalTimer() {
             if (criticalTimerInterval) clearInterval(criticalTimerInterval);
-            let timeLeft = 300; // 30.0 seconds
+            let timeLeft = 70; // 7.0 seconds
             const bar = document.getElementById("criticalDefenseTimerBar");
             const text = document.getElementById("criticalDefenseTimeText");
             
             criticalTimerInterval = setInterval(() => {
                 timeLeft -= 1;
-                bar.style.width = `${Math.max(0, (timeLeft / 300) * 100)}%`;
+                bar.style.width = `${Math.max(0, (timeLeft / 70) * 100)}%`;
                 text.innerText = `제한시간: ${(timeLeft / 10).toFixed(1)}초`;
                 
                 if (timeLeft <= 0) {
@@ -2693,10 +2710,16 @@
             playSoundEffect('incorrect');
             const errorEl = document.getElementById("criticalDefenseError");
             
-            if (gameState.armorLvl > 1) {
-                gameState.armorLvl -= 1;
-                errorEl.innerText = `❌ 방어 실패 (${reason})! 갑옷 강화 단계 하락!`;
-                showBattleToast("💥 방어구(갑옷) 손상! -1강 하락!");
+            const gearKeys = ['helmetLvl', 'armorLvl', 'weaponLvl', 'shieldLvl', 'shoesLvl'];
+            const gearNames = ['투구', '갑옷', '무기', '방패', '신발'];
+            const rIdx = Math.floor(Math.random() * gearKeys.length);
+            const targetGear = gearKeys[rIdx];
+            const targetName = gearNames[rIdx];
+
+            if (gameState[targetGear] > 1) {
+                gameState[targetGear] -= 1;
+                errorEl.innerText = `❌ 방어 실패 (${reason})! ${targetName} 강화 단계 1 하락!`;
+                showBattleToast(`💥 방어 실패! ${targetName} -1강 하락!`);
             } else {
                 errorEl.innerText = `❌ 방어 실패 (${reason})! 큰 피해를 입었습니다!`;
                 showBattleToast("💥 크리티컬 피격!");
@@ -2726,7 +2749,13 @@
                 const modal = document.getElementById("criticalDefenseModal");
                 modal.classList.remove("flex");
                 modal.classList.add("hidden");
-                showBattleToast("🛡️ 크리티컬 방어 성공!");
+                showBattleToast("🛡️ 방어 성공! 보스에게 반격 피해!");
+                
+                // 성공 시 반격 폭딜
+                const counterDmg = (calculateClickAttackPower() * 50) + (calculateDPSPower() * 10);
+                processCombatDamage(counterDmg);
+                const arena = document.getElementById("battleArena");
+                spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `✨ 카운터 어택! -${counterDmg}`);
             } else {
                 punishCriticalFailure("스펠링 오답");
             }

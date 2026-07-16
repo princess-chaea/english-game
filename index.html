@@ -1013,8 +1013,8 @@
         };
 
         const GROWTH_RATE = 1.15;
-        const MAX_GEAR_LEVEL = 50;
-        const MAX_PET_LEVEL = 50;
+        const MAX_GEAR_LEVEL = 30;
+        const MAX_PET_LEVEL = 100;
 
         // Skill Grade Configs (색상 코드 및 배율 계수)
         const SKILL_GRADES = {
@@ -1946,8 +1946,8 @@
                 ? BOSS_PROFILES[(gameState.stage - 1) % BOSS_PROFILES.length]
                 : MONSTER_PROFILES[index];
 
-            // 급격한 성장 곡선: 스테이지마다 약 45% HP 증가 (강화·펫·스킬 필수 유도)
-            const growthFactor = 1.45;
+            // 완만한 성장 곡선: 스테이지마다 약 15% HP 증가 (강화·펫·스킬 등과 밸런스 유지)
+            const growthFactor = 1.15;
             if (isBossBattleActive) {
                 const regularHp = Math.floor(50 * Math.pow(growthFactor, gameState.stage - 1));
                 monsterMaxHp = Math.floor(regularHp * 20); // 보스는 일반의 20배
@@ -1998,9 +1998,15 @@
             let success = 100;
             let dropChance = 0;
 
-            if (currentLvl >= 5) {
-                success = Math.max(5, 100 - Math.floor((currentLvl - 4) * 2.5));
-                dropChance = Math.min(60, Math.floor((currentLvl - 4) * 2));
+            if (currentLvl >= 5 && currentLvl < 15) {
+                success = Math.max(50, 100 - (currentLvl - 4) * 5);
+                dropChance = Math.min(30, (currentLvl - 4) * 3);
+            } else if (currentLvl >= 15 && currentLvl < 25) {
+                success = Math.max(20, 50 - (currentLvl - 14) * 3);
+                dropChance = Math.min(50, 30 + (currentLvl - 14) * 2);
+            } else if (currentLvl >= 25) {
+                success = Math.max(5, 20 - (currentLvl - 24) * 3);
+                dropChance = 60;
             }
 
             // 요정 펫 레벨당 강화 성공률 +1% 보정 (최대 95%까지)
@@ -2568,7 +2574,7 @@
                 buttons[index].className = "choice-btn p-3.5 bg-green-950/80 border-2 border-green-500 text-white font-bold rounded-none-forced text-center transition flex items-center justify-center";
                 gameState.totalQuizCorrect++;
 
-                const baseReward = 50 * gameState.grade;
+                const baseReward = Math.floor((50 * gameState.grade) * Math.pow(1.10, Math.max(0, gameState.stage - 1)));
                 // 슬라임 펫 골드 배율 적용 (레벨당 +5%)
                 const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
                 const goldMultiplier = 1.0 + (slimeLvl * PET_PARAMS['slime'].goldBonus);

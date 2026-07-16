@@ -44,6 +44,9 @@
             background-color: #000000; /* canvas */
             color: #ffffff; /* on-dark */
             font-weight: normal;
+            -webkit-user-select: none; /* Safari */
+            user-select: none; /* Prevent text highlighting on fast taps */
+            touch-action: manipulation; /* Prevent double-tap to zoom */
         }
 
         /* Typography utility classes */

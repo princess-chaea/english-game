@@ -8,12 +8,12 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "media/pet_dragon/1.png",
+      "src": "media/pet_dragon/pet_dragon_1.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "media/pet_dragon/10.png",
+      "src": "media/pet_dragon/pet_dragon_10.png",
       "sizes": "512x512",
       "type": "image/png"
     }

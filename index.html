@@ -285,6 +285,38 @@
         .animate-shake {
             animation: monsterShake 0.15s ease-in-out;
         }
+
+        /* Mythic Grade Aurora Glow Animation */
+        @keyframes auroraGlow {
+            0% {
+                background-position: 0% 50%;
+                border-color: #ec4899;
+                box-shadow: 0 0 15px rgba(236, 72, 153, 0.8), inset 0 0 15px rgba(59, 130, 246, 0.5);
+            }
+            33% {
+                background-position: 50% 100%;
+                border-color: #8b5cf6;
+                box-shadow: 0 0 20px rgba(139, 92, 246, 0.9), inset 0 0 20px rgba(16, 185, 129, 0.5);
+            }
+            66% {
+                background-position: 100% 50%;
+                border-color: #06b6d4;
+                box-shadow: 0 0 20px rgba(6, 182, 212, 0.9), inset 0 0 20px rgba(236, 72, 153, 0.5);
+            }
+            100% {
+                background-position: 0% 50%;
+                border-color: #ec4899;
+                box-shadow: 0 0 15px rgba(236, 72, 153, 0.8), inset 0 0 15px rgba(59, 130, 246, 0.5);
+            }
+        }
+
+        .mythic-aurora-card {
+            background: linear-gradient(135deg, #18002e, #031b33, #002b22, #33001b) !important;
+            background-size: 300% 300% !important;
+            animation: auroraGlow 4s ease infinite !important;
+            border-width: 2px !important;
+            color: #f472b6 !important;
+        }
     </style>
 </head>
 
@@ -343,11 +375,22 @@
 
             <!-- Total Currencies Widget -->
             <div class="z-10 text-center my-3">
-                <p class="text-[10px] text-[#7e7e7e] font-bold tracking-widest uppercase">현재 보유 골드</p>
-                <div class="flex items-center justify-center gap-1.5 my-1">
-                    <span class="text-xl">🪙</span>
-                    <span id="goldCount" class="text-3xl font-bold tracking-tight text-white">0</span>
-                    <span class="text-[#bbbbbb] font-bold text-xs">골드</span>
+                <div class="grid grid-cols-2 gap-2 bg-[#0d0d0d] p-2.5 border border-[#3c3c3c] rounded-none-forced">
+                    <div>
+                        <p class="text-[9px] text-[#7e7e7e] font-bold tracking-widest uppercase">보유 골드</p>
+                        <div class="flex items-center justify-center gap-1 my-0.5">
+                            <span class="text-base">🪙</span>
+                            <span id="goldCount" class="text-xl font-bold tracking-tight text-white">0</span>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-[9px] text-pink-400 font-bold tracking-widest uppercase">단어 정복 포인트 (FP)</p>
+                        <div class="flex items-center justify-center gap-1 my-0.5">
+                            <span class="text-base">🎁</span>
+                            <span id="masteryPointsCount" class="text-xl font-bold tracking-tight text-pink-400">0</span>
+                            <span class="text-xs text-pink-300 font-bold">FP</span>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Telemetry Stats -->
@@ -448,12 +491,11 @@
         <section class="lg:col-span-7 flex flex-col gap-4">
 
             <!-- Dynamic Navigation Tab Bar -->
-            <div
-                class="bg-black border border-[#3c3c3c] p-1 grid grid-cols-3 sm:grid-cols-5 gap-1 z-10 rounded-none-forced">
+            <nav class="grid grid-cols-3 sm:grid-cols-6 gap-1 bg-[#0d0d0d] p-1 border border-[#3c3c3c] rounded-none-forced">
                 <button onclick="switchTab('quizTab')" id="quizTabBtn"
-                    class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-black bg-white rounded-none-forced flex items-center justify-center gap-1">
-                    <i data-lucide="sword" class="w-3.5 h-3.5"></i>
-                    <span>전투</span>
+                    class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-black bg-white rounded-none-forced flex items-center justify-center gap-1 transition">
+                    <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
+                    <span>퀴즈 전투</span>
                 </button>
                 <button onclick="switchTab('gearTab')" id="gearTabBtn"
                     class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition">
@@ -470,12 +512,17 @@
                     <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
                     <span>스킬</span>
                 </button>
+                <button onclick="switchTab('worldBossTab')" id="worldBossTabBtn"
+                    class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition animate-pulse">
+                    <i data-lucide="swords" class="w-3.5 h-3.5 text-red-500"></i>
+                    <span>월드보스</span>
+                </button>
                 <button onclick="switchTab('statsTab')" id="statsTabBtn"
-                    class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 col-span-3 sm:col-span-1 transition">
+                    class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition">
                     <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
                     <span>서고</span>
                 </button>
-            </div>
+            </nav>
 
             <!-- TAB 1: Combat Learning Quiz View -->
             <div id="quizTab"
@@ -513,7 +560,7 @@
                 <!-- Main Active Question Area -->
                 <div id="quizContainer" class="my-6 text-center">
                     <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest mb-1.5">몬스터의 약점 영단어</p>
-                    <h2 id="quizWordEng" class="text-4xl font-bold text-white uppercase tracking-wider mb-3">
+                    <h2 id="quizWordEng" class="text-4xl font-bold text-white tracking-wider mb-3">
                         ...</h2>
 
                     <!-- Sound Synthesizer Button -->
@@ -614,18 +661,28 @@
                             <i data-lucide="sparkles" class="text-[#0066b1] animate-pulse"></i>
                             <span>영단어 마법 비기 연구소</span>
                         </h3>
-                        <span
-                            class="text-[9px] bg-[#1a1a1a] text-[#ffffff] border border-[#3c3c3c] px-2 py-0.5 rounded-none-forced font-bold uppercase tracking-wider">확률 기반 획득</span>
+                        <div class="flex gap-1.5">
+                            <button onclick="autoEquipBestSkills()" class="bg-[#0066b1] hover:bg-[#0088ee] text-white font-bold text-[10px] px-2.5 py-1 rounded-none-forced flex items-center gap-1 transition shadow-sm">
+                                <i data-lucide="zap" class="w-3 h-3 text-yellow-300"></i>
+                                <span>⚡ 상위 등급 자동 장착</span>
+                            </button>
+                            <button onclick="drawSkillCapsule()" class="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold text-[10px] px-2.5 py-1 rounded-none-forced flex items-center gap-1 transition shadow-sm animate-pulse">
+                                <i data-lucide="gift" class="w-3 h-3 text-white"></i>
+                                <span>🎁 단어 캡슐 뽑기 (50 FP)</span>
+                            </button>
+                        </div>
                     </div>
-                    <p class="text-[10px] text-[#7e7e7e] uppercase tracking-wider mb-4">학습 퀴즈를 풀고 흡수한 영단어 스킬을 전투 슬롯(최대 4개)에 배치해보세요.</p>
+                    <p class="text-[10px] text-[#7e7e7e] uppercase tracking-wider mb-4">학습 퀴즈를 풀어 쌓은 정복 포인트(FP)로 단어 캡슐을 뽑아 필살 스킬을 획득하고 강화해보세요!</p>
 
                     <!-- Equipped Slots (4 slots) -->
                     <div class="mb-5 bg-[#0d0d0d] p-3.5 border border-[#3c3c3c] rounded-none-forced">
-                        <h4
-                            class="bmw-label-uppercase text-[#0066b1] mb-2 flex items-center gap-1.5">
-                            <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
-                            <span>장착된 마법 스킬 (전투용 슬롯)</span>
-                        </h4>
+                        <div class="flex justify-between items-center mb-2">
+                            <h4
+                                class="bmw-label-uppercase text-[#0066b1] flex items-center gap-1.5">
+                                <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+                                <span>장착된 마법 스킬 (전투용 슬롯)</span>
+                            </h4>
+                        </div>
                         <div class="grid grid-cols-4 gap-2" id="equippedSkillsGrid">
                             <!-- Filled dynamically -->
                         </div>
@@ -633,11 +690,17 @@
 
                     <!-- Acquired Skills Inventory list -->
                     <div>
-                        <h4
-                            class="bmw-label-uppercase text-[#0066b1] mb-2 flex items-center gap-1.5">
-                            <i data-lucide="archive" class="w-3.5 h-3.5"></i>
-                            <span>보유한 영단어 스킬 마법 보관함</span>
-                        </h4>
+                        <div class="flex justify-between items-center mb-2">
+                            <h4
+                                class="bmw-label-uppercase text-[#0066b1] flex items-center gap-1.5">
+                                <i data-lucide="archive" class="w-3.5 h-3.5"></i>
+                                <span>보유한 영단어 스킬 마법 보관함</span>
+                            </h4>
+                            <button onclick="combineSkills()" class="bmw-btn-secondary py-1 px-3 text-[10px] bg-gradient-to-r from-purple-900 to-indigo-900 border-purple-500 text-white font-bold flex items-center gap-1 hover:from-purple-800 hover:to-indigo-800 transition">
+                                <i data-lucide="sparkles" class="w-3 h-3 text-pink-400"></i>
+                                <span>스킬 3개 조합하기 (100% 성공)</span>
+                            </button>
+                        </div>
                         <div class="bg-black border border-[#3c3c3c] p-3 max-h-48 overflow-y-auto grid grid-cols-1 gap-2 rounded-none-forced"
                             id="skillsInventoryGrid">
                             <!-- Filled dynamically -->
@@ -645,15 +708,162 @@
                     </div>
                 </div>
                 <div
-                    class="grid grid-cols-4 gap-2 text-center text-[9px] font-bold mt-4 bg-[#0d0d0d] p-2 border border-[#3c3c3c] rounded-none-forced">
-                    <div class="text-[#bbbbbb] font-light">일반 (60%): ×15</div>
-                    <div class="text-[#0066b1] font-bold">희귀 (25%): ×25</div>
-                    <div class="text-[#1c69d4] font-bold">영웅 (12%): ×40</div>
-                    <div class="text-[#e22718] font-bold">전설 (3%): ×70</div>
+                    class="grid grid-cols-5 gap-1 text-center text-[8px] font-bold mt-4 bg-[#0d0d0d] p-2 border border-[#3c3c3c] rounded-none-forced">
+                    <div class="text-[#bbbbbb] font-light">일반: ×15 (75%)</div>
+                    <div class="text-[#0066b1] font-bold">희귀: ×25 (18%)</div>
+                    <div class="text-[#1c69d4] font-bold">영웅: ×40 (5%)</div>
+                    <div class="text-[#e22718] font-bold">전설: ×70 (1.95%)</div>
+                    <div class="text-pink-400 font-bold animate-pulse">신화: ×150 (0.05%)</div>
                 </div>
             </div>
 
-            <!-- TAB 5: Core Educational Logs -->
+            <!-- TAB 5: Grade World Boss Raid Arena -->
+            <div id="worldBossTab"
+                class="bg-black border border-[#3c3c3c] p-6 flex-grow hidden flex-col justify-between min-h-[480px] rounded-none-forced">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="bmw-label-uppercase text-white flex items-center gap-2">
+                            <i data-lucide="swords" class="text-red-500 animate-pulse"></i>
+                            <span class="text-red-500 font-extrabold text-base">전 학년 연합 레이드 : 월드 보스 던전</span>
+                        </h3>
+                        <span id="worldBossEntryBadge" class="text-[9px] bg-red-950 text-red-400 border border-red-600 px-3 py-1 rounded-none-forced font-bold uppercase tracking-wider">1일 1회 도전 가능</span>
+                    </div>
+
+                    <!-- Main Raid Interface Layout (Boss Showcase + Status Panel) -->
+                    <div id="worldBossReadyBox" class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                        
+                        <!-- Left 5 Cols: Large World Boss Illustration & Weekly Rotation Info -->
+                        <div class="md:col-span-5 bg-[#0d0d0d] border-2 border-red-800 p-4 flex flex-col items-center justify-between text-center relative overflow-hidden rounded-none-forced group">
+                            <div class="z-10 w-full flex justify-between items-center mb-1">
+                                <span id="wbWeekBadge" class="text-[9px] bg-red-900/80 text-yellow-300 font-bold px-2 py-0.5 border border-red-500">1주차 월드보스</span>
+                                <span class="text-[9px] text-gray-400 font-mono">시즌 종료: <span id="worldBossDaysLeft" class="text-white font-bold">6일 남음</span></span>
+                            </div>
+
+                            <!-- Big Dynamic Boss Image -->
+                            <div class="relative my-3 flex items-center justify-center min-h-[190px] w-full">
+                                <img id="wbBossImage" src="media/bose/boss_dragon.png" alt="World Boss" class="max-h-48 object-contain filter drop-shadow-[0_0_25px_rgba(239,68,68,0.7)] transition duration-300 transform group-hover:scale-105">
+                                <div id="wbBossAura" class="absolute inset-0 bg-gradient-to-t from-red-950/80 via-transparent to-transparent pointer-events-none"></div>
+                            </div>
+
+                            <div class="z-10 w-full">
+                                <h4 id="wbBossName" class="text-lg font-black text-red-400 tracking-wider font-mono">종말의 화염룡 파브니르</h4>
+                                <p id="wbBossDesc" class="text-[9px] text-gray-400 mt-0.5 line-clamp-2">"고대 영단어의 마법을 봉인한 괴수. 전 학년 용사들이 힘을 합쳐 약점 스펠을 적중시켜야 파괴할 수 있다!"</p>
+                            </div>
+                        </div>
+
+                        <!-- Right 7 Cols: Boss Health, Individual Contribution & Challenge Entry -->
+                        <div class="md:col-span-7 flex flex-col justify-between gap-3">
+                            
+                            <!-- Global Grade HP Progress Card -->
+                            <div class="bg-[#0d0d0d] p-4 border border-[#3c3c3c] rounded-none-forced">
+                                <div class="flex justify-between items-center mb-1 text-xs">
+                                    <span class="font-bold text-gray-300 flex items-center gap-1">
+                                        🛡️ <span id="wbGradeTitle">학년 전용 공유 체력</span>
+                                    </span>
+                                    <span class="text-[10px] text-red-400 font-bold font-mono">실시간 레이드 잔여 체력</span>
+                                </div>
+
+                                <!-- HP Bar -->
+                                <div class="w-full bg-[#111] border border-red-600 h-6 relative overflow-hidden rounded-none-forced my-2 shadow-inner">
+                                    <div id="worldBossHpBar" class="bg-gradient-to-r from-red-600 via-pink-600 to-red-500 h-full transition-all duration-300" style="width: 100%"></div>
+                                    <span id="worldBossHpText" class="absolute inset-0 flex items-center justify-center text-[10px] font-extrabold font-mono text-white drop-shadow-[0_1px_3px_rgba(0,0,0,1)]">10,000,000 / 10,000,000 HP (100.0%)</span>
+                                </div>
+
+                                <!-- Individual Contribution Grid -->
+                                <div class="grid grid-cols-3 gap-2 text-[10px] bg-black p-2.5 border border-[#262626] mt-3">
+                                    <div class="text-center">
+                                        <span class="text-[#7e7e7e] block">내 누적 타격 피해</span>
+                                        <span id="myWorldBossDmgDisplay" class="font-bold text-white font-mono text-xs">0</span>
+                                    </div>
+                                    <div class="text-center border-x border-[#262626]">
+                                        <span class="text-[#7e7e7e] block">기여 지분 (%)</span>
+                                        <span id="myWorldBossShareDisplay" class="font-bold text-yellow-400 font-mono text-xs">0.00%</span>
+                                    </div>
+                                    <div class="text-center">
+                                        <span class="text-[#7e7e7e] block">예상 시즌 보상</span>
+                                        <span id="myWorldBossRewardDisplay" class="font-bold text-pink-400 text-xs">+0 FP / [수호신]</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Defense HP & Raid Attack Entry Button -->
+                            <div class="bg-[#0d0d0d] p-3.5 border border-[#3c3c3c] rounded-none-forced flex flex-col gap-2.5">
+                                <div class="flex items-center justify-between text-xs bg-black p-2 border border-[#262626]">
+                                    <span class="text-gray-300">내 대장간 장비 생존 HP:</span>
+                                    <span id="playerMaxHpDisplay" class="font-bold text-green-400 font-mono">💖 100 HP (방어막 5회 오답 버티기)</span>
+                                </div>
+
+                                <!-- Current Loadout Preview (Pet & Equipped Skills) -->
+                                <div class="bg-black p-2.5 border border-[#262626] rounded-none-forced">
+                                    <div class="flex justify-between items-center text-[9px] text-[#7e7e7e] font-bold uppercase mb-1.5">
+                                        <span>⚔️ 참전용사 최종 출전 장비/소환수 점검</span>
+                                        <span class="text-yellow-400 font-mono">DPS: <b id="wbDpsPreviewText" class="text-white">0</b></span>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2 text-[10px]">
+                                        <!-- Companion Pet Preview -->
+                                        <div class="bg-[#0d0d0d] p-1.5 border border-[#3c3c3c] flex items-center gap-1.5">
+                                            <span class="text-base">🐾</span>
+                                            <div class="min-w-0">
+                                                <span class="text-[8px] text-[#7e7e7e] block">동반 소환수</span>
+                                                <span id="wbPetPreviewName" class="font-bold text-white truncate block">소환수 없음</span>
+                                            </div>
+                                        </div>
+                                        <!-- Equipped Skills Preview -->
+                                        <div class="bg-[#0d0d0d] p-1.5 border border-[#3c3c3c] flex items-center gap-1.5">
+                                            <span class="text-base">🔮</span>
+                                            <div class="min-w-0">
+                                                <span class="text-[8px] text-[#7e7e7e] block">장착 마법 스킬</span>
+                                                <span id="wbSkillsPreviewList" class="font-bold text-pink-400 truncate block">스킬 0개 장착됨</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button id="startWorldBossBtn" onclick="startWorldBossRaid()" class="w-full py-3.5 bg-gradient-to-r from-red-700 via-pink-700 to-red-600 hover:from-red-600 hover:to-pink-600 text-white font-black text-sm tracking-wider uppercase transition shadow-xl flex items-center justify-center gap-2 rounded-none-forced">
+                                    <i data-lucide="swords" class="w-5 h-5"></i>
+                                    <span>월드보스 토벌전 참전하기 (1일 1회)</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Raid Arena Box (Shown during 70s battle) -->
+                    <div id="worldBossBattleArena" class="hidden bg-[#0d0d0d] p-4 border-2 border-red-500 rounded-none-forced text-center flex-col gap-2.5">
+                        <div class="flex justify-between items-center text-xs bg-black p-2 border border-red-950">
+                            <span class="font-bold text-red-500 flex items-center gap-1">⏱️ 제한시간: <span id="wbTimerText" class="text-white font-mono text-sm">70.0초</span></span>
+                            <span class="font-bold text-green-400 flex items-center gap-1">🛡️ 용사 남은 HP: <span id="wbPlayerHpText" class="text-white font-mono text-sm">100 HP</span></span>
+                        </div>
+
+                        <!-- Active WB Quiz Word Display -->
+                        <div class="bg-black p-3.5 border-2 border-red-900 my-0.5 relative overflow-hidden">
+                            <span class="text-[9px] text-red-400 font-bold uppercase tracking-widest block mb-1">🔥 보스 파괴 약점 영단어</span>
+                            <h2 id="wbQuizWord" class="text-3xl font-black text-yellow-300 tracking-wider font-mono">...</h2>
+                        </div>
+
+                        <!-- 4 choices for WB -->
+                        <div id="wbChoiceContainer" class="grid grid-cols-2 gap-2">
+                            <!-- Filled dynamically -->
+                        </div>
+
+                        <!-- WB Skill Casting Bar (Equipped 4 skills grid for raid combat) -->
+                        <div class="bg-black p-2 border border-red-950 mt-1">
+                            <div class="flex justify-between items-center text-[8px] text-red-400 font-bold uppercase mb-1">
+                                <span>⚡ 장착 필살 마법 시전 (쿨타임 30초 / 70초 동안 2회 시전 지원)</span>
+                            </div>
+                            <div id="wbRaidSkillsContainer" class="grid grid-cols-4 gap-1.5">
+                                <!-- Dynamic WB Skill Buttons -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-[#0d0d0d] p-3 border border-[#3c3c3c] mt-4 text-[9px] text-[#bbbbbb] flex items-start gap-2 rounded-none-forced">
+                    <i data-lucide="info" class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5"></i>
+                    <p>월드보스는 **70초 제한시간**으로 확장되어 30초 쿨타임 스킬을 **최대 2회 시전**할 수 있습니다! 또한 15초마다 광폭화 스펠 공격 패턴이 발동되니 퀴즈 정답 폭딜과 스킬 시전으로 물리치세요!</p>
+                </div>
+            </div>
+
+            <!-- TAB 6: Core Educational Logs -->
             <div id="statsTab"
                 class="bg-black border border-[#3c3c3c] p-6 flex-grow hidden flex-col justify-between min-h-[440px] rounded-none-forced">
                 <div>
@@ -668,7 +878,7 @@
                         <p class="text-xs text-[#7e7e7e] text-center py-10 uppercase tracking-wider">아직 학습을 정복한 영단어 목록이 비어 있습니다.</p>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-3">
+                    <div class="grid grid-cols-3 gap-3 mb-4">
                         <div class="telemetry-cell text-center rounded-none-forced">
                             <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest">누적 정답 수</p>
                             <span id="statCorrectCount" class="text-lg font-bold text-white">0</span>
@@ -680,6 +890,55 @@
                         <div class="telemetry-cell text-center rounded-none-forced">
                             <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest">정답 격파 비율</p>
                             <span id="statSuccessRatio" class="text-lg font-bold text-[#e22718]">0%</span>
+                        </div>
+                    </div>
+
+                    <!-- Hall of Fame (명예의 전장) Ranking Section -->
+                    <div class="bg-[#0d0d0d] border border-yellow-700/60 p-4 rounded-none-forced">
+                        <div class="flex justify-between items-center mb-3 border-b border-[#262626] pb-2">
+                            <h4 class="text-xs font-bold text-yellow-400 flex items-center gap-1.5 uppercase tracking-wider">
+                                <i data-lucide="trophy" class="w-4 h-4 text-yellow-400"></i>
+                                <span>전 학년 명예의 전장 (실시간 랭킹 Top 5)</span>
+                            </h4>
+                            <button onclick="fetchHallOfFameUI()" class="text-[9px] bg-yellow-950 text-yellow-300 border border-yellow-600 px-2 py-0.5 font-bold hover:bg-yellow-900 transition">
+                                🔄 랭킹 새로고침
+                            </button>
+                        </div>
+
+                        <!-- 3 Ranking Columns: Stage, World Boss, Gold -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-[10px]">
+                            <!-- Column 1: Highest Stage -->
+                            <div class="bg-black p-2.5 border border-[#262626]">
+                                <div class="flex justify-between items-center mb-2 pb-1 border-b border-[#262626]">
+                                    <span class="font-bold text-sky-400">🚩 최고 스테이지</span>
+                                    <span class="text-[8px] text-gray-400">내 순위: <b id="myStageRankText" class="text-yellow-400 font-mono">-위</b></span>
+                                </div>
+                                <div id="hofStageList" class="space-y-1">
+                                    <p class="text-gray-500 text-center py-2">불러오는 중...</p>
+                                </div>
+                            </div>
+
+                            <!-- Column 2: World Boss Damage -->
+                            <div class="bg-black p-2.5 border border-[#262626]">
+                                <div class="flex justify-between items-center mb-2 pb-1 border-b border-[#262626]">
+                                    <span class="font-bold text-red-400">🐉 월드보스 타격 지분</span>
+                                    <span class="text-[8px] text-gray-400">내 순위: <b id="myBossRankText" class="text-yellow-400 font-mono">-위</b></span>
+                                </div>
+                                <div id="hofBossList" class="space-y-1">
+                                    <p class="text-gray-500 text-center py-2">불러오는 중...</p>
+                                </div>
+                            </div>
+
+                            <!-- Column 3: Gold Wealth -->
+                            <div class="bg-black p-2.5 border border-[#262626]">
+                                <div class="flex justify-between items-center mb-2 pb-1 border-b border-[#262626]">
+                                    <span class="font-bold text-yellow-400">🪙 축적된 골드 부호</span>
+                                    <span class="text-[8px] text-gray-400">내 순위: <b id="myGoldRankText" class="text-yellow-400 font-mono">-위</b></span>
+                                </div>
+                                <div id="hofGoldList" class="space-y-1">
+                                    <p class="text-gray-500 text-center py-2">불러오는 중...</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -906,14 +1165,35 @@
         </div>
     </div>
 
+    <!-- Gacha Animation Overlay (Capsule Gacha Machine Effect) -->
+    <div id="gachaOverlayModal" class="hidden fixed inset-0 z-[20000] items-center justify-center flex-col" style="background:rgba(0,0,0,0.92);backdrop-filter:blur(10px);">
+        <div id="gachaContainer" class="relative flex flex-col items-center justify-center p-8 max-w-md w-full text-center">
+            <!-- 캡슐 아이콘 & 회전 연출 -->
+            <div id="gachaOrb" class="w-32 h-32 rounded-full border-4 border-pink-500 bg-gradient-to-tr from-purple-900 via-pink-900 to-indigo-900 flex items-center justify-center shadow-[0_0_50px_rgba(236,72,153,0.8)] animate-bounce mb-6">
+                <span id="gachaOrbIcon" class="text-6xl animate-spin" style="animation-duration: 3s;">🔮</span>
+            </div>
+            
+            <h2 id="gachaStatusTitle" class="text-2xl font-extrabold text-pink-400 tracking-wider mb-2 animate-pulse">마법 캡슐을 연성하는 중...</h2>
+            <p id="gachaStatusSub" class="text-xs text-[#bbbbbb] mb-6">정복한 영단어의 마법 기운이 캡슐에 응축됩니다!</p>
+
+            <div class="w-full bg-[#111] h-3 border border-[#3c3c3c] rounded-none-forced overflow-hidden">
+                <div id="gachaProgressBar" class="h-full bg-gradient-to-r from-pink-500 to-purple-500 w-0 transition-all duration-300"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Skill Acquisition Modal -->
     <div id="skillAcquireModal" class="hidden fixed inset-0 z-[10000] items-center justify-center" style="background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);">
         <div id="skillAcquireBox" class="relative flex flex-col items-center justify-center p-10 border-2 rounded-none-forced" style="min-width:320px;max-width:400px;background:#0d0d0d;box-shadow: 0 0 40px rgba(0,0,0,0.8);">
-            <div id="skillAcquireGrade" class="text-xs font-bold px-3 py-1 mb-4 uppercase tracking-widest border"></div>
-            <div id="skillAcquireWord" class="text-4xl font-bold font-mono tracking-wider mb-2 text-center"></div>
-            <div id="skillAcquireMeaning" class="text-sm text-center text-[#bbbbbb] mb-6"></div>
-            <div class="text-xs text-sky-400 font-bold mb-4 text-center">✨ 스킬을 획득했습니다. 서고에서 장착 후 사용해보세요. ✨</div>
-            <div id="skillAcquireDesc" class="text-[10px] text-center text-[#7e7e7e] mb-6"></div>
+            <div id="skillAcquireGrade" class="text-xs font-bold px-3 py-1 mb-2 uppercase tracking-widest border"></div>
+            <div id="skillAcquireWord" class="text-4xl font-bold font-mono tracking-wider mb-1 text-center"></div>
+            <div id="skillAcquireMeaning" class="text-sm text-center text-[#bbbbbb] mb-4"></div>
+            
+            <!-- 별 및 경험치 상태 영역 -->
+            <div id="skillAcquireStarsArea" class="flex items-center justify-center gap-1 text-yellow-400 text-lg mb-2"></div>
+            <div id="skillAcquireExpInfo" class="text-[10px] text-pink-400 font-bold mb-4 text-center"></div>
+
+            <div id="skillAcquireDesc" class="text-xs text-center text-[#bbbbbb] mb-6"></div>
             <button onclick="document.getElementById('skillAcquireModal').classList.remove('flex');document.getElementById('skillAcquireModal').classList.add('hidden')" class="px-10 py-3 bg-white text-black font-bold text-sm tracking-wider transition hover:bg-gray-200">확인</button>
         </div>
     </div>
@@ -1030,10 +1310,11 @@
 
         // Skill Grade Configs (색상 코드 및 배율 계수)
         const SKILL_GRADES = {
-            normal: { name: "일반", multiplier: 15, prob: 0.60, colorClass: "border-[#3c3c3c] bg-black text-[#bbbbbb] rounded-none-forced", rank: 1 },
-            rare: { name: "희귀", multiplier: 25, prob: 0.25, colorClass: "border-[#0066b1] bg-[#001f3f] text-[#66b3ff] rounded-none-forced shadow-[0_0_8px_rgba(0,102,177,0.4)]", rank: 2 },
-            hero: { name: "영웅", multiplier: 40, prob: 0.12, colorClass: "border-[#1c69d4] bg-[#0a244d] text-[#66a3ff] rounded-none-forced shadow-[0_0_12px_rgba(28,105,212,0.6)]", rank: 3 },
-            legendary: { name: "전설", multiplier: 70, prob: 0.03, colorClass: "border-[#e22718] bg-[#3f0f0f] text-[#ff8080] rounded-none-forced animate-pulse shadow-[0_0_15px_rgba(226,39,24,0.8)]", rank: 4 }
+            normal: { name: "일반", multiplier: 15, prob: 0.75, colorClass: "border-[#3c3c3c] bg-black text-[#bbbbbb] rounded-none-forced", rank: 1 },
+            rare: { name: "희귀", multiplier: 25, prob: 0.18, colorClass: "border-[#0066b1] bg-[#001f3f] text-[#66b3ff] rounded-none-forced shadow-[0_0_8px_rgba(0,102,177,0.4)]", rank: 2 },
+            hero: { name: "영웅", multiplier: 40, prob: 0.05, colorClass: "border-[#1c69d4] bg-[#0a244d] text-[#66a3ff] rounded-none-forced shadow-[0_0_12px_rgba(28,105,212,0.6)]", rank: 3 },
+            legendary: { name: "전설", multiplier: 70, prob: 0.0195, colorClass: "border-[#e22718] bg-[#3f0f0f] text-[#ff8080] rounded-none-forced animate-pulse shadow-[0_0_15px_rgba(226,39,24,0.8)]", rank: 4 },
+            mythic: { name: "신화", multiplier: 150, prob: 0.0005, colorClass: "mythic-aurora-card rounded-none-forced", rank: 5 }
         };
 
         // Companion pet details
@@ -1283,6 +1564,9 @@
                 showToast("⚠️ 학급, 번호, 이름을 올바르게 입력하세요!");
                 return;
             }
+
+            // Save recently entered student info to localStorage cache
+            localStorage.setItem("vocahero_last_student", JSON.stringify({ grade, classNum, studentNum, name }));
 
             tempCredentials = { grade, classNum, studentNum, name };
             showToast("⏳ 계정 정보 확인 중...");
@@ -2303,6 +2587,11 @@
             }
         }
 
+        function capitalizeFirstLetter(str) {
+            if (!str) return "";
+            return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+        }
+
         function generateQuizCard() {
             if (!gameState.wordsPool || gameState.wordsPool.length === 0) {
                 document.getElementById("quizWordEng").innerText = "마법 성역의 단어가 고갈되었습니다";
@@ -2310,7 +2599,7 @@
             }
 
             const current = gameState.wordsPool[gameState.currentQuizIndex];
-            document.getElementById("quizWordEng").innerText = current.word;
+            document.getElementById("quizWordEng").innerText = capitalizeFirstLetter(current.word);
 
             let choices = [current.meaning];
             let listMeanings = [];
@@ -2331,37 +2620,230 @@
             renderChoices(choices, current.meaning);
         }
 
-        function rollAndAcquireSkill(word, meaning) {
+        function getSkillMultiplier(skill) {
+            const baseGrade = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
+            const tier = skill.tier || 1;
+            const stars = skill.stars || 0;
+
+            // 세부 급간(Tier 1~3) 보정: Tier 1 (+0%), Tier 2 (+10%), Tier 3 (+20%)
+            const tierFactor = 1 + (tier - 1) * 0.10;
+
+            // 한계돌파 별(⭐ 1~6개) 완성당 +15% 수치 상승
+            const starFactor = 1 + stars * 0.15;
+
+            return Math.round(baseGrade.multiplier * tierFactor * starFactor);
+        }
+
+        function getRequiredExpForStar(grade) {
+            // 등급별 별 1개 완성에 필요한 경험치(중복 카드 획득 수)
+            const expMap = { normal: 1, rare: 2, hero: 3, legendary: 4, mythic: 5 };
+            return expMap[grade] || 1;
+        }
+
+        function addOrLevelUpSkill(word, meaning, rolledGrade) {
             if (!gameState.skillsInventory) gameState.skillsInventory = [];
 
-            if (gameState.skillsInventory.some(s => s.word === word)) return;
+            const existingSkill = gameState.skillsInventory.find(s => s.word === word);
+            const gradeInfo = SKILL_GRADES[rolledGrade];
 
+            if (existingSkill) {
+                // 이미 보유한 단어 카드: 중복 카드 경험치(EXP) 흡수로 한계돌파!
+                if (typeof existingSkill.stars === 'undefined') existingSkill.stars = 0;
+                if (typeof existingSkill.exp === 'undefined') existingSkill.exp = 0;
+
+                const reqExp = getRequiredExpForStar(existingSkill.grade);
+                existingSkill.maxExp = reqExp;
+
+                if (existingSkill.stars < 6) {
+                    existingSkill.exp += 1;
+                    if (existingSkill.exp >= reqExp) {
+                        existingSkill.exp = 0;
+                        existingSkill.stars += 1;
+                        showToast(`⭐ [${capitalizeFirstLetter(word)}] 카드 경험치 충전 완료! 별 ⭐${existingSkill.stars}개 한계돌파!`);
+                    } else {
+                        showToast(`✨ [${capitalizeFirstLetter(word)}] 중복 흡수! 경험치 (${existingSkill.exp}/${reqExp})`);
+                    }
+                } else {
+                    showToast(`⭐ [${capitalizeFirstLetter(word)}] 이미 최고 6성 한계돌파에 도달했습니다!`);
+                }
+
+                showSkillModal(existingSkill, SKILL_GRADES[existingSkill.grade]);
+                buildSkillTabUI();
+                renderSkillsUI();
+                saveLocalCache();
+                return existingSkill;
+            } else {
+                // 신규 스킬 카드 획득 (세부 급간 Tier 1~3 랜덤 지정)
+                const tier = Math.floor(Math.random() * 3) + 1; // Tier 1~3
+                const newSkill = {
+                    id: 'skill_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+                    word: word,
+                    meaning: meaning,
+                    grade: rolledGrade,
+                    tier: tier,
+                    stars: 0,
+                    exp: 0,
+                    maxExp: getRequiredExpForStar(rolledGrade),
+                    cooldownRemaining: 0,
+                    maxCooldown: 30
+                };
+
+                gameState.skillsInventory.push(newSkill);
+                showSkillModal(newSkill, gradeInfo);
+
+                buildSkillTabUI();
+                renderSkillsUI();
+                saveLocalCache();
+                return newSkill;
+            }
+        }
+
+        function rollAndAcquireSkill(word, meaning) {
             const roll = Math.random();
             let rolledGrade = "normal";
 
-            if (roll < 0.03) {
+            if (roll < 0.0005) { // 0.05%
+                rolledGrade = "mythic";
+            } else if (roll < 0.02) { // 1.95%
                 rolledGrade = "legendary";
-            } else if (roll < 0.15) {
+            } else if (roll < 0.07) { // 5%
                 rolledGrade = "hero";
-            } else if (roll < 0.40) {
+            } else if (roll < 0.25) { // 18%
                 rolledGrade = "rare";
             }
 
-            const gradeInfo = SKILL_GRADES[rolledGrade];
-            const newSkill = {
-                id: 'skill_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-                word: word,
-                meaning: meaning,
-                grade: rolledGrade,
-                cooldownRemaining: 0,
-                maxCooldown: 30
-            };
+            return addOrLevelUpSkill(word, meaning, rolledGrade);
+        }
 
-            gameState.skillsInventory.push(newSkill);
-            showSkillModal(newSkill, gradeInfo);
+        function drawSkillCapsule() {
+            if (typeof gameState.masteryPoints === 'undefined') gameState.masteryPoints = 0;
+            if (gameState.masteryPoints < 50) {
+                showToast("⚠️ 단어 캡슐 연성을 위해 정복 포인트 50 FP가 필요합니다! 퀴즈를 풀어 포인트를 모으세요.");
+                return;
+            }
+
+            gameState.masteryPoints -= 50;
+            refreshStateVisuals();
+
+            // 캡슐 오버레이 팝업 렌더링
+            const modal = document.getElementById("gachaOverlayModal");
+            const progressBar = document.getElementById("gachaProgressBar");
+            const orbIcon = document.getElementById("gachaOrbIcon");
+            const statusTitle = document.getElementById("gachaStatusTitle");
+            const statusSub = document.getElementById("gachaStatusSub");
+
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+            progressBar.style.width = "0%";
+            statusTitle.innerText = "마법 캡슐을 연성하는 중...";
+            statusSub.innerText = "정복한 영단어의 마법 기운이 캡슐에 응축됩니다!";
+            playSoundEffect('click');
+
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 25;
+                progressBar.style.width = `${progress}%`;
+                playSoundEffect('hit');
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+
+                    // 정복한 단어 중 무작위 추첨 (없을 경우 전체 퀴즈 풀에서 추첨)
+                    let pool = gameState.wordsPool && gameState.wordsPool.length > 0 ? gameState.wordsPool : MOCK_WORDS["4"];
+                    const count = Math.max(1, Math.min(gameState.totalQuizCorrect, pool.length));
+                    const learnedPool = pool.slice(0, count);
+                    const picked = learnedPool[Math.floor(Math.random() * learnedPool.length)];
+
+                    modal.classList.remove("flex");
+                    modal.classList.add("hidden");
+
+                    rollAndAcquireSkill(picked.word, picked.meaning);
+                }
+            }, 300);
+        }
+
+        function autoEquipBestSkills() {
+            if (!gameState.skillsInventory || gameState.skillsInventory.length === 0) {
+                showToast("⚠️ 보유한 스킬이 없습니다. 캡슐을 뽑아 스킬을 획득하세요!");
+                return;
+            }
+
+            // 전투력 점수 계산: (희귀도 랭크 * 10000) + (별 개수 * 1000) + (세부 급간 * 100) + 피해배율
+            const scoredSkills = [...gameState.skillsInventory].map(s => {
+                const gradeInfo = SKILL_GRADES[s.grade] || SKILL_GRADES.normal;
+                const stars = s.stars || 0;
+                const tier = s.tier || 1;
+                const mult = getSkillMultiplier(s);
+                const score = (gradeInfo.rank * 10000) + (stars * 1000) + (tier * 100) + mult;
+                return { skill: s, score: score };
+            });
+
+            // 점수 내림차순 정렬 후 상위 4개 추출
+            scoredSkills.sort((a, b) => b.score - a.score);
+            const best4 = scoredSkills.slice(0, 4).map(item => item.skill.id);
+
+            gameState.equippedSkills = best4;
+            showToast("⚡ 최상위 성능의 마법 스킬 4개가 자동 장착되었습니다!");
 
             buildSkillTabUI();
+            renderSkillsUI();
             saveLocalCache();
+        }
+
+        function combineSkills() {
+            if (!gameState.skillsInventory || gameState.skillsInventory.length < 3) {
+                showToast("⚠️ 조합하려면 최소 3개 이상의 스킬 카드가 필요합니다!");
+                return;
+            }
+
+            // 장착되지 않은 스킬 중 조합 가능 스킬 탐색 (신화 등급 제외)
+            const availableSkills = gameState.skillsInventory.filter(s => 
+                !gameState.equippedSkills.includes(s.id) && s.grade !== "mythic"
+            );
+
+            if (availableSkills.length < 3) {
+                showToast("⚠️ 장착되지 않은 스킬(신화 등급 제외)이 3개 이상 필요합니다!");
+                return;
+            }
+
+            // 등급 순서: normal(1) -> rare(2) -> hero(3) -> legendary(4) -> mythic(5)
+            const gradeRankMap = { normal: 1, rare: 2, hero: 3, legendary: 4 };
+            const nextGradeMap = { normal: "rare", rare: "hero", hero: "legendary", legendary: "mythic" };
+
+            // 동일한 등급 3개가 있는 그룹 우선 탐색
+            let targetThree = null;
+            let targetGrade = null;
+
+            for (let g in gradeRankMap) {
+                const group = availableSkills.filter(s => s.grade === g);
+                if (group.length >= 3) {
+                    targetThree = group.slice(0, 3);
+                    targetGrade = g;
+                    break;
+                }
+            }
+
+            // 동일 등급 3개가 없으면 가장 낮은 등급 3개 선택
+            if (!targetThree) {
+                availableSkills.sort((a, b) => (gradeRankMap[a.grade] || 1) - (gradeRankMap[b.grade] || 1));
+                targetThree = availableSkills.slice(0, 3);
+                // 가장 낮은 등급 기준
+                targetGrade = targetThree[0].grade;
+            }
+
+            const nextGrade = nextGradeMap[targetGrade] || "mythic";
+            const targetIds = targetThree.map(s => s.id);
+
+            // 재료 스킬 3개 삭제
+            gameState.skillsInventory = gameState.skillsInventory.filter(s => !targetIds.includes(s.id));
+
+            // 새 조합 스킬 생성
+            let pool = gameState.wordsPool && gameState.wordsPool.length > 0 ? gameState.wordsPool : MOCK_WORDS["4"];
+            const randomWordObj = pool[Math.floor(Math.random() * pool.length)];
+
+            addOrLevelUpSkill(randomWordObj.word, randomWordObj.meaning, nextGrade);
+            const nextGradeInfo = SKILL_GRADES[nextGrade];
+            showToast(`🔮 스킬 3개 연성 성공! [${nextGradeInfo.name}] 등급 스킬 획득!`);
         }
 
         function equipSkill(skillId) {
@@ -2403,56 +2885,83 @@
                     const skill = gameState.skillsInventory.find(s => s.id === id);
                     if (skill) {
                         const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
+                        const mult = getSkillMultiplier(skill);
+                        const starsCount = skill.stars || 0;
+                        const starsHtml = "⭐".repeat(starsCount);
+
                         eqHtml += `
-                            <div class="border-2 ${gradeInfo.colorClass} rounded-none-forced p-2 text-center relative flex flex-col justify-between min-h-[75px] group">
+                            <div class="border-2 ${gradeInfo.colorClass} rounded-none-forced p-2 text-center relative flex flex-col justify-between min-h-[85px] group">
                                 <button onclick="unequipSkill('${skill.id}')" class="absolute -top-1.5 -right-1.5 bg-[#e22718] hover:bg-[#b91c1c] text-white w-4.5 h-4.5 rounded-full flex items-center justify-center text-4xs transition opacity-0 group-hover:opacity-100 font-bold shadow-sm z-20">
                                     ×
                                 </button>
                                 <div class="z-10">
-                                    <span class="text-[8px] block font-bold uppercase tracking-wider ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : 'text-[#7e7e7e]'}">${gradeInfo.name}</span>
-                                    <p class="text-[10px] font-bold font-mono truncate text-white mt-0.5 ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : ''}">${skill.word.toUpperCase()}</p>
+                                    <div class="flex justify-between items-center text-[7px] font-bold text-[#7e7e7e]">
+                                        <span>${gradeInfo.name} T${skill.tier || 1}</span>
+                                        <span class="text-yellow-400">${starsHtml}</span>
+                                    </div>
+                                    <p class="text-[10px] font-bold font-mono truncate text-white mt-0.5 ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : ''}">${capitalizeFirstLetter(skill.word)}</p>
                                 </div>
-                                <span class="text-[8px] truncate mt-1 block z-10 ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-white' : 'text-[#bbbbbb]'}">${skill.meaning}</span>
+                                <div class="z-10">
+                                    <span class="text-[8px] truncate block text-[#bbbbbb]">${skill.meaning}</span>
+                                    <span class="text-[8px] font-bold text-pink-400 block">×${mult}배</span>
+                                </div>
                             </div>
                         `;
                     } else {
-                        eqHtml += `<div class="border border-dashed border-[#3c3c3c] rounded-none-forced p-2 text-center flex items-center justify-center min-h-[75px] text-[8px] text-[#7e7e7e] font-bold uppercase tracking-wider">슬롯 비어있음</div>`;
+                        eqHtml += `<div class="border border-dashed border-[#3c3c3c] rounded-none-forced p-2 text-center flex items-center justify-center min-h-[85px] text-[8px] text-[#7e7e7e] font-bold uppercase tracking-wider">슬롯 비어있음</div>`;
                     }
                 } else {
-                    eqHtml += `<div class="border border-dashed border-[#3c3c3c] rounded-none-forced p-2 text-center flex items-center justify-center min-h-[75px] text-[8px] text-[#7e7e7e] font-bold uppercase tracking-wider">슬롯 비어있음</div>`;
+                    eqHtml += `<div class="border border-dashed border-[#3c3c3c] rounded-none-forced p-2 text-center flex items-center justify-center min-h-[85px] text-[8px] text-[#7e7e7e] font-bold uppercase tracking-wider">슬롯 비어있음</div>`;
                 }
             }
             eqGrid.innerHTML = eqHtml;
 
             const invGrid = document.getElementById("skillsInventoryGrid");
             if (!gameState.skillsInventory || gameState.skillsInventory.length === 0) {
-                invGrid.innerHTML = `<p class="text-xs text-[#7e7e7e] text-center py-8 col-span-2 uppercase tracking-wider">아직 정복하여 흡수한 고대 비기가 없습니다. 퀴즈를 풀어보세요!</p>`;
+                invGrid.innerHTML = `<p class="text-xs text-[#7e7e7e] text-center py-8 col-span-2 uppercase tracking-wider">아직 획득한 영단어 비기 스킬이 없습니다. 단어 캡슐을 뽑아보세요!</p>`;
                 return;
             }
 
-            // 희귀도(rank 내림차순) 정렬 후 생성일자 내림차순
+            // 전투력 점수 기준 내림차순 정렬
             const sortedInventory = [...gameState.skillsInventory].sort((a, b) => {
                 const rankA = (SKILL_GRADES[a.grade] || SKILL_GRADES.normal).rank;
                 const rankB = (SKILL_GRADES[b.grade] || SKILL_GRADES.normal).rank;
                 if (rankB !== rankA) return rankB - rankA;
-                return b.id.localeCompare(a.id);
+                return getSkillMultiplier(b) - getSkillMultiplier(a);
             });
 
             let invHtml = "";
             sortedInventory.forEach(skill => {
                 const isEquipped = gameState.equippedSkills.includes(skill.id);
                 const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
+                const mult = getSkillMultiplier(skill);
+                const starsCount = skill.stars || 0;
+                const starsHtml = starsCount > 0 ? "⭐".repeat(starsCount) : "<span class='text-[#7e7e7e] text-[9px]'>0성</span>";
+                const exp = skill.exp || 0;
+                const maxExp = skill.maxExp || getRequiredExpForStar(skill.grade);
 
                 invHtml += `
                     <div class="border-2 ${isEquipped ? 'border-white' : 'border-[#262626]'} bg-[#0d0d0d] rounded-none-forced p-3 flex items-center justify-between text-left transition hover:bg-[#1a1a1a]">
-                        <div class="min-w-0 flex-grow pr-1.5">
+                        <div class="min-w-0 flex-grow pr-2">
                             <div class="flex items-center gap-2 mb-1">
-                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-none-forced uppercase tracking-widest ${gradeInfo.colorClass}">${gradeInfo.name}</span>
-                                <p class="text-sm font-bold font-mono text-white truncate ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : ''}">${skill.word.toUpperCase()}</p>
+                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-none-forced uppercase tracking-widest ${gradeInfo.colorClass}">${gradeInfo.name} (T${skill.tier || 1})</span>
+                                <p class="text-sm font-bold font-mono text-white truncate ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : ''}">${capitalizeFirstLetter(skill.word)}</p>
+                                <span class="text-xs text-yellow-400 font-bold">${starsHtml}</span>
                             </div>
-                            <p class="text-xs text-[#bbbbbb] truncate">${skill.meaning} (피해 배율 ×${gradeInfo.multiplier}배)</p>
+                            <div class="flex items-center justify-between text-xs text-[#bbbbbb] gap-2">
+                                <span class="truncate">${skill.meaning}</span>
+                                <span class="text-pink-400 font-bold flex-shrink-0">피해 배율: ×${mult}배</span>
+                            </div>
+                            <!-- 경험치 바 -->
+                            <div class="w-full bg-[#111] h-1.5 border border-[#3c3c3c] mt-1.5 rounded-none-forced overflow-hidden">
+                                <div class="bg-yellow-500 h-full transition-all duration-300" style="width: ${Math.min(100, (exp / maxExp) * 100)}%"></div>
+                            </div>
+                            <div class="text-[8px] text-[#7e7e7e] mt-0.5 flex justify-between">
+                                <span>한계돌파 경험치: ${exp} / ${maxExp}</span>
+                                <span>(중복 획득 시 흡수 기강)</span>
+                            </div>
                         </div>
-                        <button onclick="${isEquipped ? `unequipSkill('${skill.id}')` : `equipSkill('${skill.id}')`}" class="flex-shrink-0 text-[10px] font-bold px-4 py-2 rounded-none-forced transition ${isEquipped ? 'bg-transparent border border-[#e22718] text-[#e22718] hover:bg-[#e22718] hover:text-white' : 'bg-transparent border border-white text-white hover:bg-white hover:text-black'}">
+                        <button onclick="${isEquipped ? `unequipSkill('${skill.id}')` : `equipSkill('${skill.id}')`}" class="flex-shrink-0 text-[10px] font-bold px-3 py-2 rounded-none-forced transition ${isEquipped ? 'bg-transparent border border-[#e22718] text-[#e22718] hover:bg-[#e22718] hover:text-white' : 'bg-transparent border border-white text-white hover:bg-white hover:text-black'}">
                             ${isEquipped ? 'UNEQUIP' : 'EQUIP'}
                         </button>
                     </div>
@@ -2485,7 +2994,7 @@
                             ${isOnCooldown ? `<div class="cooldown-bar absolute bottom-0 left-0 h-1.5 bg-[#e22718] transition-all" style="width: ${100 - pct}%"></div>` : ''}
                             
                             <div class="flex justify-between items-center w-full z-10">
-                                <span class="text-xs font-bold font-mono tracking-wider ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : ''}">${skill.word.toUpperCase()}</span>
+                                <span class="text-xs font-bold font-mono tracking-wider ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : ''}">${capitalizeFirstLetter(skill.word)}</span>
                                 <span class="cooldown-timer text-[9px] ${isOnCooldown ? 'text-[#e22718] font-bold' : 'font-bold opacity-80'}">
                                     ${isOnCooldown ? `${Math.ceil(skill.cooldownRemaining)}s` : `${gradeInfo.name}`}
                                 </span>
@@ -2558,14 +3067,15 @@
             if (!skill || skill.cooldownRemaining > 0) return;
 
             const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
+            const mult = getSkillMultiplier(skill);
 
-            const skillDmg = calculateClickAttackPower() * gradeInfo.multiplier;
+            const skillDmg = calculateClickAttackPower() * mult;
             processCombatDamage(skillDmg);
             playSoundEffect('levelup');
 
             const arena = document.getElementById("battleArena");
             const rect = arena.getBoundingClientRect();
-            spawnDamageFloatingText(rect.width / 2 + (Math.random() * 40 - 20), rect.height / 3, `💥 [${gradeInfo.name}] ${skill.word.toUpperCase()}: -${skillDmg} 데미지!`);
+            spawnDamageFloatingText(rect.width / 2 + (Math.random() * 40 - 20), rect.height / 3, `💥 [${gradeInfo.name}] ${capitalizeFirstLetter(skill.word)}: -${skillDmg} 데미지!`);
 
             const mContainer = document.getElementById("monsterContainer");
             mContainer.classList.add("animate-shake");
@@ -2577,9 +3087,17 @@
             saveLocalCache();
         }
 
+        let isEvaluatingQuiz = false;
+
         function evaluateAnswer(index) {
+            if (isEvaluatingQuiz) return;
+            isEvaluatingQuiz = true;
+
             gameState.totalQuizTries++;
             const buttons = document.getElementsByClassName("choice-btn");
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].style.pointerEvents = "none";
+            }
             const current = gameState.wordsPool[gameState.currentQuizIndex];
 
             if (index === gameState.currentQuizCorrectAnswer) {
@@ -2596,6 +3114,8 @@
                 const reward = Math.floor(baseReward * goldMultiplier);
 
                 gameState.gold += reward;
+                if (typeof gameState.masteryPoints === 'undefined') gameState.masteryPoints = 0;
+                gameState.masteryPoints += 10; // 퀴즈 정답 시 10 FP 적립
 
                 const arena = document.getElementById("battleArena");
                 
@@ -2604,21 +3124,21 @@
                 processCombatDamage(quizDmg);
                 spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `✨ 퀴즈 치명타! -${quizDmg}`);
 
-                if (Math.random() < 0.4) {
-                    rollAndAcquireSkill(current.word, current.meaning);
-                }
-
                 gameState.currentQuizIndex = (gameState.currentQuizIndex + 1) % gameState.wordsPool.length;
 
                 const spellDmg = calculateClickAttackPower() * 12;
                 processCombatDamage(spellDmg);
 
-                showBattleToast(`🔥 약점 타격! -${spellDmg} 피해 / +${reward}G`);
+                showBattleToast(`🔥 약점 타격! -${spellDmg} 피해 / +${reward}G / +10 FP`);
 
                 setTimeout(() => {
                     generateQuizCard();
                     populateMasteredVocabulary();
                     refreshStateVisuals();
+                    isEvaluatingQuiz = false;
+                    for (let i = 0; i < buttons.length; i++) {
+                        buttons[i].style.pointerEvents = "auto";
+                    }
                 }, 1000);
 
             } else {
@@ -2637,6 +3157,10 @@
                 setTimeout(() => {
                     if (current) {
                         renderChoices(currentQuizChoices, current.meaning);
+                    }
+                    isEvaluatingQuiz = false;
+                    for (let i = 0; i < buttons.length; i++) {
+                        buttons[i].style.pointerEvents = "auto";
                     }
                 }, 700);
             }
@@ -2766,7 +3290,7 @@
                     html += `
                         <div class="bg-[#0d0d0d] p-2.5 border border-[#3c3c3c] rounded-none-forced flex items-center justify-between text-2xs">
                             <div>
-                                <p class="font-bold text-[#0066b1] font-mono">${item.word.toUpperCase()}</p>
+                                <p class="font-bold text-[#0066b1] font-mono">${capitalizeFirstLetter(item.word)}</p>
                                 <p class="text-[#bbbbbb] mt-0.5">${item.meaning}</p>
                             </div>
                             <span class="text-[8px] bg-black text-[#0066b1] border border-[#0066b1] font-bold px-2 py-0.5 rounded-none-forced">정복 완료</span>
@@ -2847,7 +3371,9 @@
         }
 
         function refreshStateVisuals() {
+            if (typeof gameState.masteryPoints === 'undefined') gameState.masteryPoints = 0;
             document.getElementById("goldCount").innerText = Math.floor(gameState.gold).toLocaleString();
+            document.getElementById("masteryPointsCount").innerText = Math.floor(gameState.masteryPoints).toLocaleString();
             document.getElementById("dpsCount").innerText = calculateDPSPower();
             document.getElementById("clickPowerCount").innerText = calculateClickAttackPower();
             document.getElementById("displayStageNum").innerText = isBossBattleActive 
@@ -2975,24 +3501,383 @@
             document.getElementById("gearTab").classList.add("hidden");
             document.getElementById("petTab").classList.add("hidden");
             document.getElementById("skillTab").classList.add("hidden");
+            document.getElementById("worldBossTab").classList.add("hidden");
             document.getElementById("statsTab").classList.add("hidden");
 
             document.getElementById(tabId).classList.remove("hidden");
 
-            const tabButtons = ["quizTabBtn", "gearTabBtn", "petTabBtn", "skillTabBtn", "statsTabBtn"];
+            const tabButtons = ["quizTabBtn", "gearTabBtn", "petTabBtn", "skillTabBtn", "worldBossTabBtn", "statsTabBtn"];
             tabButtons.forEach(btnId => {
                 const btn = document.getElementById(btnId);
-                const isStats = btnId === "statsTabBtn";
-                btn.className = "py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition" + (isStats ? " col-span-3 sm:col-span-1" : "");
+                if (btn) {
+                    btn.className = "py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition";
+                }
             });
 
             const activeBtn = document.getElementById(`${tabId}Btn`);
-            const isActiveStats = tabId === "statsTab";
-            activeBtn.className = "py-2.5 text-center font-bold text-xs uppercase tracking-widest text-black bg-white rounded-none-forced flex items-center justify-center gap-1" + (isActiveStats ? " col-span-3 sm:col-span-1" : "");
+            if (activeBtn) {
+                activeBtn.className = "py-2.5 text-center font-bold text-xs uppercase tracking-widest text-black bg-white rounded-none-forced flex items-center justify-center gap-1";
+            }
 
             if (tabId === 'skillTab') {
                 buildSkillTabUI();
+            } else if (tabId === 'worldBossTab') {
+                updateWorldBossUI();
+            } else if (tabId === 'statsTab') {
+                fetchHallOfFameUI();
             }
+        }
+
+        // ==========================================
+        // HALL OF FAME RANKING SYSTEM (명예의 전장)
+        // ==========================================
+        function fetchHallOfFameUI() {
+            const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+            
+            runGas("getHallOfFame", [gameState.grade, studentKey], function(res) {
+                if (res && res.success) {
+                    // 1. 스테이지 랭킹
+                    document.getElementById("myStageRankText").innerText = `${res.myStageRank}위`;
+                    let stageHtml = "";
+                    if (res.stageTop5 && res.stageTop5.length > 0) {
+                        res.stageTop5.forEach((item, idx) => {
+                            const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}.`;
+                            stageHtml += `<div class="flex justify-between items-center py-0.5"><span class="text-white">${medal} ${item.name}</span><span class="text-sky-400 font-bold font-mono">Stage ${item.stage}-${item.progress + 1}</span></div>`;
+                        });
+                    } else {
+                        stageHtml = `<p class="text-gray-500 text-center py-1">기록 없음</p>`;
+                    }
+                    document.getElementById("hofStageList").innerHTML = stageHtml;
+
+                    // 2. 월드보스 타격 랭킹
+                    document.getElementById("myBossRankText").innerText = `${res.myBossRank}위`;
+                    let bossHtml = "";
+                    if (res.bossTop5 && res.bossTop5.length > 0) {
+                        res.bossTop5.forEach((item, idx) => {
+                            const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}.`;
+                            bossHtml += `<div class="flex justify-between items-center py-0.5"><span class="text-white">${medal} ${item.name}</span><span class="text-red-400 font-bold font-mono">${item.damage.toLocaleString()} DMG</span></div>`;
+                        });
+                    } else {
+                        bossHtml = `<p class="text-gray-500 text-center py-1">기록 없음</p>`;
+                    }
+                    document.getElementById("hofBossList").innerHTML = bossHtml;
+
+                    // 3. 보유 골드 랭킹
+                    document.getElementById("myGoldRankText").innerText = `${res.myGoldRank}위`;
+                    let goldHtml = "";
+                    if (res.goldTop5 && res.goldTop5.length > 0) {
+                        res.goldTop5.forEach((item, idx) => {
+                            const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}.`;
+                            goldHtml += `<div class="flex justify-between items-center py-0.5"><span class="text-white">${medal} ${item.name}</span><span class="text-yellow-400 font-bold font-mono">${item.gold.toLocaleString()} G</span></div>`;
+                        });
+                    } else {
+                        goldHtml = `<p class="text-gray-500 text-center py-1">기록 없음</p>`;
+                    }
+                    document.getElementById("hofGoldList").innerHTML = goldHtml;
+                }
+            }, function(err) {
+                // 통신 오류 시 생략
+            });
+        }
+
+        // ==========================================
+        // WORLD BOSS RAID ENGINE (월드보스 시스템)
+        // ==========================================
+        let isWorldBossRaidActive = false;
+        let wbTimerRemaining = 60.0;
+        let wbPlayerHp = 100;
+        let wbPlayerMaxHp = 100;
+        let wbTimerInterval = null;
+        let wbTotalDamageDealt = 0;
+        let wbCurrentWordObj = null;
+
+        function calculatePlayerRaidMaxHp() {
+            // 대장간 5종 장비 강화도 합산으로 기본 HP 결정 (장비 레벨당 +10 HP 추가)
+            const sumGearLvl = (gameState.helmetLvl || 1) + (gameState.armorLvl || 1) + 
+                               (gameState.weaponLvl || 1) + (gameState.shieldLvl || 1) + 
+                               (gameState.shoesLvl || 1);
+            // 기본 50 HP + 장비 레벨당 10 HP (예: 전원 10강시 550 HP)
+            return 50 + (sumGearLvl * 10);
+        }
+
+        const WORLD_BOSS_SEASONS = [
+            {
+                name: "심연의 흑룡 파브니르",
+                img: "media/worldbose/worldbose_borndragon.png",
+                desc: "고대 영단어 스펠의 마력을 머금고 부활한 흑룡. 전 학년 용사들이 힘을 합쳐 약점 단어를 타격해야 물리칠 수 있다!"
+            },
+            {
+                name: "대지의 파멸 골렘",
+                img: "media/worldbose/worldbose_golem.png",
+                desc: "대지를 뒤흔드는 고대 암석 결계 괴수. 용사들의 연합 단어 정답 폭딜로 단단한 외피를 깨뜨려라!"
+            },
+            {
+                name: "불멸의 흑마법 리치",
+                img: "media/worldbose/worldbose_rich.png",
+                desc: "금단의 영단어 스펠을 해독하는 저주받은 군주. 정답 단어 주문을 지속해서 외워 파멸 마법을 저지하라!"
+            }
+        ];
+
+        function getWeeklyBossIndex() {
+            // 대한민국 표준시 (KST: UTC+9) 기준 현재 연도 및 주차(Week) 계산
+            const nowUtc = new Date();
+            // KST 오프셋(+9시간) 적용
+            const kstNow = new Date(nowUtc.getTime() + (9 * 60 * 60 * 1000));
+            
+            const kstStart = new Date(Date.UTC(kstNow.getUTCFullYear(), 0, 1));
+            const diff = kstNow.getTime() - kstStart.getTime();
+            const oneWeek = 1000 * 60 * 60 * 24 * 7;
+            const weekNum = Math.floor(diff / oneWeek);
+
+            // 3종의 이미지(BornDragon, Golem, Rich)가 주차별로 돌아가면서 출현
+            return weekNum % WORLD_BOSS_SEASONS.length;
+        }
+
+        function updateWorldBossUI() {
+            const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+            wbPlayerMaxHp = calculatePlayerRaidMaxHp();
+
+            // 주차별 월드보스 일러스트 & 정보 동적 세팅
+            const seasonIdx = getWeeklyBossIndex();
+            const bossInfo = WORLD_BOSS_SEASONS[seasonIdx];
+
+            document.getElementById("wbBossImage").src = bossInfo.img;
+            document.getElementById("wbBossName").innerText = bossInfo.name;
+            document.getElementById("wbBossDesc").innerText = `"${bossInfo.desc}"`;
+            document.getElementById("wbWeekBadge").innerText = `${seasonIdx + 1}주차 시즌 보스`;
+            document.getElementById("wbGradeTitle").innerText = `${gameState.grade}학년 전용 공유 체력`;
+            document.getElementById("playerMaxHpDisplay").innerText = `💖 ${wbPlayerMaxHp} HP (방어막 ${Math.floor(wbPlayerMaxHp / 20)}회 오답 버티기 가능)`;
+
+            // 출전 대기방 펫 및 장착 스킬 최종 점검 UI 렌더링
+            document.getElementById("wbDpsPreviewText").innerText = calculateDPSPower().toLocaleString();
+
+            const activePetKey = gameState.petType || "none";
+            const petInfo = PET_PARAMS[activePetKey];
+            if (petInfo && gameState.petLvl > 0) {
+                document.getElementById("wbPetPreviewName").innerText = `${petInfo.name} (Lv.${gameState.petLvl})`;
+            } else {
+                document.getElementById("wbPetPreviewName").innerText = "소환수 없음 (동반 미배치)";
+            }
+
+            if (gameState.equippedSkills && gameState.equippedSkills.length > 0 && gameState.skillsInventory) {
+                const eqNames = gameState.equippedSkills.map(id => {
+                    const s = gameState.skillsInventory.find(item => item.id === id);
+                    return s ? capitalizeFirstLetter(s.word) : null;
+                }).filter(Boolean);
+
+                document.getElementById("wbSkillsPreviewList").innerText = eqNames.length > 0 ? eqNames.join(", ") : "장착된 스킬 없음";
+            } else {
+                document.getElementById("wbSkillsPreviewList").innerText = "장착된 스킬 없음";
+            }
+
+            runGas("getWorldBossStatus", [gameState.grade, studentKey], function(res) {
+                if (res && res.success) {
+                    const curHp = res.curHp;
+                    const maxHp = res.maxHp;
+                    const pct = Math.max(0, Math.min(100, (curHp / maxHp) * 100));
+
+                    document.getElementById("worldBossHpBar").style.width = `${pct}%`;
+                    document.getElementById("worldBossHpText").innerText = `${curHp.toLocaleString()} / ${maxHp.toLocaleString()} HP (${pct.toFixed(1)}%)`;
+                    document.getElementById("myWorldBossDmgDisplay").innerText = res.myDamage.toLocaleString();
+                    document.getElementById("myWorldBossShareDisplay").innerText = `${res.sharePct}%`;
+                    document.getElementById("myWorldBossRewardDisplay").innerText = `+${Math.floor(res.myDamage / 1000)} FP / [수호신] 칭호`;
+
+                    const btn = document.getElementById("startWorldBossBtn");
+                    const badge = document.getElementById("worldBossEntryBadge");
+
+                    if (!res.canAttack) {
+                        btn.disabled = true;
+                        btn.className = "w-full py-3.5 bg-[#262626] text-[#7e7e7e] font-bold text-sm tracking-wider uppercase rounded-none-forced cursor-not-allowed";
+                        btn.innerText = "🔒 오늘 도전 완료 (1일 1회 제한)";
+                        badge.innerText = "오늘 참전 완료";
+                        badge.className = "text-[9px] bg-gray-800 text-gray-400 border border-gray-600 px-3 py-1 rounded-none-forced font-bold uppercase tracking-wider";
+                    } else {
+                        btn.disabled = false;
+                        btn.className = "w-full py-3.5 bg-gradient-to-r from-red-700 via-pink-700 to-red-600 hover:from-red-600 hover:to-pink-600 text-white font-black text-sm tracking-wider uppercase transition shadow-xl flex items-center justify-center gap-2 cursor-pointer";
+                        btn.innerText = "⚔️ 월드보스 토벌전 참전하기 (1일 1회)";
+                        badge.innerText = "1일 1회 도전 가능";
+                        badge.className = "text-[9px] bg-red-950 text-red-400 border border-red-600 px-3 py-1 rounded-none-forced font-bold uppercase tracking-wider animate-pulse";
+                    }
+                }
+            }, function(err) {
+                // 통신 오류 시 가상 UI 업데이트
+            });
+        }
+
+        function startWorldBossRaid() {
+            if (isWorldBossRaidActive) return;
+
+            isWorldBossRaidActive = true;
+            wbTimerRemaining = 70.0;
+            wbPlayerMaxHp = calculatePlayerRaidMaxHp();
+            wbPlayerHp = wbPlayerMaxHp;
+            wbTotalDamageDealt = 0;
+
+            document.getElementById("worldBossReadyBox").classList.add("hidden");
+            const arena = document.getElementById("worldBossBattleArena");
+            arena.classList.remove("hidden");
+            arena.classList.add("flex");
+
+            document.getElementById("wbTimerText").innerText = "70.0초";
+            document.getElementById("wbPlayerHpText").innerText = `${wbPlayerHp} / ${wbPlayerMaxHp} HP`;
+
+            generateWorldBossQuiz();
+            renderWorldBossRaidSkills();
+            playSoundEffect('levelup');
+            showToast("🚨 월드보스 참전! (70초 제한시간 / 15초마다 광폭화 공격 패턴 발동!)");
+
+            let lastPatternCheck = 70.0;
+
+            if (wbTimerInterval) clearInterval(wbTimerInterval);
+            wbTimerInterval = setInterval(() => {
+                wbTimerRemaining -= 0.1;
+                document.getElementById("wbTimerText").innerText = `${wbTimerRemaining.toFixed(1)}초`;
+
+                // 15초마다 보스의 [🔥 광폭화 파멸 스펠] 패턴 발동! (약점 퀴즈 강제 교체 & 기습 -15 HP 피해)
+                if (lastPatternCheck - wbTimerRemaining >= 15.0) {
+                    lastPatternCheck = wbTimerRemaining;
+                    wbPlayerHp -= 15;
+                    document.getElementById("wbPlayerHpText").innerText = `${Math.max(0, wbPlayerHp)} / ${wbPlayerMaxHp} HP`;
+                    showBattleToast("⚠️ [월드보스 광폭화 스펠!] 약점 퀴즈가 변형되며 용사에게 -15 HP 피해!");
+                    playSoundEffect('incorrect');
+                    generateWorldBossQuiz();
+
+                    if (wbPlayerHp <= 0) {
+                        endWorldBossRaid("💀 월드보스의 광폭화 파멸 마법에 패배하여 퇴장당했습니다!");
+                        return;
+                    }
+                }
+
+                if (wbTimerRemaining <= 0) {
+                    endWorldBossRaid("⏱️ 70초 제한시간이 초과되어 토벌전이 완료되었습니다!");
+                }
+            }, 100);
+        }
+
+        function renderWorldBossRaidSkills() {
+            const container = document.getElementById("wbRaidSkillsContainer");
+            if (!container) return;
+
+            if (!gameState.equippedSkills || gameState.equippedSkills.length === 0) {
+                container.innerHTML = `<p class="text-[8px] text-[#7e7e7e] text-center col-span-4">장착된 마법 스킬이 없습니다.</p>`;
+                return;
+            }
+
+            let html = "";
+            gameState.equippedSkills.forEach(id => {
+                const s = gameState.skillsInventory ? gameState.skillsInventory.find(item => item.id === id) : null;
+                if (s) {
+                    const gradeInfo = SKILL_GRADES[s.grade] || SKILL_GRADES.normal;
+                    const mult = getSkillMultiplier(s);
+                    html += `
+                        <button onclick="castWorldBossSkill('${s.id}')" class="p-1.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-red-800 text-left rounded-none-forced flex flex-col justify-between h-11 transition group">
+                            <span class="text-[8px] font-bold text-yellow-300 font-mono truncate">${capitalizeFirstLetter(s.word)}</span>
+                            <span class="text-[7px] text-pink-400 font-bold">×${mult}배 폭딜</span>
+                        </button>
+                    `;
+                }
+            });
+            container.innerHTML = html;
+        }
+
+        function castWorldBossSkill(skillId) {
+            if (!isWorldBossRaidActive || !gameState.skillsInventory) return;
+            const skill = gameState.skillsInventory.find(s => s.id === skillId);
+            if (!skill) return;
+
+            const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
+            const mult = getSkillMultiplier(skill);
+            const skillDmg = (calculateClickAttackPower() * mult * 3); // 레이드전 시전 시 3배 추가 보정 폭딜
+
+            wbTotalDamageDealt += skillDmg;
+            playSoundEffect('levelup');
+            showBattleToast(`💥 필살 시전! [${gradeInfo.name}] ${capitalizeFirstLetter(skill.word)}: 보스에게 -${skillDmg.toLocaleString()} 대폭딜!`);
+        }
+
+        function generateWorldBossQuiz() {
+            let pool = gameState.wordsPool && gameState.wordsPool.length > 0 ? gameState.wordsPool : MOCK_WORDS["4"];
+            wbCurrentWordObj = pool[Math.floor(Math.random() * pool.length)];
+
+            document.getElementById("wbQuizWord").innerText = capitalizeFirstLetter(wbCurrentWordObj.word);
+
+            let choices = [wbCurrentWordObj.meaning];
+            let meanings = [];
+            for (let g in MOCK_WORDS) {
+                MOCK_WORDS[g].forEach(item => {
+                    if (item.meaning !== wbCurrentWordObj.meaning && !meanings.includes(item.meaning)) {
+                        meanings.push(item.meaning);
+                    }
+                });
+            }
+            meanings.sort(() => 0.5 - Math.random());
+            for (let i = 0; i < Math.min(3, meanings.length); i++) {
+                choices.push(meanings[i]);
+            }
+            choices.sort(() => 0.5 - Math.random());
+
+            let html = "";
+            choices.forEach(m => {
+                const isCorrect = (m === wbCurrentWordObj.meaning);
+                html += `
+                    <button onclick="handleWorldBossAnswer(${isCorrect})" class="p-3 bg-black hover:bg-gray-900 border border-red-900 hover:border-yellow-400 text-white font-bold text-xs rounded-none-forced transition">
+                        ${m}
+                    </button>
+                `;
+            });
+            document.getElementById("wbChoiceContainer").innerHTML = html;
+        }
+
+        function handleWorldBossAnswer(isCorrect) {
+            if (!isWorldBossRaidActive) return;
+
+            if (isCorrect) {
+                playSoundEffect('correct');
+                // 정답 시 월드보스에게 내 공격력 기반 강력 폭딜 (기본 공격력 * 50)
+                const dmg = (calculateClickAttackPower() * 50) + (calculateDPSPower() * 10);
+                wbTotalDamageDealt += dmg;
+
+                showBattleToast(`💥 약점 스펠 타격 성공! 보스에게 -${dmg.toLocaleString()} 피해!`);
+                generateWorldBossQuiz();
+            } else {
+                playSoundEffect('incorrect');
+                // 오답 시 보스의 강력 일격! (용사 HP 차감)
+                const bossDmg = 20; // 1회 오답당 20 HP 차감
+                wbPlayerHp -= bossDmg;
+                document.getElementById("wbPlayerHpText").innerText = `${Math.max(0, wbPlayerHp)} / ${wbPlayerMaxHp} HP`;
+
+                showBattleToast(`💔 오답! 월드보스의 반격으로 -${bossDmg} HP 피해!`);
+
+                if (wbPlayerHp <= 0) {
+                    endWorldBossRaid("💀 용사의 HP가 모두 깎여 월드보스에게 강퇴(사망)당했습니다!");
+                } else {
+                    generateWorldBossQuiz();
+                }
+            }
+        }
+
+        function endWorldBossRaid(reasonMessage) {
+            clearInterval(wbTimerInterval);
+            isWorldBossRaidActive = false;
+
+            const arena = document.getElementById("worldBossBattleArena");
+            arena.classList.add("hidden");
+            arena.classList.remove("flex");
+
+            document.getElementById("worldBossReadyBox").classList.remove("hidden");
+
+            showToast(reasonMessage);
+            playSoundEffect('levelup');
+
+            // 서버에 피해량 전송 및 1일 1회 기록
+            const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+            runGas("attackWorldBoss", [gameState.grade, studentKey, wbTotalDamageDealt], function(res) {
+                if (res && res.success) {
+                    showToast(`🎉 월드보스에 총 ${wbTotalDamageDealt.toLocaleString()} 피해를 기록했습니다!`);
+                    updateWorldBossUI();
+                } else if (res && res.message) {
+                    showToast(`⚠️ ${res.message}`);
+                }
+            });
         }
 
         function openModal(modalId) {
@@ -3043,19 +3928,36 @@
             const box = document.getElementById("skillAcquireBox");
             const gradeEl = document.getElementById("skillAcquireGrade");
             
-            gradeEl.innerText = gradeInfo.name;
-            gradeEl.className = `text-xs font-bold px-3 py-1 mb-4 uppercase tracking-widest ${gradeInfo.colorClass}`;
+            gradeEl.innerText = `${gradeInfo.name} (T${skill.tier || 1})`;
+            gradeEl.className = `text-xs font-bold px-3 py-1 mb-2 uppercase tracking-widest ${gradeInfo.colorClass}`;
             
-            document.getElementById("skillAcquireWord").innerText = skill.word.toUpperCase();
-            document.getElementById("skillAcquireWord").className = `text-4xl font-bold font-mono tracking-wider mb-2 ${gradeInfo.colorClass.includes('animate-pulse') ? 'animate-pulse text-[#ff8080]' : 'text-white'} text-center`;
+            document.getElementById("skillAcquireWord").innerText = capitalizeFirstLetter(skill.word);
+            document.getElementById("skillAcquireWord").className = `text-4xl font-bold font-mono tracking-wider mb-1 ${gradeInfo.colorClass.includes('animate-pulse') ? 'animate-pulse text-[#ff8080]' : 'text-white'} text-center`;
             document.getElementById("skillAcquireMeaning").innerText = skill.meaning;
-            document.getElementById("skillAcquireDesc").innerText = `피해 배율: 물리 공격력의 ×${gradeInfo.multiplier}배`;
+
+            const starsCount = skill.stars || 0;
+            const starsHtml = starsCount > 0 ? "⭐".repeat(starsCount) : "<span class='text-xs text-[#7e7e7e] font-normal'>⭐ 0성 (동일 카드 획득 시 한계돌파)</span>";
+            document.getElementById("skillAcquireStarsArea").innerHTML = starsHtml;
+
+            const exp = skill.exp || 0;
+            const maxExp = skill.maxExp || getRequiredExpForStar(skill.grade);
+            document.getElementById("skillAcquireExpInfo").innerText = `한계돌파 누적 카드 경험치: ${exp} / ${maxExp}`;
+
+            const mult = getSkillMultiplier(skill);
+            document.getElementById("skillAcquireDesc").innerText = `💥 최종 피해 배율: 공격력의 ×${mult}배 (Tier & ⭐ 한계돌파 수치 포함)`;
             
-            box.className = `relative flex flex-col items-center justify-center p-10 border-2 rounded-none-forced transition-all duration-500 scale-100 ${gradeInfo.colorClass}`;
+            box.className = `relative flex flex-col items-center justify-center p-8 border-2 rounded-none-forced transition-all duration-500 scale-100 ${gradeInfo.colorClass}`;
             
             modal.classList.remove("hidden");
             modal.classList.add("flex");
             playSoundEffect('levelup');
+
+            // 영단어 발음 음성 재생 (Web Speech API)
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(skill.word);
+                utterance.lang = 'en-US';
+                window.speechSynthesis.speak(utterance);
+            }
         }
 
         function showForgeResult(isSuccess, title, desc, borderColor) {
@@ -3162,6 +4064,19 @@
         window.onload = function () {
             lucide.createIcons();
             checkConnectionState();
+
+            // Auto fill last logged in student info from localStorage cache
+            const lastStudentRaw = localStorage.getItem("vocahero_last_student");
+            if (lastStudentRaw) {
+                try {
+                    const last = JSON.parse(lastStudentRaw);
+                    if (last.grade) document.getElementById("inputGrade").value = last.grade;
+                    if (last.classNum) document.getElementById("inputClass").value = last.classNum;
+                    if (last.studentNum) document.getElementById("inputNumber").value = last.studentNum;
+                    if (last.name) document.getElementById("inputName").value = last.name;
+                } catch(e) {}
+            }
+
             openModal("loginModal");
         };
         // PWA Install & Service Worker Logic

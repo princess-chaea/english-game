@@ -34,6 +34,12 @@ function doPost(e) {
       result = saveStudentProgress.apply(null, args);
     } else if (action === "uploadWordsBatch") {
       result = uploadWordsBatch.apply(null, args);
+    } else if (action === "getWorldBossStatus") {
+      result = getWorldBossStatus.apply(null, args);
+    } else if (action === "attackWorldBoss") {
+      result = attackWorldBoss.apply(null, args);
+    } else if (action === "getHallOfFame") {
+      result = getHallOfFame.apply(null, args);
     } else {
       throw new Error("Unknown action: " + action);
     }
@@ -105,6 +111,236 @@ function initDatabaseSheets() {
     for (var i = 0; i < defaultWords.length; i++) {
       wordsSheet.appendRow(defaultWords[i]);
     }
+  }
+
+  // 2-3. WorldBoss (학년별 레이드 보스 상태 데이터베이스) 검사 및 생성
+  var bossSheet = ss.getSheetByName("WorldBoss");
+  if (!bossSheet) {
+    bossSheet = ss.insertSheet("WorldBoss");
+    var bossHeaders = ["Grade", "CurrentHP", "MaxHP", "LastUpdatedDate"];
+    bossSheet.appendRow(bossHeaders);
+    var bossHeaderRange = bossSheet.getRange(1, 1, 1, bossHeaders.length);
+    bossHeaderRange.setBackground("#991b1b")
+                   .setFontColor("#ffffff")
+                   .setFontWeight("bold")
+                   .setHorizontalAlignment("center");
+    bossSheet.setFrozenRows(1);
+    
+    // 학년별 보스 기본 체력 10,000,000 탑재
+    var defaultBosses = [
+      [3, 10000000, 10000000, Date.now()],
+      [4, 10000000, 10000000, Date.now()],
+      [5, 10000000, 10000000, Date.now()],
+      [6, 10000000, 10000000, Date.now()]
+    ];
+    for (var j = 0; j < defaultBosses.length; j++) {
+      bossSheet.appendRow(defaultBosses[j]);
+    }
+  }
+
+  // 2-4. WorldBossLog (학생 개별 레이드 기여도 로그)
+  var logSheet = ss.getSheetByName("WorldBossLog");
+  if (!logSheet) {
+    logSheet = ss.insertSheet("WorldBossLog");
+    var logHeaders = ["Grade", "StudentKey", "DamageDealt", "LastAttackDate"];
+    logSheet.appendRow(logHeaders);
+    var logHeaderRange = logSheet.getRange(1, 1, 1, logHeaders.length);
+    logHeaderRange.setBackground("#7f1d1d")
+                  .setFontColor("#ffffff")
+                  .setFontWeight("bold")
+                  .setHorizontalAlignment("center");
+    logSheet.setFrozenRows(1);
+  }
+}
+
+// 월드보스 상태 및 내 기여도 조회
+function getWorldBossStatus(grade, studentKey) {
+  initDatabaseSheets();
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var bossSheet = ss.getSheetByName("WorldBoss");
+    var bossData = bossSheet.getDataRange().getValues();
+    
+    var curHp = 10000000;
+    var maxHp = 10000000;
+    
+    for (var i = 1; i < bossData.length; i++) {
+      if (String(bossData[i][0]) === String(grade)) {
+        curHp = Number(bossData[i][1]);
+        maxHp = Number(bossData[i][2]);
+        break;
+      }
+    }
+    
+    // 학생 개인 기여도 계산
+    var logSheet = ss.getSheetByName("WorldBossLog");
+    var logData = logSheet.getDataRange().getValues();
+    var myDamage = 0;
+    var lastAttackDate = "";
+    
+    for (var k = 1; k < logData.length; k++) {
+      if (String(logData[k][0]) === String(grade) && String(logData[k][1]) === String(studentKey)) {
+        myDamage = Number(logData[k][2]);
+        lastAttackDate = String(logData[k][3]);
+        break;
+      }
+    }
+    
+    // 전체 해당 학년 유저 누적 데미지 합산
+    var totalGradeDamage = maxHp - curHp;
+    if (totalGradeDamage <= 0) totalGradeDamage = 1; // Prevent div by 0
+    
+    var sharePct = (myDamage / totalGradeDamage) * 100;
+    
+    // 오늘 도전 가능 여부 (대한민국 표준시 KST 날짜 비교: YYYY-MM-DD)
+    var todayStr = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd");
+    var canAttack = (lastAttackDate !== todayStr);
+    
+    return {
+      success: true,
+      curHp: curHp,
+      maxHp: maxHp,
+      myDamage: myDamage,
+      sharePct: sharePct.toFixed(2),
+      canAttack: canAttack
+    };
+  } catch(e) {
+    return { error: e.toString() };
+  }
+}
+
+// 월드보스 공격 가하기 (1일 1회 제약)
+function attackWorldBoss(grade, studentKey, damageDealt) {
+  initDatabaseSheets();
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var todayStr = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd");
+    
+    var logSheet = ss.getSheetByName("WorldBossLog");
+    var logData = logSheet.getDataRange().getValues();
+    var targetRow = -1;
+    var currentMyDamage = 0;
+    
+    for (var k = 1; k < logData.length; k++) {
+      if (String(logData[k][0]) === String(grade) && String(logData[k][1]) === String(studentKey)) {
+        if (String(logData[k][3]) === todayStr) {
+          return { success: false, message: "오늘 이미 월드보스 레이드에 참전하셨습니다! 내일 다시 도전하세요." };
+        }
+        targetRow = k + 1;
+        currentMyDamage = Number(logData[k][2]);
+        break;
+      }
+    }
+    
+    var newMyDamage = currentMyDamage + Number(damageDealt);
+    if (targetRow > 0) {
+      logSheet.getRange(targetRow, 3).setValue(newMyDamage);
+      logSheet.getRange(targetRow, 4).setValue(todayStr);
+    } else {
+      logSheet.appendRow([grade, studentKey, newMyDamage, todayStr]);
+    }
+    
+    // WorldBoss HP 감축
+    var bossSheet = ss.getSheetByName("WorldBoss");
+    var bossData = bossSheet.getDataRange().getValues();
+    for (var i = 1; i < bossData.length; i++) {
+      if (String(bossData[i][0]) === String(grade)) {
+        var currentHp = Number(bossData[i][1]);
+        var nextHp = Math.max(0, currentHp - Number(damageDealt));
+        bossSheet.getRange(i + 1, 2).setValue(nextHp);
+        bossSheet.getRange(i + 1, 4).setValue(Date.now());
+        break;
+      }
+    }
+    
+// 명예의 전장 (Hall of Fame) 랭킹 시스템
+function getHallOfFame(grade, studentKey) {
+  initDatabaseSheets();
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var studentSheet = ss.getSheetByName("Students");
+    var studentData = studentSheet.getDataRange().getValues();
+    
+    var stageRankList = [];
+    var goldRankList = [];
+    
+    // Students 필드 탐색: Grade(0), Class(1), Number(2), Name(3), Gold(4), Stage(13), Progress(14)
+    for (var i = 1; i < studentData.length; i++) {
+      var sGrade = String(studentData[i][0]);
+      if (sGrade === String(grade)) {
+        var sClass = studentData[i][1];
+        var sNum = studentData[i][2];
+        var sName = studentData[i][3];
+        var sGold = Number(studentData[i][4]) || 0;
+        var sStage = Number(studentData[i][13]) || 1;
+        var sProg = Number(studentData[i][14]) || 0;
+        var key = sGrade + "_" + sClass + "_" + sNum + "_" + sName;
+        var displayName = sClass + "반 " + sName;
+        
+        stageRankList.push({
+          key: key,
+          name: displayName,
+          stage: sStage,
+          progress: sProg,
+          score: (sStage * 100) + sProg
+        });
+        
+        goldRankList.push({
+          key: key,
+          name: displayName,
+          gold: sGold
+        });
+      }
+    }
+    
+    // 1. 최고 스테이지 랭킹 내림차순
+    stageRankList.sort(function(a, b) { return b.score - a.score; });
+    
+    // 2. 보유 골드 랭킹 내림차순
+    goldRankList.sort(function(a, b) { return b.gold - a.gold; });
+    
+    // 3. 월드보스 타격 피해량 랭킹 (WorldBossLog 시트)
+    var bossLogSheet = ss.getSheetByName("WorldBossLog");
+    var bossLogData = bossLogSheet.getDataRange().getValues();
+    var bossRankList = [];
+    
+    for (var k = 1; k < bossLogData.length; k++) {
+      if (String(bossLogData[k][0]) === String(grade)) {
+        var bKey = String(bossLogData[k][1]);
+        var bParts = bKey.split("_");
+        var bName = (bParts.length >= 4) ? (bParts[1] + "반 " + bParts[3]) : bKey;
+        var bDmg = Number(bossLogData[k][2]) || 0;
+        
+        bossRankList.push({
+          key: bKey,
+          name: bName,
+          damage: bDmg
+        });
+      }
+    }
+    bossRankList.sort(function(a, b) { return b.damage - a.damage; });
+    
+    // 내 순위 계산 함수
+    function findMyRank(list, myKey) {
+      for (var idx = 0; idx < list.length; idx++) {
+        if (list[idx].key === myKey) {
+          return idx + 1;
+        }
+      }
+      return "-";
+    }
+    
+    return {
+      success: true,
+      stageTop5: stageRankList.slice(0, 5),
+      myStageRank: findMyRank(stageRankList, studentKey),
+      bossTop5: bossRankList.slice(0, 5),
+      myBossRank: findMyRank(bossRankList, studentKey),
+      goldTop5: goldRankList.slice(0, 5),
+      myGoldRank: findMyRank(goldRankList, studentKey)
+    };
+  } catch(e) {
+    return { error: e.toString() };
   }
 }
 
@@ -183,7 +419,9 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
         } else {
           // PIN이 비어있는 구계정: 최초 PIN 등록으로 처리 (저장)
           if (password && String(password).trim() !== "") {
-            sheet.getRange(i + 1, 19).setValue(String(password).trim());
+            var range = sheet.getRange(i + 1, 19);
+            range.setNumberFormat("@");
+            range.setValue(String(password).trim());
           }
         }
 
@@ -236,10 +474,13 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
     var newRow = [
       Number(grade), Number(classNum), Number(studentNum), String(name), 
       0, String(defaultAvatar), 1, 1, 1, 1, 1, "{}", "", 1, 0, Date.now(),
-      defaultInvStr, defaultEqStr, String(password)
+      defaultInvStr, defaultEqStr, "'" + String(password).trim()
     ];
     
     sheet.appendRow(newRow);
+    var lastRow = sheet.getLastRow();
+    sheet.getRange(lastRow, 19).setNumberFormat("@");
+    sheet.getRange(lastRow, 19).setValue(String(password).trim());
     
     return {
       grade: newRow[0], classNum: newRow[1], studentNum: newRow[2], name: newRow[3],

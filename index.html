@@ -1523,8 +1523,8 @@
             dragon: {
                 name: "드래곤",
                 cost: 350,
-                dps: 50,          // 레벨당 자동 공격 DPS +50 (100렙시 +5,000 DPS)
-                desc: "⚔️ 화염 특화 — 레벨당 초당 자동 DPS +50 (고스테이지 대항)"
+                dps: 10,          // 레벨당 자동 공격 DPS +10 (100렙시 +1,000 DPS)
+                desc: "⚔️ 화염 특화 — 레벨당 초당 자동 DPS +10"
             },
             fairy: {
                 name: "요정",
@@ -3451,7 +3451,8 @@
                 window.speechSynthesis.speak(utterance);
             }
 
-            const skillDmg = calculateClickAttackPower() * mult;
+            // 스킬 데미지 공식 대폭 상향: (클릭 타격력 * 5 + 현재 DPS) * 스킬 배율(×15배 ~ ×150배+)
+            const skillDmg = (calculateClickAttackPower() * 5 + calculateDPSPower()) * mult;
             processCombatDamage(skillDmg);
             playSoundEffect('levelup');
 

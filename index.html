@@ -35,13 +35,14 @@
 
         @font-face {
             font-family: 'KERISBAEUM_B';
-            src: url('media/font/KERISBAEUM_B.ttf') format('truetype');
+            src: url('media/font/KerisBaeum_B.ttf') format('truetype'),
+                 url('media/font/KERISBAEUM_B.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
         }
 
         body {
-            font-family: 'KERISBAEUM_B', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: 'KERISBAEUM_B', 'Hakgyoansim_PosterB', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: #000000; /* canvas */
             color: #ffffff; /* on-dark */
             font-weight: normal;
@@ -352,7 +353,7 @@
     <main class="max-w-6xl w-full mx-auto p-4 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
 
         <!-- LEFT PANEL: Dynamic RPG Battle Arena (5 Cols) -->
-        <section
+        <section id="leftRpgPanel"
             class="lg:col-span-5 bg-black border border-[#3c3c3c] p-5 flex flex-col justify-between relative overflow-hidden min-h-[520px] rounded-none-forced">
             
             <!-- Stage Header & Progress -->
@@ -488,7 +489,7 @@
         </section>
 
         <!-- RIGHT PANEL: Action Quiz, Equipment Upgrades, Pets (7 Cols) -->
-        <section class="lg:col-span-7 flex flex-col gap-4">
+        <section id="rightMainPanel" class="lg:col-span-7 flex flex-col gap-4 transition-all duration-300">
 
             <!-- Dynamic Navigation Tab Bar -->
             <nav class="grid grid-cols-3 sm:grid-cols-6 gap-1 bg-[#0d0d0d] p-1 border border-[#3c3c3c] rounded-none-forced">
@@ -733,94 +734,94 @@
                     <div id="worldBossReadyBox" class="grid grid-cols-1 md:grid-cols-12 gap-4">
                         
                         <!-- Left 5 Cols: Large World Boss Illustration & Weekly Rotation Info -->
-                        <div class="md:col-span-5 bg-[#0d0d0d] border-2 border-red-800 p-4 flex flex-col items-center justify-between text-center relative overflow-hidden rounded-none-forced group">
+                        <div class="md:col-span-5 bg-[#0d0d0d] border-2 border-red-800 p-5 flex flex-col items-center justify-between text-center relative overflow-hidden rounded-none-forced group">
                             <div class="z-10 w-full flex justify-between items-center mb-1">
-                                <span id="wbWeekBadge" class="text-[9px] bg-red-900/80 text-yellow-300 font-bold px-2 py-0.5 border border-red-500">1주차 월드보스</span>
-                                <span class="text-[9px] text-gray-400 font-mono">시즌 종료: <span id="worldBossDaysLeft" class="text-white font-bold">6일 남음</span></span>
+                                <span id="wbWeekBadge" class="text-xs bg-red-900/80 text-yellow-300 font-bold px-2.5 py-1 border border-red-500">1주차 월드보스</span>
+                                <span class="text-xs text-gray-400 font-mono">시즌 종료: <span id="worldBossDaysLeft" class="text-white font-bold">6일 남음</span></span>
                             </div>
 
                             <!-- Big Dynamic Boss Image -->
-                            <div class="relative my-3 flex items-center justify-center min-h-[190px] w-full">
-                                <img id="wbBossImage" src="media/bose/boss_dragon.png" alt="World Boss" class="max-h-48 object-contain filter drop-shadow-[0_0_25px_rgba(239,68,68,0.7)] transition duration-300 transform group-hover:scale-105">
+                            <div class="relative my-4 flex items-center justify-center min-h-[260px] w-full">
+                                <img id="wbBossImage" src="media/worldbose/worldbose_golem.png" alt="World Boss" class="max-h-64 object-contain filter drop-shadow-[0_0_30px_rgba(239,68,68,0.8)] transition duration-300 transform group-hover:scale-105">
                                 <div id="wbBossAura" class="absolute inset-0 bg-gradient-to-t from-red-950/80 via-transparent to-transparent pointer-events-none"></div>
                             </div>
 
                             <div class="z-10 w-full">
-                                <h4 id="wbBossName" class="text-lg font-black text-red-400 tracking-wider font-mono">종말의 화염룡 파브니르</h4>
-                                <p id="wbBossDesc" class="text-[9px] text-gray-400 mt-0.5 line-clamp-2">"고대 영단어의 마법을 봉인한 괴수. 전 학년 용사들이 힘을 합쳐 약점 스펠을 적중시켜야 파괴할 수 있다!"</p>
+                                <h4 id="wbBossName" class="text-xl font-black text-red-400 tracking-wider">종말의 화염룡 파브니르</h4>
+                                <p id="wbBossDesc" class="text-xs text-gray-300 mt-1.5 leading-relaxed">"고대 영단어의 마법을 봉인한 괴수. 전 학년 용사들이 힘을 합쳐 약점 스펠을 적중시켜야 파괴할 수 있다!"</p>
                             </div>
                         </div>
 
                         <!-- Right 7 Cols: Boss Health, Individual Contribution & Challenge Entry -->
-                        <div class="md:col-span-7 flex flex-col justify-between gap-3">
+                        <div class="md:col-span-7 flex flex-col justify-between gap-4">
                             
                             <!-- Global Grade HP Progress Card -->
-                            <div class="bg-[#0d0d0d] p-4 border border-[#3c3c3c] rounded-none-forced">
-                                <div class="flex justify-between items-center mb-1 text-xs">
-                                    <span class="font-bold text-gray-300 flex items-center gap-1">
+                            <div class="bg-[#0d0d0d] p-5 border border-[#3c3c3c] rounded-none-forced">
+                                <div class="flex justify-between items-center mb-2 text-sm">
+                                    <span class="font-bold text-gray-200 flex items-center gap-1.5">
                                         🛡️ <span id="wbGradeTitle">학년 전용 공유 체력</span>
                                     </span>
-                                    <span class="text-[10px] text-red-400 font-bold font-mono">실시간 레이드 잔여 체력</span>
+                                    <span class="text-xs text-red-400 font-bold font-mono">실시간 레이드 잔여 체력</span>
                                 </div>
 
                                 <!-- HP Bar -->
-                                <div class="w-full bg-[#111] border border-red-600 h-6 relative overflow-hidden rounded-none-forced my-2 shadow-inner">
+                                <div class="w-full bg-[#111] border border-red-600 h-8 relative overflow-hidden rounded-none-forced my-3 shadow-inner">
                                     <div id="worldBossHpBar" class="bg-gradient-to-r from-red-600 via-pink-600 to-red-500 h-full transition-all duration-300" style="width: 100%"></div>
-                                    <span id="worldBossHpText" class="absolute inset-0 flex items-center justify-center text-[10px] font-extrabold font-mono text-white drop-shadow-[0_1px_3px_rgba(0,0,0,1)]">10,000,000 / 10,000,000 HP (100.0%)</span>
+                                    <span id="worldBossHpText" class="absolute inset-0 flex items-center justify-center text-xs font-extrabold font-mono text-white drop-shadow-[0_1px_3px_rgba(0,0,0,1)]">10,000,000 / 10,000,000 HP (100.0%)</span>
                                 </div>
 
                                 <!-- Individual Contribution Grid -->
-                                <div class="grid grid-cols-3 gap-2 text-[10px] bg-black p-2.5 border border-[#262626] mt-3">
+                                <div class="grid grid-cols-3 gap-2 text-xs bg-black p-3 border border-[#262626] mt-3">
                                     <div class="text-center">
-                                        <span class="text-[#7e7e7e] block">내 누적 타격 피해</span>
-                                        <span id="myWorldBossDmgDisplay" class="font-bold text-white font-mono text-xs">0</span>
+                                        <span class="text-[#7e7e7e] block text-[10px] mb-1">내 누적 타격 피해</span>
+                                        <span id="myWorldBossDmgDisplay" class="font-bold text-white font-mono text-sm">0</span>
                                     </div>
                                     <div class="text-center border-x border-[#262626]">
-                                        <span class="text-[#7e7e7e] block">기여 지분 (%)</span>
-                                        <span id="myWorldBossShareDisplay" class="font-bold text-yellow-400 font-mono text-xs">0.00%</span>
+                                        <span class="text-[#7e7e7e] block text-[10px] mb-1">기여 지분 (%)</span>
+                                        <span id="myWorldBossShareDisplay" class="font-bold text-yellow-400 font-mono text-sm">0.00%</span>
                                     </div>
                                     <div class="text-center">
-                                        <span class="text-[#7e7e7e] block">예상 시즌 보상</span>
-                                        <span id="myWorldBossRewardDisplay" class="font-bold text-pink-400 text-xs">+0 FP / [수호신]</span>
+                                        <span class="text-[#7e7e7e] block text-[10px] mb-1">예상 시즌 보상</span>
+                                        <span id="myWorldBossRewardDisplay" class="font-bold text-pink-400 text-sm">+0 FP / [수호신]</span>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Defense HP & Raid Attack Entry Button -->
-                            <div class="bg-[#0d0d0d] p-3.5 border border-[#3c3c3c] rounded-none-forced flex flex-col gap-2.5">
-                                <div class="flex items-center justify-between text-xs bg-black p-2 border border-[#262626]">
-                                    <span class="text-gray-300">내 대장간 장비 생존 HP:</span>
-                                    <span id="playerMaxHpDisplay" class="font-bold text-green-400 font-mono">💖 100 HP (방어막 5회 오답 버티기)</span>
+                            <div class="bg-[#0d0d0d] p-4 border border-[#3c3c3c] rounded-none-forced flex flex-col gap-3">
+                                <div class="flex items-center justify-between text-xs bg-black p-3 border border-[#262626]">
+                                    <span class="text-gray-300 font-bold">내 대장간 장비 생존 HP:</span>
+                                    <span id="playerMaxHpDisplay" class="font-bold text-green-400 font-mono text-sm">💖 100 HP (방어막 5회 오답 버티기)</span>
                                 </div>
 
                                 <!-- Current Loadout Preview (Pet & Equipped Skills) -->
-                                <div class="bg-black p-2.5 border border-[#262626] rounded-none-forced">
-                                    <div class="flex justify-between items-center text-[9px] text-[#7e7e7e] font-bold uppercase mb-1.5">
+                                <div class="bg-black p-3 border border-[#262626] rounded-none-forced">
+                                    <div class="flex justify-between items-center text-xs text-gray-300 font-bold mb-2">
                                         <span>⚔️ 참전용사 최종 출전 장비/소환수 점검</span>
                                         <span class="text-yellow-400 font-mono">DPS: <b id="wbDpsPreviewText" class="text-white">0</b></span>
                                     </div>
-                                    <div class="grid grid-cols-2 gap-2 text-[10px]">
+                                    <div class="grid grid-cols-2 gap-3 text-xs">
                                         <!-- Companion Pet Preview -->
-                                        <div class="bg-[#0d0d0d] p-1.5 border border-[#3c3c3c] flex items-center gap-1.5">
-                                            <span class="text-base">🐾</span>
+                                        <div class="bg-[#0d0d0d] p-2 border border-[#3c3c3c] flex items-center gap-2">
+                                            <span class="text-lg">🐾</span>
                                             <div class="min-w-0">
-                                                <span class="text-[8px] text-[#7e7e7e] block">동반 소환수</span>
+                                                <span class="text-[10px] text-gray-400 block">동반 소환수</span>
                                                 <span id="wbPetPreviewName" class="font-bold text-white truncate block">소환수 없음</span>
                                             </div>
                                         </div>
                                         <!-- Equipped Skills Preview -->
-                                        <div class="bg-[#0d0d0d] p-1.5 border border-[#3c3c3c] flex items-center gap-1.5">
-                                            <span class="text-base">🔮</span>
+                                        <div class="bg-[#0d0d0d] p-2 border border-[#3c3c3c] flex items-center gap-2">
+                                            <span class="text-lg">🔮</span>
                                             <div class="min-w-0">
-                                                <span class="text-[8px] text-[#7e7e7e] block">장착 마법 스킬</span>
+                                                <span class="text-[10px] text-gray-400 block">장착 마법 스킬</span>
                                                 <span id="wbSkillsPreviewList" class="font-bold text-pink-400 truncate block">스킬 0개 장착됨</span>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <button id="startWorldBossBtn" onclick="startWorldBossRaid()" class="w-full py-3.5 bg-gradient-to-r from-red-700 via-pink-700 to-red-600 hover:from-red-600 hover:to-pink-600 text-white font-black text-sm tracking-wider uppercase transition shadow-xl flex items-center justify-center gap-2 rounded-none-forced">
-                                    <i data-lucide="swords" class="w-5 h-5"></i>
+                                <button id="startWorldBossBtn" onclick="startWorldBossRaid()" class="w-full py-4 bg-gradient-to-r from-red-700 via-pink-700 to-red-600 hover:from-red-600 hover:to-pink-600 text-white font-black text-base tracking-wider uppercase transition shadow-xl flex items-center justify-center gap-2 rounded-none-forced">
+                                    <i data-lucide="swords" class="w-6 h-6"></i>
                                     <span>월드보스 토벌전 참전하기 (1일 1회)</span>
                                 </button>
                             </div>
@@ -3497,6 +3498,23 @@
         }, 20000);
 
         function switchTab(tabId) {
+            const leftPanel = document.getElementById("leftRpgPanel");
+            const rightPanel = document.getElementById("rightMainPanel");
+
+            if (tabId === 'worldBossTab') {
+                if (leftPanel) leftPanel.classList.add("hidden");
+                if (rightPanel) {
+                    rightPanel.classList.remove("lg:col-span-7");
+                    rightPanel.classList.add("lg:col-span-12");
+                }
+            } else {
+                if (leftPanel) leftPanel.classList.remove("hidden");
+                if (rightPanel) {
+                    rightPanel.classList.remove("lg:col-span-12");
+                    rightPanel.classList.add("lg:col-span-7");
+                }
+            }
+
             document.getElementById("quizTab").classList.add("hidden");
             document.getElementById("gearTab").classList.add("hidden");
             document.getElementById("petTab").classList.add("hidden");

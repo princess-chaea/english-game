@@ -4126,6 +4126,11 @@
             if (hpBarEl) {
                 hpBarEl.style.width = `${pct}%`;
             }
+
+            // 보스 HP가 0 이하로 떨어진 순간 즉시 토벌 완전 승리 마무리!
+            if (currentRemHp <= 0 && isWorldBossRaidActive) {
+                endWorldBossRaid("🎉 [월드보스 완전 격퇴] 전 학년 용사들의 영웅적인 대격전에 월드보스가 완전히 파괴되었습니다!");
+            }
         }
 
         let wbComboCount = 0;
@@ -4380,23 +4385,30 @@
             }
         }
 
+        let wbRevealedLetterCount = 0; // 현재 문제에서 힌트로 밝혀진 글자 수
+
         function usePetHintAssistant() {
             if (!isWorldBossRaidActive || !wbCurrentWordObj) return;
 
-            // 1. 동일한 문제에서 이미 힌트를 본 경우 차감 없이 힌트 재안내만 출력!
-            const isSameWord = (wbLastHintWordObj && wbLastHintWordObj.word === wbCurrentWordObj.word);
-            if (!isSameWord) {
-                if (wbPetHintRemaining <= 0) {
-                    showToast("🔒 소환수 힌트 찬스를 모두 소진하셨습니다!");
-                    return;
-                }
-                wbPetHintRemaining--;
-                wbLastHintWordObj = wbCurrentWordObj;
-                updatePetHintBtnUI();
-                playSoundEffect('levelup');
-            } else {
-                playSoundEffect('click');
+            if (wbPetHintRemaining <= 0) {
+                showToast("🔒 소환수 힌트 찬스를 모두 소진하셨습니다!");
+                return;
             }
+
+            const wordUpper = wbCurrentWordObj.word.toUpperCase();
+            const wordLower = wbCurrentWordObj.word.toLowerCase();
+            const wordLen = wordUpper.length;
+
+            // 이미 단어의 모든 알파벳 글자가 힌트로 다 밝혀진 경우
+            if (wbRevealedLetterCount >= wordLen) {
+                showToast(`💡 소환수가 이미 정답 전체(${wordUpper})를 완성해 드렸습니다!`);
+                return;
+            }
+
+            wbPetHintRemaining--;
+            wbRevealedLetterCount++;
+            updatePetHintBtnUI();
+            playSoundEffect('levelup');
 
             // 힌트 연출: 가장 높은 레벨의 펫이 힌트 메시지를 전달
             let bestPet = '요정';
@@ -4406,20 +4418,35 @@
             if (dragonLvl >= slimeLvl && dragonLvl >= fairyLvl) bestPet = '드래곤';
             else if (slimeLvl >= dragonLvl && slimeLvl >= fairyLvl) bestPet = '슬라임';
 
-            const word = wbCurrentWordObj.word.toUpperCase();
-            const meaning = wbCurrentWordObj.meaning;
-            const firstLetter = word.charAt(0);
-            const wordLen = word.length;
+            const revealedSubstr = wordUpper.substring(0, wbRevealedLetterCount);
+            const remainingDashes = "_ ".repeat(wordLen - wbRevealedLetterCount).trim();
 
-            let hintMsg = `🧚 [${bestPet}] "첫 글자는 '${firstLetter}', 총 ${wordLen}글자입니다!" (뜻: ${meaning})`;
+            let hintMsg = `🧚 [${bestPet}] "힌트 ${wbRevealedLetterCount}번째 글자: '${revealedSubstr}' (${wordLen}글자 중 ${wbRevealedLetterCount}개 완성!)"`;
             showWorldBossFxNotice(hintMsg, "text-yellow-300 border-yellow-400");
-            showToast(`💡 소환수 ${bestPet}의 힌트: 정답 첫 글자는 '${firstLetter}'로 시작합니다!`);
+            showToast(`💡 소환수 ${bestPet}의 힌트: '${revealedSubstr}' ${remainingDashes}`);
 
-            // 주관식 단답형인 경우 입력창에 첫 글자 자동 기입 도와주기
+            // 1. [단답식 필기형]: 입력창에 정답 글자를 누적해서 하나씩 자동 기입!
             const shortInput = document.getElementById("wbShortAnswerInput");
-            if (shortInput && (!shortInput.value || shortInput.value.length === 0)) {
-                shortInput.value = firstLetter;
+            if (shortInput) {
+                shortInput.value = wordLower.substring(0, wbRevealedLetterCount);
                 shortInput.focus();
+                checkWbShortAnswerAutoSubmit(shortInput);
+            }
+
+            // 2. [철자 조합형]: 알파벳 블록을 정답 순서에 맞춰 한 글자씩 자동 타일 클릭 조립!
+            if (wbCurrentQuizType === "unscramble") {
+                resetWbUnscramble();
+                const targetLetters = wordLower.substring(0, wbRevealedLetterCount).split("");
+                
+                targetLetters.forEach(char => {
+                    const buttons = document.querySelectorAll("#wbChoiceContainer button[id^='wbTile_']");
+                    for (let btn of buttons) {
+                        if (!btn.disabled && btn.innerText.trim().toLowerCase() === char) {
+                            clickWbUnscrambleTile(char, btn.id);
+                            break;
+                        }
+                    }
+                });
             }
         }
 
@@ -4481,6 +4508,7 @@
         let wbUnscrambleCurrentTiles = [];
 
         function generateWorldBossQuiz() {
+            wbRevealedLetterCount = 0; // 새 문제가 출제될 때마다 힌트 밝힘 개수 초기화
             let pool = gameState.wordsPool && gameState.wordsPool.length > 0 ? gameState.wordsPool : MOCK_WORDS["4"];
             wbCurrentWordObj = pool[Math.floor(Math.random() * pool.length)];
 

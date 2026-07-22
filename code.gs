@@ -389,8 +389,8 @@ function checkStudentExists(grade, classNum, studentNum, name) {
           String(data[i][1]) === String(classNum) && 
           String(data[i][2]) === String(studentNum) && 
           String(data[i][3]) === String(name)) {
-        // hasPassword: PIN이 이미 시트에 저장되어 있는지 여부
-        var storedPw = data[i][18] ? String(data[i][18]).trim() : "";
+        // hasPassword: PIN이 이미 시트에 저장되어 있는지 여부 (18번째 열, 인덱스 17)
+        var storedPw = (data[i][17] !== undefined && data[i][17] !== null) ? String(data[i][17]).trim() : "";
         return { exists: true, hasPassword: storedPw !== "" };
       }
     }
@@ -432,11 +432,12 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
         }
 
         // 직렬화되어 문자열 상태로 적재된 JSON 스킬 필드 안전 파싱
+        // 16번째 열(idx 15): SkillsInventory, 17번째 열(idx 16): EquippedSkills
         var parsedInventory = [];
         var parsedEquipped = [];
         try {
-          if (data[i][16]) parsedInventory = JSON.parse(data[i][16]);
-          if (data[i][17]) parsedEquipped = JSON.parse(data[i][17]);
+          if (data[i][15]) parsedInventory = JSON.parse(data[i][15]);
+          if (data[i][16]) parsedEquipped = JSON.parse(data[i][16]);
         } catch(e) {
           // 파싱 실패 시 초기 세션 구조 할당
           parsedInventory = [];

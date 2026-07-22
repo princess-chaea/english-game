@@ -1384,45 +1384,124 @@
             </div>
         </div>
     <!-- World Boss Victory Announcement Modal -->
-    <div id="wbVictoryNoticeModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden items-center justify-center p-4">
-        <div class="bg-gradient-to-b from-[#1a0505] via-[#0d0d0d] to-black border-2 border-yellow-500 max-w-md w-full p-6 text-center shadow-[0_0_50px_rgba(234,179,8,0.4)] relative rounded-none-forced">
-            <div class="flex justify-center mb-3">
-                <div class="w-20 h-20 bg-yellow-500/10 border-2 border-yellow-400 rounded-full flex items-center justify-center shadow-inner">
-                    <span class="text-5xl filter drop-shadow-[0_0_15px_#f59e0b]">👑</span>
-                </div>
-            </div>
-            
-            <h3 class="text-xl font-black text-yellow-300 font-mono tracking-widest uppercase mb-1">
-                🎉 전 학년 월드보스 격퇴 성공!
-            </h3>
-            <p class="text-xs font-bold text-gray-300 mb-4" id="wbVictoryModalSubTitle">
-                전 학년 용사들의 위대한 연합으로 보스를 완벽히 정복했습니다!
-            </p>
+    <!-- ✅ 월드보스 격퇴 보상 수령 모달 (화면 중앙 대형 팝업) -->
+    <div id="wbVictoryNoticeModal" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4"
+         style="background: radial-gradient(ellipse at center, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.98) 100%); backdrop-filter: blur(8px);">
 
-            <div class="bg-[#141414] border border-yellow-600/60 p-4 mb-4 text-left flex flex-col gap-2 shadow-md">
-                <div class="flex justify-between items-center text-xs">
-                    <span class="text-gray-400 font-bold">🏆 토벌 상태:</span>
-                    <span class="text-green-400 font-bold font-mono">완전 승리 (0.0% HP)</span>
-                </div>
-                <div class="flex justify-between items-center text-xs">
-                    <span class="text-gray-400 font-bold">⚔️ 내 총 누적 타격 피해:</span>
-                    <span id="wbModalMyDamage" class="text-yellow-400 font-black font-mono">0 HP</span>
-                </div>
-                <div class="flex justify-between items-center text-xs">
-                    <span class="text-gray-400 font-bold">📊 내 기여 지분율:</span>
-                    <span id="wbModalMyShare" class="text-pink-400 font-black font-mono">0.0%</span>
-                </div>
-                <div class="border-t border-gray-800 pt-2 flex justify-between items-center text-xs">
-                    <span class="text-yellow-300 font-black">🎁 최종 하사 칭호 및 보상:</span>
-                    <span id="wbModalRewardSummary" class="text-yellow-300 font-black font-mono">+0 FP / [수호신]</span>
-                </div>
+        <!-- 파티클 스파클 배경 -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+            <div class="wb-spark" style="left:10%;top:20%;animation-delay:0s"></div>
+            <div class="wb-spark" style="left:30%;top:10%;animation-delay:0.3s"></div>
+            <div class="wb-spark" style="left:55%;top:15%;animation-delay:0.6s"></div>
+            <div class="wb-spark" style="left:75%;top:25%;animation-delay:0.2s"></div>
+            <div class="wb-spark" style="left:85%;top:60%;animation-delay:0.9s"></div>
+            <div class="wb-spark" style="left:20%;top:70%;animation-delay:0.5s"></div>
+            <div class="wb-spark" style="left:50%;top:80%;animation-delay:0.8s"></div>
+            <div class="wb-spark" style="left:70%;top:75%;animation-delay:0.1s"></div>
+        </div>
+
+        <!-- 메인 팝업 카드 -->
+        <div class="relative max-w-lg w-full text-center animate-wbModalIn"
+             style="border: 2px solid #f59e0b; border-radius: 4px;
+                    background: linear-gradient(160deg, #1a0f00 0%, #0d0800 40%, #1a0800 100%);
+                    box-shadow: 0 0 80px rgba(251,191,36,0.55), 0 0 160px rgba(251,191,36,0.2), inset 0 0 40px rgba(251,191,36,0.06);
+                    padding: 0;">
+
+            <!-- 상단 황금 배너 -->
+            <div style="background: linear-gradient(90deg, #92400e, #d97706, #fbbf24, #d97706, #92400e);
+                        padding: 10px 24px; letter-spacing: 0.25em; font-size: 11px; font-weight: 900; color: #000; font-family: monospace;">
+                ★ WORLD BOSS VANQUISHED ★ &nbsp;·&nbsp; 전 학년 연합 토벌 달성
             </div>
 
-            <button onclick="closeModal('wbVictoryNoticeModal')" class="w-full py-3 bg-gradient-to-r from-yellow-500 via-amber-500 to-yellow-600 hover:from-yellow-400 hover:to-amber-400 text-black font-black text-sm uppercase tracking-widest transition shadow-lg rounded-none-forced cursor-pointer">
-                ✨ 전설의 보상 영접 완료!
-            </button>
+            <div style="padding: 28px 32px 24px;">
+
+                <!-- 왕관 아이콘 -->
+                <div class="flex justify-center mb-4">
+                    <div style="width:100px;height:100px;border-radius:50%;
+                                background: radial-gradient(circle at 40% 40%, #fbbf24, #d97706, #92400e);
+                                border: 3px solid #fbbf24;
+                                box-shadow: 0 0 30px #fbbf24, 0 0 60px rgba(251,191,36,0.4);
+                                display:flex;align-items:center;justify-content:center;
+                                animation: wbCrownPulse 2s ease-in-out infinite;">
+                        <span style="font-size:52px;filter:drop-shadow(0 0 12px #fff);">👑</span>
+                    </div>
+                </div>
+
+                <!-- 타이틀 -->
+                <h2 style="font-size:26px;font-weight:900;color:#fbbf24;font-family:monospace;letter-spacing:0.1em;
+                            text-shadow: 0 0 20px #fbbf24, 0 0 40px rgba(251,191,36,0.5);
+                            margin-bottom:6px;">
+                    🎉 월드보스 격퇴 성공!
+                </h2>
+                <p style="color:#d1d5db;font-size:13px;margin-bottom:22px;">
+                    전 학년 용사들의 위대한 연합으로 보스를 완벽히 정복했습니다!
+                </p>
+
+                <!-- 스탯 박스 -->
+                <div style="background:rgba(0,0,0,0.5);border:1px solid rgba(251,191,36,0.3);border-radius:4px;
+                            padding:16px;margin-bottom:20px;text-align:left;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <span style="color:#9ca3af;font-size:12px;font-weight:700;">🏆 토벌 상태</span>
+                        <span style="color:#4ade80;font-size:13px;font-weight:900;font-family:monospace;">완전 승리 ✅</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <span style="color:#9ca3af;font-size:12px;font-weight:700;">⚔️ 내 총 누적 타격 피해</span>
+                        <span id="wbModalMyDamage" style="color:#fbbf24;font-size:14px;font-weight:900;font-family:monospace;">0 HP</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                        <span style="color:#9ca3af;font-size:12px;font-weight:700;">📊 내 기여 지분율</span>
+                        <span id="wbModalMyShare" style="color:#f472b6;font-size:14px;font-weight:900;font-family:monospace;">0.00%</span>
+                    </div>
+                    <!-- 보상 하이라이트 -->
+                    <div style="background:linear-gradient(90deg,rgba(251,191,36,0.15),rgba(251,191,36,0.05));
+                                border:1px solid rgba(251,191,36,0.5);border-radius:4px;padding:12px;
+                                display:flex;justify-content:space-between;align-items:center;">
+                        <span style="color:#fde68a;font-size:13px;font-weight:900;">🎁 최종 보상</span>
+                        <span id="wbModalRewardSummary"
+                              style="color:#fbbf24;font-size:16px;font-weight:900;font-family:monospace;
+                                     text-shadow: 0 0 10px #fbbf24;">+0 FP / [수호신]</span>
+                    </div>
+                </div>
+
+                <!-- 확인 버튼 -->
+                <button onclick="closeModal('wbVictoryNoticeModal')"
+                        style="width:100%;padding:16px;font-size:15px;font-weight:900;letter-spacing:0.15em;
+                               background: linear-gradient(90deg, #d97706, #fbbf24, #d97706);
+                               color:#000;border:none;cursor:pointer;border-radius:4px;
+                               box-shadow: 0 0 20px rgba(251,191,36,0.6);
+                               transition: all 0.2s ease;"
+                        onmouseover="this.style.boxShadow='0 0 40px rgba(251,191,36,0.9)'"
+                        onmouseout="this.style.boxShadow='0 0 20px rgba(251,191,36,0.6)'">
+                    ✨ 보상 영접 완료! 전설이 되다
+                </button>
+            </div>
         </div>
     </div>
+
+    <style>
+        @keyframes wbSparkFloat {
+            0%   { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-80px) scale(0); opacity: 0; }
+        }
+        @keyframes wbCrownPulse {
+            0%, 100% { box-shadow: 0 0 30px #fbbf24, 0 0 60px rgba(251,191,36,0.4); transform: scale(1); }
+            50%       { box-shadow: 0 0 50px #fbbf24, 0 0 100px rgba(251,191,36,0.6); transform: scale(1.05); }
+        }
+        @keyframes wbModalIn {
+            0%   { transform: scale(0.7) translateY(40px); opacity: 0; }
+            70%  { transform: scale(1.04) translateY(-4px); opacity: 1; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .animate-wbModalIn { animation: wbModalIn 0.55s cubic-bezier(0.22,1,0.36,1) both; }
+        .wb-spark {
+            position: absolute;
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #fbbf24, #f59e0b);
+            box-shadow: 0 0 8px #fbbf24;
+            animation: wbSparkFloat 1.8s ease-in-out infinite;
+        }
+    </style>
 
     <script>
         // Secret trigger for Teacher Settings

@@ -2466,9 +2466,12 @@
                     if (!alreadyRewarded && earnedFp > 0) {
                         localStorage.setItem(victoryRewardKey, "true");
                         gameState.masteryPoints = (gameState.masteryPoints || 0) + earnedFp;
+                        // ✅ [수호신] 칭호 영구 부여 (gameState에 저장)
+                        gameState.wbTitle = "수호신";
                         refreshStateVisuals();
+                        saveLocalCache();
                         saveSessionToCloud();
-                        showToast(`🎁 [월드보스 토별 보상] +${earnedFp} FP가 정복 포인트에 적립되었습니다!`);
+                        showToast(`🎁 [월드보스 토별 보상] +${earnedFp} FP가 정복 포인트에 적립되었습니다! 👑 [수호신] 칭호가 부여되었습니다!`);
                     }
 
                     // 모달은 보상 확인 여부와 독립적으로 한 번만 표시
@@ -3911,6 +3914,22 @@
                 : 0;
             document.getElementById("statSuccessRatio").innerText = `${ratio}%`;
             document.getElementById("masteredTotalText").innerText = gameState.totalQuizCorrect;
+
+            // ✅ [수호신] 칭호: 월드보스 격파 달성 시 영웅 이름 태그에 칭호 표시
+            const nameTagEl = document.getElementById("heroNameTag");
+            if (nameTagEl && gameState.name) {
+                const title = gameState.wbTitle ? `[${gameState.wbTitle}] ` : "";
+                nameTagEl.innerText = `${title}${gameState.name}`;
+                if (gameState.wbTitle) {
+                    nameTagEl.style.color = "#fbbf24";
+                    nameTagEl.style.borderColor = "#d97706";
+                    nameTagEl.style.textShadow = "0 0 8px rgba(251,191,36,0.6)";
+                } else {
+                    nameTagEl.style.color = "";
+                    nameTagEl.style.borderColor = "";
+                    nameTagEl.style.textShadow = "";
+                }
+            }
         }
 
         // ==========================================
@@ -4159,6 +4178,7 @@
 
         function updateWorldBossUI() {
             const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+            const wbCacheKey = `vocahero_wb_cache_${gameState.grade}_${gameState.name}_${gameState.studentNum}`;
             wbPlayerMaxHp = calculatePlayerRaidMaxHp();
 
             // 주차별 월드보스 일러스트 & 정보 동적 세팅
@@ -4255,26 +4275,55 @@
                 }
             }
 
-            // 피해 기록 동기화 안내 및 실시간 데이터 요청
-            const hpTextEl = document.getElementById("worldBossHpText");
-            if (hpTextEl && (!hpTextEl.innerText || hpTextEl.innerText.includes("..."))) {
-                hpTextEl.innerText = "🔄 서버 실시간 레이드 상태 수신 중...";
+            // ✅ 캐시 데이터 즉시 반영 (탭 전환 시 서버 응답 전에 마지막 알려진 상태 바로 표시)
+            const cachedWb = JSON.parse(localStorage.getItem(wbCacheKey) || "null");
+            if (cachedWb) {
+                const cachedPct = Math.max(0, Math.min(100, (cachedWb.curHp / cachedWb.maxHp) * 100));
+                document.getElementById("worldBossHpBar").style.width = `${cachedPct}%`;
+                document.getElementById("worldBossHpText").innerText = `${cachedWb.curHp.toLocaleString()} / ${cachedWb.maxHp.toLocaleString()} HP (${cachedPct.toFixed(1)}%) [캐시]`;
+                document.getElementById("myWorldBossDmgDisplay").innerText = cachedWb.myDamage.toLocaleString();
+                document.getElementById("myWorldBossShareDisplay").innerText = `${cachedWb.sharePct}%`;
+                document.getElementById("myWorldBossRewardDisplay").innerText = `+${Math.floor(cachedWb.myDamage / 1000)} FP / [수호신] 칭호`;
+
+                // 캐시 기반 클리어 오버레이 즉시 표시
+                const defeatedOverlay = document.getElementById("wbDefeatedOverlay");
+                if (defeatedOverlay) {
+                    if (cachedWb.curHp <= 0) {
+                        defeatedOverlay.classList.remove("hidden"); defeatedOverlay.classList.add("flex");
+                        if (btn) { btn.disabled = true; btn.innerText = "👑 월드보스 완전 토벌 완료 (시즌 승리)"; btn.className = "w-full py-3.5 bg-[#262626] text-[#7e7e7e] font-bold text-sm tracking-wider uppercase rounded-none-forced cursor-not-allowed border border-red-950"; }
+                        if (badge) { badge.innerText = "토벌 성공"; badge.className = "text-[9px] bg-yellow-950 text-yellow-400 border border-yellow-600 px-3 py-1 rounded-none-forced font-bold uppercase tracking-wider"; }
+                    } else {
+                        defeatedOverlay.classList.remove("flex"); defeatedOverlay.classList.add("hidden");
+                    }
+                }
+            } else {
+                const hpTextEl = document.getElementById("worldBossHpText");
+                if (hpTextEl) hpTextEl.innerText = "🔄 서버 실시간 레이드 상태 수신 중...";
             }
 
+            // 서버에서 최신 데이터 가져오기 (백그라운드 업데이트)
             runGas("getWorldBossStatus", [gameState.grade, studentKey], function(res) {
                 if (res && res.success) {
                     wbCurBossHp = res.curHp;
                     wbMaxBossHp = res.maxHp;
                     const pct = Math.max(0, Math.min(100, (wbCurBossHp / wbMaxBossHp) * 100));
+                    const cappedShare = Math.min(100.0, Math.max(0, parseFloat(res.sharePct) || 0)).toFixed(2);
 
                     document.getElementById("worldBossHpBar").style.width = `${pct}%`;
                     document.getElementById("worldBossHpText").innerText = `${wbCurBossHp.toLocaleString()} / ${wbMaxBossHp.toLocaleString()} HP (${pct.toFixed(1)}%)`;
                     document.getElementById("myWorldBossDmgDisplay").innerText = res.myDamage.toLocaleString();
-                    
-                    // 기여 지분율 100% 상한선 캡핑 보정 (데이터 로딩 비동기 상한선 방어)
-                    const cappedShare = Math.min(100.0, Math.max(0, parseFloat(res.sharePct) || 0)).toFixed(2);
                     document.getElementById("myWorldBossShareDisplay").innerText = `${cappedShare}%`;
                     document.getElementById("myWorldBossRewardDisplay").innerText = `+${Math.floor(res.myDamage / 1000)} FP / [수호신] 칭호`;
+
+                    // ✅ 서버 응답 데이터를 로컬 캐시에 저장 (다음 탭 전환 시 즉시 표시용)
+                    localStorage.setItem(wbCacheKey, JSON.stringify({
+                        curHp: res.curHp,
+                        maxHp: res.maxHp,
+                        myDamage: res.myDamage,
+                        sharePct: cappedShare,
+                        canAttack: res.canAttack,
+                        cachedAt: Date.now()
+                    }));
 
                     // 보스 체력이 0 HP일 때 대기실 보스 일러스트 위에 붉은 ✖ 자 강렬한 CLEAR! 낙인 효과 토글 렌더링
                     const defeatedOverlay = document.getElementById("wbDefeatedOverlay");

@@ -2661,10 +2661,25 @@
                 const rolledGradeRank = (SKILL_GRADES[rolledGrade] || SKILL_GRADES.normal).rank;
 
                 if (rolledGradeRank > existingGradeRank) {
-                    // 🎉 상위 등급 카드가 뽑힌 경우: 기존 카드가 상위 등급으로 등급 승급(업그레이드)되며 별(⭐)과 경험치 승계!
+                    // 🎉 상위 등급 카드가 뽑힌 경우: 
+                    // 기존 하위 등급에서 투입된 총 누적 획득 카드 경험치를 계산하여 상위 등급의 별(⭐)로 50% 보정 보환!
+                    const oldGradeReqExp = getRequiredExpForStar(existingSkill.grade);
+                    const totalOldCardExp = ((existingSkill.stars || 0) * oldGradeReqExp) + (existingSkill.exp || 0);
+
+                    // 새로운 상위 등급 정보 설정
                     existingSkill.grade = rolledGrade;
-                    existingSkill.maxExp = getRequiredExpForStar(rolledGrade);
-                    showToast(`🔥 [${capitalizeFirstLetter(word)}] 대각성! [${gradeInfo.name}] 등급으로 상위 승급되었습니다!`);
+                    const newGradeReqExp = getRequiredExpForStar(rolledGrade);
+                    existingSkill.maxExp = newGradeReqExp;
+
+                    // 이전 투입 노력의 50%를 신규 등급 누적 경험치로 전환 보정
+                    const convertedExp = Math.floor(totalOldCardExp * 0.5);
+                    const newStars = Math.min(6, Math.floor(convertedExp / newGradeReqExp));
+                    const newExp = convertedExp % newGradeReqExp;
+
+                    existingSkill.stars = newStars;
+                    existingSkill.exp = newExp;
+
+                    showToast(`🔥 [${capitalizeFirstLetter(word)}] 대각성! [${gradeInfo.name}] 등급으로 상위 승급 (⭐${newStars}성 보정 환산)!`);
                 } else {
                     // 동일 이하 등급 카드: 중복 카드 경험치(EXP) 흡수로 한계돌파!
                     if (typeof existingSkill.stars === 'undefined') existingSkill.stars = 0;

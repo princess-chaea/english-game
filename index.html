@@ -1837,7 +1837,7 @@
                     gameState.gold, gameState.avatarType, gameState.helmetLvl, gameState.armorLvl,
                     gameState.weaponLvl, gameState.shieldLvl, gameState.shoesLvl, petStr,
                     gameState.stage, gameState.progress, gameState.skillsInventory, gameState.equippedSkills,
-                    gameState.masteryPoints || 0
+                    Number(gameState.masteryPoints) || 0
                 ],
                 function (success) {
                     if (success) {

@@ -533,7 +533,7 @@ function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType
           [
             gold, avatarType, helmetLvl, armorLvl, weaponLvl, shieldLvl, shoesLvl,
             petLevelsStr, stage, progress, Date.now(),
-            serializedInventory, serializedEquipped, existingPassword, masteryPoints || 0
+            serializedInventory, serializedEquipped, existingPassword, Number(masteryPoints) || 0
           ]
         ];
 

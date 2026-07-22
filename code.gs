@@ -270,7 +270,7 @@ function getHallOfFame(grade, studentKey) {
     var stageRankList = [];
     var goldRankList = [];
     
-    // Students 필드 탐색: Grade(0), Class(1), Number(2), Name(3), Gold(4), Stage(13), Progress(14)
+    // Students 필드 탐색: Grade(0), Class(1), Number(2), Name(3), Gold(4), Stage(12), Progress(13)
     for (var i = 1; i < studentData.length; i++) {
       var sGrade = String(studentData[i][0]);
       if (sGrade === String(grade)) {
@@ -278,8 +278,8 @@ function getHallOfFame(grade, studentKey) {
         var sNum = studentData[i][2];
         var sName = studentData[i][3];
         var sGold = Number(studentData[i][4]) || 0;
-        var sStage = Number(studentData[i][13]) || 1;
-        var sProg = Number(studentData[i][14]) || 0;
+        var sStage = Number(studentData[i][12]) || 1;
+        var sProg = Number(studentData[i][13]) || 0;
         var key = sGrade + "_" + sClass + "_" + sNum + "_" + sName;
         var displayName = sClass + "반 " + sName;
         

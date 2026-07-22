@@ -2164,13 +2164,24 @@
                     }
 
                     const fallbackUrl = type === 'dragon' ? `media/pet_dragon/pet_dragon_1.png` : `media/pet_${type}/pet_${type}_1.png`;
-                    // 슬라임(좌측 펫)은 오른 쪽(중앙)을 바라보도록 반전, 드래곤(우측 펫)은 왼쪽(중앙)을 바라보도록 설정
+                    
+                    // 슬라임(좌측 펫)은 오른쪽(중앙)을 바라보고, 드래곤(우측 펫)은 왼쪽(중앙)을 바라보도록 180도 좌우 반전
                     let imgTransform = "";
-                    if (type === 'slime') {
+                    if (type === 'slime' || type === 'dragon') {
                         imgTransform = `transform="scale(-1, 1)" transform-origin="${x + width/2}px ${y + height/2}px"`;
                     }
+
+                    // 100레벨 맥스 단계 펫을 위한 찬란한 전설 아우라 빛 무늬 (Aura Glow Effect)
+                    let auraFilter = "mix-blend-mode: screen;";
+                    let auraOverlay = "";
+                    if (level >= 100) {
+                        auraFilter += " filter: drop-shadow(0 0 12px #f59e0b) drop-shadow(0 0 25px #ec4899);";
+                        auraOverlay = `<circle cx="${x + width/2}" cy="${y + height/2}" r="${width/1.8}" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4,4" class="animate-spin" opacity="0.8" />`;
+                    }
+
                     svg.innerHTML = `
-                        <image href="${imageUrl}" onerror="this.setAttribute('href', '${fallbackUrl}')" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet" ${imgTransform} style="mix-blend-mode: screen;" />
+                        ${auraOverlay}
+                        <image href="${imageUrl}" onerror="this.setAttribute('href', '${fallbackUrl}')" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet" ${imgTransform} style="${auraFilter}" />
                     `;
                     container.classList.remove("hidden");
                 } else {
@@ -3057,11 +3068,12 @@
                 }
             }
 
-            // 동일 등급 3개가 없으면 가장 낮은 등급 3개 선택
+            // 동일 등급 3개가 없으면 투입된 3개 카드 중 '가장 높은 등급'을 기준으로 유저에게 더욱 유리하게 승급 판정!
             if (!targetThree) {
-                availableSkills.sort((a, b) => (gradeRankMap[a.grade] || 1) - (gradeRankMap[b.grade] || 1));
+                // 등급 내림차순 정렬 (높은 등급 우선)
+                availableSkills.sort((a, b) => (gradeRankMap[b.grade] || 1) - (gradeRankMap[a.grade] || 1));
                 targetThree = availableSkills.slice(0, 3);
-                // 가장 낮은 등급 기준
+                // 가장 높은 등급 기준 적용!
                 targetGrade = targetThree[0].grade;
             }
 

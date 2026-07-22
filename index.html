@@ -735,13 +735,51 @@
                         </div>
                     </div>
                 </div>
-                <div
-                    class="grid grid-cols-5 gap-1.5 text-center text-xs font-bold mt-4 bg-[#0d0d0d] p-2.5 border border-[#3c3c3c] rounded-none-forced">
-                    <div class="text-[#bbbbbb]">일반: ×15 (75%)</div>
-                    <div class="text-[#0066b1]">희귀: ×25 (18%)</div>
-                    <div class="text-[#1c69d4]">영웅: ×40 (5%)</div>
-                    <div class="text-[#e22718]">전설: ×70 (1.95%)</div>
-                    <div class="text-pink-400 animate-pulse">신화: ×150 (0.05%)</div>
+                <!-- Infographics & Probability Guide Panel -->
+                <div class="mt-4 bg-[#0d0d0d] border border-[#3c3c3c] p-3.5 rounded-none-forced flex flex-col gap-3">
+                    <div class="flex justify-between items-center border-b border-[#262626] pb-2">
+                        <span class="text-xs font-bold text-[#0066b1] flex items-center gap-1.5 uppercase tracking-wider">
+                            <i data-lucide="info" class="w-4 h-4"></i>
+                            <span>스킬 수집 & 강화 인포그래픽 가이드</span>
+                        </span>
+                        <span class="text-[10px] text-gray-400 font-mono">기존 스킬 재획득 시 자동 중복 경험치(EXP) 누적</span>
+                    </div>
+
+                    <!-- 5 Grades Multiplier & Probability Cards -->
+                    <div class="grid grid-cols-5 gap-1.5 text-center text-[10px]">
+                        <div class="bg-black/90 p-2 border border-[#3c3c3c]">
+                            <span class="text-[#bbbbbb] font-extrabold block">일반 (75%)</span>
+                            <span class="text-white font-mono font-bold">기본 ×15배</span>
+                        </div>
+                        <div class="bg-black/90 p-2 border border-[#0066b1]">
+                            <span class="text-[#0066b1] font-extrabold block">희귀 (18%)</span>
+                            <span class="text-white font-mono font-bold">기본 ×25배</span>
+                        </div>
+                        <div class="bg-black/90 p-2 border border-[#1c69d4]">
+                            <span class="text-[#1c69d4] font-extrabold block">영웅 (5%)</span>
+                            <span class="text-white font-mono font-bold">기본 ×40배</span>
+                        </div>
+                        <div class="bg-black/90 p-2 border border-[#e22718]">
+                            <span class="text-[#e22718] font-extrabold block">전설 (1.95%)</span>
+                            <span class="text-white font-mono font-bold">기본 ×70배</span>
+                        </div>
+                        <div class="bg-black/90 p-2 border border-pink-500 animate-pulse">
+                            <span class="text-pink-400 font-extrabold block">신화 (0.05%)</span>
+                            <span class="text-white font-mono font-bold">기본 ×150배</span>
+                        </div>
+                    </div>
+
+                    <!-- Tier & Star Explanation Rows -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-[10px] text-gray-300">
+                        <div class="bg-black p-2 border border-[#262626] flex items-center gap-2">
+                            <span class="bg-purple-950 text-purple-300 border border-purple-600 px-2 py-1 font-black shrink-0">✨ 3개 스킬 합성</span>
+                            <p class="leading-tight">동일 티어 카드 3개를 조합하면 <b>20% 확률로 상위 등급 승급</b> 또는 <b>80% 확률로 동일 등급 유지</b>됩니다.</p>
+                        </div>
+                        <div class="bg-black p-2 border border-[#262626] flex items-center gap-2">
+                            <span class="bg-yellow-950 text-yellow-300 border border-yellow-600 px-2 py-1 font-black shrink-0">⭐ 별 & T티어 성장</span>
+                            <p class="leading-tight">중복 획득 시 <b>EXP가 차면 T티어와 별(⭐)이 상승</b>하며, <b>티어당 +10%, 별(⭐)당 +50% 추가 피해</b>가 곱연산 증가합니다!</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -3398,17 +3436,14 @@
 
                 const arena = document.getElementById("battleArena");
                 
-                // 단어 정답 시 강력한 공격 데미지 적용 (클릭 데미지의 30배 + 초당 DPS의 5배)
-                const quizDmg = (calculateClickAttackPower() * 30) + (calculateDPSPower() * 5);
+                // 단어 정답 시 치명타 폭딜 데미지 타격 (클릭 데미지의 250배 + 초당 DPS의 30배)
+                const quizDmg = (calculateClickAttackPower() * 250) + (calculateDPSPower() * 30);
                 processCombatDamage(quizDmg);
-                spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `✨ 퀴즈 치명타! -${quizDmg}`);
+                spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `⚡ 퀴즈 크리티컬! -${quizDmg.toLocaleString()}`);
 
                 gameState.currentQuizIndex = (gameState.currentQuizIndex + 1) % gameState.wordsPool.length;
 
-                const spellDmg = calculateClickAttackPower() * 12;
-                processCombatDamage(spellDmg);
-
-                showBattleToast(`🔥 약점 타격! -${spellDmg} 피해 / +${reward}G / +10 FP`);
+                showBattleToast(`🔥 약점 정답 타격! -${quizDmg.toLocaleString()} 피해 / +${reward.toLocaleString()}G / +10 FP`);
 
                 setTimeout(() => {
                     generateQuizCard();
@@ -4091,7 +4126,7 @@
             }
 
             isWorldBossRaidActive = true;
-            wbTimerRemaining = 70.0;
+            wbTimerRemaining = 180.0;
             wbPlayerMaxHp = calculatePlayerRaidMaxHp();
             wbPlayerHp = wbPlayerMaxHp;
             wbTotalDamageDealt = 0;
@@ -4104,7 +4139,7 @@
             arena.classList.remove("hidden");
             arena.classList.add("flex");
 
-            document.getElementById("wbTimerText").innerText = "70.0초";
+            document.getElementById("wbTimerText").innerText = "180.0초";
             document.getElementById("wbPlayerHpText").innerText = `${wbPlayerHp} / ${wbPlayerMaxHp} HP`;
             updateWorldBossBattleHpBar();
 
@@ -4139,9 +4174,9 @@
             generateWorldBossQuiz();
             renderWorldBossRaidSkills();
             playSoundEffect('levelup');
-            showToast(`🚨 월드보스 참전! (소지한 펫의 힘으로 총 ${wbPetHintRemaining}회의 소환수 힌트 찬스가 충전되었습니다!)`);
+            showToast(`🚨 월드보스 참전! 3분(180초) 동안 약점 스펠과 소환수 힌트를 활용해 폭딜을 퍼부으세요!`);
 
-            let lastPatternCheck = 70.0;
+            let lastPatternCheck = 180.0;
 
             if (wbTimerInterval) clearInterval(wbTimerInterval);
             wbTimerInterval = setInterval(() => {
@@ -4159,14 +4194,13 @@
                 }
                 renderWorldBossRaidSkills();
 
-                // 15초마다 보스의 [🔥 광폭화 파멸 스펠] 패턴 발동!
-                if (lastPatternCheck - wbTimerRemaining >= 15.0) {
+                // 25초마다 보스의 [🔥 광폭화 파멸 스펠] 패턴 발동!
+                if (lastPatternCheck - wbTimerRemaining >= 25.0) {
                     lastPatternCheck = wbTimerRemaining;
-                    const bossSpellDmg = Math.floor(wbPlayerMaxHp * 0.25); // 최대 HP의 25% 가혹한 치명타 피해
+                    const bossSpellDmg = Math.floor(wbPlayerMaxHp * 0.20);
                     wbPlayerHp -= bossSpellDmg;
                     document.getElementById("wbPlayerHpText").innerText = `${Math.max(0, wbPlayerHp)} / ${wbPlayerMaxHp} HP`;
                     
-                    // 보스 광폭화 타격 비주얼 이펙트
                     triggerWorldBossAttackAnim(`🔥 광폭화 파멸 스펠 강타! -${bossSpellDmg} HP!`);
                     playSoundEffect('incorrect');
                     generateWorldBossQuiz();
@@ -4178,7 +4212,7 @@
                 }
 
                 if (wbTimerRemaining <= 0) {
-                    endWorldBossRaid("⏱️ 70초 제한시간이 초과되어 토벌전이 완료되었습니다!");
+                    endWorldBossRaid("⏱️ 180초 제한시간이 초과되어 토벌전이 완료되었습니다!");
                 }
             }, 100);
         }
@@ -4590,11 +4624,10 @@
                 playSoundEffect('correct');
                 wbComboCount++;
 
-                // 기본 용사 정답 폭딜
-                let heroDmg = (calculateClickAttackPower() * 50) + (calculateDPSPower() * 10);
+                // 기본 용사 정답 폭딜 (클릭 타격력 300배 + DPS 50배)
+                let heroDmg = (calculateClickAttackPower() * 300) + (calculateDPSPower() * 50);
                 
                 // 펫 레벨 기반 비례 데미지 및 연속 정답 콤보에 따른 펫 순차 협공
-                // 콤보 1: 슬라임 협공, 콤보 2: 드래곤 협공, 콤보 3+: 요정 협공 & 전원 동시 총공격!
                 const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
                 const dragonLvl = (gameState.petLevels && gameState.petLevels['dragon']) || 0;
                 const fairyLvl = (gameState.petLevels && gameState.petLevels['fairy']) || 0;
@@ -4603,18 +4636,18 @@
                 let totalComboDmg = heroDmg;
 
                 if (wbComboCount === 1) {
-                    const slimeDmg = 100 + (slimeLvl * 50);
+                    const slimeDmg = 500 + (slimeLvl * 250);
                     totalComboDmg += slimeDmg;
                     petNoticeText = `🟢 1콤보! [슬라임(Lv.${slimeLvl})] 몸통 박치기! -${slimeDmg.toLocaleString()}`;
                     spawnWbDamageParticle(`🟢 -${slimeDmg.toLocaleString()}`, false);
                 } else if (wbComboCount === 2) {
-                    const dragonDmg = 300 + (dragonLvl * 120);
+                    const dragonDmg = 1500 + (dragonLvl * 600);
                     totalComboDmg += dragonDmg;
                     petNoticeText = `🐉 2연속 콤보! [드래곤(Lv.${dragonLvl})] 화염 브레스! -${dragonDmg.toLocaleString()}`;
                     spawnWbDamageParticle(`🐉 -${dragonDmg.toLocaleString()}`, true);
                 } else {
-                    const fairyDmg = 500 + (fairyLvl * 200);
-                    const totalPetDmg = (slimeLvl * 30) + (dragonLvl * 80) + fairyDmg;
+                    const fairyDmg = 3000 + (fairyLvl * 1000);
+                    const totalPetDmg = (slimeLvl * 200) + (dragonLvl * 500) + fairyDmg;
                     totalComboDmg += totalPetDmg;
                     petNoticeText = `✨ ${wbComboCount}연속 콤보! [펫 3종 소환수] 일제 총공격! -${totalPetDmg.toLocaleString()}`;
                     spawnWbDamageParticle(`✨ -${totalPetDmg.toLocaleString()}`, true);

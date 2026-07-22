@@ -523,21 +523,22 @@ function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType
         // 획득한 영단어 등급별 스킬 인벤토리와 장착 슬롯을 문자열 형식으로 직렬화 변환
         var serializedInventory = JSON.stringify(skillsInventory || []);
         var serializedEquipped = JSON.stringify(equippedSkills || []);
+        var existingPassword = data[i][17] !== undefined && data[i][17] !== null ? String(data[i][17]) : "";
+        if (existingPassword !== "" && !existingPassword.startsWith("'")) {
+          existingPassword = "'" + existingPassword;
+        }
 
-        sheet.getRange(targetRow, 5).setValue(gold);
-        sheet.getRange(targetRow, 6).setValue(avatarType);
-        sheet.getRange(targetRow, 7).setValue(helmetLvl);
-        sheet.getRange(targetRow, 8).setValue(armorLvl);
-        sheet.getRange(targetRow, 9).setValue(weaponLvl);
-        sheet.getRange(targetRow, 10).setValue(shieldLvl);
-        sheet.getRange(targetRow, 11).setValue(shoesLvl);
-        sheet.getRange(targetRow, 12).setValue(petLevelsStr);
-        sheet.getRange(targetRow, 13).setValue(stage);
-        sheet.getRange(targetRow, 14).setValue(progress);
-        sheet.getRange(targetRow, 15).setValue(Date.now());
-        sheet.getRange(targetRow, 16).setValue(serializedInventory);
-        sheet.getRange(targetRow, 17).setValue(serializedEquipped);
-        sheet.getRange(targetRow, 19).setValue(masteryPoints || 0);
+        // 5번째 열(E, Gold)부터 19번째 열(S, MasteryPoints)까지 15개 열 단일 배열 기록 (속도 최적화 & 열 어긋남 보장)
+        var rowValues = [
+          [
+            gold, avatarType, helmetLvl, armorLvl, weaponLvl, shieldLvl, shoesLvl,
+            petLevelsStr, stage, progress, Date.now(),
+            serializedInventory, serializedEquipped, existingPassword, masteryPoints || 0
+          ]
+        ];
+
+        sheet.getRange(targetRow, 18).setNumberFormat("@");
+        sheet.getRange(targetRow, 5, 1, 15).setValues(rowValues);
         
         return true;
       }

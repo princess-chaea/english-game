@@ -653,7 +653,7 @@
 
             <!-- TAB 4: Skill Custom Equip Lab (신규 추가된 스킬 연구소 탭) -->
             <div id="skillTab"
-                class="bg-black border border-[#3c3c3c] p-6 flex-grow hidden flex-col justify-between min-h-[440px] rounded-none-forced">
+                class="bg-black border border-[#3c3c3c] p-5 flex-grow hidden flex-col justify-between rounded-none-forced overflow-y-auto">
                 <div>
                     <div class="flex justify-between items-center mb-2">
                         <h3 class="bmw-label-uppercase text-white flex items-center gap-2">
@@ -791,27 +791,25 @@
                                 </div>
 
                                 <!-- Current Loadout Preview (Pet & Equipped Skills) -->
-                                <div class="bg-black p-3 border border-[#262626] rounded-none-forced">
-                                    <div class="flex justify-between items-center text-xs text-gray-300 font-bold mb-2">
+                                <div class="bg-black p-3 border border-[#262626] rounded-none-forced flex flex-col gap-2.5">
+                                    <div class="flex justify-between items-center text-xs text-gray-300 font-bold">
                                         <span>⚔️ 참전용사 최종 출전 장비/소환수 점검</span>
                                         <span class="text-yellow-400 font-mono">DPS: <b id="wbDpsPreviewText" class="text-white">0</b></span>
                                     </div>
-                                    <div class="grid grid-cols-2 gap-3 text-xs">
-                                        <!-- Companion Pet Preview -->
-                                        <div class="bg-[#0d0d0d] p-2 border border-[#3c3c3c] flex items-center gap-2">
-                                            <span class="text-lg">🐾</span>
-                                            <div class="min-w-0">
-                                                <span class="text-[10px] text-gray-400 block">동반 소환수</span>
-                                                <span id="wbPetPreviewName" class="font-bold text-white truncate block">소환수 없음</span>
-                                            </div>
+                                    
+                                    <!-- 3 Companion Pets Loadout Display -->
+                                    <div class="bg-[#0d0d0d] p-2 border border-[#3c3c3c]">
+                                        <span class="text-[10px] text-gray-400 block font-bold mb-1.5">🐾 참전 펫 3종 보유 상태</span>
+                                        <div id="wbPetPreviewContainer" class="grid grid-cols-3 gap-1.5">
+                                            <!-- Dynamic 3 Pets Image & Lv -->
                                         </div>
-                                        <!-- Equipped Skills Preview -->
-                                        <div class="bg-[#0d0d0d] p-2 border border-[#3c3c3c] flex items-center gap-2">
-                                            <span class="text-lg">🔮</span>
-                                            <div class="min-w-0">
-                                                <span class="text-[10px] text-gray-400 block">장착 마법 스킬</span>
-                                                <span id="wbSkillsPreviewList" class="font-bold text-pink-400 truncate block">스킬 0개 장착됨</span>
-                                            </div>
+                                    </div>
+
+                                    <!-- Equipped Skills Loadout Display -->
+                                    <div class="bg-[#0d0d0d] p-2 border border-[#3c3c3c]">
+                                        <span class="text-[10px] text-gray-400 block font-bold mb-1.5">🔮 장착 스킬 (등급 & 별)</span>
+                                        <div id="wbSkillsPreviewContainer" class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                                            <!-- Dynamic Equipped Skills with Grade & Stars -->
                                         </div>
                                     </div>
                                 </div>
@@ -3809,26 +3807,62 @@
             document.getElementById("wbGradeTitle").innerText = `${gameState.grade}학년 전용 공유 체력`;
             document.getElementById("playerMaxHpDisplay").innerText = `💖 ${wbPlayerMaxHp} HP (방어막 ${Math.floor(wbPlayerMaxHp / 20)}회 오답 버티기 가능)`;
 
-            // 출전 대기방 펫 및 장착 스킬 최종 점검 UI 렌더링
-            document.getElementById("wbDpsPreviewText").innerText = calculateDPSPower().toLocaleString();
-
-            const activePetKey = gameState.petType || "none";
-            const petInfo = PET_PARAMS[activePetKey];
-            if (petInfo && gameState.petLvl > 0) {
-                document.getElementById("wbPetPreviewName").innerText = `${petInfo.name} (Lv.${gameState.petLvl})`;
-            } else {
-                document.getElementById("wbPetPreviewName").innerText = "소환수 없음 (동반 미배치)";
+            // 1. 펫 3종 동시 렌더링 (이미지 + 레벨)
+            const petContainer = document.getElementById("wbPetPreviewContainer");
+            if (petContainer) {
+                let petHtml = "";
+                const petKeys = ['slime', 'dragon', 'fairy'];
+                petKeys.forEach(type => {
+                    const info = PET_PARAMS[type];
+                    const lvl = (gameState.petLevels && gameState.petLevels[type]) || 0;
+                    const imgUrl = type === 'dragon' ? 'media/pet_dragon/pet_dragon_1.png' : `media/pet_${type}/pet_${type}_1.png`;
+                    petHtml += `
+                        <div class="bg-black p-1.5 border border-[#262626] flex items-center gap-1.5 min-w-0">
+                            <img src="${imgUrl}" alt="${info.name}" class="w-6 h-6 object-contain flex-shrink-0">
+                            <div class="min-w-0 flex-1">
+                                <span class="text-[8px] text-gray-400 block truncate">${info.name.split(' ')[1] || info.name}</span>
+                                <span class="text-[9px] font-bold ${lvl > 0 ? 'text-yellow-300' : 'text-gray-600'} font-mono block">Lv.${lvl}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                petContainer.innerHTML = petHtml;
             }
 
-            if (gameState.equippedSkills && gameState.equippedSkills.length > 0 && gameState.skillsInventory) {
-                const eqNames = gameState.equippedSkills.map(id => {
-                    const s = gameState.skillsInventory.find(item => item.id === id);
-                    return s ? capitalizeFirstLetter(s.word) : null;
-                }).filter(Boolean);
+            // 2. 장착 스킬 4종 동시 렌더링 (단어 + 등급 + 별)
+            const skillContainer = document.getElementById("wbSkillsPreviewContainer");
+            if (skillContainer) {
+                let skillHtml = "";
+                for (let i = 0; i < 4; i++) {
+                    const id = gameState.equippedSkills ? gameState.equippedSkills[i] : null;
+                    if (id && gameState.skillsInventory) {
+                        const s = gameState.skillsInventory.find(item => item.id === id);
+                        if (s) {
+                            const gradeInfo = SKILL_GRADES[s.grade] || SKILL_GRADES.normal;
+                            const starsHtml = "⭐".repeat(s.stars || 0);
+                            skillHtml += `
+                                <div class="bg-black p-1.5 border ${gradeInfo.colorClass.split(' ')[0]} flex flex-col justify-between h-10 min-w-0">
+                                    <div class="flex justify-between items-center text-[7px] text-gray-400">
+                                        <span class="font-bold text-yellow-300">${gradeInfo.name}</span>
+                                        <span>${starsHtml}</span>
+                                    </div>
+                                    <span class="text-[9px] font-bold font-mono text-white truncate">${capitalizeFirstLetter(s.word)}</span>
+                                </div>
+                            `;
+                        } else {
+                            skillHtml += `<div class="bg-black p-1.5 border border-dashed border-[#262626] flex items-center justify-center h-10 text-[8px] text-gray-600 font-bold">비어있음</div>`;
+                        }
+                    } else {
+                        skillHtml += `<div class="bg-black p-1.5 border border-dashed border-[#262626] flex items-center justify-center h-10 text-[8px] text-gray-600 font-bold">비어있음</div>`;
+                    }
+                }
+                skillContainer.innerHTML = skillHtml;
+            }
 
-                document.getElementById("wbSkillsPreviewList").innerText = eqNames.length > 0 ? eqNames.join(", ") : "장착된 스킬 없음";
-            } else {
-                document.getElementById("wbSkillsPreviewList").innerText = "장착된 스킬 없음";
+            // 피해 기록 동기화 안내 및 실시간 데이터 요청
+            const hpTextEl = document.getElementById("worldBossHpText");
+            if (hpTextEl && (!hpTextEl.innerText || hpTextEl.innerText.includes("..."))) {
+                hpTextEl.innerText = "🔄 서버 실시간 레이드 상태 수신 중...";
             }
 
             runGas("getWorldBossStatus", [gameState.grade, studentKey], function(res) {
@@ -3861,7 +3895,7 @@
                     }
                 }
             }, function(err) {
-                // 통신 오류 시 가상 UI 업데이트
+                // 통신 오류 시 생략
             });
         }
 
@@ -4293,12 +4327,17 @@
             refreshStateVisuals();
             saveLocalCache();
 
-            showToast(`${reasonMessage} 🎁 참전 보상: 🪙 +${rewardGold.toLocaleString()}G, 🎁 +${rewardFp} FP 획득!`);
+            showToast(`${reasonMessage} 🎁 참전 보상: 🪙 +${rewardGold.toLocaleString()}G, 🎁 +${rewardFp} FP 획득! ⏳ 서버에 내 피해 기록 반영 중...`);
 
-            // 서버에 피해량 전송 및 1일 1회 기록
+            // 1. 서버 전송 전 즉시 로컬 데이터 가상 반영 (즉시 반응성 보장)
+            document.getElementById("myWorldBossDmgDisplay").innerText = wbTotalDamageDealt.toLocaleString();
+            document.getElementById("myWorldBossRewardDisplay").innerText = `+${Math.floor(wbTotalDamageDealt / 1000)} FP / [수호신] 칭호`;
+
+            // 2. 서버에 피해량 전송 및 1일 1회 기록
             const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
             runGas("attackWorldBoss", [gameState.grade, studentKey, wbTotalDamageDealt], function(res) {
                 if (res && res.success) {
+                    showToast("✨ 서버에 월드보스 누적 피해 기록이 반영되었습니다!");
                     updateWorldBossUI();
                 } else if (res && res.message) {
                     showToast(`⚠️ ${res.message}`);

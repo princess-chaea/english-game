@@ -2656,24 +2656,35 @@
             const gradeInfo = SKILL_GRADES[rolledGrade];
 
             if (existingSkill) {
-                // 이미 보유한 단어 카드: 중복 카드 경험치(EXP) 흡수로 한계돌파!
-                if (typeof existingSkill.stars === 'undefined') existingSkill.stars = 0;
-                if (typeof existingSkill.exp === 'undefined') existingSkill.exp = 0;
+                // 기존 등급 순위와 뽑힌 등급 순위 비교
+                const existingGradeRank = (SKILL_GRADES[existingSkill.grade] || SKILL_GRADES.normal).rank;
+                const rolledGradeRank = (SKILL_GRADES[rolledGrade] || SKILL_GRADES.normal).rank;
 
-                const reqExp = getRequiredExpForStar(existingSkill.grade);
-                existingSkill.maxExp = reqExp;
-
-                if (existingSkill.stars < 6) {
-                    existingSkill.exp += 1;
-                    if (existingSkill.exp >= reqExp) {
-                        existingSkill.exp = 0;
-                        existingSkill.stars += 1;
-                        showToast(`⭐ [${capitalizeFirstLetter(word)}] 카드 경험치 충전 완료! 별 ⭐${existingSkill.stars}개 한계돌파!`);
-                    } else {
-                        showToast(`✨ [${capitalizeFirstLetter(word)}] 중복 흡수! 경험치 (${existingSkill.exp}/${reqExp})`);
-                    }
+                if (rolledGradeRank > existingGradeRank) {
+                    // 🎉 상위 등급 카드가 뽑힌 경우: 기존 카드가 상위 등급으로 등급 승급(업그레이드)되며 별(⭐)과 경험치 승계!
+                    existingSkill.grade = rolledGrade;
+                    existingSkill.maxExp = getRequiredExpForStar(rolledGrade);
+                    showToast(`🔥 [${capitalizeFirstLetter(word)}] 대각성! [${gradeInfo.name}] 등급으로 상위 승급되었습니다!`);
                 } else {
-                    showToast(`⭐ [${capitalizeFirstLetter(word)}] 이미 최고 6성 한계돌파에 도달했습니다!`);
+                    // 동일 이하 등급 카드: 중복 카드 경험치(EXP) 흡수로 한계돌파!
+                    if (typeof existingSkill.stars === 'undefined') existingSkill.stars = 0;
+                    if (typeof existingSkill.exp === 'undefined') existingSkill.exp = 0;
+
+                    const reqExp = getRequiredExpForStar(existingSkill.grade);
+                    existingSkill.maxExp = reqExp;
+
+                    if (existingSkill.stars < 6) {
+                        existingSkill.exp += 1;
+                        if (existingSkill.exp >= reqExp) {
+                            existingSkill.exp = 0;
+                            existingSkill.stars += 1;
+                            showToast(`⭐ [${capitalizeFirstLetter(word)}] 카드 경험치 충전 완료! 별 ⭐${existingSkill.stars}개 한계돌파!`);
+                        } else {
+                            showToast(`✨ [${capitalizeFirstLetter(word)}] 중복 흡수! 경험치 (${existingSkill.exp}/${reqExp})`);
+                        }
+                    } else {
+                        showToast(`⭐ [${capitalizeFirstLetter(word)}] 이미 최고 6성 한계돌파에 도달했습니다!`);
+                    }
                 }
 
                 showSkillModal(existingSkill, SKILL_GRADES[existingSkill.grade]);

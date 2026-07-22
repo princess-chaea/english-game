@@ -280,10 +280,40 @@
             75% {
                 transform: translateX(8px) rotate(3deg);
             }
+            0%, 100% {
+                transform: translateX(0);
+            }
         }
 
         .animate-shake {
             animation: monsterShake 0.15s ease-in-out;
+        }
+
+        /* Skill Magic Blast Slash Visual Animation */
+        @keyframes skillMagicBlast {
+            0% {
+                transform: translate(-50%, -50%) scale(0.2) rotate(0deg);
+                opacity: 1;
+                filter: drop-shadow(0 0 10px #ec4899);
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.4) rotate(45deg);
+                opacity: 0.9;
+                filter: drop-shadow(0 0 35px #f43f5e);
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(2.2) rotate(90deg);
+                opacity: 0;
+            }
+        }
+
+        .animate-skill-blast {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            pointer-events: none;
+            z-index: 40;
+            animation: skillMagicBlast 0.6s ease-out forwards;
         }
 
         /* Mythic Grade Aurora Glow Animation */
@@ -3266,6 +3296,15 @@
             const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
             const mult = getSkillMultiplier(skill);
 
+            // 1. 영어 스펠링 단어 TTS 음성 발음 재생
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // 이전 음성 취소 후 즉시 발음
+                const utterance = new SpeechSynthesisUtterance(skill.word);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
+
             const skillDmg = calculateClickAttackPower() * mult;
             processCombatDamage(skillDmg);
             playSoundEffect('levelup');
@@ -3279,11 +3318,28 @@
             const mContainer = document.getElementById("monsterContainer");
             if (mContainer) {
                 mContainer.classList.add("animate-shake");
-                setTimeout(() => mContainer.classList.remove("animate-shake"), 200);
+                setTimeout(() => mContainer.classList.remove("animate-shake"), 250);
             }
 
+            // 2. 전장 화려한 검기/마법 비기 베기 이펙트(Magic Blast) 생성
             const arena = document.getElementById("battleArena");
             if (arena) {
+                const blastEffect = document.createElement("div");
+                blastEffect.className = "animate-skill-blast flex flex-col items-center justify-center pointer-events-none";
+                
+                let blastIcon = "💥";
+                if (skill.grade === "mythic") blastIcon = "🌌";
+                else if (skill.grade === "legendary") blastIcon = "🔥";
+                else if (skill.grade === "hero") blastIcon = "⚡";
+                else if (skill.grade === "rare") blastIcon = "✨";
+
+                blastEffect.innerHTML = `
+                    <span class="text-7xl filter drop-shadow-[0_0_20px_#ec4899]">${blastIcon}</span>
+                    <span class="text-xs font-black font-mono bg-black/80 text-pink-400 border border-pink-500 px-3 py-1 mt-1 uppercase tracking-widest shadow-xl">${capitalizeFirstLetter(skill.word)}!</span>
+                `;
+                arena.appendChild(blastEffect);
+                setTimeout(() => blastEffect.remove(), 600);
+
                 const rect = arena.getBoundingClientRect();
                 spawnDamageFloatingText(rect.width / 2 - 40 + (Math.random() * 40 - 20), rect.height / 3, `⚡ [비기] ${capitalizeFirstLetter(skill.word)}: -${skillDmg.toLocaleString()}!`, true);
             }

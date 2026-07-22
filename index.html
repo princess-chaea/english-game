@@ -3041,13 +3041,16 @@
                 return;
             }
 
-            // 장착되지 않은 스킬 중 조합 가능 스킬 탐색 (신화 등급 제외)
+            // 장착되지 않고, 별(⭐ 0성)과 경험치(EXP 0)가 전혀 투자되지 않은 순수 중복 카드만 합성 재료로 선택 (안전 보호!)
             const availableSkills = gameState.skillsInventory.filter(s => 
-                !gameState.equippedSkills.includes(s.id) && s.grade !== "mythic"
+                !gameState.equippedSkills.includes(s.id) && 
+                s.grade !== "mythic" && 
+                (!s.stars || s.stars === 0) && 
+                (!s.exp || s.exp === 0)
             );
 
             if (availableSkills.length < 3) {
-                showToast("⚠️ 장착되지 않은 스킬(신화 등급 제외)이 3개 이상 필요합니다!");
+                showToast("⚠️ 합성 가능한 순수 미성장 스킬(0성/0경험치, 신화 제외)이 3개 이상 필요합니다!");
                 return;
             }
 

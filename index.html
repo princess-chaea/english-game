@@ -2432,12 +2432,12 @@
                 ? BOSS_PROFILES[(gameState.stage - 1) % BOSS_PROFILES.length]
                 : MONSTER_PROFILES[index];
 
-            // 성장 곡선 조정: 초기 체력을 올리고 스테이지당 20% 증가로 상향 (너무 쉬운 초반 난이도 완화)
-            const growthFactor = 1.20;
+            // 성장 곡선 완화: 스테이지 배율을 1.20에서 1.15로 완화하여 고스테이지(45+) 진입 장벽 조정
+            const growthFactor = 1.15;
             const baseHp = 100;
             if (isBossBattleActive) {
                 const regularHp = Math.floor(baseHp * Math.pow(growthFactor, gameState.stage - 1));
-                monsterMaxHp = Math.floor(regularHp * 15); // 보스는 일반의 15배 (너무 큰 통곡의 벽 방지)
+                monsterMaxHp = Math.floor(regularHp * 15); // 보스는 일반의 15배
             } else {
                 monsterMaxHp = Math.floor(baseHp * Math.pow(growthFactor, gameState.stage - 1));
             }
@@ -2506,11 +2506,11 @@
         }
 
         function calculateGearDPS() {
-            return (gameState.helmetLvl - 1) * 5 +
-                   (gameState.armorLvl - 1) * 15 +
-                   (gameState.weaponLvl - 1) * 10 +
-                   (gameState.shieldLvl - 1) * 8 +
-                   (gameState.shoesLvl - 1) * 6;
+            return (gameState.helmetLvl - 1) * 25 +
+                   (gameState.armorLvl - 1) * 60 +
+                   (gameState.weaponLvl - 1) * 50 +
+                   (gameState.shieldLvl - 1) * 40 +
+                   (gameState.shoesLvl - 1) * 30;
         }
 
         function buildUpgradeblacksmith() {

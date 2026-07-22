@@ -697,7 +697,7 @@
                             </h4>
                             <button onclick="combineSkills()" class="bmw-btn-secondary py-1.5 px-3.5 text-xs bg-gradient-to-r from-purple-900 to-indigo-900 border-purple-500 text-white font-bold flex items-center gap-1.5 hover:from-purple-800 hover:to-indigo-800 transition shadow-md">
                                 <i data-lucide="sparkles" class="w-4 h-4 text-pink-400"></i>
-                                <span>스킬 3개 조합하기 (100% 확정 확승)</span>
+                                <span>스킬 3개 조합하기 (20% 승급 / 80% 유지)</span>
                             </button>
                         </div>
                         <div class="bg-black border border-[#3c3c3c] p-3 max-h-64 overflow-y-auto grid grid-cols-1 gap-2.5 rounded-none-forced"
@@ -1795,14 +1795,24 @@
 
             let overlays = "";
 
-            // 색상 등급: 1:무광철, 2-3:청동, 4-5:은, 6-7:금, 8-9:블루크리스탈, 10:적색화염
+            // 대장간 30강 확장 색상 및 오라 등급:
+            // 1-4: 무광 철 (Gray)
+            // 5-9: 청동 (Bronze)
+            // 10-14: 실버 (Silver)
+            // 15-19: 골드 (Gold)
+            // 20-23: 사파이어 (Sapphire Blue)
+            // 24-26: 루비 크림슨 (Ruby Red)
+            // 27-29: 암흑 자수정 (Mythic Purple)
+            // 30강: 오로라 코스믹 신화 (Aurora Cyan/Gold)
             const getRankColor = (lvl) => {
-                if (lvl >= 10) return { main: "#e22718", glow: "#ff4d4d", stroke: "#ffaaaa" };
-                if (lvl >= 8) return { main: "#0066b1", glow: "#3399ff", stroke: "#aaddff" };
-                if (lvl >= 6) return { main: "#d4af37", glow: "#ffdf00", stroke: "#fff5cc" };
-                if (lvl >= 4) return { main: "#c0c0c0", glow: "#e6e6e6", stroke: "#ffffff" };
-                if (lvl >= 2) return { main: "#cd7f32", glow: "#e6a15c", stroke: "#ffcc99" };
-                return { main: "#7a7a7a", glow: "#999999", stroke: "#cccccc" };
+                if (lvl >= 30) return { main: "#00f0ff", glow: "#ffd700", stroke: "#ffffff", aura: "shadow-[0_0_20px_#00f0ff]" };
+                if (lvl >= 27) return { main: "#a855f7", glow: "#d8b4fe", stroke: "#f3e8ff", aura: "shadow-[0_0_15px_#a855f7]" };
+                if (lvl >= 24) return { main: "#ef4444", glow: "#fca5a5", stroke: "#ffe4e4", aura: "shadow-[0_0_12px_#ef4444]" };
+                if (lvl >= 20) return { main: "#0284c7", glow: "#38bdf8", stroke: "#bae6fd", aura: "shadow-[0_0_10px_#0284c7]" };
+                if (lvl >= 15) return { main: "#eab308", glow: "#fde047", stroke: "#fef08a", aura: "shadow-[0_0_8px_#eab308]" };
+                if (lvl >= 10) return { main: "#94a3b8", glow: "#cbd5e1", stroke: "#f8fafc", aura: "" };
+                if (lvl >= 5)  return { main: "#d97706", glow: "#fbbf24", stroke: "#fef3c7", aura: "" };
+                return { main: "#64748b", glow: "#94a3b8", stroke: "#cbd5e1", aura: "" };
             };
 
             // 1. Helmet Overlay (Level >= 1)
@@ -2830,7 +2840,18 @@
                 targetGrade = targetThree[0].grade;
             }
 
-            const nextGrade = nextGradeMap[targetGrade] || "mythic";
+            // 80% 확률로 현재 등급 유지 (단, 새로운 단어로 무작위 연성), 20% 확률로 상위 등급 승급
+            const roll = Math.random();
+            let resultGrade = targetGrade;
+
+            if (roll < 0.20) {
+                // 20% 확률: 등급 승급 (Normal -> Rare -> Hero -> Legendary -> Mythic)
+                resultGrade = nextGradeMap[targetGrade] || "mythic";
+            } else {
+                // 80% 확률: 현재 등급 유지 (동일 등급의 새로운 스킬 연성)
+                resultGrade = targetGrade;
+            }
+
             const targetIds = targetThree.map(s => s.id);
 
             // 재료 스킬 3개 삭제
@@ -2840,9 +2861,15 @@
             let pool = gameState.wordsPool && gameState.wordsPool.length > 0 ? gameState.wordsPool : MOCK_WORDS["4"];
             const randomWordObj = pool[Math.floor(Math.random() * pool.length)];
 
-            addOrLevelUpSkill(randomWordObj.word, randomWordObj.meaning, nextGrade);
-            const nextGradeInfo = SKILL_GRADES[nextGrade];
-            showToast(`🔮 스킬 3개 연성 성공! [${nextGradeInfo.name}] 등급 스킬 획득!`);
+            addOrLevelUpSkill(randomWordObj.word, randomWordObj.meaning, resultGrade);
+            const resGradeInfo = SKILL_GRADES[resultGrade];
+            const currentGradeInfo = SKILL_GRADES[targetGrade];
+
+            if (resultGrade !== targetGrade) {
+                showToast(`✨ 대성공! 20% 확률 승급 적용! [${resGradeInfo.name}] 등급 스킬 연성!`);
+            } else {
+                showToast(`🔮 카드 조합 완료 (80% 확률)! [${currentGradeInfo.name}] 등급 스킬 획득!`);
+            }
         }
 
         function equipSkill(skillId) {

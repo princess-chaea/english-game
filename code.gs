@@ -415,7 +415,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
           String(data[i][2]) === String(studentNum) && 
           String(data[i][3]) === String(name)) {
         
-        var savedPassword = data[i][18] ? String(data[i][18]).trim() : "";
+        var savedPassword = data[i][17] !== undefined && data[i][17] !== null ? String(data[i][17]).trim() : "";
         
         // PIN이 이미 저장된 계정: 반드시 일치해야 통과
         if (savedPassword !== "") {
@@ -425,7 +425,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
         } else {
           // PIN이 비어있는 구계정: 최초 PIN 등록으로 처리 (저장)
           if (password && String(password).trim() !== "") {
-            var range = sheet.getRange(i + 1, 19);
+            var range = sheet.getRange(i + 1, 18);
             range.setNumberFormat("@");
             range.setValue(String(password).trim());
           }

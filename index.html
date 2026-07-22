@@ -4891,12 +4891,9 @@
 
             document.getElementById("worldBossReadyBox").classList.remove("hidden");
 
-            // 참전 보상 계산 (기본 보상 + 피해량 비례 골드 & FP)
+            // ✅ 참전 보상: 피해량 비례 골드만 지급 (FP 보상은 격파 확인 후 checkWorldBossVictoryOnStartup에서 통합 처리)
             const rewardGold = Math.max(500, Math.floor(wbTotalDamageDealt / 500));
-            const rewardFp = Math.max(20, Math.floor(wbTotalDamageDealt / 2000));
-
             gameState.gold = (gameState.gold || 0) + rewardGold;
-            gameState.masteryPoints = (gameState.masteryPoints || 0) + rewardFp;
 
             // 참전 완료 후 즉시 1일 1회 도전 완료 잠금 처리 (로컬 + 서버 이중 락)
             const todayStr = new Date().toISOString().slice(0, 10);
@@ -4905,48 +4902,23 @@
             playSoundEffect('levelup');
             refreshStateVisuals();
             saveLocalCache();
-            saveSessionToCloud(); // ✅ 월드보스 참전 보상(FP, 골드)을 클라우드에 즉시 영구 저장
 
             updateWorldBossUI();
-            showToast(`${reasonMessage} 🎁 참전 보상: 🪙 +${rewardGold.toLocaleString()}G, 🎁 +${rewardFp} FP 획득!`);
+            showToast(`${reasonMessage} 🪙 참전 골드 보상: +${rewardGold.toLocaleString()}G 획득! FP 보상은 클리어 팝업을 확인해주세요.`);
 
-            // ✅ 보스를 직접 격파한 계정 포함 모든 참전자에게 즉시 승리 모달 팝업 + 미지급 FP 보상 실제 지급!
-            const bossRemHp = Math.max(0, wbCurBossHp - wbTotalDamageDealt);
-            const victoryModalKey = `vocahero_wb_victory_modal_seen_${gameState.grade}_${gameState.name}_${gameState.studentNum}`;
-            const victoryRewardKey = `vocahero_wb_reward_claimed_${gameState.grade}_${gameState.name}_${gameState.studentNum}`;
-            if (bossRemHp <= 0) {
-                // 해당 레이드 세션 데미지 기준 FP 보상 (1회만 지급)
-                if (!localStorage.getItem(victoryRewardKey)) {
-                    localStorage.setItem(victoryRewardKey, "true");
-                    const earnedFp = Math.max(20, Math.floor(wbTotalDamageDealt / 1000));
-                    gameState.masteryPoints = (gameState.masteryPoints || 0) + earnedFp;
-                    refreshStateVisuals();
-                    saveLocalCache();
-                    saveSessionToCloud();
-                    showToast(`🎁 [월드보스 토별 보상] 내 피해량 기준 +${earnedFp} FP가 저장되었습니다!`);
-                }
-
-                if (!localStorage.getItem(victoryModalKey)) {
-                    localStorage.setItem(victoryModalKey, "true");
-                    const shareEstimate = wbMaxBossHp > 0 ? Math.min(100, (wbTotalDamageDealt / wbMaxBossHp * 100)).toFixed(2) : "0.00";
-                    const displayFp = Math.max(20, Math.floor(wbTotalDamageDealt / 1000));
-                    document.getElementById("wbModalMyDamage").innerText = `${wbTotalDamageDealt.toLocaleString()} HP`;
-                    document.getElementById("wbModalMyShare").innerText = `${shareEstimate}%`;
-                    document.getElementById("wbModalRewardSummary").innerText = `+${displayFp} FP 획득완료 / [수호신] 칭호 획득!`;
-                    setTimeout(() => { openModal("wbVictoryNoticeModal"); }, 500);
-                }
-            }
-
-            // 1. 서버 전송 전 즉시 로컬 데이터 가상 반영 (즉시 반응성 보장)
+            // 서버 전송 전 즉시 로컬 데이터 가상 반영
             document.getElementById("myWorldBossDmgDisplay").innerText = wbTotalDamageDealt.toLocaleString();
             document.getElementById("myWorldBossRewardDisplay").innerText = `+${Math.floor(wbTotalDamageDealt / 1000)} FP / [수호신] 칭호`;
 
-            // 2. 서버에 피해량 전송 및 1일 1회 기록
+            // ✅ 서버에 피해량 전송 → 완료 후 즉시 클리어 보상 체크 (격파자 포함 통합 처리)
             const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
             runGas("attackWorldBoss", [gameState.grade, studentKey, wbTotalDamageDealt], function(res) {
                 if (res && res.success) {
                     showToast("✨ 서버에 월드보스 누적 피해 기록이 반영되었습니다!");
                     updateWorldBossUI();
+                    // ✅ 서버 HP 업데이트 완료 후 클리어 여부 확인 & 보상/모달 처리
+                    // (격파자도 이 경로로 FP 보상 수령 + 팝업 확인)
+                    setTimeout(() => { checkWorldBossVictoryOnStartup(); }, 1000);
                 } else if (res && res.message) {
                     showToast(`⚠️ ${res.message}`);
                     updateWorldBossUI();

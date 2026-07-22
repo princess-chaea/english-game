@@ -1365,19 +1365,19 @@
         // Companion pet details
         const PET_PARAMS = {
             slime: {
-                name: "아기 젤리 슬라임",
+                name: "슬라임",
                 cost: 100,
                 goldBonus: 0.05,   // 레벨당 퀴즈 골드 획득 +5%
                 desc: "🪙 골드 획득 특화 — 레벨당 퀴즈 골드 수당 +5%"
             },
             dragon: {
-                name: "화염의 드래곤베이비",
+                name: "드래곤",
                 cost: 350,
                 dps: 3,           // 레벨당 자동 공격 DPS +3
                 desc: "⚔️ 공격 특화 — 레벨당 자동 공격 DPS +3"
             },
             fairy: {
-                name: "황금 축복 마법요정",
+                name: "요정",
                 cost: 800,
                 forgeBonus: 1,     // 레벨당 대장간 강화 성공률 +1%
                 desc: "🔨 강화 특화 — 레벨당 대장간 강화 성공률 +1%"
@@ -3834,7 +3834,7 @@
                         <div class="bg-[#0d0d0d] p-1.5 border border-[#3c3c3c] flex items-center gap-2 min-w-0 rounded-none-forced">
                             <img src="${imgUrl}" alt="${info.name}" class="w-8 h-8 object-contain flex-shrink-0">
                             <div class="min-w-0 flex-1">
-                                <span class="text-[9px] text-gray-300 font-bold block truncate">${info.name.split(' ')[1] || info.name}</span>
+                                <span class="text-[9px] text-gray-300 font-bold block truncate">${info.name}</span>
                                 <span class="text-[10px] font-bold ${lvl > 0 ? 'text-yellow-400' : 'text-gray-600'} font-mono block">Lv.${lvl}</span>
                             </div>
                         </div>
@@ -4245,7 +4245,7 @@
 
                 let letterButtonsHtml = letters.map((char, idx) => `
                     <button id="wbTile_${idx}" onclick="clickWbUnscrambleTile('${char}', 'wbTile_${idx}')"
-                        class="w-10 h-10 bg-red-950 hover:bg-red-800 border border-yellow-500 text-yellow-300 font-black font-mono text-base uppercase rounded-none-forced transition shadow-md">
+                        class="w-10 h-10 bg-red-950 hover:bg-red-800 border border-yellow-500 text-yellow-300 font-black font-mono text-base rounded-none-forced transition shadow-md">
                         ${char}
                     </button>
                 `).join("");
@@ -4282,7 +4282,7 @@
         function renderWbUnscrambleAnswer() {
             const display = document.getElementById("wbUnscrambleAnswerDisplay");
             if (!display) return;
-            const str = wbUnscrambleCurrentTiles.map(t => t.char.toUpperCase()).join(" ");
+            const str = wbUnscrambleCurrentTiles.map(t => t.char).join(" ");
             display.innerText = str.length > 0 ? str : "_ _ _ _";
         }
 

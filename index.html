@@ -665,9 +665,13 @@
                                 <i data-lucide="zap" class="w-3 h-3 text-yellow-300"></i>
                                 <span>⚡ 상위 등급 자동 장착</span>
                             </button>
-                            <button onclick="drawSkillCapsule()" class="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold text-[10px] px-2.5 py-1 rounded-none-forced flex items-center gap-1 transition shadow-sm animate-pulse">
+                            <button onclick="drawSkillCapsule(1)" class="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold text-[10px] px-2.5 py-1 rounded-none-forced flex items-center gap-1 transition shadow-sm">
                                 <i data-lucide="gift" class="w-3 h-3 text-white"></i>
-                                <span>🎁 단어 캡슐 뽑기 (50 FP)</span>
+                                <span>🎁 1회 뽑기 (50 FP)</span>
+                            </button>
+                            <button onclick="drawSkillCapsule(10)" class="bg-gradient-to-r from-purple-700 via-pink-600 to-yellow-500 hover:from-purple-600 hover:to-yellow-400 text-yellow-200 font-extrabold text-[10px] px-2.5 py-1 rounded-none-forced flex items-center gap-1 transition shadow-md animate-pulse">
+                                <i data-lucide="sparkles" class="w-3 h-3 text-yellow-300"></i>
+                                <span>🔥 10연속 소환 (450 FP -10%)</span>
                             </button>
                         </div>
                     </div>
@@ -2680,7 +2684,7 @@
             return expMap[grade] || 1;
         }
 
-        function addOrLevelUpSkill(word, meaning, rolledGrade) {
+        function addOrLevelUpSkill(word, meaning, rolledGrade, suppressModal = false) {
             if (!gameState.skillsInventory) gameState.skillsInventory = [];
 
             const existingSkill = gameState.skillsInventory.find(s => s.word === word);
@@ -2710,7 +2714,7 @@
                     existingSkill.stars = newStars;
                     existingSkill.exp = newExp;
 
-                    showToast(`🔥 [${capitalizeFirstLetter(word)}] 대각성! [${gradeInfo.name}] 등급으로 상위 승급 (⭐${newStars}성 보정 환산)!`);
+                    if (!suppressModal) showToast(`🔥 [${capitalizeFirstLetter(word)}] 대각성! [${gradeInfo.name}] 등급으로 상위 승급 (⭐${newStars}성 보정 환산)!`);
                 } else {
                     // 동일 이하 등급 카드: 중복 카드 경험치(EXP) 흡수로 한계돌파!
                     if (typeof existingSkill.stars === 'undefined') existingSkill.stars = 0;
@@ -2724,16 +2728,16 @@
                         if (existingSkill.exp >= reqExp) {
                             existingSkill.exp = 0;
                             existingSkill.stars += 1;
-                            showToast(`⭐ [${capitalizeFirstLetter(word)}] 카드 경험치 충전 완료! 별 ⭐${existingSkill.stars}개 한계돌파!`);
+                            if (!suppressModal) showToast(`⭐ [${capitalizeFirstLetter(word)}] 카드 경험치 충전 완료! 별 ⭐${existingSkill.stars}개 한계돌파!`);
                         } else {
-                            showToast(`✨ [${capitalizeFirstLetter(word)}] 중복 흡수! 경험치 (${existingSkill.exp}/${reqExp})`);
+                            if (!suppressModal) showToast(`✨ [${capitalizeFirstLetter(word)}] 중복 흡수! 경험치 (${existingSkill.exp}/${reqExp})`);
                         }
                     } else {
-                        showToast(`⭐ [${capitalizeFirstLetter(word)}] 이미 최고 6성 한계돌파에 도달했습니다!`);
+                        if (!suppressModal) showToast(`⭐ [${capitalizeFirstLetter(word)}] 이미 최고 6성 한계돌파에 도달했습니다!`);
                     }
                 }
 
-                showSkillModal(existingSkill, SKILL_GRADES[existingSkill.grade]);
+                if (!suppressModal) showSkillModal(existingSkill, SKILL_GRADES[existingSkill.grade]);
                 buildSkillTabUI();
                 renderSkillsUI();
                 saveLocalCache();
@@ -2755,7 +2759,7 @@
                 };
 
                 gameState.skillsInventory.push(newSkill);
-                showSkillModal(newSkill, gradeInfo);
+                if (!suppressModal) showSkillModal(newSkill, gradeInfo);
 
                 buildSkillTabUI();
                 renderSkillsUI();
@@ -2781,27 +2785,28 @@
             return addOrLevelUpSkill(word, meaning, rolledGrade);
         }
 
-        function drawSkillCapsule() {
+        function drawSkillCapsule(drawCount = 1) {
             if (typeof gameState.masteryPoints === 'undefined') gameState.masteryPoints = 0;
-            if (gameState.masteryPoints < 50) {
-                showToast("⚠️ 단어 캡슐 연성을 위해 정복 포인트 50 FP가 필요합니다! 퀴즈를 풀어 포인트를 모으세요.");
+            const cost = drawCount === 10 ? 450 : 50 * drawCount;
+
+            if (gameState.masteryPoints < cost) {
+                showToast(`⚠️ 단어 캡슐 연성을 위해 정복 포인트 ${cost} FP가 필요합니다! 퀴즈를 풀어 포인트를 모으세요.`);
                 return;
             }
 
-            gameState.masteryPoints -= 50;
+            gameState.masteryPoints -= cost;
             refreshStateVisuals();
 
             // 캡슐 오버레이 팝업 렌더링
             const modal = document.getElementById("gachaOverlayModal");
             const progressBar = document.getElementById("gachaProgressBar");
-            const orbIcon = document.getElementById("gachaOrbIcon");
             const statusTitle = document.getElementById("gachaStatusTitle");
             const statusSub = document.getElementById("gachaStatusSub");
 
             modal.classList.remove("hidden");
             modal.classList.add("flex");
             progressBar.style.width = "0%";
-            statusTitle.innerText = "마법 캡슐을 연성하는 중...";
+            statusTitle.innerText = drawCount === 10 ? "✨ 마법 캡슐 10연속 소환 연성 중..." : "마법 캡슐을 연성하는 중...";
             statusSub.innerText = "정복한 영단어의 마법 기운이 캡슐에 응축됩니다!";
             playSoundEffect('click');
 
@@ -2814,18 +2819,55 @@
                 if (progress >= 100) {
                     clearInterval(interval);
 
-                    // 정복한 단어 중 무작위 추첨 (없을 경우 전체 퀴즈 풀에서 추첨)
-                    let pool = gameState.wordsPool && gameState.wordsPool.length > 0 ? gameState.wordsPool : MOCK_WORDS["4"];
-                    const count = Math.max(1, Math.min(gameState.totalQuizCorrect, pool.length));
-                    const learnedPool = pool.slice(0, count);
-                    const picked = learnedPool[Math.floor(Math.random() * learnedPool.length)];
+                    // 전체 학년 교과 단어 + MOCK 단어 통합 풀 구성 (한 단어 고정 방지)
+                    let fullPool = [];
+                    if (gameState.wordsPool && gameState.wordsPool.length > 0) {
+                        fullPool = [...gameState.wordsPool];
+                    }
+                    for (let gKey in MOCK_WORDS) {
+                        MOCK_WORDS[gKey].forEach(w => {
+                            if (!fullPool.some(item => item.word.toLowerCase() === w.word.toLowerCase())) {
+                                fullPool.push(w);
+                            }
+                        });
+                    }
 
                     modal.classList.remove("flex");
                     modal.classList.add("hidden");
 
-                    rollAndAcquireSkill(picked.word, picked.meaning);
+                    if (drawCount === 10) {
+                        // 10연속 소환 처리
+                        let acquiredList = [];
+                        for (let i = 0; i < 10; i++) {
+                            const picked = fullPool[Math.floor(Math.random() * fullPool.length)];
+                            const roll = Math.random();
+                            let rolledGrade = "normal";
+                            if (roll < 0.0008) rolledGrade = "mythic";        // 0.08%
+                            else if (roll < 0.03) rolledGrade = "legendary";   // 2.92%
+                            else if (roll < 0.10) rolledGrade = "hero";        // 7.00%
+                            else if (roll < 0.35) rolledGrade = "rare";        // 25.0%
+
+                            // 10연차 중 최소 1개는 Rare 이상 보장
+                            if (i === 9 && !acquiredList.some(item => item.grade !== "normal")) {
+                                rolledGrade = "rare";
+                            }
+
+                            const resultSkill = addOrLevelUpSkill(picked.word, picked.meaning, rolledGrade, true);
+                            acquiredList.push(resultSkill);
+                        }
+
+                        // 10연속 결과 토스트 및 UI 갱신
+                        buildSkillTabUI();
+                        renderSkillsUI();
+                        saveLocalCache();
+                        showToast(`🎉 10연속 단어 캡슐 소환 완료! 스킬 보관함을 확인해보세요.`);
+                    } else {
+                        // 1회 단일 소환
+                        const picked = fullPool[Math.floor(Math.random() * fullPool.length)];
+                        rollAndAcquireSkill(picked.word, picked.meaning);
+                    }
                 }
-            }, 300);
+            }, 250);
         }
 
         function autoEquipBestSkills() {

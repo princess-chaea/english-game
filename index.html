@@ -3159,20 +3159,29 @@
                 const skill = gameState.skillsInventory.find(s => s.id === id);
                 if (skill) {
                     const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
+                    const mult = getSkillMultiplier(skill);
+                    const starsCount = skill.stars || 0;
+                    const starsHtml = starsCount > 0 ? "⭐".repeat(starsCount) : "";
                     const isOnCooldown = skill.cooldownRemaining > 0;
                     const pct = isOnCooldown ? Math.round((skill.cooldownRemaining / skill.maxCooldown) * 100) : 0;
 
                     html += `
-                        <button id="btn-skill-${skill.id}" onclick="castWordSkill('${skill.id}')" ${isOnCooldown ? 'disabled' : ''} class="relative overflow-hidden p-2.5 ${gradeInfo.colorClass} border-2 text-left rounded-none-forced transition duration-150 flex flex-col justify-between h-14 group">
+                        <button id="btn-skill-${skill.id}" onclick="castWordSkill('${skill.id}')" ${isOnCooldown ? 'disabled' : ''} class="relative overflow-hidden p-2.5 ${gradeInfo.colorClass} border-2 text-left rounded-none-forced transition duration-150 flex flex-col justify-between h-16 group">
                             ${isOnCooldown ? `<div class="cooldown-bar absolute bottom-0 left-0 h-1.5 bg-[#e22718] transition-all" style="width: ${100 - pct}%"></div>` : ''}
                             
                             <div class="flex justify-between items-center w-full z-10">
-                                <span class="text-xs font-bold font-mono tracking-wider ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : ''}">${capitalizeFirstLetter(skill.word)}</span>
-                                <span class="cooldown-timer text-[9px] ${isOnCooldown ? 'text-[#e22718] font-bold' : 'font-bold opacity-80'}">
-                                    ${isOnCooldown ? `${Math.ceil(skill.cooldownRemaining)}s` : `${gradeInfo.name}`}
+                                <div class="flex items-center gap-1 min-w-0 pr-1">
+                                    <span class="text-xs font-extrabold font-mono tracking-wider truncate ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : ''}">${capitalizeFirstLetter(skill.word)}</span>
+                                    <span class="text-[10px] text-yellow-400 font-bold flex-shrink-0">${starsHtml}</span>
+                                </div>
+                                <span class="cooldown-timer text-[9px] ${isOnCooldown ? 'text-[#e22718] font-extrabold' : 'font-extrabold text-pink-400'}">
+                                    ${isOnCooldown ? `${Math.ceil(skill.cooldownRemaining)}s` : `×${mult}배`}
                                 </span>
                             </div>
-                            <span class="text-[9px] font-light truncate w-full z-10 opacity-90 ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-white' : ''}">${skill.meaning}</span>
+                            <div class="flex justify-between items-center w-full z-10 text-[9px] font-medium opacity-90 ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-white' : ''}">
+                                <span class="truncate pr-1">${skill.meaning}</span>
+                                <span class="text-[8px] font-bold text-gray-400 flex-shrink-0">${gradeInfo.name}</span>
+                            </div>
                         </button>
                     `;
                 }
@@ -3181,7 +3190,7 @@
             const emptySlots = 4 - gameState.equippedSkills.length;
             for (let i = 0; i < emptySlots; i++) {
                 html += `
-                    <div class="border border-dashed border-[#3c3c3c] rounded-none-forced flex items-center justify-center h-14 text-[9px] text-[#7e7e7e] font-bold uppercase tracking-wider bg-[#0d0d0d]">
+                    <div class="border border-dashed border-[#3c3c3c] rounded-none-forced flex items-center justify-center h-16 text-[9px] text-[#7e7e7e] font-bold uppercase tracking-wider bg-[#0d0d0d]">
                         비어있음
                     </div>
                 `;
@@ -3199,6 +3208,7 @@
                     const btn = document.getElementById(`btn-skill-${id}`);
                     if (btn) {
                         const isOnCooldown = skill.cooldownRemaining > 0;
+                        const mult = getSkillMultiplier(skill);
                         
                         if (isOnCooldown) {
                             btn.setAttribute('disabled', 'true');
@@ -3208,12 +3218,11 @@
                         
                         const timerSpan = btn.querySelector('.cooldown-timer');
                         if (timerSpan) {
-                            const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
-                            timerSpan.innerText = isOnCooldown ? `${Math.ceil(skill.cooldownRemaining)}s` : gradeInfo.name;
+                            timerSpan.innerText = isOnCooldown ? `${Math.ceil(skill.cooldownRemaining)}s` : `×${mult}배`;
                             if (isOnCooldown) {
-                                timerSpan.className = 'cooldown-timer text-[9px] text-[#e22718] font-bold';
+                                timerSpan.className = 'cooldown-timer text-[9px] text-[#e22718] font-extrabold';
                             } else {
-                                timerSpan.className = 'cooldown-timer text-[9px] text-[#0066b1] font-bold';
+                                timerSpan.className = 'cooldown-timer text-[9px] text-pink-400 font-extrabold';
                             }
                         }
                         

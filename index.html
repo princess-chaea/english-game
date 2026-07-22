@@ -1220,7 +1220,7 @@
                         <div id="criticalDefenseTimerBar" class="h-full bg-red-500 w-full" style="transition: width 0.1s linear;"></div>
                     </div>
                     <p id="criticalDefenseTimeText" class="text-xs text-red-400 font-bold tracking-widest uppercase text-left">제한시간: 30초</p>
-                    <input type="text" id="criticalDefenseInput" class="bmw-input w-full text-center text-xl font-mono uppercase bg-black border-red-500/50 focus:border-red-500 text-white placeholder-[#3c3c3c]" placeholder="영어 단어 입력" style="ime-mode: inactive;" onkeydown="if(event.key === 'Enter') submitCriticalDefense()">
+                    <input type="text" id="criticalDefenseInput" class="bmw-input w-full text-center text-xl font-mono bg-black border-red-500/50 focus:border-red-500 text-white placeholder-[#3c3c3c]" placeholder="영어 단어 입력" style="ime-mode: inactive;" oninput="if(this.value.length > 0){ this.value = this.value.charAt(0).toUpperCase() + this.value.slice(1).toLowerCase(); }" onkeydown="if(event.key === 'Enter') submitCriticalDefense()">
                     <p id="criticalDefenseError" class="text-xs text-red-500 font-bold hidden"></p>
                 </div>
             </div>

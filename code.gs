@@ -427,7 +427,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
           if (password && String(password).trim() !== "") {
             var range = sheet.getRange(i + 1, 18);
             range.setNumberFormat("@");
-            range.setValue(String(password).trim());
+            range.setValue("'" + String(password).trim());
           }
         }
 

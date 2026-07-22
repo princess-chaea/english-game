@@ -35,8 +35,7 @@
 
         @font-face {
             font-family: 'KERISBAEUM_B';
-            src: url('media/font/KerisBaeum_B.ttf') format('truetype'),
-                 url('media/font/KERISBAEUM_B.ttf') format('truetype');
+            src: url('media/font/KERISBAEUM_B.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
         }
@@ -566,9 +565,8 @@
 
                     <!-- Sound Synthesizer Button -->
                     <button onclick="speakTargetWord()"
-                        class="inline-flex items-center gap-1.5 text-[10px] bg-transparent hover:bg-white text-white hover:text-black font-bold px-4 py-2 border border-[#3c3c3c] hover:border-white transition rounded-none-forced uppercase tracking-widest">
-                        <i data-lucide="volume-2" class="w-3.5 h-3.5 text-[#0066b1] group-hover:text-black"></i>
-                        <span>🔊 원어민 발음 듣기</span>
+                        class="inline-flex items-center gap-1.5 text-[10px] bg-transparent hover:bg-white text-white hover:text-black font-bold px-4 py-2 border border-[#3c3c3c] hover:border-white transition rounded-none-forced uppercase tracking-widest cursor-pointer">
+                        <span>🔊 발음 듣기</span>
                     </button>
 
                     <!-- Answer Options Matrix - 정렬 및 번호 제거 개편 -->
@@ -827,29 +825,66 @@
                     </div>
 
                     <!-- Active Raid Arena Box (Shown during 70s battle) -->
-                    <div id="worldBossBattleArena" class="hidden bg-[#0d0d0d] p-4 border-2 border-red-500 rounded-none-forced text-center flex-col gap-2.5">
-                        <div class="flex justify-between items-center text-xs bg-black p-2 border border-red-950">
-                            <span class="font-bold text-red-500 flex items-center gap-1">⏱️ 제한시간: <span id="wbTimerText" class="text-white font-mono text-sm">70.0초</span></span>
-                            <span class="font-bold text-green-400 flex items-center gap-1">🛡️ 용사 남은 HP: <span id="wbPlayerHpText" class="text-white font-mono text-sm">100 HP</span></span>
+                    <div id="worldBossBattleArena" class="hidden bg-black p-4 border-2 border-red-600 rounded-none-forced text-center flex-col gap-3 relative overflow-hidden shadow-[0_0_30px_rgba(220,38,38,0.3)]">
+                        <!-- Top Battle Bar: Timer & Hero HP -->
+                        <div class="flex justify-between items-center text-xs bg-[#0d0d0d] p-2.5 border border-red-900 z-10">
+                            <div class="flex items-center gap-1.5 font-bold text-red-400">
+                                <i data-lucide="timer" class="w-4 h-4 text-red-500 animate-pulse"></i>
+                                <span>제한시간: <span id="wbTimerText" class="text-white font-mono text-sm">70.0초</span></span>
+                            </div>
+                            <div class="flex items-center gap-1.5 font-bold text-green-400">
+                                <i data-lucide="shield" class="w-4 h-4 text-green-400"></i>
+                                <span>용사 HP: <span id="wbPlayerHpText" class="text-white font-mono text-sm">100 HP</span></span>
+                            </div>
+                        </div>
+
+                        <!-- VISUAL BATTLE ARENA VIEWPORT FOR WORLD BOSS -->
+                        <div id="wbVisualStage" class="relative z-10 w-full h-48 border border-red-900/80 bg-gradient-to-b from-red-950/60 via-black to-black flex justify-between items-center px-6 overflow-hidden rounded-none-forced">
+                            <!-- Background Aura Glow -->
+                            <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-900/20 via-transparent to-transparent pointer-events-none"></div>
+
+                            <!-- Left: Hero Combatant Sprite -->
+                            <div id="wbHeroSprite" class="relative z-10 flex flex-col items-center transition-transform duration-200">
+                                <div class="w-24 h-28 relative flex items-end justify-center">
+                                    <svg viewBox="0 0 100 120" class="w-full h-full" id="wbHeroSvg"></svg>
+                                </div>
+                                <span class="text-[9px] bg-red-950 border border-red-800 px-2 py-0.5 font-bold text-white uppercase tracking-wider mt-1">도전자 용사</span>
+                            </div>
+
+                            <!-- Center: Impact / Battle FX Notification Banner -->
+                            <div id="wbBattleFxNotice" class="z-20 text-center pointer-events-none transition-all duration-300 transform scale-95 opacity-0">
+                                <span id="wbBattleFxText" class="text-xs font-black text-yellow-300 bg-red-950/90 border border-yellow-500 px-3 py-1.5 shadow-lg tracking-wider"></span>
+                            </div>
+
+                            <!-- Right: World Boss Monster Sprite -->
+                            <div id="wbBossSprite" class="relative z-10 flex flex-col items-center transition-transform duration-200">
+                                <div class="w-28 h-32 flex items-center justify-center relative">
+                                    <img id="wbActiveBossImg" src="media/worldbose/worldbose_golem.png" alt="World Boss" class="max-h-full max-w-full object-contain filter drop-shadow-[0_0_20px_rgba(239,68,68,0.9)] animate-pulse">
+                                </div>
+                                <span id="wbActiveBossNameTag" class="text-[9px] bg-red-950 border border-red-700 px-2 py-0.5 font-bold text-red-400 uppercase tracking-wider mt-1">월드 보스</span>
+                            </div>
+
+                            <!-- Floating Damage Particle Container -->
+                            <div id="wbDamageParticleBox" class="absolute inset-0 pointer-events-none z-30 overflow-hidden"></div>
                         </div>
 
                         <!-- Active WB Quiz Word Display -->
-                        <div class="bg-black p-3.5 border-2 border-red-900 my-0.5 relative overflow-hidden">
+                        <div class="bg-[#0d0d0d] p-3 border-2 border-red-800 relative overflow-hidden z-10">
                             <span class="text-[9px] text-red-400 font-bold uppercase tracking-widest block mb-1">🔥 보스 파괴 약점 영단어</span>
-                            <h2 id="wbQuizWord" class="text-3xl font-black text-yellow-300 tracking-wider font-mono">...</h2>
+                            <h2 id="wbQuizWord" class="text-3xl font-black text-yellow-300 tracking-wider font-mono drop-shadow-[0_0_10px_rgba(253,224,71,0.5)]">...</h2>
                         </div>
 
                         <!-- 4 choices for WB -->
-                        <div id="wbChoiceContainer" class="grid grid-cols-2 gap-2">
+                        <div id="wbChoiceContainer" class="grid grid-cols-2 gap-2 z-10">
                             <!-- Filled dynamically -->
                         </div>
 
                         <!-- WB Skill Casting Bar (Equipped 4 skills grid for raid combat) -->
-                        <div class="bg-black p-2 border border-red-950 mt-1">
-                            <div class="flex justify-between items-center text-[8px] text-red-400 font-bold uppercase mb-1">
-                                <span>⚡ 장착 필살 마법 시전 (쿨타임 30초 / 70초 동안 2회 시전 지원)</span>
+                        <div class="bg-[#0d0d0d] p-2.5 border border-red-900 z-10">
+                            <div class="flex justify-between items-center text-[9px] text-red-400 font-bold uppercase mb-1.5">
+                                <span class="flex items-center gap-1"><i data-lucide="zap" class="w-3 h-3 text-yellow-400"></i> 장착 필살 마법 시전 (전투 중 수동 클릭 타격)</span>
                             </div>
-                            <div id="wbRaidSkillsContainer" class="grid grid-cols-4 gap-1.5">
+                            <div id="wbRaidSkillsContainer" class="grid grid-cols-4 gap-2">
                                 <!-- Dynamic WB Skill Buttons -->
                             </div>
                         </div>
@@ -2012,16 +2047,6 @@
                         `;
                     }
 
-                    // Carbon Helmet / Visor fits on top of the scaled pet (Level >= 40)
-                    if (level >= 40) {
-                        const visorColor = level >= 90 ? "#e22718" : (level >= 80 ? "#1c69d4" : "#0066b1");
-                        foregroundSvg += `
-                            <!-- Mini carbon helmet / visor -->
-                            <path d="M${x + width*0.3} ${y + height*0.35} C${x + width*0.3} ${y + height*0.1}, ${x + width*0.7} ${y + height*0.1}, ${x + width*0.7} ${y + height*0.35} Z" fill="#111111" stroke="#3c3c3c" stroke-width="1" />
-                            <rect x="${x + width*0.38}" y="${y + height*0.22}" width="${width*0.24}" height="${height*0.06}" fill="${visorColor}" rx="1" class="animate-pulse" />
-                        `;
-                    }
-
                     // Orbit rings appear in front (Level >= 90)
                     if (level >= 90) {
                         foregroundSvg += `
@@ -3113,6 +3138,21 @@
             });
         }
 
+        function spawnDamageFloatingText(x, y, text, isSkill = false) {
+            const arena = document.getElementById("battleArena");
+            if (!arena) return;
+
+            const particle = document.createElement("div");
+            particle.className = "damage-particle font-black font-mono text-sm z-50 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]";
+            particle.style.left = `${Math.max(20, Math.min(arena.clientWidth - 100, x))}px`;
+            particle.style.top = `${Math.max(30, Math.min(arena.clientHeight - 80, y))}px`;
+            particle.style.color = isSkill ? "#ec4899" : "#f59e0b";
+            particle.innerText = text;
+
+            arena.appendChild(particle);
+            setTimeout(() => particle.remove(), 700);
+        }
+
         function castWordSkill(skillId) {
             if (!gameState.skillsInventory) return;
             const skill = gameState.skillsInventory.find(s => s.id === skillId);
@@ -3125,13 +3165,25 @@
             processCombatDamage(skillDmg);
             playSoundEffect('levelup');
 
-            const arena = document.getElementById("battleArena");
-            const rect = arena.getBoundingClientRect();
-            spawnDamageFloatingText(rect.width / 2 + (Math.random() * 40 - 20), rect.height / 3, `💥 [${gradeInfo.name}] ${capitalizeFirstLetter(skill.word)}: -${skillDmg} 데미지!`);
+            const hero = document.getElementById("heroCharacter");
+            if (hero) {
+                hero.classList.add("animate-slash");
+                setTimeout(() => hero.classList.remove("animate-slash"), 200);
+            }
 
             const mContainer = document.getElementById("monsterContainer");
-            mContainer.classList.add("animate-shake");
-            setTimeout(() => { mContainer.classList.remove("animate-shake"); }, 150);
+            if (mContainer) {
+                mContainer.classList.add("animate-shake");
+                setTimeout(() => mContainer.classList.remove("animate-shake"), 200);
+            }
+
+            const arena = document.getElementById("battleArena");
+            if (arena) {
+                const rect = arena.getBoundingClientRect();
+                spawnDamageFloatingText(rect.width / 2 - 40 + (Math.random() * 40 - 20), rect.height / 3, `⚡ [비기] ${capitalizeFirstLetter(skill.word)}: -${skillDmg.toLocaleString()}!`, true);
+            }
+
+            showBattleToast(`💥 필살 시전! [${gradeInfo.name}] ${capitalizeFirstLetter(skill.word)}: -${skillDmg.toLocaleString()} 피해!`);
 
             skill.cooldownRemaining = skill.maxCooldown;
             renderSkillsUI();
@@ -3773,6 +3825,8 @@
             });
         }
 
+        let wbSkillCooldowns = {};
+
         function startWorldBossRaid() {
             if (isWorldBossRaidActive) return;
 
@@ -3781,6 +3835,7 @@
             wbPlayerMaxHp = calculatePlayerRaidMaxHp();
             wbPlayerHp = wbPlayerMaxHp;
             wbTotalDamageDealt = 0;
+            wbSkillCooldowns = {};
 
             document.getElementById("worldBossReadyBox").classList.add("hidden");
             const arena = document.getElementById("worldBossBattleArena");
@@ -3789,6 +3844,21 @@
 
             document.getElementById("wbTimerText").innerText = "70.0초";
             document.getElementById("wbPlayerHpText").innerText = `${wbPlayerHp} / ${wbPlayerMaxHp} HP`;
+
+            // 월드보스 시각화 스테이지 초기화 (보스 일러스트 & 용사 SVG 렌더링)
+            const seasonIdx = getWeeklyBossIndex();
+            const bossInfo = WORLD_BOSS_SEASONS[seasonIdx];
+            const wbBossImgEl = document.getElementById("wbActiveBossImg");
+            if (wbBossImgEl) wbBossImgEl.src = bossInfo.img;
+            const wbBossNameTagEl = document.getElementById("wbActiveBossNameTag");
+            if (wbBossNameTagEl) wbBossNameTagEl.innerText = bossInfo.name;
+
+            // 메인 렌더링 SVG 복사
+            const mainHeroSvg = document.getElementById("heroSvg");
+            const wbHeroSvg = document.getElementById("wbHeroSvg");
+            if (mainHeroSvg && wbHeroSvg) {
+                wbHeroSvg.innerHTML = mainHeroSvg.innerHTML;
+            }
 
             generateWorldBossQuiz();
             renderWorldBossRaidSkills();
@@ -3802,12 +3872,25 @@
                 wbTimerRemaining -= 0.1;
                 document.getElementById("wbTimerText").innerText = `${wbTimerRemaining.toFixed(1)}초`;
 
+                // 쿨타임 카운트다운 업데이트
+                for (let sId in wbSkillCooldowns) {
+                    if (wbSkillCooldowns[sId] > 0) {
+                        wbSkillCooldowns[sId] -= 0.1;
+                        if (wbSkillCooldowns[sId] <= 0) {
+                            delete wbSkillCooldowns[sId];
+                        }
+                    }
+                }
+                renderWorldBossRaidSkills();
+
                 // 15초마다 보스의 [🔥 광폭화 파멸 스펠] 패턴 발동! (약점 퀴즈 강제 교체 & 기습 -15 HP 피해)
                 if (lastPatternCheck - wbTimerRemaining >= 15.0) {
                     lastPatternCheck = wbTimerRemaining;
                     wbPlayerHp -= 15;
                     document.getElementById("wbPlayerHpText").innerText = `${Math.max(0, wbPlayerHp)} / ${wbPlayerMaxHp} HP`;
-                    showBattleToast("⚠️ [월드보스 광폭화 스펠!] 약점 퀴즈가 변형되며 용사에게 -15 HP 피해!");
+                    
+                    // 보스 광폭화 타격 비주얼 이펙트
+                    triggerWorldBossAttackAnim("🔥 광폭화 파멸 스펠! -15 HP!");
                     playSoundEffect('incorrect');
                     generateWorldBossQuiz();
 
@@ -3823,12 +3906,72 @@
             }, 100);
         }
 
+        function triggerHeroAttackAnim() {
+            const hero = document.getElementById("wbHeroSprite");
+            const boss = document.getElementById("wbBossSprite");
+            if (hero) {
+                hero.classList.add("animate-slash");
+                setTimeout(() => hero.classList.remove("animate-slash"), 200);
+            }
+            if (boss) {
+                boss.classList.add("animate-shake");
+                setTimeout(() => boss.classList.remove("animate-shake"), 200);
+            }
+        }
+
+        function triggerWorldBossAttackAnim(msg) {
+            const boss = document.getElementById("wbBossSprite");
+            const hero = document.getElementById("wbHeroSprite");
+            if (boss) {
+                boss.classList.add("animate-slash");
+                setTimeout(() => boss.classList.remove("animate-slash"), 200);
+            }
+            if (hero) {
+                hero.classList.add("animate-shake");
+                setTimeout(() => hero.classList.remove("animate-shake"), 200);
+            }
+            showWorldBossFxNotice(msg, "text-red-400 border-red-600");
+        }
+
+        function showWorldBossFxNotice(text, colorClasses) {
+            const notice = document.getElementById("wbBattleFxNotice");
+            const txtEl = document.getElementById("wbBattleFxText");
+            if (!notice || !txtEl) return;
+
+            txtEl.innerText = text;
+            txtEl.className = `text-xs font-black bg-black/90 border px-3 py-1.5 shadow-lg tracking-wider ${colorClasses || 'text-yellow-300 border-yellow-500'}`;
+            
+            notice.classList.remove("opacity-0", "scale-95");
+            notice.classList.add("opacity-100", "scale-105");
+
+            clearTimeout(notice._timer);
+            notice._timer = setTimeout(() => {
+                notice.classList.remove("opacity-100", "scale-105");
+                notice.classList.add("opacity-0", "scale-95");
+            }, 1200);
+        }
+
+        function spawnWbDamageParticle(text, isSkill = false) {
+            const container = document.getElementById("wbDamageParticleBox");
+            if (!container) return;
+
+            const p = document.createElement("div");
+            p.className = "damage-particle font-black font-mono text-sm z-50 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]";
+            p.style.right = `${10 + Math.random() * 25}%`;
+            p.style.top = `${20 + Math.random() * 40}%`;
+            p.style.color = isSkill ? "#ec4899" : "#f59e0b";
+            p.innerText = text;
+
+            container.appendChild(p);
+            setTimeout(() => p.remove(), 700);
+        }
+
         function renderWorldBossRaidSkills() {
             const container = document.getElementById("wbRaidSkillsContainer");
             if (!container) return;
 
             if (!gameState.equippedSkills || gameState.equippedSkills.length === 0) {
-                container.innerHTML = `<p class="text-[8px] text-[#7e7e7e] text-center col-span-4">장착된 마법 스킬이 없습니다.</p>`;
+                container.innerHTML = `<p class="text-[8px] text-[#7e7e7e] text-center col-span-4 py-2">장착된 마법 스킬이 없습니다.</p>`;
                 return;
             }
 
@@ -3838,12 +3981,25 @@
                 if (s) {
                     const gradeInfo = SKILL_GRADES[s.grade] || SKILL_GRADES.normal;
                     const mult = getSkillMultiplier(s);
-                    html += `
-                        <button onclick="castWorldBossSkill('${s.id}')" class="p-1.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-red-800 text-left rounded-none-forced flex flex-col justify-between h-11 transition group">
-                            <span class="text-[8px] font-bold text-yellow-300 font-mono truncate">${capitalizeFirstLetter(s.word)}</span>
-                            <span class="text-[7px] text-pink-400 font-bold">×${mult}배 폭딜</span>
-                        </button>
-                    `;
+                    const cdLeft = wbSkillCooldowns[id] || 0;
+                    const isCd = cdLeft > 0;
+
+                    if (isCd) {
+                        html += `
+                            <button disabled class="p-1.5 bg-[#111] border border-gray-800 text-left rounded-none-forced flex flex-col justify-between h-12 opacity-60 cursor-not-allowed relative overflow-hidden">
+                                <div class="absolute inset-0 bg-red-950/40 pointer-events-none"></div>
+                                <span class="text-[9px] font-bold text-gray-400 font-mono truncate z-10">${capitalizeFirstLetter(s.word)}</span>
+                                <span class="text-[8px] text-red-400 font-bold z-10 animate-pulse">⏳ ${cdLeft.toFixed(1)}초</span>
+                            </button>
+                        `;
+                    } else {
+                        html += `
+                            <button onclick="castWorldBossSkill('${s.id}')" class="p-1.5 bg-gradient-to-b from-[#1a1a1a] to-[#0d0d0d] hover:from-red-950 hover:to-black border border-red-600 hover:border-yellow-400 text-left rounded-none-forced flex flex-col justify-between h-12 transition group cursor-pointer shadow-md">
+                                <span class="text-[9px] font-bold text-yellow-300 font-mono truncate group-hover:text-white">${capitalizeFirstLetter(s.word)}</span>
+                                <span class="text-[8px] text-pink-400 font-bold flex items-center gap-0.5">⚡ ×${mult * 3}배 폭딜</span>
+                            </button>
+                        `;
+                    }
                 }
             });
             container.innerHTML = html;
@@ -3851,49 +4007,195 @@
 
         function castWorldBossSkill(skillId) {
             if (!isWorldBossRaidActive || !gameState.skillsInventory) return;
+            if (wbSkillCooldowns[skillId] > 0) return;
+
             const skill = gameState.skillsInventory.find(s => s.id === skillId);
             if (!skill) return;
+
+            // 30초 쿨타임 적용
+            wbSkillCooldowns[skillId] = 30.0;
 
             const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
             const mult = getSkillMultiplier(skill);
             const skillDmg = (calculateClickAttackPower() * mult * 3); // 레이드전 시전 시 3배 추가 보정 폭딜
 
             wbTotalDamageDealt += skillDmg;
+            
+            triggerHeroAttackAnim();
+            spawnWbDamageParticle(`💥 -${skillDmg.toLocaleString()}`, true);
+            showWorldBossFxNotice(`⚡ [비기] ${capitalizeFirstLetter(skill.word)}! -${skillDmg.toLocaleString()}`, "text-pink-400 border-pink-500");
             playSoundEffect('levelup');
-            showBattleToast(`💥 필살 시전! [${gradeInfo.name}] ${capitalizeFirstLetter(skill.word)}: 보스에게 -${skillDmg.toLocaleString()} 대폭딜!`);
+            renderWorldBossRaidSkills();
         }
+
+        let wbCurrentQuizType = "meaning"; // "meaning", "english", "short_answer", "unscramble"
+        let wbUnscrambleCurrentTiles = [];
 
         function generateWorldBossQuiz() {
             let pool = gameState.wordsPool && gameState.wordsPool.length > 0 ? gameState.wordsPool : MOCK_WORDS["4"];
             wbCurrentWordObj = pool[Math.floor(Math.random() * pool.length)];
 
-            document.getElementById("wbQuizWord").innerText = capitalizeFirstLetter(wbCurrentWordObj.word);
+            // 4가지 문제 유형 무작위 선택
+            const quizTypes = ["meaning", "english", "short_answer", "unscramble"];
+            wbCurrentQuizType = quizTypes[Math.floor(Math.random() * quizTypes.length)];
 
-            let choices = [wbCurrentWordObj.meaning];
-            let meanings = [];
-            for (let g in MOCK_WORDS) {
-                MOCK_WORDS[g].forEach(item => {
-                    if (item.meaning !== wbCurrentWordObj.meaning && !meanings.includes(item.meaning)) {
-                        meanings.push(item.meaning);
-                    }
+            const quizWordEl = document.getElementById("wbQuizWord");
+            const choiceContainer = document.getElementById("wbChoiceContainer");
+
+            if (wbCurrentQuizType === "meaning") {
+                // 1. 뜻 찾기 (영단어 제시 -> 4개 한글 뜻 사지선다)
+                quizWordEl.innerText = `[뜻 찾기] ${capitalizeFirstLetter(wbCurrentWordObj.word)}`;
+                
+                let choices = [wbCurrentWordObj.meaning];
+                let meanings = [];
+                for (let g in MOCK_WORDS) {
+                    MOCK_WORDS[g].forEach(item => {
+                        if (item.meaning !== wbCurrentWordObj.meaning && !meanings.includes(item.meaning)) {
+                            meanings.push(item.meaning);
+                        }
+                    });
+                }
+                meanings.sort(() => 0.5 - Math.random());
+                for (let i = 0; i < Math.min(3, meanings.length); i++) choices.push(meanings[i]);
+                choices.sort(() => 0.5 - Math.random());
+
+                let html = "";
+                choices.forEach(m => {
+                    const isCorrect = (m === wbCurrentWordObj.meaning);
+                    html += `
+                        <button onclick="handleWorldBossAnswer(${isCorrect})" class="p-3.5 bg-[#0d0d0d] hover:bg-[#1f1919] border border-red-900 hover:border-yellow-400 text-white font-bold text-xs rounded-none-forced transition active:scale-95 shadow-sm">
+                            ${m}
+                        </button>
+                    `;
                 });
-            }
-            meanings.sort(() => 0.5 - Math.random());
-            for (let i = 0; i < Math.min(3, meanings.length); i++) {
-                choices.push(meanings[i]);
-            }
-            choices.sort(() => 0.5 - Math.random());
+                choiceContainer.className = "grid grid-cols-2 gap-2 z-10";
+                choiceContainer.innerHTML = html;
 
-            let html = "";
-            choices.forEach(m => {
-                const isCorrect = (m === wbCurrentWordObj.meaning);
-                html += `
-                    <button onclick="handleWorldBossAnswer(${isCorrect})" class="p-3 bg-black hover:bg-gray-900 border border-red-900 hover:border-yellow-400 text-white font-bold text-xs rounded-none-forced transition">
-                        ${m}
-                    </button>
+            } else if (wbCurrentQuizType === "english") {
+                // 2. 영어 찾기 (한글 뜻 제시 -> 4개 영단어 사지선다)
+                quizWordEl.innerText = `[영어 찾기] ${wbCurrentWordObj.meaning}`;
+
+                let choices = [wbCurrentWordObj.word];
+                let words = [];
+                for (let g in MOCK_WORDS) {
+                    MOCK_WORDS[g].forEach(item => {
+                        if (item.word !== wbCurrentWordObj.word && !words.includes(item.word)) {
+                            words.push(item.word);
+                        }
+                    });
+                }
+                words.sort(() => 0.5 - Math.random());
+                for (let i = 0; i < Math.min(3, words.length); i++) choices.push(words[i]);
+                choices.sort(() => 0.5 - Math.random());
+
+                let html = "";
+                choices.forEach(w => {
+                    const isCorrect = (w === wbCurrentWordObj.word);
+                    html += `
+                        <button onclick="handleWorldBossAnswer(${isCorrect})" class="p-3.5 bg-[#0d0d0d] hover:bg-[#1f1919] border border-red-900 hover:border-yellow-400 text-yellow-300 font-bold text-xs font-mono rounded-none-forced transition active:scale-95 shadow-sm">
+                            ${capitalizeFirstLetter(w)}
+                        </button>
+                    `;
+                });
+                choiceContainer.className = "grid grid-cols-2 gap-2 z-10";
+                choiceContainer.innerHTML = html;
+
+            } else if (wbCurrentQuizType === "short_answer") {
+                // 3. 단답식 (한글 뜻 제시 -> 영단어 입력창 제출)
+                quizWordEl.innerText = `[단답식 필기] ${wbCurrentWordObj.meaning}`;
+
+                choiceContainer.className = "flex flex-col gap-2 z-10 w-full col-span-2";
+                choiceContainer.innerHTML = `
+                    <div class="flex gap-2 w-full">
+                        <input type="text" id="wbShortAnswerInput" placeholder="영단어를 정확히 입력하세요..." autocomplete="off"
+                            class="flex-1 bg-black border-2 border-red-800 focus:border-yellow-400 px-4 py-2.5 font-bold font-mono text-sm text-yellow-300 outline-none rounded-none-forced"
+                            onkeypress="if(event.key==='Enter') submitWbShortAnswer()">
+                        <button onclick="submitWbShortAnswer()" class="bg-red-900 hover:bg-red-700 text-white font-bold text-xs px-5 py-2.5 border border-yellow-500 rounded-none-forced transition">
+                            타격 제출! ⚔️
+                        </button>
+                    </div>
                 `;
+                setTimeout(() => {
+                    const input = document.getElementById("wbShortAnswerInput");
+                    if (input) input.focus();
+                }, 50);
+
+            } else if (wbCurrentQuizType === "unscramble") {
+                // 4. 영단어 순서 맞추기 (알파벳 블록 조합)
+                quizWordEl.innerText = `[철자 조합] ${wbCurrentWordObj.meaning}`;
+
+                const letters = wbCurrentWordObj.word.toLowerCase().split("");
+                // Shuffle letters
+                letters.sort(() => 0.5 - Math.random());
+                wbUnscrambleCurrentTiles = [];
+
+                let letterButtonsHtml = letters.map((char, idx) => `
+                    <button id="wbTile_${idx}" onclick="clickWbUnscrambleTile('${char}', 'wbTile_${idx}')"
+                        class="w-10 h-10 bg-red-950 hover:bg-red-800 border border-yellow-500 text-yellow-300 font-black font-mono text-base uppercase rounded-none-forced transition shadow-md">
+                        ${char}
+                    </button>
+                `).join("");
+
+                choiceContainer.className = "flex flex-col gap-2 z-10 w-full col-span-2";
+                choiceContainer.innerHTML = `
+                    <div class="bg-black border border-red-900 p-2 flex flex-col items-center gap-2">
+                        <div id="wbUnscrambleAnswerDisplay" class="h-10 min-w-[200px] bg-[#0d0d0d] border border-yellow-500/80 px-4 flex items-center justify-center font-mono font-black text-lg text-yellow-300 tracking-widest">
+                            _ _ _ _
+                        </div>
+                        <div class="flex flex-wrap justify-center gap-1.5 my-1">
+                            ${letterButtonsHtml}
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="resetWbUnscramble()" class="text-[10px] bg-gray-800 text-gray-300 px-3 py-1 font-bold">🔄 다시 조립</button>
+                            <button onclick="submitWbUnscramble()" class="text-[10px] bg-yellow-600 hover:bg-yellow-500 text-black font-black px-4 py-1">💥 최종 공격!</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function clickWbUnscrambleTile(char, btnId) {
+            const btn = document.getElementById(btnId);
+            if (!btn || btn.disabled) return;
+
+            btn.disabled = true;
+            btn.classList.add("opacity-30");
+            wbUnscrambleCurrentTiles.push({ char, btnId });
+
+            renderWbUnscrambleAnswer();
+        }
+
+        function renderWbUnscrambleAnswer() {
+            const display = document.getElementById("wbUnscrambleAnswerDisplay");
+            if (!display) return;
+            const str = wbUnscrambleCurrentTiles.map(t => t.char.toUpperCase()).join(" ");
+            display.innerText = str.length > 0 ? str : "_ _ _ _";
+        }
+
+        function resetWbUnscramble() {
+            wbUnscrambleCurrentTiles.forEach(t => {
+                const btn = document.getElementById(t.btnId);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.classList.remove("opacity-30");
+                }
             });
-            document.getElementById("wbChoiceContainer").innerHTML = html;
+            wbUnscrambleCurrentTiles = [];
+            renderWbUnscrambleAnswer();
+        }
+
+        function submitWbUnscramble() {
+            const userWord = wbUnscrambleCurrentTiles.map(t => t.char).join("").toLowerCase();
+            const targetWord = wbCurrentWordObj.word.toLowerCase();
+            handleWorldBossAnswer(userWord === targetWord);
+        }
+
+        function submitWbShortAnswer() {
+            const input = document.getElementById("wbShortAnswerInput");
+            if (!input) return;
+            const val = input.value.trim().toLowerCase();
+            const targetWord = wbCurrentWordObj.word.toLowerCase();
+            handleWorldBossAnswer(val === targetWord);
         }
 
         function handleWorldBossAnswer(isCorrect) {
@@ -3905,7 +4207,9 @@
                 const dmg = (calculateClickAttackPower() * 50) + (calculateDPSPower() * 10);
                 wbTotalDamageDealt += dmg;
 
-                showBattleToast(`💥 약점 스펠 타격 성공! 보스에게 -${dmg.toLocaleString()} 피해!`);
+                triggerHeroAttackAnim();
+                spawnWbDamageParticle(`-${dmg.toLocaleString()}`, false);
+                showWorldBossFxNotice(`💥 약점 격파! -${dmg.toLocaleString()}`, "text-yellow-300 border-yellow-500");
                 generateWorldBossQuiz();
             } else {
                 playSoundEffect('incorrect');
@@ -3914,7 +4218,7 @@
                 wbPlayerHp -= bossDmg;
                 document.getElementById("wbPlayerHpText").innerText = `${Math.max(0, wbPlayerHp)} / ${wbPlayerMaxHp} HP`;
 
-                showBattleToast(`💔 오답! 월드보스의 반격으로 -${bossDmg} HP 피해!`);
+                triggerWorldBossAttackAnim(`💔 오답! 보스 반격 -${bossDmg} HP`);
 
                 if (wbPlayerHp <= 0) {
                     endWorldBossRaid("💀 용사의 HP가 모두 깎여 월드보스에게 강퇴(사망)당했습니다!");
@@ -3934,17 +4238,31 @@
 
             document.getElementById("worldBossReadyBox").classList.remove("hidden");
 
-            showToast(reasonMessage);
+            // 참전 보상 계산 (기본 보상 + 피해량 비례 골드 & FP)
+            const rewardGold = Math.max(500, Math.floor(wbTotalDamageDealt / 500));
+            const rewardFp = Math.max(20, Math.floor(wbTotalDamageDealt / 2000));
+
+            gameState.gold = (gameState.gold || 0) + rewardGold;
+            gameState.masteryPoints = (gameState.masteryPoints || 0) + rewardFp;
+
+            // 로컬 클라이언트 1일 1회 강제 참전 락 기록
+            const todayStr = new Date().toISOString().slice(0, 10);
+            localStorage.setItem(`vocahero_wb_raid_date_${gameState.name}_${gameState.studentNum}`, todayStr);
+
             playSoundEffect('levelup');
+            refreshStateVisuals();
+            saveLocalCache();
+
+            showToast(`${reasonMessage} 🎁 참전 보상: 🪙 +${rewardGold.toLocaleString()}G, 🎁 +${rewardFp} FP 획득!`);
 
             // 서버에 피해량 전송 및 1일 1회 기록
             const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
             runGas("attackWorldBoss", [gameState.grade, studentKey, wbTotalDamageDealt], function(res) {
                 if (res && res.success) {
-                    showToast(`🎉 월드보스에 총 ${wbTotalDamageDealt.toLocaleString()} 피해를 기록했습니다!`);
                     updateWorldBossUI();
                 } else if (res && res.message) {
                     showToast(`⚠️ ${res.message}`);
+                    updateWorldBossUI();
                 }
             });
         }

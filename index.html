@@ -877,30 +877,44 @@
                             </div>
                         </div>
 
-                        <!-- DRAMATIC VISUAL BATTLE ARENA VIEWPORT WITH BLURRED BOSS BACKDROP -->
-                        <div id="wbVisualStage" class="relative z-10 w-full h-64 border-2 border-red-800 bg-black flex justify-between items-center px-8 overflow-hidden rounded-none-forced">
-                            <!-- Fullscreen Blurred Dramatic Boss Background Image -->
-                            <img id="wbStageBackdrop" src="media/worldbose/worldbose_golem.png" alt="Boss Backdrop" class="absolute inset-0 w-full h-full object-cover filter blur-md opacity-35 scale-110 pointer-events-none transition-all duration-500">
+                        <!-- DRAMATIC VISUAL BATTLE ARENA VIEWPORT WITH HUGE TRANSPARENT BLURRED BOSS BACKDROP -->
+                        <div id="wbVisualStage" class="relative z-10 w-full h-72 border-2 border-red-800 bg-black flex justify-between items-end p-6 overflow-hidden rounded-none-forced">
+                            <!-- Fullscreen Huge Transparent Blurred Dramatic Boss Background Image -->
+                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+                                <img id="wbStageBackdrop" src="media/worldbose/worldbose_golem.png" alt="Boss Backdrop" class="w-full h-full object-contain filter blur-[2px] opacity-25 scale-125 transition-all duration-500">
+                            </div>
                             
                             <!-- Red Vignette Ambient Glow Overlay -->
-                            <div class="absolute inset-0 bg-gradient-to-b from-red-950/40 via-transparent to-black/80 pointer-events-none"></div>
+                            <div class="absolute inset-0 bg-gradient-to-b from-red-950/50 via-transparent to-black/90 pointer-events-none"></div>
 
-                            <!-- Left: Hero Combatant Sprite -->
-                            <div id="wbHeroSprite" class="relative z-10 flex flex-col items-center transition-transform duration-200">
-                                <div class="w-28 h-36 relative flex items-end justify-center drop-shadow-[0_0_15px_rgba(0,102,177,0.8)]">
+                            <!-- Left Side: Hero + 3 Pet Companions Group -->
+                            <div id="wbHeroSprite" class="relative z-20 flex flex-col items-center transition-transform duration-200">
+                                <!-- Floating 3 Companion Pets Layer on World Boss Stage -->
+                                <div id="wbPetStageLayer" class="relative w-48 h-12 flex justify-around items-center mb-1">
+                                    <!-- Dynamic 3 Pets Image Render -->
+                                </div>
+
+                                <div class="w-28 h-36 relative flex items-end justify-center drop-shadow-[0_0_20px_rgba(0,102,177,0.9)]">
                                     <svg viewBox="0 0 100 120" class="w-full h-full" id="wbHeroSvg"></svg>
                                 </div>
                                 <span class="text-[10px] bg-red-950/90 border border-red-700 px-2.5 py-0.5 font-bold text-white uppercase tracking-wider mt-1 shadow-md">도전자 용사</span>
                             </div>
 
-                            <!-- Center: Impact / Battle FX Notification Banner -->
-                            <div id="wbBattleFxNotice" class="z-20 text-center pointer-events-none transition-all duration-300 transform scale-95 opacity-0">
-                                <span id="wbBattleFxText" class="text-sm font-black text-yellow-300 bg-red-950/95 border-2 border-yellow-400 px-4 py-2 shadow-2xl tracking-wider"></span>
+                            <!-- Center: Impact / Battle FX Notification Banner & Pet Hint Button -->
+                            <div class="z-20 flex flex-col items-center gap-2 pointer-events-auto">
+                                <div id="wbBattleFxNotice" class="text-center transition-all duration-300 transform scale-95 opacity-0 pointer-events-none">
+                                    <span id="wbBattleFxText" class="text-sm font-black text-yellow-300 bg-red-950/95 border-2 border-yellow-400 px-4 py-2 shadow-2xl tracking-wider"></span>
+                                </div>
+                                <!-- Pet Assistant Hint Button -->
+                                <button id="wbPetHintBtn" onclick="usePetHintAssistant()" class="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-extrabold text-xs px-3.5 py-1.5 border border-yellow-300 rounded-none-forced shadow-lg flex items-center gap-1.5 transition active:scale-95">
+                                    <span id="wbPetHintIcon" class="text-base">🧚</span>
+                                    <span id="wbPetHintText">소환수 힌트 찬스! (남은 힌트: 3회)</span>
+                                </button>
                             </div>
 
-                            <!-- Right: ENLARGED Dramatic World Boss Monster Sprite -->
-                            <div id="wbBossSprite" class="relative z-10 flex flex-col items-center transition-transform duration-200">
-                                <div class="w-48 h-52 flex items-center justify-center relative">
+                            <!-- Right: Clear Crisp Boss Sprite Overlay -->
+                            <div id="wbBossSprite" class="relative z-20 flex flex-col items-center transition-transform duration-200">
+                                <div class="w-44 h-48 flex items-center justify-center relative">
                                     <img id="wbActiveBossImg" src="media/worldbose/worldbose_golem.png" alt="World Boss" class="max-h-full max-w-full object-contain filter drop-shadow-[0_0_30px_rgba(239,68,68,1)] animate-pulse">
                                 </div>
                                 <span id="wbActiveBossNameTag" class="text-[10px] bg-red-950/90 border-2 border-red-600 px-3 py-0.5 font-black text-red-400 uppercase tracking-widest mt-1 shadow-lg">대지의 파멸 골렘</span>
@@ -4111,10 +4125,21 @@
                 wbHeroSvg.innerHTML = mainHeroSvg.innerHTML;
             }
 
+            // 펫 3종 출전 스테이지에 배치 렌더링
+            renderWorldBossPetStage();
+            
+            // 펫 힌트 횟수 초기화 (보유한 펫 3종 레벨 합산 기반: 기본 2회 + 펫 레벨당 추가)
+            const sumPetLvl = ((gameState.petLevels && gameState.petLevels['slime']) || 0) + 
+                              ((gameState.petLevels && gameState.petLevels['dragon']) || 0) + 
+                              ((gameState.petLevels && gameState.petLevels['fairy']) || 0);
+            wbPetHintMaxCount = 2 + Math.floor(sumPetLvl / 15);
+            wbPetHintRemaining = wbPetHintMaxCount;
+            updatePetHintBtnUI();
+
             generateWorldBossQuiz();
             renderWorldBossRaidSkills();
             playSoundEffect('levelup');
-            showToast("🚨 월드보스 참전! (연속 정답 콤보 시 소지한 펫이 1마리씩 차례로 폭딜 협공합니다!)");
+            showToast(`🚨 월드보스 참전! (소지한 펫의 힘으로 총 ${wbPetHintRemaining}회의 소환수 힌트 찬스가 충전되었습니다!)`);
 
             let lastPatternCheck = 70.0;
 
@@ -4257,6 +4282,83 @@
             container.innerHTML = html;
         }
 
+        let wbPetHintRemaining = 3;
+        let wbPetHintMaxCount = 3;
+
+        function renderWorldBossPetStage() {
+            const petLayer = document.getElementById("wbPetStageLayer");
+            if (!petLayer) return;
+
+            let petHtml = "";
+            const petKeys = ['slime', 'dragon', 'fairy'];
+            petKeys.forEach(type => {
+                const info = PET_PARAMS[type];
+                const lvl = (gameState.petLevels && gameState.petLevels[type]) || 0;
+                const stage = lvl > 0 ? Math.min(10, Math.ceil(lvl / 10)) : 1;
+                const imgUrl = `media/pet_${type}/pet_${type}_${stage}.png`;
+                const isFlipped = type === 'slime' ? 'transform: scale(-1, 1);' : '';
+                
+                petHtml += `
+                    <div class="relative group flex flex-col items-center">
+                        <img src="${imgUrl}" alt="${info.name}" style="${isFlipped}" class="w-9 h-9 object-contain filter drop-shadow-[0_0_8px_rgba(253,224,71,0.8)] animate-hover-pet">
+                        <span class="text-[8px] font-bold ${lvl > 0 ? 'text-yellow-300' : 'text-gray-500'} font-mono bg-black/80 px-1 border border-yellow-500/50">Lv.${lvl}</span>
+                    </div>
+                `;
+            });
+            petLayer.innerHTML = petHtml;
+        }
+
+        function updatePetHintBtnUI() {
+            const btnText = document.getElementById("wbPetHintText");
+            const btnIcon = document.getElementById("wbPetHintIcon");
+            const btn = document.getElementById("wbPetHintBtn");
+            if (!btn || !btnText) return;
+
+            if (wbPetHintRemaining > 0) {
+                btn.disabled = false;
+                btn.className = "bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-extrabold text-xs px-3.5 py-1.5 border border-yellow-300 rounded-none-forced shadow-lg flex items-center gap-1.5 transition active:scale-95 cursor-pointer";
+                btnText.innerText = `소환수 힌트 찬스! (남은 힌트: ${wbPetHintRemaining}/${wbPetHintMaxCount}회)`;
+                if (btnIcon) btnIcon.innerText = "🧚";
+            } else {
+                btn.disabled = true;
+                btn.className = "bg-gray-800 text-gray-400 font-bold text-xs px-3.5 py-1.5 border border-gray-600 rounded-none-forced shadow-none flex items-center gap-1.5 cursor-not-allowed opacity-60";
+                btnText.innerText = `소환수 힌트 소진 (${wbPetHintMaxCount}회 사용 완료)`;
+                if (btnIcon) btnIcon.innerText = "🔒";
+            }
+        }
+
+        function usePetHintAssistant() {
+            if (!isWorldBossRaidActive || wbPetHintRemaining <= 0 || !wbCurrentWordObj) return;
+
+            wbPetHintRemaining--;
+            updatePetHintBtnUI();
+            playSoundEffect('levelup');
+
+            // 힌트 연출: 가장 높은 레벨의 펫이 힌트 메시지를 발풍선으로 전달
+            let bestPet = '요정';
+            const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
+            const dragonLvl = (gameState.petLevels && gameState.petLevels['dragon']) || 0;
+            const fairyLvl = (gameState.petLevels && gameState.petLevels['fairy']) || 0;
+            if (dragonLvl >= slimeLvl && dragonLvl >= fairyLvl) bestPet = '드래곤';
+            else if (slimeLvl >= dragonLvl && slimeLvl >= fairyLvl) bestPet = '슬라임';
+
+            const word = wbCurrentWordObj.word.toUpperCase();
+            const meaning = wbCurrentWordObj.meaning;
+            const firstLetter = word.charAt(0);
+            const wordLen = word.length;
+
+            let hintMsg = `🧚 [${bestPet}] "첫 글자는 '${firstLetter}', 총 ${wordLen}글자입니다!" (뜻: ${meaning})`;
+            showWorldBossFxNotice(hintMsg, "text-yellow-300 border-yellow-400");
+            showToast(`💡 소환수 ${bestPet}의 힌트: 정답 첫 글자는 '${firstLetter}'로 시작합니다!`);
+
+            // 주관식 단답형인 경우 입력창에 첫 글자 자동 기입 도와주기
+            const shortInput = document.getElementById("wbShortAnswerInput");
+            if (shortInput && (!shortInput.value || shortInput.value.length === 0)) {
+                shortInput.value = firstLetter;
+                shortInput.focus();
+            }
+        }
+
         function castWorldBossSkill(skillId) {
             if (!isWorldBossRaidActive || !gameState.skillsInventory) return;
             if (wbSkillCooldowns[skillId] > 0) return;
@@ -4267,6 +4369,15 @@
             // 30초 쿨타임 적용
             wbSkillCooldowns[skillId] = 30.0;
 
+            // 스킬 원어민 음성 발음 재생
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(skill.word);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
+
             const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
             const mult = getSkillMultiplier(skill);
             const skillDmg = (calculateClickAttackPower() * mult * 3); // 레이드전 시전 시 3배 추가 보정 폭딜
@@ -4275,6 +4386,27 @@
             updateWorldBossBattleHpBar();
             
             triggerHeroAttackAnim();
+
+            // 전장 화려한 검기/마법 비기 베기 이펙트(Magic Blast) 생성
+            const arena = document.getElementById("wbVisualStage");
+            if (arena) {
+                const blastEffect = document.createElement("div");
+                blastEffect.className = "animate-skill-blast flex flex-col items-center justify-center pointer-events-none";
+                
+                let blastIcon = "💥";
+                if (skill.grade === "mythic") blastIcon = "🌌";
+                else if (skill.grade === "legendary") blastIcon = "🔥";
+                else if (skill.grade === "hero") blastIcon = "⚡";
+                else if (skill.grade === "rare") blastIcon = "✨";
+
+                blastEffect.innerHTML = `
+                    <span class="text-7xl filter drop-shadow-[0_0_20px_#ec4899]">${blastIcon}</span>
+                    <span class="text-xs font-black font-mono bg-black/80 text-pink-400 border border-pink-500 px-3 py-1 mt-1 uppercase tracking-widest shadow-xl">${capitalizeFirstLetter(skill.word)}!</span>
+                `;
+                arena.appendChild(blastEffect);
+                setTimeout(() => blastEffect.remove(), 600);
+            }
+
             spawnWbDamageParticle(`💥 -${skillDmg.toLocaleString()}`, true);
             showWorldBossFxNotice(`⚡ [비기] ${capitalizeFirstLetter(skill.word)}! -${skillDmg.toLocaleString()}`, "text-pink-400 border-pink-500");
             playSoundEffect('levelup');

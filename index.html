@@ -1508,8 +1508,8 @@
             normal: { name: "일반", multiplier: 15, prob: 0.75, colorClass: "border-[#4b5563] bg-gradient-to-b from-[#1f2937] to-[#111827] text-gray-200 rounded-none-forced", rank: 1 },
             rare: { name: "희귀", multiplier: 25, prob: 0.18, colorClass: "border-[#0284c7] bg-gradient-to-b from-[#0369a1] to-[#0c4a6e] text-[#7dd3fc] rounded-none-forced shadow-[0_0_10px_rgba(2,132,199,0.5)]", rank: 2 },
             hero: { name: "영웅", multiplier: 40, prob: 0.05, colorClass: "border-[#9333ea] bg-gradient-to-b from-[#7e22ce] to-[#581c87] text-[#e9d5ff] rounded-none-forced shadow-[0_0_14px_rgba(147,51,234,0.7)]", rank: 3 },
-            legendary: { name: "전설", multiplier: 70, prob: 0.0195, colorClass: "border-[#dc2626] bg-gradient-to-b from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] rounded-none-forced animate-pulse shadow-[0_0_18px_rgba(220,38,38,0.9)]", rank: 4 },
-            mythic: { name: "신화", multiplier: 150, prob: 0.0005, colorClass: "mythic-aurora-card rounded-none-forced border-[#f59e0b] shadow-[0_0_22px_rgba(245,158,11,0.9)]", rank: 5 }
+            legendary: { name: "전설", multiplier: 70, prob: 0.0195, colorClass: "border-[#dc2626] bg-gradient-to-b from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] rounded-none-forced shadow-[0_0_18px_rgba(220,38,38,0.9)]", rank: 4 },
+            mythic: { name: "신화", multiplier: 150, prob: 0.0005, colorClass: "mythic-aurora-card rounded-none-forced border-[#f59e0b] shadow-[0_0_25px_rgba(245,158,11,1)] animate-pulse", rank: 5 }
         };
 
         // Companion pet details
@@ -2218,21 +2218,24 @@
                         imgTransform = `transform="scale(-1, 1)" transform-origin="${x + width/2}px ${y + height/2}px"`;
                     }
 
-                    // 100레벨 맥스 펫: 이미지 투명도 깜빡임(animate-pulse)을 제거하고, 펫 뒷배경에 영롱하게 빛나는 오로라 후광(Aura Glow Halo) 삽입!
+                    // 100레벨 맥스 펫: 사각형 절단 테두리가 생기지 않도록 SVG 내부 0% 완전 사멸 방사형 부드러운 오로라 원형 후광 생성!
                     let auraOverlay = "";
                     if (level >= 100) {
                         auraOverlay = `
                             <defs>
                                 <radialGradient id="petAurora_${type}" cx="50%" cy="50%" r="50%">
-                                    <stop offset="0%" stop-color="#ffd700" stop-opacity="0.75" />
-                                    <stop offset="60%" stop-color="#ec4899" stop-opacity="0.4" />
-                                    <stop offset="100%" stop-color="#3b82f6" stop-opacity="0" />
+                                    <stop offset="0%" stop-color="#ffd700" stop-opacity="0.8" />
+                                    <stop offset="45%" stop-color="#ec4899" stop-opacity="0.45" />
+                                    <stop offset="85%" stop-color="#3b82f6" stop-opacity="0.1" />
+                                    <stop offset="100%" stop-color="#000000" stop-opacity="0" />
                                 </radialGradient>
                             </defs>
-                            <circle cx="${x + width/2}" cy="${y + height/2}" r="${Math.max(width, height)/1.4}" fill="url(#petAurora_${type})" class="animate-pulse" />
+                            <circle cx="${x + width/2}" cy="${y + height/2}" r="${Math.max(width, height)/1.8}" fill="url(#petAurora_${type})" />
                         `;
                     }
 
+                    svg.setAttribute("viewBox", `0 0 100 120`);
+                    svg.style.overflow = "visible";
                     svg.innerHTML = `
                         ${auraOverlay}
                         <image href="${imageUrl}" onerror="this.setAttribute('href', '${fallbackUrl}')" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet" ${imgTransform} />
@@ -2361,6 +2364,28 @@
             renderSkillsUI();
             populateMasteredVocabulary();
             refreshStateVisuals();
+            checkWorldBossVictoryOnStartup();
+        }
+
+        function checkWorldBossVictoryOnStartup() {
+            if (!gameState.grade || !gameState.name) return;
+            const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+            const victoryNoticeKey = `vocahero_wb_victory_modal_seen_${gameState.grade}_${gameState.name}_${gameState.studentNum}`;
+            if (localStorage.getItem(victoryNoticeKey)) return; // 이미 승리 팝업을 본 유저는 패스
+
+            runGas("getWorldBossStatus", [gameState.grade, studentKey], function(res) {
+                if (res && res.success && res.curHp <= 0) {
+                    if (!localStorage.getItem(victoryNoticeKey)) {
+                        localStorage.setItem(victoryNoticeKey, "true");
+                        const cappedShare = Math.min(100.0, Math.max(0, parseFloat(res.sharePct) || 0)).toFixed(2);
+                        document.getElementById("wbModalMyDamage").innerText = `${res.myDamage.toLocaleString()} HP`;
+                        document.getElementById("wbModalMyShare").innerText = `${cappedShare}%`;
+                        document.getElementById("wbModalRewardSummary").innerText = `+${Math.floor(res.myDamage / 1000)} FP / [수호신] 칭호`;
+                        openModal("wbVictoryNoticeModal");
+                        playSoundEffect('levelup');
+                    }
+                }
+            });
         }
 
         function calculateDPSPower() {

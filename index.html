@@ -3824,6 +3824,36 @@
                 skillContainer.innerHTML = skillHtml;
             }
 
+            // 로컬 클라이언트 1일 1회 완료 여부 즉시 사전 검사
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const lastRaidDate = localStorage.getItem(`vocahero_wb_raid_date_${gameState.name}_${gameState.studentNum}`);
+            const isTodayDone = (lastRaidDate === todayStr);
+
+            const btn = document.getElementById("startWorldBossBtn");
+            const badge = document.getElementById("worldBossEntryBadge");
+
+            if (isTodayDone) {
+                if (btn) {
+                    btn.disabled = true;
+                    btn.className = "w-full py-3.5 bg-[#262626] text-[#7e7e7e] font-bold text-sm tracking-wider uppercase rounded-none-forced cursor-not-allowed border border-red-950";
+                    btn.innerText = "🔒 오늘 토벌 완료 (1일 1회 제한)";
+                }
+                if (badge) {
+                    badge.innerText = "오늘 참전 완료";
+                    badge.className = "text-[9px] bg-gray-800 text-gray-400 border border-gray-600 px-3 py-1 rounded-none-forced font-bold uppercase tracking-wider";
+                }
+            } else {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.className = "w-full py-3.5 bg-gradient-to-r from-red-700 via-pink-700 to-red-600 hover:from-red-600 hover:to-pink-600 text-white font-black text-sm tracking-wider uppercase transition shadow-xl flex items-center justify-center gap-2 cursor-pointer";
+                    btn.innerText = "⚔️ 월드보스 토벌전 참전하기 (1일 1회)";
+                }
+                if (badge) {
+                    badge.innerText = "1일 1회 도전 가능";
+                    badge.className = "text-[9px] bg-red-950 text-red-400 border border-red-600 px-3 py-1 rounded-none-forced font-bold uppercase tracking-wider animate-pulse";
+                }
+            }
+
             // 피해 기록 동기화 안내 및 실시간 데이터 요청
             const hpTextEl = document.getElementById("worldBossHpText");
             if (hpTextEl && (!hpTextEl.innerText || hpTextEl.innerText.includes("..."))) {
@@ -3842,21 +3872,16 @@
                     document.getElementById("myWorldBossShareDisplay").innerText = `${res.sharePct}%`;
                     document.getElementById("myWorldBossRewardDisplay").innerText = `+${Math.floor(res.myDamage / 1000)} FP / [수호신] 칭호`;
 
-                    const btn = document.getElementById("startWorldBossBtn");
-                    const badge = document.getElementById("worldBossEntryBadge");
-
-                    if (!res.canAttack) {
-                        btn.disabled = true;
-                        btn.className = "w-full py-3.5 bg-[#262626] text-[#7e7e7e] font-bold text-sm tracking-wider uppercase rounded-none-forced cursor-not-allowed";
-                        btn.innerText = "🔒 오늘 도전 완료 (1일 1회 제한)";
-                        badge.innerText = "오늘 참전 완료";
-                        badge.className = "text-[9px] bg-gray-800 text-gray-400 border border-gray-600 px-3 py-1 rounded-none-forced font-bold uppercase tracking-wider";
-                    } else {
-                        btn.disabled = false;
-                        btn.className = "w-full py-3.5 bg-gradient-to-r from-red-700 via-pink-700 to-red-600 hover:from-red-600 hover:to-pink-600 text-white font-black text-sm tracking-wider uppercase transition shadow-xl flex items-center justify-center gap-2 cursor-pointer";
-                        btn.innerText = "⚔️ 월드보스 토벌전 참전하기 (1일 1회)";
-                        badge.innerText = "1일 1회 도전 가능";
-                        badge.className = "text-[9px] bg-red-950 text-red-400 border border-red-600 px-3 py-1 rounded-none-forced font-bold uppercase tracking-wider animate-pulse";
+                    if (!res.canAttack || isTodayDone) {
+                        if (btn) {
+                            btn.disabled = true;
+                            btn.className = "w-full py-3.5 bg-[#262626] text-[#7e7e7e] font-bold text-sm tracking-wider uppercase rounded-none-forced cursor-not-allowed border border-red-950";
+                            btn.innerText = "🔒 오늘 토벌 완료 (1일 1회 제한)";
+                        }
+                        if (badge) {
+                            badge.innerText = "오늘 참전 완료";
+                            badge.className = "text-[9px] bg-gray-800 text-gray-400 border border-gray-600 px-3 py-1 rounded-none-forced font-bold uppercase tracking-wider";
+                        }
                     }
                 }
             }, function(err) {
@@ -4357,7 +4382,8 @@
             refreshStateVisuals();
             saveLocalCache();
 
-            showToast(`${reasonMessage} 🎁 참전 보상: 🪙 +${rewardGold.toLocaleString()}G, 🎁 +${rewardFp} FP 획득! ⏳ 서버에 내 피해 기록 반영 중...`);
+            updateWorldBossUI();
+            showToast(`${reasonMessage} 🎁 참전 보상: 🪙 +${rewardGold.toLocaleString()}G, 🎁 +${rewardFp} FP 획득!`);
 
             // 1. 서버 전송 전 즉시 로컬 데이터 가상 반영 (즉시 반응성 보장)
             document.getElementById("myWorldBossDmgDisplay").innerText = wbTotalDamageDealt.toLocaleString();

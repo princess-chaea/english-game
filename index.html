@@ -2370,17 +2370,34 @@
         function checkWorldBossVictoryOnStartup() {
             if (!gameState.grade || !gameState.name) return;
             const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
-            const victoryNoticeKey = `vocahero_wb_victory_modal_seen_${gameState.grade}_${gameState.name}_${gameState.studentNum}`;
-            if (localStorage.getItem(victoryNoticeKey)) return; // 이미 승리 팝업을 본 유저는 패스
+            const victoryModalKey = `vocahero_wb_victory_modal_seen_${gameState.grade}_${gameState.name}_${gameState.studentNum}`;
+            const victoryRewardKey = `vocahero_wb_reward_claimed_${gameState.grade}_${gameState.name}_${gameState.studentNum}`;
+
+            // 모달 확인 여부와 관계없이 보상 수령 여부로 쳴크 (late joiner 보상 실제 지급)
+            const alreadyRewarded = localStorage.getItem(victoryRewardKey);
+            const alreadySeenModal = localStorage.getItem(victoryModalKey);
+            if (alreadySeenModal && alreadyRewarded) return;
 
             runGas("getWorldBossStatus", [gameState.grade, studentKey], function(res) {
                 if (res && res.success && res.curHp <= 0) {
-                    if (!localStorage.getItem(victoryNoticeKey)) {
-                        localStorage.setItem(victoryNoticeKey, "true");
-                        const cappedShare = Math.min(100.0, Math.max(0, parseFloat(res.sharePct) || 0)).toFixed(2);
+                    const cappedShare = Math.min(100.0, Math.max(0, parseFloat(res.sharePct) || 0)).toFixed(2);
+                    const earnedFp = Math.floor(res.myDamage / 1000);
+
+                    // ✅ 실제 FP 보상 지급 (철로 보상 입금 처리 - 1회만)
+                    if (!alreadyRewarded && earnedFp > 0) {
+                        localStorage.setItem(victoryRewardKey, "true");
+                        gameState.masteryPoints = (gameState.masteryPoints || 0) + earnedFp;
+                        refreshStateVisuals();
+                        saveSessionToCloud();
+                        showToast(`🎁 [월드보스 토별 보상] +${earnedFp} FP가 정복 포인트에 적립되었습니다!`);
+                    }
+
+                    // 모달은 보상 확인 여부와 독립적으로 한 번만 표시
+                    if (!alreadySeenModal) {
+                        localStorage.setItem(victoryModalKey, "true");
                         document.getElementById("wbModalMyDamage").innerText = `${res.myDamage.toLocaleString()} HP`;
                         document.getElementById("wbModalMyShare").innerText = `${cappedShare}%`;
-                        document.getElementById("wbModalRewardSummary").innerText = `+${Math.floor(res.myDamage / 1000)} FP / [수호신] 칭호`;
+                        document.getElementById("wbModalRewardSummary").innerText = `+${earnedFp} FP 획득완료 / [수호신] 칭호 획득!`;
                         openModal("wbVictoryNoticeModal");
                         playSoundEffect('levelup');
                     }
@@ -4893,16 +4910,31 @@
             updateWorldBossUI();
             showToast(`${reasonMessage} 🎁 참전 보상: 🪙 +${rewardGold.toLocaleString()}G, 🎁 +${rewardFp} FP 획득!`);
 
-            // ✅ 보스를 직접 격파한 계정 포함 모든 참전자에게 즉시 승리 모달 팝업 표시!
-            const isBossKill = (Math.max(0, wbCurBossHp - wbTotalDamageDealt) <= 0);
-            const victoryNoticeKey = `vocahero_wb_victory_modal_seen_${gameState.grade}_${gameState.name}_${gameState.studentNum}`;
-            if (isBossKill && !localStorage.getItem(victoryNoticeKey)) {
-                localStorage.setItem(victoryNoticeKey, "true");
-                const shareEstimate = wbMaxBossHp > 0 ? Math.min(100, (wbTotalDamageDealt / wbMaxBossHp * 100)).toFixed(2) : "0.00";
-                document.getElementById("wbModalMyDamage").innerText = `${wbTotalDamageDealt.toLocaleString()} HP`;
-                document.getElementById("wbModalMyShare").innerText = `${shareEstimate}%`;
-                document.getElementById("wbModalRewardSummary").innerText = `+${rewardFp} FP / [수호신] 칭호 획득!`;
-                setTimeout(() => { openModal("wbVictoryNoticeModal"); }, 500);
+            // ✅ 보스를 직접 격파한 계정 포함 모든 참전자에게 즉시 승리 모달 팝업 + 미지급 FP 보상 실제 지급!
+            const bossRemHp = Math.max(0, wbCurBossHp - wbTotalDamageDealt);
+            const victoryModalKey = `vocahero_wb_victory_modal_seen_${gameState.grade}_${gameState.name}_${gameState.studentNum}`;
+            const victoryRewardKey = `vocahero_wb_reward_claimed_${gameState.grade}_${gameState.name}_${gameState.studentNum}`;
+            if (bossRemHp <= 0) {
+                // 해당 레이드 세션 데미지 기준 FP 보상 (1회만 지급)
+                if (!localStorage.getItem(victoryRewardKey)) {
+                    localStorage.setItem(victoryRewardKey, "true");
+                    const earnedFp = Math.max(20, Math.floor(wbTotalDamageDealt / 1000));
+                    gameState.masteryPoints = (gameState.masteryPoints || 0) + earnedFp;
+                    refreshStateVisuals();
+                    saveLocalCache();
+                    saveSessionToCloud();
+                    showToast(`🎁 [월드보스 토별 보상] 내 피해량 기준 +${earnedFp} FP가 저장되었습니다!`);
+                }
+
+                if (!localStorage.getItem(victoryModalKey)) {
+                    localStorage.setItem(victoryModalKey, "true");
+                    const shareEstimate = wbMaxBossHp > 0 ? Math.min(100, (wbTotalDamageDealt / wbMaxBossHp * 100)).toFixed(2) : "0.00";
+                    const displayFp = Math.max(20, Math.floor(wbTotalDamageDealt / 1000));
+                    document.getElementById("wbModalMyDamage").innerText = `${wbTotalDamageDealt.toLocaleString()} HP`;
+                    document.getElementById("wbModalMyShare").innerText = `${shareEstimate}%`;
+                    document.getElementById("wbModalRewardSummary").innerText = `+${displayFp} FP 획득완료 / [수호신] 칭호 획득!`;
+                    setTimeout(() => { openModal("wbVictoryNoticeModal"); }, 500);
+                }
             }
 
             // 1. 서버 전송 전 즉시 로컬 데이터 가상 반영 (즉시 반응성 보장)

@@ -3532,8 +3532,8 @@
 
                 const arena = document.getElementById("battleArena");
                 
-                // 단어 정답 시 치명타 타격: 클릭 데미지의 30배 + DPS 5배 (스킬 신화 × 150배보다 항상 약하게 유지)
-                const quizDmg = (calculateClickAttackPower() * 30) + (calculateDPSPower() * 5);
+                // 단어 정답 시 치명타 타격: 클릭력×10 + DPS×2 (스킬 신화×150배보다 항상 훨씬 약하게 균형 유지)
+                const quizDmg = (calculateClickAttackPower() * 10) + (calculateDPSPower() * 2);
                 processCombatDamage(quizDmg);
                 spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `⚡ 퀴즈 크리티컬! -${quizDmg.toLocaleString()}`);
 
@@ -4892,6 +4892,18 @@
 
             updateWorldBossUI();
             showToast(`${reasonMessage} 🎁 참전 보상: 🪙 +${rewardGold.toLocaleString()}G, 🎁 +${rewardFp} FP 획득!`);
+
+            // ✅ 보스를 직접 격파한 계정 포함 모든 참전자에게 즉시 승리 모달 팝업 표시!
+            const isBossKill = (Math.max(0, wbCurBossHp - wbTotalDamageDealt) <= 0);
+            const victoryNoticeKey = `vocahero_wb_victory_modal_seen_${gameState.grade}_${gameState.name}_${gameState.studentNum}`;
+            if (isBossKill && !localStorage.getItem(victoryNoticeKey)) {
+                localStorage.setItem(victoryNoticeKey, "true");
+                const shareEstimate = wbMaxBossHp > 0 ? Math.min(100, (wbTotalDamageDealt / wbMaxBossHp * 100)).toFixed(2) : "0.00";
+                document.getElementById("wbModalMyDamage").innerText = `${wbTotalDamageDealt.toLocaleString()} HP`;
+                document.getElementById("wbModalMyShare").innerText = `${shareEstimate}%`;
+                document.getElementById("wbModalRewardSummary").innerText = `+${rewardFp} FP / [수호신] 칭호 획득!`;
+                setTimeout(() => { openModal("wbVictoryNoticeModal"); }, 500);
+            }
 
             // 1. 서버 전송 전 즉시 로컬 데이터 가상 반영 (즉시 반응성 보장)
             document.getElementById("myWorldBossDmgDisplay").innerText = wbTotalDamageDealt.toLocaleString();

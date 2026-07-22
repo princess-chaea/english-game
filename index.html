@@ -823,43 +823,56 @@
                     </div>
 
                     <!-- Active Raid Arena Box (Shown during 70s battle) -->
-                    <div id="worldBossBattleArena" class="hidden bg-black p-4 border-2 border-red-600 rounded-none-forced text-center flex-col gap-3 relative overflow-hidden shadow-[0_0_30px_rgba(220,38,38,0.3)]">
-                        <!-- Top Battle Bar: Timer & Hero HP -->
-                        <div class="flex justify-between items-center text-xs bg-[#0d0d0d] p-2.5 border border-red-900 z-10">
-                            <div class="flex items-center gap-1.5 font-bold text-red-400">
-                                <i data-lucide="timer" class="w-4 h-4 text-red-500 animate-pulse"></i>
-                                <span>제한시간: <span id="wbTimerText" class="text-white font-mono text-sm">70.0초</span></span>
+                    <div id="worldBossBattleArena" class="hidden bg-black p-4 border-2 border-red-600 rounded-none-forced text-center flex-col gap-3 relative overflow-hidden shadow-[0_0_35px_rgba(220,38,38,0.4)]">
+                        <!-- Top Battle Bar: Timer, Boss HP Tracker Bar & Hero HP -->
+                        <div class="flex flex-col gap-2 bg-[#0d0d0d] p-3 border border-red-900 z-10 rounded-none-forced">
+                            <div class="flex justify-between items-center text-xs">
+                                <div class="flex items-center gap-1.5 font-bold text-red-400">
+                                    <i data-lucide="timer" class="w-4 h-4 text-red-500 animate-pulse"></i>
+                                    <span>제한시간: <span id="wbTimerText" class="text-white font-mono text-sm">70.0초</span></span>
+                                </div>
+                                <div class="flex items-center gap-1.5 font-bold text-yellow-300">
+                                    <i data-lucide="crosshair" class="w-4 h-4 text-yellow-400 animate-spin"></i>
+                                    <span>월드보스 실시간 잔여 HP: <span id="wbBattleBossHpText" class="text-white font-mono text-sm">10,000,000 / 10,000,000 HP</span></span>
+                                </div>
+                                <div class="flex items-center gap-1.5 font-bold text-green-400">
+                                    <i data-lucide="shield" class="w-4 h-4 text-green-400"></i>
+                                    <span>용사 HP: <span id="wbPlayerHpText" class="text-white font-mono text-sm">100 HP</span></span>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-1.5 font-bold text-green-400">
-                                <i data-lucide="shield" class="w-4 h-4 text-green-400"></i>
-                                <span>용사 HP: <span id="wbPlayerHpText" class="text-white font-mono text-sm">100 HP</span></span>
+                            <!-- World Boss HP Progress Tracker Bar -->
+                            <div class="w-full bg-[#111] h-2.5 border border-red-800 relative overflow-hidden rounded-none-forced">
+                                <div id="wbBattleBossHpBar" class="bg-gradient-to-r from-red-700 via-pink-600 to-red-500 h-full transition-all duration-300 w-full"></div>
                             </div>
                         </div>
 
-                        <!-- VISUAL BATTLE ARENA VIEWPORT FOR WORLD BOSS -->
-                        <div id="wbVisualStage" class="relative z-10 w-full h-48 border border-red-900/80 bg-gradient-to-b from-red-950/60 via-black to-black flex justify-between items-center px-6 overflow-hidden rounded-none-forced">
-                            <!-- Background Aura Glow -->
-                            <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-900/20 via-transparent to-transparent pointer-events-none"></div>
+                        <!-- DRAMATIC VISUAL BATTLE ARENA VIEWPORT WITH BLURRED BOSS BACKDROP -->
+                        <div id="wbVisualStage" class="relative z-10 w-full h-64 border-2 border-red-800 bg-black flex justify-between items-center px-8 overflow-hidden rounded-none-forced">
+                            <!-- Fullscreen Blurred Dramatic Boss Background Image -->
+                            <img id="wbStageBackdrop" src="media/worldbose/worldbose_golem.png" alt="Boss Backdrop" class="absolute inset-0 w-full h-full object-cover filter blur-md opacity-35 scale-110 pointer-events-none transition-all duration-500">
+                            
+                            <!-- Red Vignette Ambient Glow Overlay -->
+                            <div class="absolute inset-0 bg-gradient-to-b from-red-950/40 via-transparent to-black/80 pointer-events-none"></div>
 
                             <!-- Left: Hero Combatant Sprite -->
                             <div id="wbHeroSprite" class="relative z-10 flex flex-col items-center transition-transform duration-200">
-                                <div class="w-24 h-28 relative flex items-end justify-center">
+                                <div class="w-28 h-36 relative flex items-end justify-center drop-shadow-[0_0_15px_rgba(0,102,177,0.8)]">
                                     <svg viewBox="0 0 100 120" class="w-full h-full" id="wbHeroSvg"></svg>
                                 </div>
-                                <span class="text-[9px] bg-red-950 border border-red-800 px-2 py-0.5 font-bold text-white uppercase tracking-wider mt-1">도전자 용사</span>
+                                <span class="text-[10px] bg-red-950/90 border border-red-700 px-2.5 py-0.5 font-bold text-white uppercase tracking-wider mt-1 shadow-md">도전자 용사</span>
                             </div>
 
                             <!-- Center: Impact / Battle FX Notification Banner -->
                             <div id="wbBattleFxNotice" class="z-20 text-center pointer-events-none transition-all duration-300 transform scale-95 opacity-0">
-                                <span id="wbBattleFxText" class="text-xs font-black text-yellow-300 bg-red-950/90 border border-yellow-500 px-3 py-1.5 shadow-lg tracking-wider"></span>
+                                <span id="wbBattleFxText" class="text-sm font-black text-yellow-300 bg-red-950/95 border-2 border-yellow-400 px-4 py-2 shadow-2xl tracking-wider"></span>
                             </div>
 
-                            <!-- Right: World Boss Monster Sprite -->
+                            <!-- Right: ENLARGED Dramatic World Boss Monster Sprite -->
                             <div id="wbBossSprite" class="relative z-10 flex flex-col items-center transition-transform duration-200">
-                                <div class="w-28 h-32 flex items-center justify-center relative">
-                                    <img id="wbActiveBossImg" src="media/worldbose/worldbose_golem.png" alt="World Boss" class="max-h-full max-w-full object-contain filter drop-shadow-[0_0_20px_rgba(239,68,68,0.9)] animate-pulse">
+                                <div class="w-48 h-52 flex items-center justify-center relative">
+                                    <img id="wbActiveBossImg" src="media/worldbose/worldbose_golem.png" alt="World Boss" class="max-h-full max-w-full object-contain filter drop-shadow-[0_0_30px_rgba(239,68,68,1)] animate-pulse">
                                 </div>
-                                <span id="wbActiveBossNameTag" class="text-[9px] bg-red-950 border border-red-700 px-2 py-0.5 font-bold text-red-400 uppercase tracking-wider mt-1">월드 보스</span>
+                                <span id="wbActiveBossNameTag" class="text-[10px] bg-red-950/90 border-2 border-red-600 px-3 py-0.5 font-black text-red-400 uppercase tracking-widest mt-1 shadow-lg">대지의 파멸 골렘</span>
                             </div>
 
                             <!-- Floating Damage Particle Container -->
@@ -3868,12 +3881,12 @@
 
             runGas("getWorldBossStatus", [gameState.grade, studentKey], function(res) {
                 if (res && res.success) {
-                    const curHp = res.curHp;
-                    const maxHp = res.maxHp;
-                    const pct = Math.max(0, Math.min(100, (curHp / maxHp) * 100));
+                    wbCurBossHp = res.curHp;
+                    wbMaxBossHp = res.maxHp;
+                    const pct = Math.max(0, Math.min(100, (wbCurBossHp / wbMaxBossHp) * 100));
 
                     document.getElementById("worldBossHpBar").style.width = `${pct}%`;
-                    document.getElementById("worldBossHpText").innerText = `${curHp.toLocaleString()} / ${maxHp.toLocaleString()} HP (${pct.toFixed(1)}%)`;
+                    document.getElementById("worldBossHpText").innerText = `${wbCurBossHp.toLocaleString()} / ${wbMaxBossHp.toLocaleString()} HP (${pct.toFixed(1)}%)`;
                     document.getElementById("myWorldBossDmgDisplay").innerText = res.myDamage.toLocaleString();
                     document.getElementById("myWorldBossShareDisplay").innerText = `${res.sharePct}%`;
                     document.getElementById("myWorldBossRewardDisplay").innerText = `+${Math.floor(res.myDamage / 1000)} FP / [수호신] 칭호`;
@@ -3900,10 +3913,32 @@
             });
         }
 
-        let wbSkillCooldowns = {};
+        let wbCurBossHp = 10000000;
+        let wbMaxBossHp = 10000000;
+
+        function updateWorldBossBattleHpBar() {
+            const hpTextEl = document.getElementById("wbBattleBossHpText");
+            const hpBarEl = document.getElementById("wbBattleBossHpBar");
+            const currentRemHp = Math.max(0, wbCurBossHp - wbTotalDamageDealt);
+            const pct = Math.max(0, Math.min(100, (currentRemHp / wbMaxBossHp) * 100));
+
+            if (hpTextEl) {
+                hpTextEl.innerText = `${currentRemHp.toLocaleString()} / ${wbMaxBossHp.toLocaleString()} HP (${pct.toFixed(1)}%)`;
+            }
+            if (hpBarEl) {
+                hpBarEl.style.width = `${pct}%`;
+            }
+        }
 
         function startWorldBossRaid() {
             if (isWorldBossRaidActive) return;
+
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const lastRaidDate = localStorage.getItem(`vocahero_wb_raid_date_${gameState.name}_${gameState.studentNum}`);
+            if (lastRaidDate === todayStr) {
+                showToast("🔒 오늘 월드보스 참전(1일 1회 제한)을 완료하셨습니다. 내일 다시 도전해 주세요!");
+                return;
+            }
 
             isWorldBossRaidActive = true;
             wbTimerRemaining = 70.0;
@@ -3919,12 +3954,15 @@
 
             document.getElementById("wbTimerText").innerText = "70.0초";
             document.getElementById("wbPlayerHpText").innerText = `${wbPlayerHp} / ${wbPlayerMaxHp} HP`;
+            updateWorldBossBattleHpBar();
 
             // 월드보스 시각화 스테이지 초기화 (보스 일러스트 & 용사 SVG 렌더링)
             const seasonIdx = getWeeklyBossIndex();
             const bossInfo = WORLD_BOSS_SEASONS[seasonIdx];
             const wbBossImgEl = document.getElementById("wbActiveBossImg");
             if (wbBossImgEl) wbBossImgEl.src = bossInfo.img;
+            const wbStageBackdropEl = document.getElementById("wbStageBackdrop");
+            if (wbStageBackdropEl) wbStageBackdropEl.src = bossInfo.img;
             const wbBossNameTagEl = document.getElementById("wbActiveBossNameTag");
             if (wbBossNameTagEl) wbBossNameTagEl.innerText = bossInfo.name;
 
@@ -4095,6 +4133,7 @@
             const skillDmg = (calculateClickAttackPower() * mult * 3); // 레이드전 시전 시 3배 추가 보정 폭딜
 
             wbTotalDamageDealt += skillDmg;
+            updateWorldBossBattleHpBar();
             
             triggerHeroAttackAnim();
             spawnWbDamageParticle(`💥 -${skillDmg.toLocaleString()}`, true);
@@ -4281,6 +4320,7 @@
                 // 정답 시 월드보스에게 내 공격력 기반 강력 폭딜 (기본 공격력 * 50)
                 const dmg = (calculateClickAttackPower() * 50) + (calculateDPSPower() * 10);
                 wbTotalDamageDealt += dmg;
+                updateWorldBossBattleHpBar();
 
                 triggerHeroAttackAnim();
                 spawnWbDamageParticle(`-${dmg.toLocaleString()}`, false);

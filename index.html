@@ -3930,6 +3930,9 @@
             }
         }
 
+        let wbComboCount = 0;
+        let wbWrongCount = 0;
+
         function startWorldBossRaid() {
             if (isWorldBossRaidActive) return;
 
@@ -3946,6 +3949,8 @@
             wbPlayerHp = wbPlayerMaxHp;
             wbTotalDamageDealt = 0;
             wbSkillCooldowns = {};
+            wbComboCount = 0;
+            wbWrongCount = 0;
 
             document.getElementById("worldBossReadyBox").classList.add("hidden");
             const arena = document.getElementById("worldBossBattleArena");
@@ -3976,7 +3981,7 @@
             generateWorldBossQuiz();
             renderWorldBossRaidSkills();
             playSoundEffect('levelup');
-            showToast("🚨 월드보스 참전! (70초 제한시간 / 15초마다 광폭화 공격 패턴 발동!)");
+            showToast("🚨 월드보스 참전! (연속 정답 콤보 시 소지한 펫이 1마리씩 차례로 폭딜 협공합니다!)");
 
             let lastPatternCheck = 70.0;
 
@@ -3996,14 +4001,15 @@
                 }
                 renderWorldBossRaidSkills();
 
-                // 15초마다 보스의 [🔥 광폭화 파멸 스펠] 패턴 발동! (약점 퀴즈 강제 교체 & 기습 -15 HP 피해)
+                // 15초마다 보스의 [🔥 광폭화 파멸 스펠] 패턴 발동!
                 if (lastPatternCheck - wbTimerRemaining >= 15.0) {
                     lastPatternCheck = wbTimerRemaining;
-                    wbPlayerHp -= 15;
+                    const bossSpellDmg = Math.floor(wbPlayerMaxHp * 0.25); // 최대 HP의 25% 가혹한 치명타 피해
+                    wbPlayerHp -= bossSpellDmg;
                     document.getElementById("wbPlayerHpText").innerText = `${Math.max(0, wbPlayerHp)} / ${wbPlayerMaxHp} HP`;
                     
                     // 보스 광폭화 타격 비주얼 이펙트
-                    triggerWorldBossAttackAnim("🔥 광폭화 파멸 스펠! -15 HP!");
+                    triggerWorldBossAttackAnim(`🔥 광폭화 파멸 스펠 강타! -${bossSpellDmg} HP!`);
                     playSoundEffect('incorrect');
                     generateWorldBossQuiz();
 
@@ -4317,26 +4323,58 @@
 
             if (isCorrect) {
                 playSoundEffect('correct');
-                // 정답 시 월드보스에게 내 공격력 기반 강력 폭딜 (기본 공격력 * 50)
-                const dmg = (calculateClickAttackPower() * 50) + (calculateDPSPower() * 10);
-                wbTotalDamageDealt += dmg;
+                wbComboCount++;
+
+                // 기본 용사 정답 폭딜
+                let heroDmg = (calculateClickAttackPower() * 50) + (calculateDPSPower() * 10);
+                
+                // 펫 레벨 기반 비례 데미지 및 연속 정답 콤보에 따른 펫 순차 협공
+                // 콤보 1: 슬라임 협공, 콤보 2: 드래곤 협공, 콤보 3+: 요정 협공 & 전원 동시 총공격!
+                const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
+                const dragonLvl = (gameState.petLevels && gameState.petLevels['dragon']) || 0;
+                const fairyLvl = (gameState.petLevels && gameState.petLevels['fairy']) || 0;
+
+                let petNoticeText = "";
+                let totalComboDmg = heroDmg;
+
+                if (wbComboCount === 1) {
+                    const slimeDmg = 100 + (slimeLvl * 50);
+                    totalComboDmg += slimeDmg;
+                    petNoticeText = `🟢 1콤보! [슬라임(Lv.${slimeLvl})] 몸통 박치기! -${slimeDmg.toLocaleString()}`;
+                    spawnWbDamageParticle(`🟢 -${slimeDmg.toLocaleString()}`, false);
+                } else if (wbComboCount === 2) {
+                    const dragonDmg = 300 + (dragonLvl * 120);
+                    totalComboDmg += dragonDmg;
+                    petNoticeText = `🐉 2연속 콤보! [드래곤(Lv.${dragonLvl})] 화염 브레스! -${dragonDmg.toLocaleString()}`;
+                    spawnWbDamageParticle(`🐉 -${dragonDmg.toLocaleString()}`, true);
+                } else {
+                    const fairyDmg = 500 + (fairyLvl * 200);
+                    const totalPetDmg = (slimeLvl * 30) + (dragonLvl * 80) + fairyDmg;
+                    totalComboDmg += totalPetDmg;
+                    petNoticeText = `✨ ${wbComboCount}연속 콤보! [펫 3종 소환수] 일제 총공격! -${totalPetDmg.toLocaleString()}`;
+                    spawnWbDamageParticle(`✨ -${totalPetDmg.toLocaleString()}`, true);
+                }
+
+                wbTotalDamageDealt += totalComboDmg;
                 updateWorldBossBattleHpBar();
 
                 triggerHeroAttackAnim();
-                spawnWbDamageParticle(`-${dmg.toLocaleString()}`, false);
-                showWorldBossFxNotice(`💥 약점 격파! -${dmg.toLocaleString()}`, "text-yellow-300 border-yellow-500");
+                showWorldBossFxNotice(petNoticeText, "text-yellow-300 border-yellow-500");
                 generateWorldBossQuiz();
             } else {
                 playSoundEffect('incorrect');
-                // 오답 시 보스의 강력 일격! (용사 HP 차감)
-                const bossDmg = 20; // 1회 오답당 20 HP 차감
+                wbComboCount = 0; // 오답 시 콤보 리셋
+                wbWrongCount++;
+
+                // 오답 중첩 시 보스의 피격 데미지 기하급수적 증가 (기본 15 + 오답 횟수 * 15)
+                const bossDmg = 15 + (wbWrongCount * 15);
                 wbPlayerHp -= bossDmg;
                 document.getElementById("wbPlayerHpText").innerText = `${Math.max(0, wbPlayerHp)} / ${wbPlayerMaxHp} HP`;
 
-                triggerWorldBossAttackAnim(`💔 오답! 보스 반격 -${bossDmg} HP`);
+                triggerWorldBossAttackAnim(`💔 오답 ${wbWrongCount}회! 보스 반격 -${bossDmg} HP (콤보 리셋)`);
 
                 if (wbPlayerHp <= 0) {
-                    endWorldBossRaid("💀 용사의 HP가 모두 깎여 월드보스에게 강퇴(사망)당했습니다!");
+                    endWorldBossRaid("💀 연이은 오답으로 보스의 강력한 일격에 사망하셨습니다!");
                 } else {
                     generateWorldBossQuiz();
                 }

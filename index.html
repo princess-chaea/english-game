@@ -1342,11 +1342,11 @@
 
         // Skill Grade Configs (색상 코드 및 배율 계수)
         const SKILL_GRADES = {
-            normal: { name: "일반", multiplier: 15, prob: 0.75, colorClass: "border-[#3c3c3c] bg-black text-[#bbbbbb] rounded-none-forced", rank: 1 },
-            rare: { name: "희귀", multiplier: 25, prob: 0.18, colorClass: "border-[#0066b1] bg-[#001f3f] text-[#66b3ff] rounded-none-forced shadow-[0_0_8px_rgba(0,102,177,0.4)]", rank: 2 },
-            hero: { name: "영웅", multiplier: 40, prob: 0.05, colorClass: "border-[#1c69d4] bg-[#0a244d] text-[#66a3ff] rounded-none-forced shadow-[0_0_12px_rgba(28,105,212,0.6)]", rank: 3 },
-            legendary: { name: "전설", multiplier: 70, prob: 0.0195, colorClass: "border-[#e22718] bg-[#3f0f0f] text-[#ff8080] rounded-none-forced animate-pulse shadow-[0_0_15px_rgba(226,39,24,0.8)]", rank: 4 },
-            mythic: { name: "신화", multiplier: 150, prob: 0.0005, colorClass: "mythic-aurora-card rounded-none-forced", rank: 5 }
+            normal: { name: "일반", multiplier: 15, prob: 0.75, colorClass: "border-[#4b5563] bg-gradient-to-b from-[#1f2937] to-[#111827] text-gray-200 rounded-none-forced", rank: 1 },
+            rare: { name: "희귀", multiplier: 25, prob: 0.18, colorClass: "border-[#0284c7] bg-gradient-to-b from-[#0369a1] to-[#0c4a6e] text-[#7dd3fc] rounded-none-forced shadow-[0_0_10px_rgba(2,132,199,0.5)]", rank: 2 },
+            hero: { name: "영웅", multiplier: 40, prob: 0.05, colorClass: "border-[#9333ea] bg-gradient-to-b from-[#7e22ce] to-[#581c87] text-[#e9d5ff] rounded-none-forced shadow-[0_0_14px_rgba(147,51,234,0.7)]", rank: 3 },
+            legendary: { name: "전설", multiplier: 70, prob: 0.0195, colorClass: "border-[#dc2626] bg-gradient-to-b from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] rounded-none-forced animate-pulse shadow-[0_0_18px_rgba(220,38,38,0.9)]", rank: 4 },
+            mythic: { name: "신화", multiplier: 150, prob: 0.0005, colorClass: "mythic-aurora-card rounded-none-forced border-[#f59e0b] shadow-[0_0_22px_rgba(245,158,11,0.9)]", rank: 5 }
         };
 
         // Companion pet details
@@ -3807,7 +3807,7 @@
             document.getElementById("wbGradeTitle").innerText = `${gameState.grade}학년 전용 공유 체력`;
             document.getElementById("playerMaxHpDisplay").innerText = `💖 ${wbPlayerMaxHp} HP (방어막 ${Math.floor(wbPlayerMaxHp / 20)}회 오답 버티기 가능)`;
 
-            // 1. 펫 3종 동시 렌더링 (이미지 + 레벨)
+            // 1. 펫 3종 동시 렌더링 (레벨별 진화 1~10단계 이미지 적용)
             const petContainer = document.getElementById("wbPetPreviewContainer");
             if (petContainer) {
                 let petHtml = "";
@@ -3815,13 +3815,14 @@
                 petKeys.forEach(type => {
                     const info = PET_PARAMS[type];
                     const lvl = (gameState.petLevels && gameState.petLevels[type]) || 0;
-                    const imgUrl = type === 'dragon' ? 'media/pet_dragon/pet_dragon_1.png' : `media/pet_${type}/pet_${type}_1.png`;
+                    const stage = lvl > 0 ? Math.min(10, Math.ceil(lvl / 10)) : 1;
+                    const imgUrl = `media/pet_${type}/pet_${type}_${stage}.png`;
                     petHtml += `
-                        <div class="bg-black p-1.5 border border-[#262626] flex items-center gap-1.5 min-w-0">
-                            <img src="${imgUrl}" alt="${info.name}" class="w-6 h-6 object-contain flex-shrink-0">
+                        <div class="bg-[#0d0d0d] p-1.5 border border-[#3c3c3c] flex items-center gap-2 min-w-0 rounded-none-forced">
+                            <img src="${imgUrl}" alt="${info.name}" class="w-8 h-8 object-contain flex-shrink-0">
                             <div class="min-w-0 flex-1">
-                                <span class="text-[8px] text-gray-400 block truncate">${info.name.split(' ')[1] || info.name}</span>
-                                <span class="text-[9px] font-bold ${lvl > 0 ? 'text-yellow-300' : 'text-gray-600'} font-mono block">Lv.${lvl}</span>
+                                <span class="text-[9px] text-gray-300 font-bold block truncate">${info.name.split(' ')[1] || info.name}</span>
+                                <span class="text-[10px] font-bold ${lvl > 0 ? 'text-yellow-400' : 'text-gray-600'} font-mono block">Lv.${lvl}</span>
                             </div>
                         </div>
                     `;
@@ -3829,7 +3830,7 @@
                 petContainer.innerHTML = petHtml;
             }
 
-            // 2. 장착 스킬 4종 동시 렌더링 (단어 + 등급 + 별)
+            // 2. 장착 스킬 4종 동시 렌더링 (단어 + 등급별 그라데이션 풀 배경 + 별)
             const skillContainer = document.getElementById("wbSkillsPreviewContainer");
             if (skillContainer) {
                 let skillHtml = "";
@@ -3841,19 +3842,19 @@
                             const gradeInfo = SKILL_GRADES[s.grade] || SKILL_GRADES.normal;
                             const starsHtml = "⭐".repeat(s.stars || 0);
                             skillHtml += `
-                                <div class="bg-black p-1.5 border ${gradeInfo.colorClass.split(' ')[0]} flex flex-col justify-between h-10 min-w-0">
-                                    <div class="flex justify-between items-center text-[7px] text-gray-400">
-                                        <span class="font-bold text-yellow-300">${gradeInfo.name}</span>
-                                        <span>${starsHtml}</span>
+                                <div class="p-1.5 border-2 ${gradeInfo.colorClass} flex flex-col justify-between h-12 min-w-0">
+                                    <div class="flex justify-between items-center text-[8px]">
+                                        <span class="font-bold uppercase tracking-wider">${gradeInfo.name} T${s.tier || 1}</span>
+                                        <span class="text-yellow-300 font-bold">${starsHtml}</span>
                                     </div>
-                                    <span class="text-[9px] font-bold font-mono text-white truncate">${capitalizeFirstLetter(s.word)}</span>
+                                    <span class="text-[10px] font-bold font-mono text-white truncate">${capitalizeFirstLetter(s.word)}</span>
                                 </div>
                             `;
                         } else {
-                            skillHtml += `<div class="bg-black p-1.5 border border-dashed border-[#262626] flex items-center justify-center h-10 text-[8px] text-gray-600 font-bold">비어있음</div>`;
+                            skillHtml += `<div class="bg-[#0d0d0d] p-1.5 border border-dashed border-[#3c3c3c] flex items-center justify-center h-12 text-[9px] text-gray-500 font-bold">비어있음</div>`;
                         }
                     } else {
-                        skillHtml += `<div class="bg-black p-1.5 border border-dashed border-[#262626] flex items-center justify-center h-10 text-[8px] text-gray-600 font-bold">비어있음</div>`;
+                        skillHtml += `<div class="bg-[#0d0d0d] p-1.5 border border-dashed border-[#3c3c3c] flex items-center justify-center h-12 text-[9px] text-gray-500 font-bold">비어있음</div>`;
                     }
                 }
                 skillContainer.innerHTML = skillHtml;

@@ -432,17 +432,27 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
         }
 
         // 직렬화되어 문자열 상태로 적재된 JSON 스킬 필드 안전 파싱
-        // 16번째 열(idx 15): SkillsInventory, 17번째 열(idx 16): EquippedSkills
+        // (신규 16번째 P열 / 구버전 17번째 Q열 모두 자동 호환 탐색)
         var parsedInventory = [];
         var parsedEquipped = [];
+        
         try {
-          if (data[i][15]) parsedInventory = JSON.parse(data[i][15]);
-          if (data[i][16]) parsedEquipped = JSON.parse(data[i][16]);
-        } catch(e) {
-          // 파싱 실패 시 초기 세션 구조 할당
-          parsedInventory = [];
-          parsedEquipped = [];
-        }
+          var invRaw = data[i][15] || data[i][16] || "";
+          if (typeof invRaw === 'string' && invRaw.startsWith('[')) {
+             parsedInventory = JSON.parse(invRaw);
+          } else if (Array.isArray(invRaw)) {
+             parsedInventory = invRaw;
+          }
+        } catch(e) { parsedInventory = []; }
+
+        try {
+          var eqRaw = data[i][16] || data[i][17] || "";
+          if (typeof eqRaw === 'string' && eqRaw.startsWith('[')) {
+             parsedEquipped = JSON.parse(eqRaw);
+          } else if (Array.isArray(eqRaw)) {
+             parsedEquipped = eqRaw;
+          }
+        } catch(e) { parsedEquipped = []; }
 
         var loadedPetLevels = {};
         var petCol = String(data[i][11]).trim();

@@ -673,48 +673,46 @@
                             </button>
                         </div>
                     </div>
-                    <p class="text-[10px] text-[#7e7e7e] uppercase tracking-wider mb-4">학습 퀴즈를 풀어 쌓은 정복 포인트(FP)로 단어 캡슐을 뽑아 필살 스킬을 획득하고 강화해보세요!</p>
+                    <p class="text-xs text-gray-300 font-bold mb-4">학습 퀴즈를 풀어 쌓은 정복 포인트(FP)로 단어 캡슐을 뽑아 필살 스킬을 획득하고 강화해보세요!</p>
 
                     <!-- Equipped Slots (4 slots) -->
-                    <div class="mb-5 bg-[#0d0d0d] p-3.5 border border-[#3c3c3c] rounded-none-forced">
-                        <div class="flex justify-between items-center mb-2">
-                            <h4
-                                class="bmw-label-uppercase text-[#0066b1] flex items-center gap-1.5">
-                                <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+                    <div class="mb-5 bg-[#0d0d0d] p-4 border border-[#3c3c3c] rounded-none-forced">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="text-xs font-bold text-[#0066b1] flex items-center gap-1.5 uppercase tracking-wider">
+                                <i data-lucide="layout-grid" class="w-4 h-4"></i>
                                 <span>장착된 마법 스킬 (전투용 슬롯)</span>
                             </h4>
                         </div>
-                        <div class="grid grid-cols-4 gap-2" id="equippedSkillsGrid">
+                        <div class="grid grid-cols-4 gap-3" id="equippedSkillsGrid">
                             <!-- Filled dynamically -->
                         </div>
                     </div>
 
                     <!-- Acquired Skills Inventory list -->
                     <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <h4
-                                class="bmw-label-uppercase text-[#0066b1] flex items-center gap-1.5">
-                                <i data-lucide="archive" class="w-3.5 h-3.5"></i>
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="text-xs font-bold text-[#0066b1] flex items-center gap-1.5 uppercase tracking-wider">
+                                <i data-lucide="archive" class="w-4 h-4"></i>
                                 <span>보유한 영단어 스킬 마법 보관함</span>
                             </h4>
-                            <button onclick="combineSkills()" class="bmw-btn-secondary py-1 px-3 text-[10px] bg-gradient-to-r from-purple-900 to-indigo-900 border-purple-500 text-white font-bold flex items-center gap-1 hover:from-purple-800 hover:to-indigo-800 transition">
-                                <i data-lucide="sparkles" class="w-3 h-3 text-pink-400"></i>
-                                <span>스킬 3개 조합하기 (100% 성공)</span>
+                            <button onclick="combineSkills()" class="bmw-btn-secondary py-1.5 px-3.5 text-xs bg-gradient-to-r from-purple-900 to-indigo-900 border-purple-500 text-white font-bold flex items-center gap-1.5 hover:from-purple-800 hover:to-indigo-800 transition shadow-md">
+                                <i data-lucide="sparkles" class="w-4 h-4 text-pink-400"></i>
+                                <span>스킬 3개 조합하기 (100% 확정 확승)</span>
                             </button>
                         </div>
-                        <div class="bg-black border border-[#3c3c3c] p-3 max-h-48 overflow-y-auto grid grid-cols-1 gap-2 rounded-none-forced"
+                        <div class="bg-black border border-[#3c3c3c] p-3 max-h-64 overflow-y-auto grid grid-cols-1 gap-2.5 rounded-none-forced"
                             id="skillsInventoryGrid">
                             <!-- Filled dynamically -->
                         </div>
                     </div>
                 </div>
                 <div
-                    class="grid grid-cols-5 gap-1 text-center text-[8px] font-bold mt-4 bg-[#0d0d0d] p-2 border border-[#3c3c3c] rounded-none-forced">
-                    <div class="text-[#bbbbbb] font-light">일반: ×15 (75%)</div>
-                    <div class="text-[#0066b1] font-bold">희귀: ×25 (18%)</div>
-                    <div class="text-[#1c69d4] font-bold">영웅: ×40 (5%)</div>
-                    <div class="text-[#e22718] font-bold">전설: ×70 (1.95%)</div>
-                    <div class="text-pink-400 font-bold animate-pulse">신화: ×150 (0.05%)</div>
+                    class="grid grid-cols-5 gap-1.5 text-center text-xs font-bold mt-4 bg-[#0d0d0d] p-2.5 border border-[#3c3c3c] rounded-none-forced">
+                    <div class="text-[#bbbbbb]">일반: ×15 (75%)</div>
+                    <div class="text-[#0066b1]">희귀: ×25 (18%)</div>
+                    <div class="text-[#1c69d4]">영웅: ×40 (5%)</div>
+                    <div class="text-[#e22718]">전설: ×70 (1.95%)</div>
+                    <div class="text-pink-400 animate-pulse">신화: ×150 (0.05%)</div>
                 </div>
             </div>
 
@@ -2942,28 +2940,28 @@
                 const maxExp = skill.maxExp || getRequiredExpForStar(skill.grade);
 
                 invHtml += `
-                    <div class="border-2 ${isEquipped ? 'border-white' : 'border-[#262626]'} bg-[#0d0d0d] rounded-none-forced p-3 flex items-center justify-between text-left transition hover:bg-[#1a1a1a]">
-                        <div class="min-w-0 flex-grow pr-2">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-none-forced uppercase tracking-widest ${gradeInfo.colorClass}">${gradeInfo.name} (T${skill.tier || 1})</span>
-                                <p class="text-sm font-bold font-mono text-white truncate ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : ''}">${capitalizeFirstLetter(skill.word)}</p>
-                                <span class="text-xs text-yellow-400 font-bold">${starsHtml}</span>
+                    <div class="border-2 ${isEquipped ? 'border-white' : 'border-[#262626]'} bg-[#0d0d0d] rounded-none-forced p-3.5 flex items-center justify-between text-left transition hover:bg-[#1a1a1a]">
+                        <div class="min-w-0 flex-grow pr-3">
+                            <div class="flex items-center gap-2 mb-1.5">
+                                <span class="text-xs font-bold px-2.5 py-0.5 rounded-none-forced uppercase tracking-widest ${gradeInfo.colorClass}">${gradeInfo.name} (T${skill.tier || 1})</span>
+                                <p class="text-base font-bold font-mono text-white truncate ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : ''}">${capitalizeFirstLetter(skill.word)}</p>
+                                <span class="text-sm text-yellow-400 font-bold">${starsHtml}</span>
                             </div>
-                            <div class="flex items-center justify-between text-xs text-[#bbbbbb] gap-2">
+                            <div class="flex items-center justify-between text-xs text-gray-300 font-bold gap-2">
                                 <span class="truncate">${skill.meaning}</span>
-                                <span class="text-pink-400 font-bold flex-shrink-0">피해 배율: ×${mult}배</span>
+                                <span class="text-pink-400 font-bold flex-shrink-0 text-xs">피해 배율: ×${mult}배</span>
                             </div>
                             <!-- 경험치 바 -->
-                            <div class="w-full bg-[#111] h-1.5 border border-[#3c3c3c] mt-1.5 rounded-none-forced overflow-hidden">
+                            <div class="w-full bg-[#111] h-2 border border-[#3c3c3c] mt-2 rounded-none-forced overflow-hidden">
                                 <div class="bg-yellow-500 h-full transition-all duration-300" style="width: ${Math.min(100, (exp / maxExp) * 100)}%"></div>
                             </div>
-                            <div class="text-[8px] text-[#7e7e7e] mt-0.5 flex justify-between">
+                            <div class="text-[10px] text-gray-400 mt-1 flex justify-between font-bold">
                                 <span>한계돌파 경험치: ${exp} / ${maxExp}</span>
-                                <span>(중복 획득 시 흡수 기강)</span>
+                                <span>(중복 획득 시 흡수 성장)</span>
                             </div>
                         </div>
-                        <button onclick="${isEquipped ? `unequipSkill('${skill.id}')` : `equipSkill('${skill.id}')`}" class="flex-shrink-0 text-[10px] font-bold px-3 py-2 rounded-none-forced transition ${isEquipped ? 'bg-transparent border border-[#e22718] text-[#e22718] hover:bg-[#e22718] hover:text-white' : 'bg-transparent border border-white text-white hover:bg-white hover:text-black'}">
-                            ${isEquipped ? 'UNEQUIP' : 'EQUIP'}
+                        <button onclick="${isEquipped ? `unequipSkill('${skill.id}')` : `equipSkill('${skill.id}')`}" class="flex-shrink-0 text-xs font-black px-4 py-2.5 rounded-none-forced transition shadow-md ${isEquipped ? 'bg-transparent border-2 border-[#e22718] text-[#e22718] hover:bg-[#e22718] hover:text-white' : 'bg-transparent border-2 border-white text-white hover:bg-white hover:text-black'}">
+                            ${isEquipped ? '해제 (UNEQUIP)' : '장착 (EQUIP)'}
                         </button>
                     </div>
                 `;

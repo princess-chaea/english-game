@@ -2171,17 +2171,14 @@
                         imgTransform = `transform="scale(-1, 1)" transform-origin="${x + width/2}px ${y + height/2}px"`;
                     }
 
-                    // 100레벨 맥스 단계 펫을 위한 찬란한 전설 오로라 아우라 빛 무늬 (Pure Transparent Aura Glow Effect)
-                    let auraStyle = "";
-                    let auraOverlay = "";
+                    // 100레벨 맥스 단계 펫: 이미지 잘림(Clipping) 박스를 만드는 외부 필터 제거하고 순수 전설 아우라 효과 적용
+                    let auraClass = "";
                     if (level >= 100) {
-                        auraStyle = "filter: drop-shadow(0 0 12px #f59e0b) drop-shadow(0 0 25px #ec4899);";
-                        auraOverlay = `<circle cx="${x + width/2}" cy="${y + height/2}" r="${width/1.8}" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4,4" class="animate-spin" opacity="0.8" />`;
+                        auraClass = "animate-pulse";
                     }
 
                     svg.innerHTML = `
-                        ${auraOverlay}
-                        <image href="${imageUrl}" onerror="this.setAttribute('href', '${fallbackUrl}')" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet" ${imgTransform} style="${auraStyle}" />
+                        <image href="${imageUrl}" onerror="this.setAttribute('href', '${fallbackUrl}')" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet" ${imgTransform} class="${auraClass}" />
                     `;
                     container.classList.remove("hidden");
                 } else {

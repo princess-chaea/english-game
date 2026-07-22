@@ -65,7 +65,7 @@ function initDatabaseSheets() {
       "Grade", "Class", "Number", "Name", "Gold", 
       "AvatarType", "HelmetLvl", "ArmorLvl", "WeaponLvl", "ShieldLvl", "ShoesLvl", 
       "PetType", "PetLvl", "Stage", "Progress", "LastSaved", 
-      "SkillsInventory", "EquippedSkills", "Password"
+      "SkillsInventory", "EquippedSkills", "Password", "MasteryPoints"
     ];
     studentSheet.appendRow(studentHeaders);
     
@@ -468,7 +468,8 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
           progress: Number(data[i][14]) || 0,
           lastSaved: Number(data[i][15]) || Date.now(),
           skillsInventory: parsedInventory,
-          equippedSkills: parsedEquipped
+          equippedSkills: parsedEquipped,
+          masteryPoints: Number(data[i][19]) || 0
         };
       }
     }
@@ -480,7 +481,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
     var newRow = [
       Number(grade), Number(classNum), Number(studentNum), String(name), 
       0, String(defaultAvatar), 1, 1, 1, 1, 1, "{}", "", 1, 0, Date.now(),
-      defaultInvStr, defaultEqStr, "'" + String(password).trim()
+      defaultInvStr, defaultEqStr, "'" + String(password).trim(), 0
     ];
     
     sheet.appendRow(newRow);
@@ -493,7 +494,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
       gold: newRow[4], avatarType: newRow[5], helmetLvl: newRow[6], armorLvl: newRow[7],
       weaponLvl: newRow[8], shieldLvl: newRow[9], shoesLvl: newRow[10],
       petLevels: {}, stage: newRow[13], progress: newRow[14], 
-      lastSaved: newRow[15], skillsInventory: [], equippedSkills: []
+      lastSaved: newRow[15], skillsInventory: [], equippedSkills: [], masteryPoints: 0
     };
   } catch(e) {
     return null;
@@ -501,7 +502,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
 }
 
 // 5. 플레이어 진행도 보존 실시간 업로드 동기화
-function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType, helmetLvl, armorLvl, weaponLvl, shieldLvl, shoesLvl, petLevelsStr, stage, progress, skillsInventory, equippedSkills) {
+function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType, helmetLvl, armorLvl, weaponLvl, shieldLvl, shoesLvl, petLevelsStr, stage, progress, skillsInventory, equippedSkills, masteryPoints) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName("Students");
@@ -528,6 +529,7 @@ function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType
         sheet.getRange(targetRow, 8).setValue(armorLvl);
         sheet.getRange(targetRow, 9).setValue(weaponLvl);
         sheet.getRange(targetRow, 10).setValue(shieldLvl);
+        sheet.getRow(targetRow);
         sheet.getRange(targetRow, 11).setValue(shoesLvl);
         sheet.getRange(targetRow, 12).setValue(petLevelsStr);
         sheet.getRange(targetRow, 13).setValue("");
@@ -536,6 +538,7 @@ function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType
         sheet.getRange(targetRow, 16).setValue(Date.now());
         sheet.getRange(targetRow, 17).setValue(serializedInventory);
         sheet.getRange(targetRow, 18).setValue(serializedEquipped);
+        sheet.getRange(targetRow, 20).setValue(masteryPoints || 0);
         
         return true;
       }

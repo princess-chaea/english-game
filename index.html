@@ -1797,8 +1797,48 @@
 
             gameState.skillsInventory = data.skillsInventory || [];
             gameState.equippedSkills = data.equippedSkills || [];
+            gameState.masteryPoints = data.masteryPoints || 0;
 
             fetchWordsFromSpreadsheet();
+        }
+
+        function saveLocalCache() {
+            if (!gameState.name) return;
+            const cacheKey = `vocahero_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+            localStorage.setItem(cacheKey, JSON.stringify(gameState));
+        }
+
+        function saveSessionToCloud() {
+            saveLocalCache();
+            const savedUrl = getGasUrl();
+            if (!isGoogleScriptActive && (!savedUrl || savedUrl.trim() === "")) {
+                showToast("💾 로컬 저장소에 게임 진행 상황이 보존되었습니다.");
+                return;
+            }
+
+            showToast("⏳ 구글 시트 클라우드 동기화 저장 중...");
+            const petStr = JSON.stringify(gameState.petLevels || {});
+            
+            runGas(
+                "saveStudentProgress",
+                [
+                    gameState.grade, gameState.classNum, gameState.studentNum, gameState.name,
+                    gameState.gold, gameState.avatarType, gameState.helmetLvl, gameState.armorLvl,
+                    gameState.weaponLvl, gameState.shieldLvl, gameState.shoesLvl, petStr,
+                    gameState.stage, gameState.progress, gameState.skillsInventory, gameState.equippedSkills,
+                    gameState.masteryPoints || 0
+                ],
+                function (success) {
+                    if (success) {
+                        showToast("🏰 구글 시트 클라우드에 진행 상황이 안전하게 동기화되었습니다!");
+                    } else {
+                        showToast("⚠️ 클라우드 저장 실패! 로컬 저장은 유지됩니다.");
+                    }
+                },
+                function () {
+                    showToast("⚠️ 통신 오류로 클라우드 동기화 실패! 로컬 저장은 완료되었습니다.");
+                }
+            );
         }
 
         function fetchWordsFromSpreadsheet() {

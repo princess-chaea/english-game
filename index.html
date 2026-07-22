@@ -4162,18 +4162,30 @@
         ];
 
         function getWeeklyBossIndex() {
-            // 대한민국 표준시 (KST: UTC+9) 기준 현재 연도 및 주차(Week) 계산
+            // ✅ 매주 월요일 00:00 KST 기준으로 주차 교체 (ISO 주차 기준)
             const nowUtc = new Date();
-            // KST 오프셋(+9시간) 적용
+            // KST(UTC+9) 변환
             const kstNow = new Date(nowUtc.getTime() + (9 * 60 * 60 * 1000));
-            
-            const kstStart = new Date(Date.UTC(kstNow.getUTCFullYear(), 0, 1));
-            const diff = kstNow.getTime() - kstStart.getTime();
-            const oneWeek = 1000 * 60 * 60 * 24 * 7;
-            const weekNum = Math.floor(diff / oneWeek);
 
-            // 3종의 이미지(BornDragon, Golem, Rich)가 주차별로 돌아가면서 출현
-            return weekNum % WORLD_BOSS_SEASONS.length;
+            // ISO 주차 계산: 해당 주의 목요일이 속한 연도의 1월 첫 목요일이 1주차
+            // 간단 구현: 1970-01-05(월요일)부터 현재까지의 주 수
+            const EPOCH_MONDAY = new Date(Date.UTC(1970, 0, 5)); // 1970-01-05 월요일 UTC
+            // KST 기준 오늘 자정(월요일 경계)을 UTC로 환산
+            const kstMidnight = new Date(Date.UTC(
+                kstNow.getUTCFullYear(),
+                kstNow.getUTCMonth(),
+                kstNow.getUTCDate()
+            ));
+            // 요일 조정: kstMidnight을 해당 주 월요일 00:00 KST로 맞추기
+            const dayOfWeek = kstMidnight.getUTCDay(); // 0=일, 1=월, ..., 6=토
+            const daysSinceMonday = (dayOfWeek + 6) % 7; // 월=0, 화=1, ..., 일=6
+            const thisMonday = new Date(kstMidnight.getTime() - daysSinceMonday * 24 * 60 * 60 * 1000);
+
+            const oneWeek = 1000 * 60 * 60 * 24 * 7;
+            const weekNum = Math.floor((thisMonday.getTime() - EPOCH_MONDAY.getTime()) / oneWeek);
+
+            // 3종의 보스(BornDragon, Golem, Rich)가 월요일마다 돌아가면서 출현
+            return ((weekNum % WORLD_BOSS_SEASONS.length) + WORLD_BOSS_SEASONS.length) % WORLD_BOSS_SEASONS.length;
         }
 
         function updateWorldBossUI() {

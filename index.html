@@ -3451,8 +3451,9 @@
                 window.speechSynthesis.speak(utterance);
             }
 
-            // 스킬 데미지 공식 대폭 상향: (클릭 타격력 * 5 + 현재 DPS) * 스킬 배율(×15배 ~ ×150배+)
-            const skillDmg = (calculateClickAttackPower() * 5 + calculateDPSPower()) * mult;
+            // 스킬 데미지 공식 밸런싱: (클릭 타격력 * 스킬 배율 * 3) + (현재 DPS * 2)
+            // 원샷 원킬 방지 및 타격감 넘치는 필살기 딜링 밸런스 유지
+            const skillDmg = (calculateClickAttackPower() * mult * 3) + (calculateDPSPower() * 2);
             processCombatDamage(skillDmg);
             playSoundEffect('levelup');
 

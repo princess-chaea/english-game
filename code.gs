@@ -253,6 +253,12 @@ function attackWorldBoss(grade, studentKey, damageDealt) {
       }
     }
     
+    return { success: true, newMyDamage: newMyDamage };
+  } catch(e) {
+    return { error: e.toString() };
+  }
+}
+
 // 명예의 전장 (Hall of Fame) 랭킹 시스템
 function getHallOfFame(grade, studentKey) {
   initDatabaseSheets();

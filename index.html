@@ -2210,14 +2210,24 @@
                         imgTransform = `transform="scale(-1, 1)" transform-origin="${x + width/2}px ${y + height/2}px"`;
                     }
 
-                    // 100레벨 맥스 단계 펫: 이미지 잘림(Clipping) 박스를 만드는 외부 필터 제거하고 순수 전설 아우라 효과 적용
-                    let auraClass = "";
+                    // 100레벨 맥스 펫: 이미지 투명도 깜빡임(animate-pulse)을 제거하고, 펫 뒷배경에 영롱하게 빛나는 오로라 후광(Aura Glow Halo) 삽입!
+                    let auraOverlay = "";
                     if (level >= 100) {
-                        auraClass = "animate-pulse";
+                        auraOverlay = `
+                            <defs>
+                                <radialGradient id="petAurora_${type}" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stop-color="#ffd700" stop-opacity="0.75" />
+                                    <stop offset="60%" stop-color="#ec4899" stop-opacity="0.4" />
+                                    <stop offset="100%" stop-color="#3b82f6" stop-opacity="0" />
+                                </radialGradient>
+                            </defs>
+                            <circle cx="${x + width/2}" cy="${y + height/2}" r="${Math.max(width, height)/1.4}" fill="url(#petAurora_${type})" class="animate-pulse" />
+                        `;
                     }
 
                     svg.innerHTML = `
-                        <image href="${imageUrl}" onerror="this.setAttribute('href', '${fallbackUrl}')" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet" ${imgTransform} class="${auraClass}" />
+                        ${auraOverlay}
+                        <image href="${imageUrl}" onerror="this.setAttribute('href', '${fallbackUrl}')" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet" ${imgTransform} />
                     `;
                     container.classList.remove("hidden");
                 } else {

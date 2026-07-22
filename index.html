@@ -3532,8 +3532,8 @@
 
                 const arena = document.getElementById("battleArena");
                 
-                // 단어 정답 시 치명타 폭딜 데미지 타격 (클릭 데미지의 250배 + 초당 DPS의 30배)
-                const quizDmg = (calculateClickAttackPower() * 250) + (calculateDPSPower() * 30);
+                // 단어 정답 시 치명타 타격: 클릭 데미지의 30배 + DPS 5배 (스킬 신화 × 150배보다 항상 약하게 유지)
+                const quizDmg = (calculateClickAttackPower() * 30) + (calculateDPSPower() * 5);
                 processCombatDamage(quizDmg);
                 spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `⚡ 퀴즈 크리티컬! -${quizDmg.toLocaleString()}`);
 
@@ -4888,6 +4888,7 @@
             playSoundEffect('levelup');
             refreshStateVisuals();
             saveLocalCache();
+            saveSessionToCloud(); // ✅ 월드보스 참전 보상(FP, 골드)을 클라우드에 즉시 영구 저장
 
             updateWorldBossUI();
             showToast(`${reasonMessage} 🎁 참전 보상: 🪙 +${rewardGold.toLocaleString()}G, 🎁 +${rewardFp} FP 획득!`);

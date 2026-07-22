@@ -4048,8 +4048,10 @@
                 skillContainer.innerHTML = skillHtml;
             }
 
-            // 로컬 클라이언트 1일 1회 완료 여부 즉시 사전 검사 (시트 기반 검증 적용)
-            const isTodayDone = false;
+            // 로컬 클라이언트 1일 1회 완료 여부 즉시 사전 검사
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const lastRaidDate = localStorage.getItem(`vocahero_wb_raid_date_${gameState.name}_${gameState.studentNum}`);
+            const isTodayDone = (lastRaidDate === todayStr);
 
             const btn = document.getElementById("startWorldBossBtn");
             const badge = document.getElementById("worldBossEntryBadge");
@@ -4770,9 +4772,9 @@
             gameState.gold = (gameState.gold || 0) + rewardGold;
             gameState.masteryPoints = (gameState.masteryPoints || 0) + rewardFp;
 
-            // 로컬 락 기록 제거 (구글 시트 WorldBossLog 시트 기반 판정 적용)
-            // const todayStr = new Date().toISOString().slice(0, 10);
-            // localStorage.setItem(`vocahero_wb_raid_date_${gameState.name}_${gameState.studentNum}`, todayStr);
+            // 참전 완료 후 즉시 1일 1회 도전 완료 잠금 처리 (로컬 + 서버 이중 락)
+            const todayStr = new Date().toISOString().slice(0, 10);
+            localStorage.setItem(`vocahero_wb_raid_date_${gameState.name}_${gameState.studentNum}`, todayStr);
 
             playSoundEffect('levelup');
             refreshStateVisuals();

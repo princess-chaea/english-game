@@ -1222,7 +1222,9 @@
             <div class="text-center">
                 <div
                     class="w-14 h-14 bg-[#0d0d0d] border border-[#3c3c3c] text-[#0066b1] flex items-center justify-center mx-auto mb-2 rounded-none-forced">
-                    <i data-lucide="sparkles" class="w-8 h-8"></i>
+                    <svg viewBox="0 0 24 24" class="w-8 h-8 stroke-current fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"/>
+                    </svg>
                 </div>
                 <h2 class="text-xl font-bold uppercase tracking-wider text-white" style="letter-spacing: -0.5px;">영단어 원정대 출격</h2>
                 <p class="text-[10px] text-[#7e7e7e] uppercase tracking-widest mt-1">학번과 이름을 입력하고 원정대로 출격하세요!</p>
@@ -1246,17 +1248,17 @@
                 <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">반</label>
-                        <input type="number" id="inputClass" placeholder="반"
+                        <input type="number" id="inputClass" min="1" placeholder="반" oninput="if(this.value < 1 && this.value !== ''){ this.value = 1; showToast('⚠️ 반 숫자는 1 이상이어야 합니다.'); }"
                             class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced">
                     </div>
                     <div>
                         <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">번호</label>
-                        <input type="number" id="inputNumber" placeholder="번호"
+                        <input type="number" id="inputNumber" min="1" placeholder="번호" oninput="if(this.value < 1 && this.value !== ''){ this.value = 1; showToast('⚠️ 번호는 1 이상이어야 합니다.'); }"
                             class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced">
                     </div>
                     <div>
-                        <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">이름</label>
-                        <input type="text" id="inputName" placeholder="이름" style="ime-mode: active;" oninput="if(/[a-zA-Z]/.test(this.value)){ this.value=this.value.replace(/[a-zA-Z]/g,''); showToast('⚠️ 영문 키보드 상태입니다. 한/영 키를 눌러 한글로 입력해주세요!'); }"
+                        <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">이름 (한글)</label>
+                        <input type="text" id="inputName" placeholder="이름" lang="ko" inputmode="text" oninput="if(/[^가-힣ㄱ-ㅎㅏ-ㅣ\s]/.test(this.value)){ this.value = this.value.replace(/[^가-힣ㄱ-ㅎㅏ-ㅣ\s]/g, ''); showToast('⚠️ 학생 이름은 한글 전용입니다. 한/영 키를 확인해주세요!'); }"
                             class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced">
                     </div>
                 </div>
@@ -1979,8 +1981,8 @@
             const studentNum = parseInt(document.getElementById("inputNumber").value);
             const name = document.getElementById("inputName").value.trim();
 
-            if (!classNum || !studentNum || !name) {
-                showToast("⚠️ 학급, 번호, 이름을 올바르게 입력하세요!");
+            if (!classNum || classNum < 1 || !studentNum || studentNum < 1 || !name) {
+                showToast("⚠️ 반, 번호는 1 이상의 양수 숫자이어야 하며, 이름도 입력해야 합니다!");
                 return;
             }
 

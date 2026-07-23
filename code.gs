@@ -65,7 +65,7 @@ function initDatabaseSheets() {
       "Grade", "Class", "Number", "Name", "Gold", 
       "AvatarType", "HelmetLvl", "ArmorLvl", "WeaponLvl", "ShieldLvl", "ShoesLvl", 
       "PetLevels", "Stage", "Progress", "LastSaved", 
-      "SkillsInventory", "EquippedSkills", "Password", "MasteryPoints"
+      "SkillsInventory", "EquippedSkills", "Password", "MasteryPoints", "ExtraData"
     ];
     studentSheet.appendRow(studentHeaders);
     
@@ -493,12 +493,20 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
           skillsInventory: parsedInventory,
           equippedSkills: parsedEquipped,
           masteryPoints: Number(data[i][18]) || 0,
+          // ExtraData JSON (col 20, index 19) - 장신구, 유물, 잠재력, 정복단어, 칭호, 통계
           necklaceLvl: Number(extraParsed.necklaceLvl) || 0,
           braceletLvl: Number(extraParsed.braceletLvl) || 0,
           ringLvl: Number(extraParsed.ringLvl) || 0,
           acquiredRelics: extraParsed.acquiredRelics || [],
           gearPotentials: extraParsed.gearPotentials || [],
-          isPotentialUnlocked: extraParsed.isPotentialUnlocked || false
+          isPotentialUnlocked: extraParsed.isPotentialUnlocked || false,
+          masteredWords: extraParsed.masteredWords || [],
+          equippedTitle: extraParsed.equippedTitle || "",
+          wbTitle: extraParsed.wbTitle || "",
+          unlockedTitles: extraParsed.unlockedTitles || [],
+          bossTokens: Number(extraParsed.bossTokens) || 0,
+          totalQuizTries: Number(extraParsed.totalQuizTries) || 0,
+          totalQuizCorrect: Number(extraParsed.totalQuizCorrect) || 0
         };
       }
     }
@@ -523,7 +531,11 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
       gold: newRow[4], avatarType: newRow[5], helmetLvl: newRow[6], armorLvl: newRow[7],
       weaponLvl: newRow[8], shieldLvl: newRow[9], shoesLvl: newRow[10],
       petLevels: {}, stage: newRow[12], progress: newRow[13], 
-      lastSaved: newRow[14], skillsInventory: [], equippedSkills: [], masteryPoints: 0
+      lastSaved: newRow[14], skillsInventory: [], equippedSkills: [], masteryPoints: 0,
+      necklaceLvl: 0, braceletLvl: 0, ringLvl: 0,
+      acquiredRelics: [], gearPotentials: [], isPotentialUnlocked: false,
+      masteredWords: [], equippedTitle: "", wbTitle: "", unlockedTitles: [],
+      bossTokens: 0, totalQuizTries: 0, totalQuizCorrect: 0
     };
   } catch(e) {
     return null;

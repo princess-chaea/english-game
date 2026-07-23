@@ -2361,6 +2361,15 @@
             gameState.gearPotentials = data.gearPotentials || [];
             gameState.isPotentialUnlocked = data.isPotentialUnlocked || false;
 
+            // 📚 정복 단어, 칭호, 퀴즈 통계 복원
+            gameState.masteredWords = data.masteredWords || [];
+            gameState.equippedTitle = data.equippedTitle || "";
+            gameState.wbTitle = data.wbTitle || "";
+            gameState.unlockedTitles = data.unlockedTitles || [];
+            gameState.bossTokens = data.bossTokens || 0;
+            gameState.totalQuizTries = data.totalQuizTries || 0;
+            gameState.totalQuizCorrect = data.totalQuizCorrect || 0;
+
             fetchWordsFromSpreadsheet();
         }
 
@@ -2388,7 +2397,14 @@
                 ringLvl: gameState.ringLvl || 0,
                 acquiredRelics: gameState.acquiredRelics || [],
                 gearPotentials: gameState.gearPotentials || [],
-                isPotentialUnlocked: gameState.isPotentialUnlocked || false
+                isPotentialUnlocked: gameState.isPotentialUnlocked || false,
+                masteredWords: gameState.masteredWords || [],
+                equippedTitle: gameState.equippedTitle || "",
+                wbTitle: gameState.wbTitle || "",
+                unlockedTitles: gameState.unlockedTitles || [],
+                bossTokens: gameState.bossTokens || 0,
+                totalQuizTries: gameState.totalQuizTries || 0,
+                totalQuizCorrect: gameState.totalQuizCorrect || 0
             });
             
             runGas(

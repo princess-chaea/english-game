@@ -367,16 +367,11 @@
                     <i data-lucide="user" class="w-4 h-4 text-white"></i>
                     <span id="displayStudentName">불러오는 중...</span>
                 </div>
-                <!-- Save & Exit Button -->
+                <!-- Save & Exit Button (저장 + 로그아웃 통합) -->
                 <button onclick="saveAndExit()" 
-                    class="bg-[#0066b1] hover:bg-[#1c69d4] border border-[#0066b1] text-white px-3 py-1.5 rounded-none-forced text-xs font-bold transition flex items-center gap-1.5 tracking-wider uppercase">
+                    class="bg-[#e22718] hover:bg-[#b91c1c] border border-[#e22718] text-white px-3 py-1.5 rounded-none-forced text-xs font-bold transition flex items-center gap-1.5 tracking-wider uppercase">
                     <i data-lucide="save" class="w-3.5 h-3.5"></i>
-                    <span>저장하기</span>
-                </button>
-                <button onclick="logoutUser()" 
-                    class="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-gray-300 px-2.5 py-1.5 rounded-none-forced text-xs font-bold transition flex items-center gap-1 tracking-wider uppercase" title="다른 계정으로 로그인">
-                    <i data-lucide="log-out" class="w-3.5 h-3.5 text-red-400"></i>
-                    <span>로그아웃</span>
+                    <span>저장하고 나가기</span>
                 </button>
             </div>
         </div>
@@ -4911,12 +4906,54 @@
         }
 
         function saveAndExit() {
-            saveSessionToCloud();
-            showToast("💾 데이터 저장 완료! 잠시 후 창을 안전하게 닫습니다...");
-            setTimeout(() => {
-                window.close();
-                alert("💾 데이터가 완벽하게 저장되었습니다! 이제 브라우저 창을 닫으셔도 좋습니다.");
-            }, 1200);
+            saveLocalCache();
+            showToast("💾 데이터 저장 중... 잠시 후 첫 화면으로 이동합니다.");
+            const savedUrl = getGasUrl();
+            if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
+                // 클라우드 저장 후 세션 제거 → 로그인 화면으로
+                const petStr = JSON.stringify(gameState.petLevels || {});
+                const extraDataStr = JSON.stringify({
+                    necklaceLvl: gameState.necklaceLvl || 0,
+                    braceletLvl: gameState.braceletLvl || 0,
+                    ringLvl: gameState.ringLvl || 0,
+                    acquiredRelics: gameState.acquiredRelics || [],
+                    gearPotentials: gameState.gearPotentials || [],
+                    isPotentialUnlocked: gameState.isPotentialUnlocked || false,
+                    masteredWords: gameState.masteredWords || [],
+                    equippedTitle: gameState.equippedTitle || "",
+                    wbTitle: gameState.wbTitle || "",
+                    unlockedTitles: gameState.unlockedTitles || [],
+                    bossTokens: gameState.bossTokens || 0,
+                    totalQuizTries: gameState.totalQuizTries || 0,
+                    totalQuizCorrect: gameState.totalQuizCorrect || 0
+                });
+                runGas(
+                    "saveStudentProgress",
+                    [
+                        gameState.grade, gameState.classNum, gameState.studentNum, gameState.name,
+                        gameState.gold, gameState.avatarType, gameState.helmetLvl, gameState.armorLvl,
+                        gameState.weaponLvl, gameState.shieldLvl, gameState.shoesLvl, petStr,
+                        gameState.stage, gameState.progress, gameState.skillsInventory, gameState.equippedSkills,
+                        Number(gameState.masteryPoints) || 0,
+                        extraDataStr
+                    ],
+                    function () {
+                        localStorage.removeItem("vocahero_active_session");
+                        location.reload();
+                    },
+                    function () {
+                        // 클라우드 실패해도 로컬은 저장된 상태로 나가기
+                        localStorage.removeItem("vocahero_active_session");
+                        location.reload();
+                    }
+                );
+            } else {
+                // 로컬 저장만 하고 나가기
+                setTimeout(() => {
+                    localStorage.removeItem("vocahero_active_session");
+                    location.reload();
+                }, 800);
+            }
         }
 
         function resetFullSession() {

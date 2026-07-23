@@ -2670,10 +2670,11 @@
         }
 
         function calculateClickAttackPower() {
-            // 무기, 갑옷, 방패, 신발 및 스테이지 스케일링 기본 클릭 공격력 보정
-            const baseGearPower = (gameState.weaponLvl * 10) + (gameState.armorLvl * 4) + (gameState.shieldLvl * 3) + (gameState.shoesLvl * 2);
-            const stageScaling = Math.floor(Math.pow(1.12, (gameState.stage || 1) - 1) * 25);
-            return Math.max(1, baseGearPower + stageScaling);
+            // 무기, 갑옷, 방패, 신발 및 완화된 스테이지 클릭 공격력 보정
+            const baseGearPower = (gameState.weaponLvl * 6) + (gameState.armorLvl * 3) + (gameState.shieldLvl * 2) + (gameState.shoesLvl * 2);
+            // 지수(pow) 급증을 선형 + 완화된 승수로 조정하여 적정 밸런스 유지 (60스테이지 기준 약 1,500 ~ 2,000 수준)
+            const stagePower = Math.floor((gameState.stage || 1) * 20 + Math.pow(1.045, (gameState.stage || 1) - 1) * 10);
+            return Math.max(1, baseGearPower + stagePower);
         }
 
         function calculateOfflineGains() {
@@ -3801,22 +3802,22 @@
             let targetThree = [];
             let targetGrade = null;
 
-            // 💡 1. 유저가 직접 3개를 선택한 경우 수동 선택된 3개 적용!
+            // 💡 1. 유저가 직접 3개를 선택한 경우
             if (selectedCombineSkillIds && selectedCombineSkillIds.length === 3) {
                 targetThree = availableSkills.filter(s => selectedCombineSkillIds.includes(s.id));
                 if (targetThree.length !== 3) {
                     showToast("⚠️ 선택한 카드가 올바르지 않습니다. 다시 선택해주세요.");
                     return;
                 }
-                // 투입된 3개 중 가장 높은 등급을 목표 등급 기준으로 설정
                 targetThree.sort((a, b) => (gradeRankMap[b.grade] || 1) - (gradeRankMap[a.grade] || 1));
                 targetGrade = targetThree[0].grade;
             } else if (selectedCombineSkillIds && selectedCombineSkillIds.length > 0 && selectedCombineSkillIds.length < 3) {
                 showToast(`⚠️ 연성하려면 카드를 3개 선택해야 합니다! (현재 ${selectedCombineSkillIds.length}개 선택됨)`);
                 return;
             } else {
-                // 💡 2. 선택된 것이 없는 경우: 기존 자동 탐색 (동일 등급 3개 또는 최고 등급 3개)
-                for (let g in gradeRankMap) {
+                // 💡 2. 선택된 것이 없는 경우: 낮은 등급(normal부터)부터 3장 자동 선택!
+                const lowestToHighestGrades = ["normal", "rare", "hero", "legendary"];
+                for (let g of lowestToHighestGrades) {
                     const group = availableSkills.filter(s => s.grade === g);
                     if (group.length >= 3) {
                         targetThree = group.slice(0, 3);
@@ -3825,59 +3826,73 @@
                     }
                 }
 
+                // 동일 등급 3장이 없으면 전체 중 가장 낮은 등급 3장 자동 선택
                 if (!targetThree || targetThree.length < 3) {
-                    availableSkills.sort((a, b) => (gradeRankMap[b.grade] || 1) - (gradeRankMap[a.grade] || 1));
+                    availableSkills.sort((a, b) => (gradeRankMap[a.grade] || 1) - (gradeRankMap[b.grade] || 1));
                     targetThree = availableSkills.slice(0, 3);
+                    targetThree.sort((a, b) => (gradeRankMap[b.grade] || 1) - (gradeRankMap[a.grade] || 1));
                     targetGrade = targetThree[0].grade;
                 }
             }
 
-            // 💡 [경험치/성장 소모 시스템]: 투입된 3개 카드의 별(⭐ 1개당 +10%)과 EXP(1개당 +2%)를 합산하여 승급 확률 추가 보너스!
+            // 💡 [확률 예측 모달에 표시할 데이터 계산]
             const totalStars = targetThree.reduce((sum, s) => sum + (s.stars || 0), 0);
             const totalExp = targetThree.reduce((sum, s) => sum + (s.exp || 0), 0);
             
-            // 기본 20% + (총 별 × 10%) + (총 EXP × 2%), 최대 95% 확률 제한
             const baseSuccessRate = 0.20;
             const starBonus = totalStars * 0.10;
             const expBonus = totalExp * 0.02;
             const finalUpgradeProb = Math.min(0.95, baseSuccessRate + starBonus + expBonus);
             const successPctDisplay = Math.round(finalUpgradeProb * 100);
+            const failPctDisplay = 100 - successPctDisplay;
 
-            // 주사위 굴리기
-            const roll = Math.random();
-            let resultGrade = targetGrade;
+            const nextGrade = nextGradeMap[targetGrade] || "mythic";
+            const targetGradeInfo = SKILL_GRADES[targetGrade];
+            const nextGradeInfo = SKILL_GRADES[nextGrade];
 
-            if (roll < finalUpgradeProb) {
-                // 승급 성공! (Normal -> Rare -> Hero -> Legendary -> Mythic)
-                resultGrade = nextGradeMap[targetGrade] || "mythic";
-            } else {
-                // 승급 실패 시 동일 등급 무작위 연성
-                resultGrade = targetGrade;
-            }
+            // 실행 확인 모달 팝업 안내 (바로 카드가 만들어지는 것 방지)
+            const confirmMsg = `
+                🔮 <b>마법 카드 3장 연성 조합 미리보기</b><br><br>
+                🔸 <b>재료 카드 (3장)</b>: ${targetThree.map(s => `[${SKILL_GRADES[s.grade].name}] ${s.word}`).join(', ')}<br>
+                ✨ <b>상위 등급 승급 확률</b>: <strong class="text-yellow-300 text-sm">${successPctDisplay}%</strong> (기본 20% + ⭐${totalStars*10}% + EXP${Math.round(expBonus*100)}%)<br>
+                🏆 <b>성공 시 결과</b>: <span class="text-pink-400 font-bold">[${nextGradeInfo.name}]</span> 무작위 신규 스킬 획득<br>
+                🔮 <b>유지 시 결과 (${failPctDisplay}%)</b>: <span class="text-gray-300 font-bold">[${targetGradeInfo.name}]</span> 무작위 스킬 연성<br><br>
+                연성을 진행하시겠습니까?
+            `;
 
-            const targetIds = targetThree.map(s => s.id);
+            showCombinePreviewModal(confirmMsg, () => {
+                // 주사위 굴리기
+                const roll = Math.random();
+                let resultGrade = targetGrade;
 
-            // 재료 스킬 3개 소모(삭제)
-            gameState.skillsInventory = gameState.skillsInventory.filter(s => !targetIds.includes(s.id));
-            selectedCombineSkillIds = []; // 선택 목록 초기화
+                if (roll < finalUpgradeProb) {
+                    resultGrade = nextGrade;
+                } else {
+                    resultGrade = targetGrade;
+                }
 
-            // 새 연성 스킬 생성
-            let pool = gameState.wordsPool && gameState.wordsPool.length > 0 ? gameState.wordsPool : MOCK_WORDS["4"];
-            const randomWordObj = pool[Math.floor(Math.random() * pool.length)];
+                const targetIds = targetThree.map(s => s.id);
+                gameState.skillsInventory = gameState.skillsInventory.filter(s => !targetIds.includes(s.id));
+                selectedCombineSkillIds = [];
 
-            addOrLevelUpSkill(randomWordObj.word, randomWordObj.meaning, resultGrade);
-            const resGradeInfo = SKILL_GRADES[resultGrade];
-            const currentGradeInfo = SKILL_GRADES[targetGrade];
+                let pool = gameState.wordsPool && gameState.wordsPool.length > 0 ? gameState.wordsPool : MOCK_WORDS["4"];
+                const randomWordObj = pool[Math.floor(Math.random() * pool.length)];
 
-            if (resultGrade !== targetGrade) {
-                showToast(`✨ 대성공! (확률 ${successPctDisplay}% [기본20%+⭐${totalStars*10}%+EXP${Math.round(expBonus*100)}%]) [${resGradeInfo.name}] 등급 스킬 연성 성공!`);
-            } else {
-                showToast(`🔮 연성 완료 (확률 ${successPctDisplay}%)! 경험치를 소비하였으나 [${currentGradeInfo.name}] 등급 스킬 연성!`);
-            }
-            
-            buildSkillTabUI();
-            renderSkillsUI();
-            saveLocalCache();
+                addOrLevelUpSkill(randomWordObj.word, randomWordObj.meaning, resultGrade);
+                const resGradeInfo = SKILL_GRADES[resultGrade];
+
+                if (resultGrade !== targetGrade) {
+                    playSoundEffect('levelup');
+                    showToast(`✨ 대성공! (${successPctDisplay}% 확률 달성!) [${resGradeInfo.name}] 등급 스킬 연성 성공!`);
+                } else {
+                    playSoundEffect('hit');
+                    showToast(`🔮 연성 완료 (${successPctDisplay}% 확률)! [${targetGradeInfo.name}] 등급 스킬 연성!`);
+                }
+                
+                buildSkillTabUI();
+                renderSkillsUI();
+                saveLocalCache();
+            });
         }
 
         function equipSkill(skillId) {
@@ -5905,6 +5920,42 @@
                 overlay.classList.add("hidden");
                 overlay.classList.remove("flex");
             }, 3000);
+        }
+
+        function showCombinePreviewModal(htmlContent, onConfirm) {
+            const overlay = document.getElementById("forgeResultOverlay");
+            const box = document.getElementById("forgeResultBox");
+            const icon = document.getElementById("forgeResultIcon");
+            const titleEl = document.getElementById("forgeResultTitle");
+            const descEl = document.getElementById("forgeResultDesc");
+
+            icon.innerText = "🔮";
+            titleEl.innerText = "마법 조합 연성 확인";
+            titleEl.style.color = "#a855f7";
+            descEl.innerHTML = `
+                ${htmlContent}
+                <div class="flex gap-2 mt-4 justify-center">
+                    <button id="cancelCombineBtn" class="px-4 py-2 bg-gray-800 text-gray-300 font-bold text-xs border border-gray-600 rounded-none-forced">취소</button>
+                    <button id="proceedCombineBtn" class="px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-xs rounded-none-forced shadow-lg">연성 시작!</button>
+                </div>
+            `;
+            box.style.borderColor = "#a855f7";
+            box.style.boxShadow = `0 0 32px rgba(168,85,247,0.5)`;
+
+            overlay.classList.remove("hidden");
+            overlay.classList.add("flex");
+
+            clearTimeout(overlay._autoClose);
+
+            document.getElementById("cancelCombineBtn").onclick = () => {
+                overlay.classList.add("hidden");
+                overlay.classList.remove("flex");
+            };
+            document.getElementById("proceedCombineBtn").onclick = () => {
+                overlay.classList.add("hidden");
+                overlay.classList.remove("flex");
+                if (onConfirm) onConfirm();
+            };
         }
 
         function copyAppsScriptCode() {

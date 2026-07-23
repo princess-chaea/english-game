@@ -1233,7 +1233,7 @@
     <!-- MODAL 1: Character Creation & Class Number Setup -->
     <!-- MODAL 1: Character Login Info Setup -->
     <div id="loginModal"
-        class="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 transition-opacity duration-300">
+        class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-50 transition-opacity duration-300">
         <div
             class="bg-black text-white max-w-md w-full p-8 shadow-2xl border border-[#3c3c3c] flex flex-col gap-5 rounded-none-forced">
             <div class="text-center">
@@ -2234,7 +2234,10 @@
 
         function handleLocalVerify(grade, classNum, studentNum, name, password) {
             if (loadLocalSimulation(grade, classNum, studentNum, name, password)) {
+                // 모든 로그인 관련 모달 닫기 (새로고침 자동 복원 시 loginModal이 열려있을 수 있음)
+                closeModal("loginModal");
                 closeModal("pinVerifyModal");
+                closeModal("newUserRegisterModal");
                 localStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
                 showToast("🏰 로컬 원정대 계정 로드 성공!");
             }
@@ -6351,17 +6354,24 @@
                                 [session.grade, session.classNum, session.studentNum, session.name, "male", session.password],
                                 function (response) {
                                     if (response && response.error !== "password_mismatch") {
+                                        // 클라우드 자동 복원 성공
+                                        closeModal("loginModal");
+                                        closeModal("pinVerifyModal");
+                                        closeModal("newUserRegisterModal");
                                         syncStateFromServer(response);
                                         showToast(`👋 어서오세요, ${session.name} 용사님! 자동 로그인되었습니다.`);
                                     } else {
+                                        // 비밀번호 불일치 시 로컬 시도
                                         handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
                                     }
                                 },
                                 function () {
+                                    // 클라우드 연결 실패 → 로컬 자동 복원
                                     handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
                                 }
                             );
                         } else {
+                            // 로컬 모드 자동 복원
                             handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
                         }
                         return; // 로그인 모달 팝업 방지
@@ -6369,6 +6379,7 @@
                 } catch(e) {}
             }
 
+            // 저장된 세션 없음 → 로그인 모달 표시
             openModal("loginModal");
         };
         // PWA Install & Service Worker Logic

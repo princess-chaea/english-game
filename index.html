@@ -2582,7 +2582,8 @@
                     const addG = Math.floor(goldAccumulator);
                     goldAccumulator -= addG;
                     gameState.gold = (gameState.gold || 0) + addG;
-                    document.getElementById("goldDisplay").innerText = gameState.gold.toLocaleString();
+                    const gEl = document.getElementById("goldCount");
+                    if (gEl) gEl.innerText = gameState.gold.toLocaleString();
                 }
 
                 // 스킬의 재사용 대기시간(쿨타임) 감소
@@ -4480,39 +4481,63 @@
 
         function refreshStateVisuals() {
             if (typeof gameState.masteryPoints === 'undefined') gameState.masteryPoints = 0;
-            document.getElementById("goldCount").innerText = Math.floor(gameState.gold).toLocaleString();
-            document.getElementById("masteryPointsCount").innerText = Math.floor(gameState.masteryPoints).toLocaleString();
-            document.getElementById("dpsCount").innerText = calculateDPSPower();
-            document.getElementById("clickPowerCount").innerText = calculateClickAttackPower();
-            document.getElementById("displayStageNum").innerText = isBossBattleActive 
-                ? `보스 스테이지 ${gameState.stage}`
-                : `스테이지 ${gameState.stage}-${gameState.progress + 1}`;
+            const goldEl = document.getElementById("goldCount");
+            if (goldEl) goldEl.innerText = Math.floor(gameState.gold).toLocaleString();
+
+            const mpEl = document.getElementById("masteryPointsCount");
+            if (mpEl) mpEl.innerText = Math.floor(gameState.masteryPoints).toLocaleString();
+
+            const dpsEl = document.getElementById("dpsCount");
+            if (dpsEl) dpsEl.innerText = calculateDPSPower();
+
+            const clickEl = document.getElementById("clickPowerCount");
+            if (clickEl) clickEl.innerText = calculateClickAttackPower();
+
+            const stageEl = document.getElementById("displayStageNum");
+            if (stageEl) {
+                stageEl.innerText = isBossBattleActive 
+                    ? `보스 스테이지 ${gameState.stage}`
+                    : `스테이지 ${gameState.stage}-${gameState.progress + 1}`;
+            }
 
             // 권장 DPS 계산 (일반 몬스터는 8초 이내, 보스는 30초 이내 처치 목표)
             const recommendedDps = Math.ceil(monsterMaxHp / (isBossBattleActive ? 30 : 8));
-            document.getElementById("recommendedDpsDisplay").innerText = recommendedDps.toLocaleString();
+            const recDpsEl = document.getElementById("recommendedDpsDisplay");
+            if (recDpsEl) recDpsEl.innerText = recommendedDps.toLocaleString();
 
             const curProg = gameState.progress;
             const progressRatio = Math.min(100, (curProg / BOSS_UNLOCK_LIMIT) * 100);
 
-            document.getElementById("bossProgressBar").style.width = `${progressRatio}%`;
-            document.getElementById("bossUnlockRatio").innerText = `${curProg} / ${BOSS_UNLOCK_LIMIT}`;
+            const pBarEl = document.getElementById("bossProgressBar");
+            if (pBarEl) pBarEl.style.width = `${progressRatio}%`;
 
-            if (curProg >= BOSS_UNLOCK_LIMIT && !isBossBattleActive) {
-                document.getElementById("bossTriggerBtn").classList.remove("hidden");
-                document.getElementById("bossTriggerBtn").classList.add("flex");
-            } else {
-                document.getElementById("bossTriggerBtn").classList.add("hidden");
+            const unlockRatioEl = document.getElementById("bossUnlockRatio");
+            if (unlockRatioEl) unlockRatioEl.innerText = `${curProg} / ${BOSS_UNLOCK_LIMIT}`;
+
+            const triggerBtn = document.getElementById("bossTriggerBtn");
+            if (triggerBtn) {
+                if (curProg >= BOSS_UNLOCK_LIMIT && !isBossBattleActive) {
+                    triggerBtn.classList.remove("hidden");
+                    triggerBtn.classList.add("flex");
+                } else {
+                    triggerBtn.classList.add("hidden");
+                }
             }
 
-            document.getElementById("statCorrectCount").innerText = gameState.totalQuizCorrect;
-            document.getElementById("statIncorrectCount").innerText = gameState.totalQuizTries - gameState.totalQuizCorrect;
+            const statCorrEl = document.getElementById("statCorrectCount");
+            if (statCorrEl) statCorrEl.innerText = gameState.totalQuizCorrect;
+
+            const statIncorrEl = document.getElementById("statIncorrectCount");
+            if (statIncorrEl) statIncorrEl.innerText = gameState.totalQuizTries - gameState.totalQuizCorrect;
 
             const ratio = gameState.totalQuizTries > 0
                 ? Math.round((gameState.totalQuizCorrect / gameState.totalQuizTries) * 100)
                 : 0;
-            document.getElementById("statSuccessRatio").innerText = `${ratio}%`;
-            document.getElementById("masteredTotalText").innerText = gameState.totalQuizCorrect;
+            const statRatioEl = document.getElementById("statSuccessRatio");
+            if (statRatioEl) statRatioEl.innerText = `${ratio}%`;
+
+            const mTotalEl = document.getElementById("masteredTotalText");
+            if (mTotalEl) mTotalEl.innerText = gameState.totalQuizCorrect;
 
             // ✅ 영웅 칭호 태그 렌더링 (장착된 칭호 사용)
             const nameTagEl = document.getElementById("heroNameTag");

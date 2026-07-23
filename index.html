@@ -493,15 +493,15 @@
                         <span id="heroRelicName" class="text-[7px] text-yellow-300 font-bold font-mono truncate max-w-full">고대성배</span>
                     </div>
 
-                    <!-- 💎 [캐릭터 우측] 장착된 장신구 3종 visual slots -->
-                    <div id="heroAccSlotsContainer" class="absolute top-4 left-[calc(50%+4.5rem)] flex flex-col gap-1 z-20">
-                        <div id="accSlot_necklace" class="w-7 h-7 bg-black/80 border border-purple-500 flex items-center justify-center p-0.5 shadow-[0_0_10px_rgba(168,85,247,0.5)] title='지혜의 목걸이'">
+                    <!-- 💎 [캐릭터 우측] 장착된 장신구 3종 visual slots (가로 세로 겹침 방지) -->
+                    <div id="heroAccSlotsContainer" class="absolute top-16 left-[calc(50%+4.5rem)] flex flex-row gap-1 z-20">
+                        <div id="accSlot_necklace" class="w-6 h-6 bg-black/80 border border-purple-500 hidden items-center justify-center p-0.5 shadow-[0_0_8px_rgba(168,85,247,0.5)]" title="지혜의 목걸이">
                             <img id="accImg_necklace" src="media/accessories/necklace.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23c084fc\' stroke-width=\'2\'><circle cx=\'12\' cy=\'14\' r=\'5\'/><path d=\'M7 4a7 7 0 0 0 10 0\'/></svg>'" class="w-full h-full object-contain">
                         </div>
-                        <div id="accSlot_bracelet" class="w-7 h-7 bg-black/80 border border-sky-500 flex items-center justify-center p-0.5 shadow-[0_0_10px_rgba(56,189,248,0.5)] title='투지의 팔찌'">
+                        <div id="accSlot_bracelet" class="w-6 h-6 bg-black/80 border border-sky-500 hidden items-center justify-center p-0.5 shadow-[0_0_8px_rgba(56,189,248,0.5)]" title="투지의 팔찌">
                             <img id="accImg_bracelet" src="media/accessories/bracelet.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2338bdf8\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'8\'/></svg>'" class="w-full h-full object-contain">
                         </div>
-                        <div id="accSlot_ring" class="w-7 h-7 bg-black/80 border border-amber-500 flex items-center justify-center p-0.5 shadow-[0_0_10px_rgba(245,158,11,0.5)] title='영웅의 반지'">
+                        <div id="accSlot_ring" class="w-6 h-6 bg-black/80 border border-amber-500 hidden items-center justify-center p-0.5 shadow-[0_0_8px_rgba(245,158,11,0.5)]" title="영웅의 반지">
                             <img id="accImg_ring" src="media/accessories/ring.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23fbbf24\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'6\'/><path d=\'M12 2v4\'/></svg>'" class="w-full h-full object-contain">
                         </div>
                     </div>
@@ -554,7 +554,7 @@
                 <button onclick="switchTab('petTab')" id="petTabBtn"
                     class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition">
                     <i data-lucide="cat" class="w-3.5 h-3.5"></i>
-                    <span>펫 소환</span>
+                    <span>펫/유물 소환</span>
                 </button>
                 <button onclick="switchTab('skillTab')" id="skillTabBtn"
                     class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition">
@@ -703,36 +703,18 @@
                         </div>
                     </div>
 
-                    <!-- 💍 [50스테이지 해금] 전설 장신구 3종 & 고대 유물 제단 -->
+                    <!-- 💍 [50스테이지 해금] 전설 장신구 3종 -->
                     <div id="accessoriesLabContainer" class="mt-6 border-t border-[#262626] pt-4">
                         <div class="flex justify-between items-center mb-2">
                             <h4 class="text-xs font-bold text-purple-400 flex items-center gap-1.5 uppercase tracking-wider">
                                 <i data-lucide="gem" class="w-4 h-4 text-purple-400"></i>
-                                <span>💍 고대 장신구 & 🏺 유물 제단 (50스테이지 10단위 해금)</span>
+                                <span>💍 고대 장신구 (50/60/70스테이지 10단위 해금)</span>
                             </h4>
                         </div>
                         <div class="bg-[#0d0d0d] border border-purple-900/40 p-3 rounded-none-forced">
                             <!-- 장신구 3종 그리드 -->
-                            <div id="accessoriesShopGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+                            <div id="accessoriesShopGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                 <!-- Dynamic Accessories Cards -->
-                            </div>
-
-                            <!-- 고대 유물 제단 & 10종 소환 -->
-                            <div class="border-t border-purple-900/40 pt-3">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="text-xs font-bold text-yellow-400 flex items-center gap-1">🏺 고대 유물 소환 제단</span>
-                                    <div class="flex gap-1.5">
-                                        <button onclick="drawRelicCapsule(1)" class="px-2.5 py-1 bg-purple-900 hover:bg-purple-800 text-purple-200 font-bold text-[10px] border border-purple-500">
-                                            🏺 1회 (50 증표)
-                                        </button>
-                                        <button onclick="drawRelicCapsule(10)" class="px-2.5 py-1 bg-gradient-to-r from-yellow-600 to-amber-500 hover:from-yellow-500 hover:to-amber-400 text-black font-extrabold text-[10px] shadow-md">
-                                            🔥 10연속 (450 증표)
-                                        </button>
-                                    </div>
-                                </div>
-                                <div id="relicsInventoryGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-2 max-h-48 overflow-y-auto p-1 bg-black border border-[#262626]">
-                                    <!-- Dynamic Relic Cards -->
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -742,23 +724,44 @@
                 </p>
             </div>
 
-            <!-- TAB 3: Companion Pet Lab & Multipliers -->
+            <!-- TAB 3: Companion Pet Lab & Multipliers (펫/유물 소환) -->
             <div id="petTab"
                 class="bg-black border border-[#3c3c3c] p-6 flex-grow hidden flex-col justify-between min-h-[440px] rounded-none-forced">
                 <div>
                     <h3 class="bmw-label-uppercase text-white flex items-center gap-2 mb-4">
                         <i data-lucide="paw-print" class="text-[#0066b1]"></i>
-                        <span>소환수 소환 및 친밀도 연구실</span>
+                        <span>🐾 소환수 연구실 & 🏺 고대 유물 소환 제단</span>
                     </h3>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="petListContainer">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" id="petListContainer">
                         <!-- Dynamic Companion Pet inventory listing -->
+                    </div>
+
+                    <!-- 🏺 고대 유물 제단 & 10종 소환 -->
+                    <div class="border-t border-purple-900/50 pt-4 mt-2">
+                        <div class="flex justify-between items-center mb-2.5">
+                            <h4 class="text-xs font-bold text-yellow-400 flex items-center gap-1.5 uppercase tracking-wider">
+                                <i data-lucide="sparkles" class="w-4 h-4 text-yellow-400"></i>
+                                <span>🏺 고대 유물 소환 제단 (보스 증표 소환)</span>
+                            </h4>
+                            <div class="flex gap-1.5">
+                                <button onclick="drawRelicCapsule(1)" class="px-3 py-1 bg-purple-900 hover:bg-purple-800 text-purple-200 font-bold text-[10px] border border-purple-500 rounded-none-forced">
+                                    🏺 1회 (50 증표)
+                                </button>
+                                <button onclick="drawRelicCapsule(10)" class="px-3 py-1 bg-gradient-to-r from-yellow-600 to-amber-500 hover:from-yellow-500 hover:to-amber-400 text-black font-extrabold text-[10px] shadow-md rounded-none-forced">
+                                    🔥 10연속 (450 증표)
+                                </button>
+                            </div>
+                        </div>
+                        <div id="relicsInventoryGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-2 max-h-48 overflow-y-auto p-2 bg-[#0d0d0d] border border-[#262626] rounded-none-forced">
+                            <!-- Dynamic Relic Cards -->
+                        </div>
                     </div>
                 </div>
                 <div
                     class="bg-[#0d0d0d] p-3.5 border border-[#3c3c3c] mt-4 text-[10px] text-[#bbbbbb] flex items-start gap-2 rounded-none-forced">
                     <i data-lucide="sparkles" class="w-4 h-4 text-[#e22718]"></i>
-                    <p><strong>활성화 버프 가이드:</strong> 소유 중인 가장 레벨이 높은 펫이 전장에 동반하며, 펫이 가해주는 추가 자동 공격 피해와 학습 수당 곱연산 혜택은 누적 적용됩니다.</p>
+                    <p><strong>소환 및 유물 버프 가이드:</strong> 소유 중인 펫의 추가 피해와 유물 공명 수치(⭐ 한계돌파)는 캐릭터 전투력에 누적 반영됩니다.</p>
                 </div>
             </div>
 
@@ -2194,6 +2197,14 @@
             gameState.equippedSkills = data.equippedSkills || [];
             gameState.masteryPoints = data.masteryPoints || 0;
 
+            // 💍 50+ 콘텐츠 확장 필드 클라우드 동기화 셋업
+            gameState.necklaceLvl = data.necklaceLvl || 0;
+            gameState.braceletLvl = data.braceletLvl || 0;
+            gameState.ringLvl = data.ringLvl || 0;
+            gameState.acquiredRelics = data.acquiredRelics || [];
+            gameState.gearPotentials = data.gearPotentials || [];
+            gameState.isPotentialUnlocked = data.isPotentialUnlocked || false;
+
             fetchWordsFromSpreadsheet();
         }
 
@@ -2215,6 +2226,15 @@
             showToast("⏳ 구글 시트 클라우드 동기화 저장 중...");
             const petStr = JSON.stringify(gameState.petLevels || {});
             
+            const extraDataStr = JSON.stringify({
+                necklaceLvl: gameState.necklaceLvl || 0,
+                braceletLvl: gameState.braceletLvl || 0,
+                ringLvl: gameState.ringLvl || 0,
+                acquiredRelics: gameState.acquiredRelics || [],
+                gearPotentials: gameState.gearPotentials || [],
+                isPotentialUnlocked: gameState.isPotentialUnlocked || false
+            });
+            
             runGas(
                 "saveStudentProgress",
                 [
@@ -2222,7 +2242,8 @@
                     gameState.gold, gameState.avatarType, gameState.helmetLvl, gameState.armorLvl,
                     gameState.weaponLvl, gameState.shieldLvl, gameState.shoesLvl, petStr,
                     gameState.stage, gameState.progress, gameState.skillsInventory, gameState.equippedSkills,
-                    Number(gameState.masteryPoints) || 0
+                    Number(gameState.masteryPoints) || 0,
+                    extraDataStr
                 ],
                 function (success) {
                     if (success) {
@@ -3046,6 +3067,28 @@
         // ==========================================
         let selectedLockedPotentialSlots = [];
 
+        function unlockPotentialLab() {
+            const stage = gameState.stage || 1;
+            if (stage < 40) {
+                showToast("⚠️ 무구 잠재력 연구소 개설은 40스테이지 달성 시 해금됩니다!");
+                return;
+            }
+
+            const cost = 100000; // 10만 골드 개설 비용
+            if (gameState.gold < cost) {
+                showToast(`🪙 골드가 부족합니다! 잠재력 연구소를 개설하려면 ${cost.toLocaleString()} Gold가 필요합니다.`);
+                return;
+            }
+
+            gameState.gold -= cost;
+            gameState.isPotentialUnlocked = true;
+            playSoundEffect('levelup');
+            showToast("⚡ 축하합니다! [무구 잠재력 연구소]가 정식 개설되었습니다!");
+            renderGearPotentialLabUI();
+            refreshStateVisuals();
+            saveLocalCache();
+        }
+
         function renderGearPotentialLabUI() {
             const tokenText = document.getElementById("bossTokenCountText");
             if (tokenText) tokenText.innerText = (gameState.bossTokens || 0).toLocaleString();
@@ -3056,8 +3099,22 @@
             const stage = gameState.stage || 1;
             const avgGearLvl = Math.floor(((gameState.helmetLvl || 1) + (gameState.armorLvl || 1) + (gameState.weaponLvl || 1) + (gameState.shieldLvl || 1) + (gameState.shoesLvl || 1)) / 5);
 
-            let unlockedSlots = 0;
-            if (stage >= 40) unlockedSlots = 3;
+            // 미해금 시 개설 버튼 표시
+            if (!gameState.isPotentialUnlocked) {
+                grid.innerHTML = `
+                    <div class="col-span-2 sm:col-span-3 border border-yellow-700/60 bg-black/90 p-4 text-center flex flex-col items-center justify-center rounded-none-forced py-6">
+                        <span class="text-2xl mb-1">⚡</span>
+                        <h4 class="font-extrabold text-xs text-yellow-300">무구 잠재력 연구소 미개설</h4>
+                        <p class="text-[10px] text-gray-400 mt-1 mb-3">${stage >= 40 ? '40스테이지에 도달했습니다! 골드를 지불하여 잠재력 연구소를 개설하세요.' : '🔒 40스테이지 달성 시 연구소 개설이 해금됩니다.'}</p>
+                        <button onclick="unlockPotentialLab()" ${stage < 40 ? 'disabled' : ''} class="px-5 py-2 ${stage >= 40 ? 'bg-yellow-500 hover:bg-yellow-400 text-black shadow-lg cursor-pointer' : 'bg-gray-800 text-gray-500 cursor-not-allowed'} font-extrabold text-xs rounded-none-forced transition">
+                            ${stage >= 40 ? '🔓 100,000 Gold 지불하고 연구소 개설' : '🔒 40스테이지 달성 필요'}
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            let unlockedSlots = 3;
             if (avgGearLvl >= 30) unlockedSlots = 4;
             if (avgGearLvl >= 40) unlockedSlots = 5;
             if (avgGearLvl >= 50) unlockedSlots = 6;
@@ -3065,15 +3122,6 @@
             if (!gameState.gearPotentials) gameState.gearPotentials = [];
 
             let html = "";
-            const potentialPool = [
-                { type: "atk", name: "전체 공격력", icon: "⚔️", format: (v) => `+${v}%` },
-                { type: "skillDmg", name: "마법 스킬 피해", icon: "🪄", format: (v) => `+${v}%` },
-                { type: "bossDmg", name: "보스전 피해량", icon: "🐉", format: (v) => `+${v}%` },
-                { type: "clickDmg", name: "마우스 클릭 타격", icon: "💥", format: (v) => `+${v}` },
-                { type: "goldBonus", name: "정답 골드 수당", icon: "🪙", format: (v) => `+${v}%` },
-                { type: "critRate", name: "크리티컬 확률", icon: "🎯", format: (v) => `+${v}%` }
-            ];
-
             const gradeColorMap = {
                 normal: "border-gray-700 bg-gray-950 text-gray-300",
                 rare: "border-sky-600 bg-sky-950 text-sky-300",
@@ -3087,8 +3135,8 @@
                 if (!isUnlocked) {
                     html += `
                         <div class="border border-gray-900 bg-black/60 p-2.5 text-center flex flex-col items-center justify-center min-h-[75px] opacity-40 rounded-none-forced">
-                            <span class="text-xs text-gray-500 font-bold">🔒 잠김</span>
-                            <span class="text-[8px] text-gray-600 mt-1">${i < 3 ? '40스테이지 해금' : `평균 ${i === 3 ? '30강' : i === 4 ? '40강' : '50강'} 달성`}</span>
+                            <span class="text-xs text-gray-500 font-bold">🔒 슬롯 잠김</span>
+                            <span class="text-[8px] text-gray-600 mt-1">평균 ${i === 3 ? '30강' : i === 4 ? '40강' : '50강'} 달성</span>
                         </div>
                     `;
                     continue;
@@ -3119,7 +3167,6 @@
 
             grid.innerHTML = html;
 
-            // 리롤 비용 계산 (잠금 개수별 단계 상승)
             const lockedCount = selectedLockedPotentialSlots.length;
             const costMap = [50000, 150000, 400000, 1000000, 2500000, 6000000];
             const currentCost = costMap[Math.min(lockedCount, 5)];
@@ -3234,10 +3281,14 @@
 
                 const slotEl = document.getElementById(`accSlot_${accKey}`);
                 if (slotEl) {
-                    if (currentLvl > 0) {
+                    if (currentLvl > 0 && isUnlocked) {
                         slotEl.classList.remove("hidden");
+                        slotEl.classList.add("flex");
                         const auraColor = currentLvl >= 30 ? "border-amber-400 shadow-[0_0_15px_#f59e0b]" : (currentLvl >= 15 ? "border-purple-400 shadow-[0_0_10px_#a855f7]" : "border-sky-400");
-                        slotEl.className = `w-7 h-7 bg-black/80 ${auraColor} flex items-center justify-center p-0.5 transition duration-300`;
+                        slotEl.className = `w-6 h-6 bg-black/80 ${auraColor} flex items-center justify-center p-0.5 transition duration-300`;
+                    } else {
+                        slotEl.classList.add("hidden");
+                        slotEl.classList.remove("flex");
                     }
                 }
 

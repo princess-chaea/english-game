@@ -4652,18 +4652,35 @@
 
         function populateMasteredVocabulary() {
             const listDiv = document.getElementById("masteredVocabularyCatalog");
-            const count = gameState.totalQuizCorrect;
+            if (!listDiv) return;
 
-            if (count === 0) {
+            const masteredList = gameState.masteredWords || [];
+
+            // 통계 업데이트
+            const correctEl = document.getElementById("statCorrectCount");
+            const incorrectEl = document.getElementById("statIncorrectCount");
+            const ratioEl = document.getElementById("statSuccessRatio");
+            if (correctEl) correctEl.innerText = gameState.totalQuizCorrect || 0;
+            if (incorrectEl) incorrectEl.innerText = (gameState.totalQuizTries || 0) - (gameState.totalQuizCorrect || 0);
+            if (ratioEl) {
+                const tries = gameState.totalQuizTries || 0;
+                const correct = gameState.totalQuizCorrect || 0;
+                ratioEl.innerText = tries > 0 ? `${Math.round((correct / tries) * 100)}%` : "0%";
+            }
+
+            const totalEl = document.getElementById("masteredTotalText");
+            if (totalEl) totalEl.innerText = masteredList.length;
+
+            if (masteredList.length === 0) {
                 listDiv.innerHTML = `<p class="text-xs text-[#7e7e7e] text-center py-10 uppercase tracking-wider">아직 학습을 정복한 영단어 목록이 비어 있습니다.</p>`;
                 return;
             }
 
             let html = `<div class="grid grid-cols-2 gap-2">`;
-            const maxCap = Math.min(count, gameState.wordsPool.length);
-            for (let i = 0; i < maxCap; i++) {
-                const item = gameState.wordsPool[i];
-                if (item) {
+            // 최근 정복 단어부터 앞에 표시
+            const displayList = [...masteredList].reverse();
+            displayList.forEach(item => {
+                if (item && item.word) {
                     html += `
                         <div class="bg-[#0d0d0d] p-2.5 border border-[#3c3c3c] rounded-none-forced flex items-center justify-between text-2xs">
                             <div>
@@ -4674,7 +4691,7 @@
                         </div>
                     `;
                 }
-            }
+            });
             html += `</div>`;
             listDiv.innerHTML = html;
         }
@@ -4922,7 +4939,7 @@
             const leftPanel = document.getElementById("leftRpgPanel");
             const rightPanel = document.getElementById("rightMainPanel");
 
-            if (tabId === 'worldBossTab' || tabId === 'hallOfFameTab') {
+            if (tabId === 'worldBossTab' || tabId === 'hallOfFameTab' || tabId === 'statsTab') {
                 if (leftPanel) leftPanel.classList.add("hidden");
                 if (rightPanel) {
                     rightPanel.classList.remove("lg:col-span-7");
@@ -4936,20 +4953,20 @@
                 }
             }
 
-            document.getElementById("quizTab").classList.add("hidden");
-            document.getElementById("gearTab").classList.add("hidden");
-            document.getElementById("petTab").classList.add("hidden");
-            document.getElementById("skillTab").classList.add("hidden");
-            document.getElementById("worldBossTab").classList.add("hidden");
-            document.getElementById("hallOfFameTab").classList.add("hidden");
-            document.getElementById("statsTab").classList.add("hidden");
+            // 모든 탭 강제 숨김 (display도 none으로)
+            const allTabs = ["quizTab", "gearTab", "petTab", "skillTab", "worldBossTab", "hallOfFameTab", "statsTab"];
+            allTabs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.classList.add("hidden");
+                    el.style.display = "none";
+                }
+            });
 
             const activeEl = document.getElementById(tabId);
             if (activeEl) {
                 activeEl.classList.remove("hidden");
-                if (tabId === 'hallOfFameTab' || tabId === 'statsTab') {
-                    activeEl.style.display = 'flex';
-                }
+                activeEl.style.display = "flex";
             }
 
             const tabButtons = ["quizTabBtn", "gearTabBtn", "petTabBtn", "skillTabBtn", "worldBossTabBtn", "hallOfFameTabBtn", "statsTabBtn"];

@@ -688,16 +688,21 @@
                                 <i data-lucide="zap" class="w-4 h-4 text-yellow-400"></i>
                                 <span>⚡ 무구 잠재력(Potential) 연구소 (40스테이지 해금)</span>
                             </h4>
-                            <span class="text-[10px] text-gray-400">소유 보스 증표: <b id="bossTokenCountText" class="text-yellow-300 font-bold">0</b>개</span>
+                            <div class="flex items-center gap-2">
+                                <button onclick="openPotentialProbModal()" class="text-[10px] text-yellow-300 bg-yellow-950/80 border border-yellow-600 px-2 py-0.5 font-bold hover:bg-yellow-900 transition flex items-center gap-1">
+                                    📊 확률표 보기
+                                </button>
+                                <span class="text-[10px] text-gray-400">소유 보스 증표: <b id="bossTokenCountText" class="text-yellow-300 font-bold">0</b>개</span>
+                            </div>
                         </div>
                         <div class="bg-[#0d0d0d] border border-[#3c3c3c] p-3 rounded-none-forced">
                             <div id="potentialSlotsGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
                                 <!-- Dynamic Potential Slots -->
                             </div>
                             <div class="flex justify-between items-center pt-2 border-t border-[#222]">
-                                <span class="text-[10px] text-gray-400">리롤 비용: <b id="potentialRerollCostText" class="text-yellow-300">50,000 Gold</b></span>
+                                <span class="text-[10px] text-gray-400">재설정 비용: <b id="potentialRerollCostText" class="text-yellow-300">50,000 Gold</b></span>
                                 <button onclick="rerollGearPotentials()" class="px-4 py-1.5 bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold text-xs transition rounded-none-forced shadow-md">
-                                    🎲 골드 잠재력 리롤
+                                    🎲 골드 잠재력 재설정
                                 </button>
                             </div>
                         </div>
@@ -1405,6 +1410,145 @@
             <div class="border-t border-[#3c3c3c] pt-3 flex justify-end">
                 <button onclick="closeModal('teacherModal')" class="bmw-btn-secondary px-6 py-2.5">
                     확인완료
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📊 무구 잠재력 확률표 & 등급별 급간 정보 멀티모달 팝업 -->
+    <div id="potentialProbModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+        <div class="bg-[#0a0a0a] rounded-none-forced max-w-xl w-full p-6 shadow-2xl border border-yellow-600/70 flex flex-col gap-4 max-h-[85vh] overflow-hidden text-gray-200">
+            <div class="flex justify-between items-center border-b border-yellow-700/50 pb-3">
+                <div class="flex items-center gap-2 text-yellow-400 font-extrabold text-sm uppercase tracking-wider">
+                    <i data-lucide="zap" class="w-5 h-5 text-yellow-400"></i>
+                    <span>📊 무구 잠재력 등급 확률 & 급간 수치 가이드</span>
+                </div>
+                <button onclick="closeModal('potentialProbModal')" class="text-gray-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="overflow-y-auto space-y-4 text-xs pr-1 leading-relaxed">
+                <!-- 1. 등급 출현 확률표 -->
+                <div class="bg-[#121212] p-3 border border-yellow-900/40 rounded-none-forced">
+                    <h4 class="font-extrabold text-yellow-300 mb-2 flex items-center gap-1.5">
+                        🎲 1회 재설정 시 등급 출현 확률
+                    </h4>
+                    <table class="w-full text-[10px] text-center border-collapse">
+                        <thead>
+                            <tr class="bg-black text-gray-400 border-b border-gray-800 font-bold">
+                                <th class="p-1.5 text-left">등급 (Grade)</th>
+                                <th class="p-1.5">획득 확률 (%)</th>
+                                <th class="p-1.5">수치 보정 배율</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-800">
+                            <tr class="text-gray-300">
+                                <td class="p-1.5 text-left font-bold text-gray-400">⚪ 일반 (Normal)</td>
+                                <td class="p-1.5 font-mono">55.0%</td>
+                                <td class="p-1.5 font-mono text-gray-400">× 1.0 (기본)</td>
+                            </tr>
+                            <tr class="text-sky-300">
+                                <td class="p-1.5 text-left font-bold text-sky-400">🔹 희귀 (Rare)</td>
+                                <td class="p-1.5 font-mono">27.0%</td>
+                                <td class="p-1.5 font-mono text-sky-300">× 1.5배</td>
+                            </tr>
+                            <tr class="text-purple-300">
+                                <td class="p-1.5 text-left font-bold text-purple-400">🟣 영웅 (Hero)</td>
+                                <td class="p-1.5 font-mono">12.0%</td>
+                                <td class="p-1.5 font-mono text-purple-300">× 2.2배</td>
+                            </tr>
+                            <tr class="text-red-300">
+                                <td class="p-1.5 text-left font-bold text-red-400">🔴 전설 (Legendary)</td>
+                                <td class="p-1.5 font-mono">5.0%</td>
+                                <td class="p-1.5 font-mono text-red-400">× 3.5배</td>
+                            </tr>
+                            <tr class="text-yellow-300 bg-amber-950/30">
+                                <td class="p-1.5 text-left font-extrabold text-amber-400">🟡 신화 (Mythic)</td>
+                                <td class="p-1.5 font-mono text-yellow-300 font-bold">1.0%</td>
+                                <td class="p-1.5 font-mono text-amber-300 font-bold">× 5.0배 (최상위)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 2. 옵션 종류별 등급 수치 급간표 -->
+                <div class="bg-[#121212] p-3 border border-yellow-900/40 rounded-none-forced">
+                    <h4 class="font-extrabold text-yellow-300 mb-2 flex items-center gap-1.5">
+                        ⚔️ 옵션 유형별 등급 수치 급간표
+                    </h4>
+                    <table class="w-full text-[9px] text-center border-collapse">
+                        <thead>
+                            <tr class="bg-black text-gray-400 border-b border-gray-800 font-bold">
+                                <th class="p-1 text-left">옵션 이름</th>
+                                <th class="p-1 text-gray-400">일반</th>
+                                <th class="p-1 text-sky-400">희귀</th>
+                                <th class="p-1 text-purple-400">영웅</th>
+                                <th class="p-1 text-red-400">전설</th>
+                                <th class="p-1 text-amber-400 font-bold">신화</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-800 font-mono">
+                            <tr>
+                                <td class="p-1 text-left text-gray-200 font-sans font-bold">⚔️ 전체 공격력</td>
+                                <td>+10%</td>
+                                <td class="text-sky-300">+15%</td>
+                                <td class="text-purple-300">+22%</td>
+                                <td class="text-red-400">+35%</td>
+                                <td class="text-yellow-300 font-bold">+50%</td>
+                            </tr>
+                            <tr>
+                                <td class="p-1 text-left text-gray-200 font-sans font-bold">🪄 마법 스킬 피해</td>
+                                <td>+15%</td>
+                                <td class="text-sky-300">+22%</td>
+                                <td class="text-purple-300">+33%</td>
+                                <td class="text-red-400">+52%</td>
+                                <td class="text-yellow-300 font-bold">+75%</td>
+                            </tr>
+                            <tr>
+                                <td class="p-1 text-left text-gray-200 font-sans font-bold">🐉 보스전 피해량</td>
+                                <td>+20%</td>
+                                <td class="text-sky-300">+30%</td>
+                                <td class="text-purple-300">+44%</td>
+                                <td class="text-red-400">+70%</td>
+                                <td class="text-yellow-300 font-bold">+100%</td>
+                            </tr>
+                            <tr>
+                                <td class="p-1 text-left text-gray-200 font-sans font-bold">💥 클릭 타격력</td>
+                                <td>+100</td>
+                                <td class="text-sky-300">+150</td>
+                                <td class="text-purple-300">+220</td>
+                                <td class="text-red-400">+350</td>
+                                <td class="text-yellow-300 font-bold">+500</td>
+                            </tr>
+                            <tr>
+                                <td class="p-1 text-left text-gray-200 font-sans font-bold">🪙 정답 골드 수당</td>
+                                <td>+15%</td>
+                                <td class="text-sky-300">+22%</td>
+                                <td class="text-purple-300">+33%</td>
+                                <td class="text-red-400">+52%</td>
+                                <td class="text-yellow-300 font-bold">+75%</td>
+                            </tr>
+                            <tr>
+                                <td class="p-1 text-left text-gray-200 font-sans font-bold">🎯 크리티컬 확률</td>
+                                <td>+5%</td>
+                                <td class="text-sky-300">+7%</td>
+                                <td class="text-purple-300">+11%</td>
+                                <td class="text-red-400">+17%</td>
+                                <td class="text-yellow-300 font-bold">+25%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="text-[9px] text-gray-400 bg-black p-2 border border-gray-800">
+                    💡 <b>재설정 팁:</b> 원하는 잠재력 옵션 상단의 [🔓 해제] 버튼을 눌러 <b>[🔒 잠금]</b> 상태로 전환하면, 해당 옵션은 보존된 채 다른 슬롯만 선택 재설정할 수 있습니다 (잠금 개수가 많을수록 골드 비용 상승).
+                </div>
+            </div>
+
+            <div class="border-t border-yellow-900/40 pt-3 flex justify-end">
+                <button onclick="closeModal('potentialProbModal')" class="bg-yellow-600 hover:bg-yellow-500 text-black font-extrabold px-5 py-2 text-xs rounded-none-forced shadow-md">
+                    확인 및 닫기
                 </button>
             </div>
         </div>
@@ -3292,18 +3436,59 @@
                     }
                 }
 
+                // 구체적 레벨별 연마 수치 수식
+                let currentBonusText = "";
+                let nextBonusText = "";
+
+                if (accKey === 'necklace') {
+                    // 스킬 마법 피해 & 쿨타임
+                    const dmg = currentLvl * 15;
+                    const cd = Math.min(30, currentLvl * 0.6).toFixed(1);
+                    const nextDmg = (currentLvl + 1) * 15;
+                    const nextCd = Math.min(30, (currentLvl + 1) * 0.6).toFixed(1);
+                    currentBonusText = `스킬피해 +${dmg}% | 쿨감 -${cd}%`;
+                    nextBonusText = `스킬피해 +${nextDmg}% | 쿨감 -${nextCd}%`;
+                } else if (accKey === 'bracelet') {
+                    // 클릭 타격력 & 크리티컬
+                    const click = currentLvl * 80;
+                    const crit = Math.min(25, currentLvl * 0.5).toFixed(1);
+                    const nextClick = (currentLvl + 1) * 80;
+                    const nextCrit = Math.min(25, (currentLvl + 1) * 0.5).toFixed(1);
+                    currentBonusText = `클릭타격 +${click} | 크리티컬 +${crit}%`;
+                    nextBonusText = `클릭타격 +${nextClick} | 크리티컬 +${nextCrit}%`;
+                } else if (accKey === 'ring') {
+                    // 초당 자동 DPS & 보스 피해
+                    const dps = currentLvl * 150;
+                    const boss = currentLvl * 2;
+                    const nextDps = (currentLvl + 1) * 150;
+                    const nextBoss = (currentLvl + 1) * 2;
+                    currentBonusText = `자동DPS +${dps} | 보스피해 +${boss}%`;
+                    nextBonusText = `자동DPS +${nextDps} | 보스피해 +${nextBoss}%`;
+                }
+
                 html += `
-                    <div class="bg-[#0d0d0d] border ${isUnlocked ? 'border-purple-900/60' : 'border-gray-900 opacity-50'} p-2.5 rounded-none-forced flex flex-col justify-between min-h-[110px]">
+                    <div class="bg-[#0d0d0d] border ${isUnlocked ? 'border-purple-900/80 shadow-[0_0_10px_rgba(147,51,234,0.15)]' : 'border-gray-900 opacity-50'} p-3 rounded-none-forced flex flex-col justify-between min-h-[135px]">
                         <div>
                             <div class="flex justify-between items-center mb-1">
-                                <h4 class="font-extrabold text-xs text-purple-300">${info.name}</h4>
-                                <span class="text-[9px] font-bold text-yellow-300 font-mono">${currentLvl > 0 ? `Lv.${currentLvl}` : '미해금'}</span>
+                                <h4 class="font-extrabold text-xs text-purple-300 flex items-center gap-1">
+                                    <img src="${info.img}" class="w-4 h-4 object-contain inline">
+                                    <span>${info.name}</span>
+                                </h4>
+                                <span class="text-[9px] font-bold ${isUnlocked ? 'text-yellow-300 bg-purple-950/80 border border-purple-700 px-1.5 py-0.5' : 'text-gray-500'} font-mono">
+                                    ${!isUnlocked ? '🔒 미해금' : (currentLvl > 0 ? `Lv.${currentLvl}` : '해금 완료 (연마 가능)')}
+                                </span>
                             </div>
-                            <p class="text-[9px] text-gray-400 mb-2">${isUnlocked ? info.desc : `🔒 ${info.unlockStage}스테이지 달성 시 해금`}</p>
+                            <p class="text-[9px] text-gray-400 mb-1.5">${isUnlocked ? info.desc : `🔒 ${info.unlockStage}스테이지 달성 시 해금`}</p>
+                            ${isUnlocked ? `
+                                <div class="text-[8px] bg-black p-1.5 border border-purple-900/50 rounded-none-forced font-mono mb-2">
+                                    <div class="text-purple-300 font-bold">현재: ${currentLvl > 0 ? currentBonusText : '연마 전 (0강)'}</div>
+                                    ${!isMax ? `<div class="text-yellow-400 mt-0.5">다음: ${nextBonusText}</div>` : ''}
+                                </div>
+                            ` : ''}
                         </div>
                         <div>
-                            <button onclick="${isUnlocked && !isMax ? `upgradeAccessory('${accKey}')` : ''}" ${!isUnlocked || isMax ? 'disabled' : ''} class="w-full py-1.5 text-[9px] font-extrabold rounded-none-forced transition ${isUnlocked && !isMax ? 'bg-purple-700 hover:bg-purple-600 text-white shadow-md' : 'bg-gray-800 text-gray-500 cursor-not-allowed'}">
-                                ${!isUnlocked ? `🔒 ${info.unlockStage}강 해금` : isMax ? 'MAX (50강)' : `🪙 ${cost.toLocaleString()}G 연마`}
+                            <button onclick="${isUnlocked && !isMax ? `upgradeAccessory('${accKey}')` : ''}" ${!isUnlocked || isMax ? 'disabled' : ''} class="w-full py-1.5 text-[9px] font-extrabold rounded-none-forced transition ${isUnlocked && !isMax ? 'bg-purple-700 hover:bg-purple-600 text-white shadow-md cursor-pointer' : 'bg-gray-800 text-gray-500 cursor-not-allowed'}">
+                                ${!isUnlocked ? `🔒 ${info.unlockStage}스테이지 필요` : isMax ? 'MAX (50강 연마 달성)' : `🪙 ${cost.toLocaleString()}G 연마 (+1강)`}
                             </button>
                         </div>
                     </div>
@@ -5880,6 +6065,10 @@
                     document.getElementById("apiEndpointInput").value = savedUrl;
                 }
             }
+        }
+
+        function openPotentialProbModal() {
+            openModal('potentialProbModal');
         }
 
         function closeModal(modalId) {

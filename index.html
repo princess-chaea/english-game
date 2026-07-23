@@ -4907,15 +4907,8 @@
 
         function saveAndExit() {
             saveLocalCache();
-            showToast("💾 저장 중... 잠시 후 창이 닫힙니다.");
+            showToast("💾 데이터 저장 중... 잠시 후 창을 안전하게 닫습니다.");
             const savedUrl = getGasUrl();
-            const doClose = () => {
-                window.close();
-                // 브라우저 정책상 window.close()가 막힌 경우 안내
-                setTimeout(() => {
-                    showToast("💾 저장 완료! 브라우저 탭을 직접 닫아주세요.");
-                }, 500);
-            };
             if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
                 const petStr = JSON.stringify(gameState.petLevels || {});
                 const extraDataStr = JSON.stringify({
@@ -4943,11 +4936,20 @@
                         Number(gameState.masteryPoints) || 0,
                         extraDataStr
                     ],
-                    function () { doClose(); },
-                    function () { doClose(); }
+                    function () {
+                        window.close();
+                        alert("💾 데이터가 완벽하게 저장되었습니다! 이제 브라우저 창을 닫으셔도 좋습니다.");
+                    },
+                    function () {
+                        window.close();
+                        alert("💾 로컬 저장 완료! 브라우저 창을 닫으셔도 좋습니다.");
+                    }
                 );
             } else {
-                setTimeout(doClose, 800);
+                setTimeout(() => {
+                    window.close();
+                    alert("💾 데이터가 저장되었습니다! 이제 브라우저 창을 닫으셔도 좋습니다.");
+                }, 800);
             }
         }
 

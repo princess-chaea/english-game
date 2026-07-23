@@ -338,11 +338,11 @@ function getHallOfFame(grade, studentKey) {
     
     return {
       success: true,
-      stageTop5: stageRankList.slice(0, 5),
+      stageTop5: stageRankList.slice(0, 10),
       myStageRank: findMyRank(stageRankList, studentKey),
-      bossTop5: bossRankList.slice(0, 5),
+      bossTop5: bossRankList.slice(0, 10),
       myBossRank: findMyRank(bossRankList, studentKey),
-      goldTop5: goldRankList.slice(0, 5),
+      goldTop5: goldRankList.slice(0, 10),
       myGoldRank: findMyRank(goldRankList, studentKey)
     };
   } catch(e) {

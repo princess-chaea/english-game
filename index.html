@@ -369,9 +369,14 @@
                 </div>
                 <!-- Save & Exit Button -->
                 <button onclick="saveAndExit()" 
-                    class="bg-[#e22718] hover:bg-[#b91c1c] border border-[#e22718] text-white px-3 py-1.5 rounded-none-forced text-xs font-bold transition flex items-center gap-1.5 tracking-wider uppercase">
+                    class="bg-[#0066b1] hover:bg-[#1c69d4] border border-[#0066b1] text-white px-3 py-1.5 rounded-none-forced text-xs font-bold transition flex items-center gap-1.5 tracking-wider uppercase">
                     <i data-lucide="save" class="w-3.5 h-3.5"></i>
-                    <span>저장하고 나가기</span>
+                    <span>저장하기</span>
+                </button>
+                <button onclick="logoutUser()" 
+                    class="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-gray-300 px-2.5 py-1.5 rounded-none-forced text-xs font-bold transition flex items-center gap-1 tracking-wider uppercase" title="다른 계정으로 로그인">
+                    <i data-lucide="log-out" class="w-3.5 h-3.5 text-red-400"></i>
+                    <span>로그아웃</span>
                 </button>
             </div>
         </div>
@@ -2212,6 +2217,7 @@
                             }
                             syncStateFromServer(response);
                             closeModal("pinVerifyModal");
+                            localStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
                             showToast("🏰 원정대 클라우드 계정 로드 성공!");
                         } else {
                             handleLocalVerify(grade, classNum, studentNum, name, password);
@@ -2229,6 +2235,7 @@
         function handleLocalVerify(grade, classNum, studentNum, name, password) {
             if (loadLocalSimulation(grade, classNum, studentNum, name, password)) {
                 closeModal("pinVerifyModal");
+                localStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
                 showToast("🏰 로컬 원정대 계정 로드 성공!");
             }
         }
@@ -2252,6 +2259,7 @@
                         if (response) {
                             syncStateFromServer(response);
                             closeModal("newUserRegisterModal");
+                            localStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
                             showToast("✨ 새로운 전설의 모험이 시작되었습니다! 환영합니다!");
                         } else {
                             handleLocalRegister(grade, classNum, studentNum, name, password);
@@ -2269,6 +2277,7 @@
         function handleLocalRegister(grade, classNum, studentNum, name, password) {
             if (loadLocalSimulation(grade, classNum, studentNum, name, password)) {
                 closeModal("newUserRegisterModal");
+                localStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
                 showToast("✨ 로컬 원정대에 새로운 대원이 등록되었습니다!");
             }
         }
@@ -6274,6 +6283,13 @@
             }
         }
 
+        function logoutUser() {
+            if (confirm("로그아웃하고 로그인 첫 화면으로 돌아가시겠습니까?")) {
+                localStorage.removeItem("vocahero_active_session");
+                location.reload();
+            }
+        }
+
         window.onload = function () {
             lucide.createIcons();
             checkConnectionState();
@@ -6287,6 +6303,39 @@
                     if (last.classNum) document.getElementById("inputClass").value = last.classNum;
                     if (last.studentNum) document.getElementById("inputNumber").value = last.studentNum;
                     if (last.name) document.getElementById("inputName").value = last.name;
+                } catch(e) {}
+            }
+
+            // 🔄 새로고침 시 자동 로그인 세션 복원 장치
+            const activeSessionRaw = localStorage.getItem("vocahero_active_session");
+            if (activeSessionRaw) {
+                try {
+                    const session = JSON.parse(activeSessionRaw);
+                    if (session && session.grade && session.name && session.password) {
+                        tempCredentials = { grade: session.grade, classNum: session.classNum, studentNum: session.studentNum, name: session.name };
+                        const savedUrl = getGasUrl();
+
+                        if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
+                            runGas(
+                                "loadOrCreateStudent",
+                                [session.grade, session.classNum, session.studentNum, session.name, "male", session.password],
+                                function (response) {
+                                    if (response && response.error !== "password_mismatch") {
+                                        syncStateFromServer(response);
+                                        showToast(`👋 어서오세요, ${session.name} 용사님! 자동 로그인되었습니다.`);
+                                    } else {
+                                        handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
+                                    }
+                                },
+                                function () {
+                                    handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
+                                }
+                            );
+                        } else {
+                            handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
+                        }
+                        return; // 로그인 모달 팝업 방지
+                    }
                 } catch(e) {}
             }
 

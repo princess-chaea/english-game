@@ -1104,49 +1104,52 @@
                     </div>
 
                     <!-- 3 Ranking Columns: Stage, World Boss, Gold -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 text-xs mb-4">
                         <!-- Column 1: Highest Stage -->
-                        <div class="bg-[#0b0c10] p-3.5 border border-sky-900/60 rounded-none-forced shadow-inner">
-                            <div class="flex justify-between items-center mb-3 pb-2 border-b border-sky-900/80">
-                                <span class="font-extrabold text-sky-400 flex items-center gap-1.5">
-                                    <i data-lucide="flag" class="w-4 h-4 text-sky-400"></i>
+                        <div class="bg-[#0b0c10] p-3 border border-sky-900/60 rounded-none-forced shadow-inner">
+                            <div class="flex justify-between items-center mb-2 pb-1.5 border-b border-sky-900/80">
+                                <span class="font-extrabold text-sky-400 flex items-center gap-1.5 text-[11px]">
+                                    <i data-lucide="flag" class="w-3.5 h-3.5 text-sky-400"></i>
                                     <span>🚩 최고 스테이지 정복자</span>
                                 </span>
-                                <span class="text-[10px] text-gray-400">내 순위: <b id="myStageRankText" class="text-yellow-300 font-mono text-xs font-bold">-위</b></span>
+                                <span class="text-[9px] text-gray-400">내 순위: <b id="myStageRankText" class="text-yellow-300 font-mono font-bold">-위</b></span>
                             </div>
-                            <div id="hofStageList" class="space-y-1.5 max-h-[380px] overflow-y-auto pr-1">
-                                <p class="text-gray-500 text-center py-6">랭킹 불러오는 중...</p>
+                            <div id="hofStageList" class="space-y-1 max-h-56 overflow-y-auto pr-1">
+                                <p class="text-gray-500 text-center py-4">랭킹 불러오는 중...</p>
                             </div>
                         </div>
 
                         <!-- Column 2: World Boss Damage -->
-                        <div class="bg-[#0b0c10] p-3.5 border border-red-900/60 rounded-none-forced shadow-inner">
-                            <div class="flex justify-between items-center mb-3 pb-2 border-b border-red-900/80">
-                                <span class="font-extrabold text-red-400 flex items-center gap-1.5">
-                                    <i data-lucide="swords" class="w-4 h-4 text-red-400"></i>
+                        <div class="bg-[#0b0c10] p-3 border border-red-900/60 rounded-none-forced shadow-inner">
+                            <div class="flex justify-between items-center mb-2 pb-1.5 border-b border-red-900/80">
+                                <span class="font-extrabold text-red-400 flex items-center gap-1.5 text-[11px]">
+                                    <i data-lucide="swords" class="w-3.5 h-3.5 text-red-400"></i>
                                     <span>🐉 월드보스 타격 영웅</span>
                                 </span>
-                                <span class="text-[10px] text-gray-400">내 순위: <b id="myBossRankText" class="text-yellow-300 font-mono text-xs font-bold">-위</b></span>
+                                <span class="text-[9px] text-gray-400">내 순위: <b id="myBossRankText" class="text-yellow-300 font-mono font-bold">-위</b></span>
                             </div>
-                            <div id="hofBossList" class="space-y-1.5 max-h-[380px] overflow-y-auto pr-1">
-                                <p class="text-gray-500 text-center py-6">랭킹 불러오는 중...</p>
+                            <div id="hofBossList" class="space-y-1 max-h-56 overflow-y-auto pr-1">
+                                <p class="text-gray-500 text-center py-4">랭킹 불러오는 중...</p>
                             </div>
                         </div>
 
                         <!-- Column 3: Gold Wealth -->
-                        <div class="bg-[#0b0c10] p-3.5 border border-yellow-900/60 rounded-none-forced shadow-inner">
-                            <div class="flex justify-between items-center mb-3 pb-2 border-b border-yellow-900/80">
-                                <span class="font-extrabold text-yellow-400 flex items-center gap-1.5">
-                                    <i data-lucide="coins" class="w-4 h-4 text-yellow-400"></i>
+                        <div class="bg-[#0b0c10] p-3 border border-yellow-900/60 rounded-none-forced shadow-inner">
+                            <div class="flex justify-between items-center mb-2 pb-1.5 border-b border-yellow-900/80">
+                                <span class="font-extrabold text-yellow-400 flex items-center gap-1.5 text-[11px]">
+                                    <i data-lucide="coins" class="w-3.5 h-3.5 text-yellow-400"></i>
                                     <span>🪙 축적된 골드 부호</span>
                                 </span>
-                                <span class="text-[10px] text-gray-400">내 순위: <b id="myGoldRankText" class="text-yellow-300 font-mono text-xs font-bold">-위</b></span>
+                                <span class="text-[9px] text-gray-400">내 순위: <b id="myGoldRankText" class="text-yellow-300 font-mono font-bold">-위</b></span>
                             </div>
-                            <div id="hofGoldList" class="space-y-1.5 max-h-[380px] overflow-y-auto pr-1">
-                                <p class="text-gray-500 text-center py-6">랭킹 불러오는 중...</p>
+                            <div id="hofGoldList" class="space-y-1 max-h-56 overflow-y-auto pr-1">
+                                <p class="text-gray-500 text-center py-4">랭킹 불러오는 중...</p>
                             </div>
-                    <!-- 👑 영웅 칭호 관리 및 장착실 (명예의 전당 하단) -->
-                    <div class="mt-4 border-t border-yellow-900/60 pt-3">
+                        </div>
+                    </div>
+
+                    <!-- 👑 영웅 칭호 관리 및 장착실 (전당 랭킹 하단 독립 섹션) -->
+                    <div class="border-t border-yellow-900/60 pt-3">
                         <div class="flex justify-between items-center mb-2">
                             <h4 class="text-xs font-bold text-yellow-400 flex items-center gap-1.5 uppercase tracking-wider">
                                 <i data-lucide="award" class="w-4 h-4 text-yellow-400"></i>
@@ -1156,12 +1159,13 @@
                         </div>
                         <div class="bg-[#0b0c10] border border-yellow-900/40 p-3 rounded-none-forced">
                             <p class="text-[10px] text-gray-400 mb-2.5">업적 및 레이드를 달성해 해금한 칭호를 선택하여 영웅 태그에 장착할 수 있습니다.</p>
-                            <div id="titleInventoryContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                            <div id="titleInventoryContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1">
                                 <!-- Dynamic Title Cards -->
                             </div>
                         </div>
                     </div>
                 </div>
+
                 <div class="mt-3 bg-[#0d0d0d] p-2.5 border border-yellow-900/40 text-[10px] text-gray-400 flex items-center justify-between">
                     <span>💡 명예의 전당 랭킹은 퀴즈 정복, 월드보스 참전 및 강화를 진행할 때 실시간으로 기록이 업데이트됩니다.</span>
                 </div>

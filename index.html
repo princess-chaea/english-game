@@ -487,6 +487,25 @@
                         <svg viewBox="0 0 100 100" class="w-full h-full" id="petSvg_fairy"></svg>
                     </div>
 
+                    <!-- 🏺 [캐릭터 좌측 하단] 해금/장착된 대표 고대 유물 visual slot -->
+                    <div id="heroRelicSlot" class="absolute bottom-4 right-[calc(50%+4.5rem)] w-12 h-12 z-20 hidden flex-col items-center justify-center bg-black/80 border border-yellow-500/80 p-1 shadow-[0_0_15px_rgba(234,179,8,0.6)] animate-pulse">
+                        <img id="heroRelicImg" src="media/relics/relic_1.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23eab308\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'10\'/><path d=\'M12 6v12M6 12h12\'/></svg>'" class="w-full h-full object-contain filter drop-shadow-[0_0_8px_#f59e0b]">
+                        <span id="heroRelicName" class="text-[7px] text-yellow-300 font-bold font-mono truncate max-w-full">고대성배</span>
+                    </div>
+
+                    <!-- 💎 [캐릭터 우측] 장착된 장신구 3종 visual slots -->
+                    <div id="heroAccSlotsContainer" class="absolute top-4 left-[calc(50%+4.5rem)] flex flex-col gap-1 z-20">
+                        <div id="accSlot_necklace" class="w-7 h-7 bg-black/80 border border-purple-500 flex items-center justify-center p-0.5 shadow-[0_0_10px_rgba(168,85,247,0.5)] title='지혜의 목걸이'">
+                            <img id="accImg_necklace" src="media/accessories/necklace.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23c084fc\' stroke-width=\'2\'><circle cx=\'12\' cy=\'14\' r=\'5\'/><path d=\'M7 4a7 7 0 0 0 10 0\'/></svg>'" class="w-full h-full object-contain">
+                        </div>
+                        <div id="accSlot_bracelet" class="w-7 h-7 bg-black/80 border border-sky-500 flex items-center justify-center p-0.5 shadow-[0_0_10px_rgba(56,189,248,0.5)] title='투지의 팔찌'">
+                            <img id="accImg_bracelet" src="media/accessories/bracelet.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2338bdf8\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'8\'/></svg>'" class="w-full h-full object-contain">
+                        </div>
+                        <div id="accSlot_ring" class="w-7 h-7 bg-black/80 border border-amber-500 flex items-center justify-center p-0.5 shadow-[0_0_10px_rgba(245,158,11,0.5)] title='영웅의 반지'">
+                            <img id="accImg_ring" src="media/accessories/ring.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23fbbf24\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'6\'/><path d=\'M12 2v4\'/></svg>'" class="w-full h-full object-contain">
+                        </div>
+                    </div>
+
                     <!-- Character Body Avatar -->
                     <div id="heroCharacter" class="w-32 h-36 relative flex items-end justify-center">
                         <svg viewBox="0 0 100 120" class="w-full h-full transition-transform duration-100"
@@ -662,22 +681,62 @@
                         <!-- Upgrades generated dynamically to handle visual levels changes -->
                     </div>
 
-                    <!-- 👑 영웅 칭호 관리 및 장착실 (대장간 하단) -->
-                    <div class="mt-6 border-t border-[#262626] pt-4">
-                        <div class="flex justify-between items-center mb-3">
+                    <!-- ⚡ [40스테이지 해금] 무구 잠재력(Potential) 연구소 -->
+                    <div id="potentialLabContainer" class="mt-6 border-t border-[#262626] pt-4">
+                        <div class="flex justify-between items-center mb-2">
                             <h4 class="text-xs font-bold text-yellow-400 flex items-center gap-1.5 uppercase tracking-wider">
-                                <i data-lucide="award" class="w-4 h-4 text-yellow-400"></i>
-                                <span>영웅 칭호 보관함 & 칭호 장착실</span>
+                                <i data-lucide="zap" class="w-4 h-4 text-yellow-400"></i>
+                                <span>⚡ 무구 잠재력(Potential) 연구소 (40스테이지 해금)</span>
                             </h4>
-                            <span class="text-[10px] text-gray-400">현재 장착 칭호: <b id="currentEquippedTitleText" class="text-yellow-300 font-bold">[칭호 없음]</b></span>
+                            <span class="text-[10px] text-gray-400">소유 보스 증표: <b id="bossTokenCountText" class="text-yellow-300 font-bold">0</b>개</span>
                         </div>
                         <div class="bg-[#0d0d0d] border border-[#3c3c3c] p-3 rounded-none-forced">
-                            <p class="text-[10px] text-gray-400 mb-2.5">업적 및 레이드를 달성해 해금한 칭호를 선택하여 영웅 태그에 장착할 수 있습니다.</p>
-                            <div id="titleInventoryContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                <!-- Dynamic Title Cards -->
+                            <div id="potentialSlotsGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+                                <!-- Dynamic Potential Slots -->
+                            </div>
+                            <div class="flex justify-between items-center pt-2 border-t border-[#222]">
+                                <span class="text-[10px] text-gray-400">리롤 비용: <b id="potentialRerollCostText" class="text-yellow-300">50,000 Gold</b></span>
+                                <button onclick="rerollGearPotentials()" class="px-4 py-1.5 bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold text-xs transition rounded-none-forced shadow-md">
+                                    🎲 골드 잠재력 리롤
+                                </button>
                             </div>
                         </div>
                     </div>
+
+                    <!-- 💍 [50스테이지 해금] 전설 장신구 3종 & 고대 유물 제단 -->
+                    <div id="accessoriesLabContainer" class="mt-6 border-t border-[#262626] pt-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="text-xs font-bold text-purple-400 flex items-center gap-1.5 uppercase tracking-wider">
+                                <i data-lucide="gem" class="w-4 h-4 text-purple-400"></i>
+                                <span>💍 고대 장신구 & 🏺 유물 제단 (50스테이지 10단위 해금)</span>
+                            </h4>
+                        </div>
+                        <div class="bg-[#0d0d0d] border border-purple-900/40 p-3 rounded-none-forced">
+                            <!-- 장신구 3종 그리드 -->
+                            <div id="accessoriesShopGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+                                <!-- Dynamic Accessories Cards -->
+                            </div>
+
+                            <!-- 고대 유물 제단 & 10종 소환 -->
+                            <div class="border-t border-purple-900/40 pt-3">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-xs font-bold text-yellow-400 flex items-center gap-1">🏺 고대 유물 소환 제단</span>
+                                    <div class="flex gap-1.5">
+                                        <button onclick="drawRelicCapsule(1)" class="px-2.5 py-1 bg-purple-900 hover:bg-purple-800 text-purple-200 font-bold text-[10px] border border-purple-500">
+                                            🏺 1회 (50 증표)
+                                        </button>
+                                        <button onclick="drawRelicCapsule(10)" class="px-2.5 py-1 bg-gradient-to-r from-yellow-600 to-amber-500 hover:from-yellow-500 hover:to-amber-400 text-black font-extrabold text-[10px] shadow-md">
+                                            🔥 10연속 (450 증표)
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="relicsInventoryGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-2 max-h-48 overflow-y-auto p-1 bg-black border border-[#262626]">
+                                    <!-- Dynamic Relic Cards -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
                 <p class="text-[9px] text-[#7e7e7e] uppercase tracking-widest mt-4 text-center">※ 강화할 때마다 용사의 외형 일러스트가 점차 화려한 하이엔드 수호 성기사 형태로 무장됩니다.
                 </p>
@@ -1020,11 +1079,9 @@
                     </div>
                 </div>
 
-                <div class="bg-[#0d0d0d] p-3 border border-[#3c3c3c] mt-4 text-[9px] text-[#bbbbbb] flex items-start gap-2 rounded-none-forced">
-                    <i data-lucide="info" class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5"></i>
-                <div class="bg-[#0d0d0d] p-3 border border-[#3c3c3c] mt-4 text-[9px] text-[#bbbbbb] flex items-start gap-2 rounded-none-forced">
-                    <i data-lucide="info" class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5"></i>
-                    <p>월드보스는 <strong>제한시간 180초(3분)</strong> 동안 진행되는 전 학년 실시간 토벌 던전입니다. 정복한 단어 퀴즈를 풀어 보스의 약점을 정확하게 타격하고, 장착된 4종 마법 비기 스킬을 적재적소에 시전하여 강력한 보스 몬스터를 전 학년과 함께 물리치세요!</p>
+                <div class="bg-[#0d0d0d] p-3.5 border border-red-900/50 mt-4 text-xs md:text-sm text-[#cccccc] flex items-start gap-2.5 rounded-none-forced">
+                    <i data-lucide="info" class="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5"></i>
+                    <p class="leading-relaxed">월드보스는 <strong>제한시간 180초(3분)</strong> 동안 진행되는 전 학년 실시간 토벌 던전입니다. 정복한 단어 퀴즈를 풀어 보스의 약점을 정확하게 타격하고, 장착된 4종 마법 비기 스킬을 적재적소에 시전하여 강력한 보스 몬스터를 전 학년과 함께 물리치세요!</p>
                 </div>
             </div>
 
@@ -1088,10 +1145,24 @@
                             <div id="hofGoldList" class="space-y-1.5 max-h-[380px] overflow-y-auto pr-1">
                                 <p class="text-gray-500 text-center py-6">랭킹 불러오는 중...</p>
                             </div>
+                    <!-- 👑 영웅 칭호 관리 및 장착실 (명예의 전당 하단) -->
+                    <div class="mt-4 border-t border-yellow-900/60 pt-3">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="text-xs font-bold text-yellow-400 flex items-center gap-1.5 uppercase tracking-wider">
+                                <i data-lucide="award" class="w-4 h-4 text-yellow-400"></i>
+                                <span>👑 영웅 칭호 보관함 & 칭호 장착실</span>
+                            </h4>
+                            <span class="text-[10px] text-gray-400">현재 장착 칭호: <b id="currentEquippedTitleText" class="text-yellow-300 font-bold">[칭호 없음]</b></span>
+                        </div>
+                        <div class="bg-[#0b0c10] border border-yellow-900/40 p-3 rounded-none-forced">
+                            <p class="text-[10px] text-gray-400 mb-2.5">업적 및 레이드를 달성해 해금한 칭호를 선택하여 영웅 태그에 장착할 수 있습니다.</p>
+                            <div id="titleInventoryContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                                <!-- Dynamic Title Cards -->
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="mt-4 bg-[#0d0d0d] p-3 border border-yellow-900/40 text-[10px] text-gray-400 flex items-center justify-between">
+                <div class="mt-3 bg-[#0d0d0d] p-2.5 border border-yellow-900/40 text-[10px] text-gray-400 flex items-center justify-between">
                     <span>💡 명예의 전당 랭킹은 퀴즈 정복, 월드보스 참전 및 강화를 진행할 때 실시간으로 기록이 업데이트됩니다.</span>
                 </div>
             </div>
@@ -1396,9 +1467,14 @@
                 <!-- Dynamically filled -->
             </div>
 
-            <button onclick="document.getElementById('gacha10xResultModal').classList.remove('flex');document.getElementById('gacha10xResultModal').classList.add('hidden')" class="px-10 py-2.5 bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold text-xs tracking-wider transition shadow-lg">
-                소환 결과 확인 완료
-            </button>
+            <div class="flex gap-2 w-full justify-center">
+                <button onclick="drawSkillCapsuleInstantSkip(10)" class="flex-1 py-2.5 bg-gradient-to-r from-purple-700 via-pink-600 to-yellow-500 hover:from-purple-600 hover:to-yellow-400 text-white font-extrabold text-xs tracking-wider transition shadow-lg flex items-center justify-center gap-1">
+                    <span>⚡ 10연속 Skip 다시 뽑기 (450 FP)</span>
+                </button>
+                <button onclick="document.getElementById('gacha10xResultModal').classList.remove('flex');document.getElementById('gacha10xResultModal').classList.add('hidden')" class="px-8 py-2.5 bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold text-xs tracking-wider transition shadow-lg">
+                    확인 완료
+                </button>
+            </div>
         </div>
     </div>
 
@@ -1627,8 +1703,29 @@
         };
 
         const GROWTH_RATE = 1.15;
-        const MAX_GEAR_LEVEL = 30;
+        const MAX_GEAR_LEVEL = 50; // 40스테이지 한계돌파 50강 확장
         const MAX_PET_LEVEL = 100;
+
+        // 💍 장신구 3종 설정 (50/60/70스테이지 해금 & 50강)
+        const ACCESSORY_PARAMS = {
+            necklace: { name: "지혜의 목걸이", unlockStage: 50, baseCost: 10000, key: "necklaceLvl", img: "media/accessories/necklace.png", desc: "🪄 스킬 마법 피해 & 쿨타임 감소 특화" },
+            bracelet: { name: "투지의 팔찌", unlockStage: 60, baseCost: 50000, key: "braceletLvl", img: "media/accessories/bracelet.png", desc: "⚔️ 클릭 타격력 & 크리티컬 확율 특화" },
+            ring: { name: "영웅의 반지", unlockStage: 70, baseCost: 200000, key: "ringLvl", img: "media/accessories/ring.png", desc: "👑 전체 자동 DPS & 보스 타격 피해 특화" }
+        };
+
+        // 🏺 10종 고대 유물 세부 정의
+        const RELIC_DEFINITIONS = [
+            { id: "relic_chalice", name: "고대 지혜의 성배", img: "media/relics/relic_1.png", effectDesc: "단어 퀴즈 정답 시 공격력 급상승", baseBonus: 0.5 },
+            { id: "relic_orb", name: "지옥룡의 붉은 여의주", img: "media/relics/relic_2.png", effectDesc: "전체 자동 DPS 대폭 증대", baseBonus: 0.3 },
+            { id: "relic_sword", name: "전설 용사의 성검 조각", img: "media/relics/relic_3.png", effectDesc: "마우스 클릭 타격력 극대화", baseBonus: 0.4 },
+            { id: "relic_clock", name: "천공의 수호 시계", img: "media/relics/relic_4.png", effectDesc: "마법 스킬 쿨타임 대폭 감소", baseBonus: 0.2 },
+            { id: "relic_compass", name: "황금 풍요의 번개 나침반", img: "media/relics/relic_5.png", effectDesc: "퀴즈 및 몬스터 골드 수당 증대", baseBonus: 0.5 },
+            { id: "relic_dice", name: "파괴의 거인 마법 주사위", img: "media/relics/relic_6.png", effectDesc: "크리티컬 확률 & 크리티컬 피해 증대", baseBonus: 0.3 },
+            { id: "relic_feather", name: "불사조의 깃털 부적", img: "media/relics/relic_7.png", effectDesc: "월드보스전 전용 보스 타격 피해 극대화", baseBonus: 0.6 },
+            { id: "relic_scroll", name: "심해의 비밀 주문서", img: "media/relics/relic_8.png", effectDesc: "스킬 마법 시전 시 추가 폭발 피해", baseBonus: 0.4 },
+            { id: "relic_crown", name: "태양의 왕관 훈장", img: "media/relics/relic_9.png", effectDesc: "정복 포인트(FP) 획득량 증가", baseBonus: 0.3 },
+            { id: "relic_shield", name: "대지의 수호 방패", img: "media/relics/relic_10.png", effectDesc: "보스 공격 방어막 & 생존력 강화", baseBonus: 0.5 }
+        ];
 
         // Skill Grade Configs (색상 코드 및 배율 계수)
         const SKILL_GRADES = {
@@ -2462,6 +2559,7 @@
             // Core tick loop 100ms
             if (gameLoopInterval) clearInterval(gameLoopInterval);
             let lastTick = Date.now();
+            let goldAccumulator = 0;
             gameLoopInterval = setInterval(() => {
                 const now = Date.now();
                 const delta = (now - lastTick) / 1000;
@@ -2470,6 +2568,18 @@
                 const dps = calculateDPSPower();
                 if (dps > 0) {
                     processCombatDamage(dps * delta);
+                }
+
+                // 💡 초당 자동 골드 수당 실시간 통장 가산
+                const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
+                const slimeBonus = 1 + (slimeLvl * 0.05);
+                const autoGoldPerSec = Math.floor(gameState.stage * 15 * slimeBonus);
+                goldAccumulator += autoGoldPerSec * delta;
+                if (goldAccumulator >= 1) {
+                    const addG = Math.floor(goldAccumulator);
+                    goldAccumulator -= addG;
+                    gameState.gold = (gameState.gold || 0) + addG;
+                    document.getElementById("goldDisplay").innerText = gameState.gold.toLocaleString();
                 }
 
                 // 스킬의 재사용 대기시간(쿨타임) 감소
@@ -2556,8 +2666,10 @@
         }
 
         function calculateClickAttackPower() {
-            // 무기: 클릭당 +3, 갑옷: +1, 방패: +1, 기본 신발: +1
-            return (gameState.weaponLvl * 3) + (gameState.armorLvl * 1) + (gameState.shieldLvl * 1) + gameState.shoesLvl;
+            // 무기, 갑옷, 방패, 신발 및 스테이지 스케일링 기본 클릭 공격력 보정
+            const baseGearPower = (gameState.weaponLvl * 10) + (gameState.armorLvl * 4) + (gameState.shieldLvl * 3) + (gameState.shoesLvl * 2);
+            const stageScaling = Math.floor(Math.pow(1.12, (gameState.stage || 1) - 1) * 25);
+            return Math.max(1, baseGearPower + stageScaling);
         }
 
         function calculateOfflineGains() {
@@ -2599,14 +2711,22 @@
 
         function defeatActiveMonster() {
             let reward = 0;
+            if (typeof gameState.bossTokens === 'undefined') gameState.bossTokens = 0;
+
             if (isBossBattleActive) {
-                reward = gameState.stage * 150;
+                reward = gameState.stage * 1500;
                 gameState.gold += reward;
+                const tokenGain = Math.floor(gameState.stage * 3);
+                gameState.bossTokens += tokenGain;
+                showBattleToast(`🐉 보스 퇴치! +${reward.toLocaleString()}G / 🪙 [고대 보스 증표] +${tokenGain}개 획득!`);
                 playSoundEffect('levelup');
                 concludeBossSuccess();
             } else {
-                reward = gameState.stage * 8 + Math.floor(Math.random() * 5);
+                reward = gameState.stage * 80 + Math.floor(Math.random() * 50);
                 gameState.gold += reward;
+                if (Math.random() < 0.5) {
+                    gameState.bossTokens += 1;
+                }
                 playSoundEffect('hit');
 
                 // 보스 해금 처치 진도를 10단계로 증가
@@ -2771,6 +2891,8 @@
             }
             container.innerHTML = html;
             lucide.createIcons();
+            renderGearPotentialLabUI();
+            renderAccessoriesAndRelicsUI();
         }
 
         function getGearIcon(key) {
@@ -2914,29 +3036,331 @@
             return "🧚";
         }
 
-        function interactUpgradePet(petKey) {
-            const info = PET_PARAMS[petKey];
-            if (!gameState.petLevels) {
-                gameState.petLevels = { slime: 0, dragon: 0, fairy: 0 };
-            }
-            const currentPetLvl = gameState.petLevels[petKey] || 0;
-            const cost = Math.floor(info.cost * Math.pow(1.12, currentPetLvl));
+        // ==========================================
+        // ⚡ GEAR POTENTIAL SYSTEM (무구 잠재력 리롤 & 잠금)
+        // ==========================================
+        let selectedLockedPotentialSlots = [];
 
-            if (currentPetLvl >= MAX_PET_LEVEL) {
-                showToast(`⭐ 이 동반 펫은 이미 ${MAX_PET_LEVEL}레벨 최고 단계에 도달했습니다!`);
+        function renderGearPotentialLabUI() {
+            const tokenText = document.getElementById("bossTokenCountText");
+            if (tokenText) tokenText.innerText = (gameState.bossTokens || 0).toLocaleString();
+
+            const grid = document.getElementById("potentialSlotsGrid");
+            if (!grid) return;
+
+            const stage = gameState.stage || 1;
+            const avgGearLvl = Math.floor(((gameState.helmetLvl || 1) + (gameState.armorLvl || 1) + (gameState.weaponLvl || 1) + (gameState.shieldLvl || 1) + (gameState.shoesLvl || 1)) / 5);
+
+            let unlockedSlots = 0;
+            if (stage >= 40) unlockedSlots = 3;
+            if (avgGearLvl >= 30) unlockedSlots = 4;
+            if (avgGearLvl >= 40) unlockedSlots = 5;
+            if (avgGearLvl >= 50) unlockedSlots = 6;
+
+            if (!gameState.gearPotentials) gameState.gearPotentials = [];
+
+            let html = "";
+            const potentialPool = [
+                { type: "atk", name: "전체 공격력", icon: "⚔️", format: (v) => `+${v}%` },
+                { type: "skillDmg", name: "마법 스킬 피해", icon: "🪄", format: (v) => `+${v}%` },
+                { type: "bossDmg", name: "보스전 피해량", icon: "🐉", format: (v) => `+${v}%` },
+                { type: "clickDmg", name: "마우스 클릭 타격", icon: "💥", format: (v) => `+${v}` },
+                { type: "goldBonus", name: "정답 골드 수당", icon: "🪙", format: (v) => `+${v}%` },
+                { type: "critRate", name: "크리티컬 확률", icon: "🎯", format: (v) => `+${v}%` }
+            ];
+
+            const gradeColorMap = {
+                normal: "border-gray-700 bg-gray-950 text-gray-300",
+                rare: "border-sky-600 bg-sky-950 text-sky-300",
+                hero: "border-purple-600 bg-purple-950 text-purple-300",
+                legendary: "border-red-600 bg-red-950 text-red-300 shadow-[0_0_10px_rgba(220,38,38,0.5)]",
+                mythic: "border-amber-500 bg-amber-950 text-yellow-300 shadow-[0_0_15px_rgba(245,158,11,0.8)] animate-pulse"
+            };
+
+            for (let i = 0; i < 6; i++) {
+                const isUnlocked = i < unlockedSlots;
+                if (!isUnlocked) {
+                    html += `
+                        <div class="border border-gray-900 bg-black/60 p-2.5 text-center flex flex-col items-center justify-center min-h-[75px] opacity-40 rounded-none-forced">
+                            <span class="text-xs text-gray-500 font-bold">🔒 잠김</span>
+                            <span class="text-[8px] text-gray-600 mt-1">${i < 3 ? '40스테이지 해금' : `평균 ${i === 3 ? '30강' : i === 4 ? '40강' : '50강'} 달성`}</span>
+                        </div>
+                    `;
+                    continue;
+                }
+
+                let opt = gameState.gearPotentials[i];
+                if (!opt) {
+                    opt = generateRandomPotentialOption();
+                    gameState.gearPotentials[i] = opt;
+                }
+
+                const isLocked = selectedLockedPotentialSlots.includes(i);
+                const style = gradeColorMap[opt.grade] || gradeColorMap.normal;
+
+                html += `
+                    <div class="border ${style} p-2 text-center flex flex-col justify-between min-h-[75px] relative rounded-none-forced">
+                        <button onclick="toggleLockPotentialSlot(${i})" class="absolute -top-1.5 -right-1.5 px-1 py-0.2 text-[8px] font-black rounded-none-forced transition ${isLocked ? 'bg-yellow-400 text-black border border-yellow-600 shadow-md' : 'bg-gray-800 text-gray-400 hover:text-white'}">
+                            ${isLocked ? '🔒 잠금' : '🔓 해제'}
+                        </button>
+                        <div>
+                            <span class="text-[8px] font-bold opacity-80 uppercase block">[${opt.gradeName}]</span>
+                            <span class="text-xs font-extrabold block mt-0.5">${opt.icon} ${opt.name}</span>
+                        </div>
+                        <span class="text-[10px] font-bold font-mono text-yellow-300 block">${opt.formatValue}</span>
+                    </div>
+                `;
+            }
+
+            grid.innerHTML = html;
+
+            // 리롤 비용 계산 (잠금 개수별 단계 상승)
+            const lockedCount = selectedLockedPotentialSlots.length;
+            const costMap = [50000, 150000, 400000, 1000000, 2500000, 6000000];
+            const currentCost = costMap[Math.min(lockedCount, 5)];
+            const costText = document.getElementById("potentialRerollCostText");
+            if (costText) costText.innerText = `${currentCost.toLocaleString()} Gold`;
+        }
+
+        function generateRandomPotentialOption() {
+            const roll = Math.random();
+            let grade = "normal";
+            let gradeName = "일반";
+            let mult = 1;
+
+            if (roll < 0.01) { grade = "mythic"; gradeName = "신화"; mult = 5; }
+            else if (roll < 0.06) { grade = "legendary"; gradeName = "전설"; mult = 3.5; }
+            else if (roll < 0.18) { grade = "hero"; gradeName = "영웅"; mult = 2.2; }
+            else if (roll < 0.45) { grade = "rare"; gradeName = "희귀"; mult = 1.5; }
+
+            const pool = [
+                { type: "atk", name: "전체 공격력", icon: "⚔️", base: 10, unit: "%" },
+                { type: "skillDmg", name: "마법 스킬 피해", icon: "🪄", base: 15, unit: "%" },
+                { type: "bossDmg", name: "보스전 피해량", icon: "🐉", base: 20, unit: "%" },
+                { type: "clickDmg", name: "클릭 타격력", icon: "💥", base: 100, unit: "" },
+                { type: "goldBonus", name: "정답 골드 수당", icon: "🪙", base: 15, unit: "%" },
+                { type: "critRate", name: "크리티컬 확률", icon: "🎯", base: 5, unit: "%" }
+            ];
+
+            const picked = pool[Math.floor(Math.random() * pool.length)];
+            const val = Math.floor(picked.base * mult);
+
+            return {
+                grade: grade,
+                gradeName: gradeName,
+                type: picked.type,
+                name: picked.name,
+                icon: picked.icon,
+                value: val,
+                formatValue: picked.unit === "%" ? `+${val}%` : `+${val}`
+            };
+        }
+
+        function toggleLockPotentialSlot(idx) {
+            const pos = selectedLockedPotentialSlots.indexOf(idx);
+            if (pos >= 0) {
+                selectedLockedPotentialSlots.splice(pos, 1);
+            } else {
+                selectedLockedPotentialSlots.push(idx);
+            }
+            renderGearPotentialLabUI();
+        }
+
+        function rerollGearPotentials() {
+            const stage = gameState.stage || 1;
+            if (stage < 40) {
+                showToast("⚠️ 무구 잠재력 연구소는 40스테이지 정복 시 해금됩니다!");
                 return;
             }
 
-            if (gameState.gold >= cost) {
-                gameState.gold -= cost;
+            const lockedCount = selectedLockedPotentialSlots.length;
+            const costMap = [50000, 150000, 400000, 1000000, 2500000, 6000000];
+            const cost = costMap[Math.min(lockedCount, 5)];
 
-                gameState.petLevels[petKey] = currentPetLvl + 1;
-                gameState.petType = petKey;
-                gameState.petLvl = gameState.petLevels[petKey];
+            if (gameState.gold < cost) {
+                showToast(`🪙 골드가 부족합니다! 리롤을 진행하려면 ${cost.toLocaleString()} Gold가 필요합니다.`);
+                return;
+            }
 
-                const evolvedName = getPetEvolutionName(petKey, gameState.petLevels[petKey]);
-                playSoundEffect('levelup');
-                showToast(`💖 [소환소] ${evolvedName}과(와) 동반 모험을 개시했습니다!`);
+            gameState.gold -= cost;
+            playSoundEffect('hit');
+
+            const avgGearLvl = Math.floor(((gameState.helmetLvl || 1) + (gameState.armorLvl || 1) + (gameState.weaponLvl || 1) + (gameState.shieldLvl || 1) + (gameState.shoesLvl || 1)) / 5);
+            let unlockedSlots = 3;
+            if (avgGearLvl >= 30) unlockedSlots = 4;
+            if (avgGearLvl >= 40) unlockedSlots = 5;
+            if (avgGearLvl >= 50) unlockedSlots = 6;
+
+            if (!gameState.gearPotentials) gameState.gearPotentials = [];
+
+            for (let i = 0; i < unlockedSlots; i++) {
+                if (!selectedLockedPotentialSlots.includes(i)) {
+                    gameState.gearPotentials[i] = generateRandomPotentialOption();
+                }
+            }
+
+            renderGearPotentialLabUI();
+            refreshStateVisuals();
+            saveLocalCache();
+            showToast("🎲 무구 잠재력 옵션이 새로 재설정되었습니다!");
+        }
+
+        // ==========================================
+        // 💍 ACCESSORIES & 🏺 RELICS SYSTEM (50+ 콘텐츠)
+        // ==========================================
+        function renderAccessoriesAndRelicsUI() {
+            renderAccessoriesUI();
+            renderRelicsUI();
+        }
+
+        function renderAccessoriesUI() {
+            const container = document.getElementById("accessoriesShopGrid");
+            if (!container) return;
+
+            const stage = gameState.stage || 1;
+            let html = "";
+
+            for (let accKey in ACCESSORY_PARAMS) {
+                const info = ACCESSORY_PARAMS[accKey];
+                const currentLvl = (gameState[info.key]) || 0;
+                const isUnlocked = stage >= info.unlockStage;
+                const isMax = currentLvl >= MAX_GEAR_LEVEL;
+                const cost = isMax ? 0 : Math.floor(info.baseCost * Math.pow(1.15, currentLvl));
+
+                const slotEl = document.getElementById(`accSlot_${accKey}`);
+                if (slotEl) {
+                    if (currentLvl > 0) {
+                        slotEl.classList.remove("hidden");
+                        const auraColor = currentLvl >= 30 ? "border-amber-400 shadow-[0_0_15px_#f59e0b]" : (currentLvl >= 15 ? "border-purple-400 shadow-[0_0_10px_#a855f7]" : "border-sky-400");
+                        slotEl.className = `w-7 h-7 bg-black/80 ${auraColor} flex items-center justify-center p-0.5 transition duration-300`;
+                    }
+                }
+
+                html += `
+                    <div class="bg-[#0d0d0d] border ${isUnlocked ? 'border-purple-900/60' : 'border-gray-900 opacity-50'} p-2.5 rounded-none-forced flex flex-col justify-between min-h-[110px]">
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <h4 class="font-extrabold text-xs text-purple-300">${info.name}</h4>
+                                <span class="text-[9px] font-bold text-yellow-300 font-mono">${currentLvl > 0 ? `Lv.${currentLvl}` : '미해금'}</span>
+                            </div>
+                            <p class="text-[9px] text-gray-400 mb-2">${isUnlocked ? info.desc : `🔒 ${info.unlockStage}스테이지 달성 시 해금`}</p>
+                        </div>
+                        <div>
+                            <button onclick="${isUnlocked && !isMax ? `upgradeAccessory('${accKey}')` : ''}" ${!isUnlocked || isMax ? 'disabled' : ''} class="w-full py-1.5 text-[9px] font-extrabold rounded-none-forced transition ${isUnlocked && !isMax ? 'bg-purple-700 hover:bg-purple-600 text-white shadow-md' : 'bg-gray-800 text-gray-500 cursor-not-allowed'}">
+                                ${!isUnlocked ? `🔒 ${info.unlockStage}강 해금` : isMax ? 'MAX (50강)' : `🪙 ${cost.toLocaleString()}G 연마`}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function upgradeAccessory(accKey) {
+            const info = ACCESSORY_PARAMS[accKey];
+            const currentLvl = (gameState[info.key]) || 0;
+            const cost = Math.floor(info.baseCost * Math.pow(1.15, currentLvl));
+
+            if (gameState.gold < cost) {
+                showToast("🪙 골드가 부족합니다! 장신구를 연마하려면 자금이 더 필요합니다.");
+                return;
+            }
+
+            gameState.gold -= cost;
+            gameState[info.key] = currentLvl + 1;
+            playSoundEffect('levelup');
+            showToast(`💍 [${info.name}] 연마 성공! Lv.${currentLvl + 1}강 도달!`);
+
+            renderAccessoriesUI();
+            refreshStateVisuals();
+            saveLocalCache();
+        }
+
+        function renderRelicsUI() {
+            const grid = document.getElementById("relicsInventoryGrid");
+            if (!grid) return;
+
+            if (!gameState.acquiredRelics) gameState.acquiredRelics = [];
+
+            let html = "";
+            RELIC_DEFINITIONS.forEach(r => {
+                const acquired = gameState.acquiredRelics.find(item => item.id === r.id);
+                const isAcquired = !!acquired;
+                const gradeInfo = acquired ? (SKILL_GRADES[acquired.grade] || SKILL_GRADES.normal) : SKILL_GRADES.normal;
+                const starsCount = acquired ? (acquired.stars || 0) : 0;
+                const starsHtml = starsCount > 0 ? "⭐".repeat(starsCount) : "0성";
+
+                // 대표 유물 전투 화면 연동 (첫번째 유물)
+                if (isAcquired && r.id === RELIC_DEFINITIONS[0].id) {
+                    const heroRelicSlot = document.getElementById("heroRelicSlot");
+                    const heroRelicName = document.getElementById("heroRelicName");
+                    if (heroRelicSlot) {
+                        heroRelicSlot.classList.remove("hidden");
+                        heroRelicSlot.classList.add("flex");
+                        if (heroRelicName) heroRelicName.innerText = r.name.substring(0, 4);
+                    }
+                }
+
+                html += `
+                    <div class="border ${isAcquired ? gradeInfo.colorClass : 'border-gray-900 bg-black/50 opacity-40'} p-2 text-center flex flex-col justify-between min-h-[90px] rounded-none-forced">
+                        <div>
+                            <div class="flex justify-between items-center text-[7px] text-gray-400 font-bold">
+                                <span>${isAcquired ? gradeInfo.name : '미해금'}</span>
+                                <span class="text-yellow-400">${starsHtml}</span>
+                            </div>
+                            <h5 class="text-[10px] font-extrabold text-white truncate mt-0.5">${r.name}</h5>
+                        </div>
+                        <div>
+                            <p class="text-[8px] text-gray-400 truncate">${r.effectDesc}</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML = html;
+        }
+
+        function drawRelicCapsule(drawCount = 1) {
+            if (typeof gameState.bossTokens === 'undefined') gameState.bossTokens = 0;
+            const cost = drawCount === 10 ? 450 : 50 * drawCount;
+
+            if (gameState.bossTokens < cost) {
+                showToast(`⚠️ 고대 유물 소환을 위해 [고대 보스 증표] ${cost}개가 필요합니다! 보스전을 통해 증표를 모으세요.`);
+                return;
+            }
+
+            gameState.bossTokens -= cost;
+            refreshStateVisuals();
+
+            if (!gameState.acquiredRelics) gameState.acquiredRelics = [];
+
+            for (let i = 0; i < drawCount; i++) {
+                const pickedRelicDef = RELIC_DEFINITIONS[Math.floor(Math.random() * RELIC_DEFINITIONS.length)];
+                const roll = Math.random();
+                let rolledGrade = "normal";
+                if (roll < 0.0005) rolledGrade = "mythic";
+                else if (roll < 0.02) rolledGrade = "legendary";
+                else if (roll < 0.07) rolledGrade = "hero";
+                else if (roll < 0.25) rolledGrade = "rare";
+
+                let existing = gameState.acquiredRelics.find(item => item.id === pickedRelicDef.id);
+                if (existing) {
+                    existing.stars = Math.min(6, (existing.stars || 0) + 1);
+                    existing.grade = rolledGrade;
+                } else {
+                    gameState.acquiredRelics.push({
+                        id: pickedRelicDef.id,
+                        grade: rolledGrade,
+                        stars: 0
+                    });
+                }
+            }
+
+            playSoundEffect('levelup');
+            showToast(`🏺 고대 유물 ${drawCount}회 소환 완료! 유물 공명 효과가 강화되었습니다.`);
+            renderRelicsUI();
+            saveLocalCache();
+        }
 
                 drawPetCompanion();
                 buildCompanionPetLab();
@@ -3220,8 +3644,9 @@
                             `;
                         }
 
-                        document.getElementById("gachaModalResultGrid").innerHTML = modalGridHtml;
-                        openModal("gachaResultModal");
+                        document.getElementById("gacha10xGrid").innerHTML = modalGridHtml;
+                        document.getElementById("gacha10xResultModal").classList.remove("hidden");
+                        document.getElementById("gacha10xResultModal").classList.add("flex");
                         playSoundEffect('levelup');
                     } else {
                         const picked = fullPool[Math.floor(Math.random() * fullPool.length)];
@@ -3234,6 +3659,80 @@
                     saveLocalCache();
                 }
             }, 100);
+        }
+
+        function drawSkillCapsuleInstantSkip(drawCount = 10) {
+            if (typeof gameState.masteryPoints === 'undefined') gameState.masteryPoints = 0;
+            const cost = 450;
+
+            if (gameState.masteryPoints < cost) {
+                showToast(`⚠️ 단어 캡슐 연성을 위해 정복 포인트 ${cost} FP가 필요합니다!`);
+                return;
+            }
+
+            gameState.masteryPoints -= cost;
+            refreshStateVisuals();
+
+            let fullPool = [];
+            if (gameState.wordsPool && gameState.wordsPool.length > 0) {
+                fullPool = [...gameState.wordsPool];
+            }
+            for (let gKey in MOCK_WORDS) {
+                MOCK_WORDS[gKey].forEach(w => {
+                    if (!fullPool.some(item => item.word.toLowerCase() === w.word.toLowerCase())) {
+                        fullPool.push(w);
+                    }
+                });
+            }
+
+            let acquiredList = [];
+            let modalGridHtml = "";
+
+            for (let i = 0; i < 10; i++) {
+                const picked = fullPool[Math.floor(Math.random() * fullPool.length)];
+                const roll = Math.random();
+                let rolledGrade = "normal";
+                if (roll < 0.0008) rolledGrade = "mythic";
+                else if (roll < 0.03) rolledGrade = "legendary";
+                else if (roll < 0.10) rolledGrade = "hero";
+                else if (roll < 0.35) rolledGrade = "rare";
+
+                if (i === 9 && !acquiredList.some(item => item.grade !== "normal")) {
+                    rolledGrade = "rare";
+                }
+
+                const resultSkill = addOrLevelUpSkill(picked.word, picked.meaning, rolledGrade, true);
+                acquiredList.push(resultSkill);
+
+                const gradeInfo = SKILL_GRADES[resultSkill.grade] || SKILL_GRADES.normal;
+                const mult = getSkillMultiplier(resultSkill);
+                const starsCount = resultSkill.stars || 0;
+                const starsHtml = starsCount > 0 ? "⭐".repeat(starsCount) : "0성";
+
+                modalGridHtml += `
+                    <div class="border-2 ${gradeInfo.colorClass} bg-[#0d0d0d] p-2 text-center flex flex-col justify-between min-h-[90px] rounded-none-forced">
+                        <div>
+                            <div class="flex items-center justify-between text-[8px] font-bold text-[#7e7e7e]">
+                                <span>${gradeInfo.name}</span>
+                                <span class="text-yellow-400 font-bold">${starsHtml}</span>
+                            </div>
+                            <p class="text-[11px] font-bold font-mono text-white truncate mt-0.5">${capitalizeFirstLetter(resultSkill.word)}</p>
+                        </div>
+                        <div>
+                            <span class="text-[9px] truncate block text-[#bbbbbb]">${resultSkill.meaning}</span>
+                            <span class="text-[9px] font-bold text-pink-400 block">×${mult}배</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.getElementById("gacha10xGrid").innerHTML = modalGridHtml;
+            document.getElementById("gacha10xResultModal").classList.remove("hidden");
+            document.getElementById("gacha10xResultModal").classList.add("flex");
+            playSoundEffect('levelup');
+            buildSkillTabUI();
+            renderSkillsUI();
+            saveLocalCache();
         }
 
         // ==========================================
@@ -3473,6 +3972,7 @@
             let invHtml = "";
             sortedInventory.forEach(skill => {
                 const isEquipped = gameState.equippedSkills.includes(skill.id);
+                const isSelectedForCombine = selectedCombineSkillIds && selectedCombineSkillIds.includes(skill.id);
                 const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
                 const mult = getSkillMultiplier(skill);
                 const starsCount = skill.stars || 0;
@@ -3481,8 +3981,11 @@
                 const maxExp = skill.maxExp || getRequiredExpForStar(skill.grade);
                 const pct = Math.min(100, Math.round((exp / maxExp) * 100));
 
+                const borderStyle = isSelectedForCombine ? 'border-yellow-400 ring-4 ring-yellow-500/80 scale-95 shadow-[0_0_15px_rgba(234,179,8,0.9)]' : (isEquipped ? 'border-white ring-2 ring-white/50' : 'border-[#262626]');
+
                 invHtml += `
-                    <div class="border-2 ${isEquipped ? 'border-white ring-2 ring-white/50' : 'border-[#262626]'} ${gradeInfo.colorClass} bg-[#0d0d0d] rounded-none-forced p-2 text-center flex flex-col justify-between min-h-[125px] relative group hover:border-gray-400 transition">
+                    <div onclick="toggleSelectCombineSkill('${skill.id}')" class="border-2 ${borderStyle} ${gradeInfo.colorClass} bg-[#0d0d0d] rounded-none-forced p-2 text-center flex flex-col justify-between min-h-[125px] relative group hover:border-yellow-400 cursor-pointer transition">
+                        ${isSelectedForCombine ? '<span class="absolute -top-2 -left-2 bg-yellow-400 text-black text-[8px] font-black px-1.5 py-0.5 z-20 shadow-md animate-bounce">[조합 3개 중 선택됨]</span>' : ''}
                         <div>
                             <div class="flex justify-between items-center text-[8px] font-bold text-[#7e7e7e] mb-0.5">
                                 <span class="truncate">${gradeInfo.name} T${skill.tier || 1}</span>
@@ -3492,7 +3995,7 @@
                             <span class="text-[9px] truncate block text-[#bbbbbb] mt-0.5 font-medium">${skill.meaning}</span>
                         </div>
 
-                        <div class="mt-1.5">
+                        <div class="mt-1.5" onclick="event.stopPropagation()">
                             <span class="text-[9px] font-extrabold text-pink-400 block mb-1">×${mult}배</span>
                             
                             <!-- 경험치 바 -->
@@ -3504,7 +4007,7 @@
                                 <span>${exp}/${maxExp}</span>
                             </div>
 
-                            <button onclick="${isEquipped ? `unequipSkill('${skill.id}')` : `equipSkill('${skill.id}')`}" class="w-full text-[9px] font-extrabold py-1 rounded-none-forced transition shadow-sm ${isEquipped ? 'bg-[#e22718] text-white hover:bg-red-700' : 'bg-white text-black hover:bg-gray-200'}">
+                            <button onclick="event.stopPropagation(); ${isEquipped ? `unequipSkill('${skill.id}')` : `equipSkill('${skill.id}')`}" class="w-full text-[9px] font-extrabold py-1 rounded-none-forced transition shadow-sm ${isEquipped ? 'bg-[#e22718] text-white hover:bg-red-700' : 'bg-white text-black hover:bg-gray-200'}">
                                 ${isEquipped ? '해제 (UNEQUIP)' : '장착 (EQUIP)'}
                             </button>
                         </div>
@@ -4154,7 +4657,13 @@
             document.getElementById("hallOfFameTab").classList.add("hidden");
             document.getElementById("statsTab").classList.add("hidden");
 
-            document.getElementById(tabId).classList.remove("hidden");
+            const activeEl = document.getElementById(tabId);
+            if (activeEl) {
+                activeEl.classList.remove("hidden");
+                if (tabId === 'hallOfFameTab' || tabId === 'statsTab') {
+                    activeEl.style.display = 'flex';
+                }
+            }
 
             const tabButtons = ["quizTabBtn", "gearTabBtn", "petTabBtn", "skillTabBtn", "worldBossTabBtn", "hallOfFameTabBtn", "statsTabBtn"];
             tabButtons.forEach(btnId => {
@@ -4175,8 +4684,11 @@
                 updateWorldBossUI();
             } else if (tabId === 'hallOfFameTab') {
                 fetchHallOfFameUI();
-            } else if (tabId === 'gearTab') {
                 renderTitleInventoryUI();
+            } else if (tabId === 'gearTab') {
+                buildUpgradeblacksmith();
+            } else if (tabId === 'statsTab') {
+                populateMasteredVocabulary();
             }
         }
 
@@ -4247,8 +4759,8 @@
 
             // 🔥 [전설 등급 - Legendary]
             { id: "구세주", name: "구세주", tier: "전설", desc: "월드보스 레이드 참전 및 격퇴 성공", condition: (gs) => gs.wbTitle === "수호신" || gs.unlockedTitles?.includes("구세주"), style: "border-[#dc2626] bg-gradient-to-r from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] shadow-[0_0_10px_rgba(220,38,38,0.7)]" },
-            { id: "개척자", name: "개척자", desc: "스테이지 Top 3 이내 진입", condition: (gs, res) => typeof res?.myStageRank === 'number' && res.myStageRank <= 3, style: "border-[#dc2626] bg-gradient-to-r from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] shadow-[0_0_10px_rgba(220,38,38,0.7)]" },
-            { id: "황금 대부호", name: "황금 대부호", desc: "누적 1,000,000(100만) 골드 이상 보유", condition: (gs) => (gs.gold || 0) >= 1000000, style: "border-[#d97706] bg-gradient-to-r from-[#b45309] to-[#78350f] text-[#fde68a] shadow-[0_0_10px_rgba(217,119,6,0.7)]" },
+            { id: "개척자", name: "개척자", tier: "전설", desc: "스테이지 Top 3 이내 진입", condition: (gs, res) => typeof res?.myStageRank === 'number' && res.myStageRank <= 3, style: "border-[#dc2626] bg-gradient-to-r from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] shadow-[0_0_10px_rgba(220,38,38,0.7)]" },
+            { id: "황금 대부호", name: "황금 대부호", tier: "전설", desc: "누적 1,000,000(100만) 골드 이상 보유", condition: (gs) => (gs.gold || 0) >= 1000000, style: "border-[#d97706] bg-gradient-to-r from-[#b45309] to-[#78350f] text-[#fde68a] shadow-[0_0_10px_rgba(217,119,6,0.7)]" },
 
             // 💜 [영웅 등급 - Hero]
             { id: "토벌 대장", name: "토벌 대장", tier: "영웅", desc: "월드보스 랭킹 Top 5 이내 진입", condition: (gs, res) => typeof res?.myBossRank === 'number' && res.myBossRank <= 5, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },

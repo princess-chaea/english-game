@@ -4907,10 +4907,16 @@
 
         function saveAndExit() {
             saveLocalCache();
-            showToast("💾 데이터 저장 중... 잠시 후 첫 화면으로 이동합니다.");
+            showToast("💾 저장 중... 잠시 후 창이 닫힙니다.");
             const savedUrl = getGasUrl();
+            const doClose = () => {
+                window.close();
+                // 브라우저 정책상 window.close()가 막힌 경우 안내
+                setTimeout(() => {
+                    showToast("💾 저장 완료! 브라우저 탭을 직접 닫아주세요.");
+                }, 500);
+            };
             if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
-                // 클라우드 저장 후 세션 제거 → 로그인 화면으로
                 const petStr = JSON.stringify(gameState.petLevels || {});
                 const extraDataStr = JSON.stringify({
                     necklaceLvl: gameState.necklaceLvl || 0,
@@ -4937,22 +4943,11 @@
                         Number(gameState.masteryPoints) || 0,
                         extraDataStr
                     ],
-                    function () {
-                        localStorage.removeItem("vocahero_active_session");
-                        location.reload();
-                    },
-                    function () {
-                        // 클라우드 실패해도 로컬은 저장된 상태로 나가기
-                        localStorage.removeItem("vocahero_active_session");
-                        location.reload();
-                    }
+                    function () { doClose(); },
+                    function () { doClose(); }
                 );
             } else {
-                // 로컬 저장만 하고 나가기
-                setTimeout(() => {
-                    localStorage.removeItem("vocahero_active_session");
-                    location.reload();
-                }, 800);
+                setTimeout(doClose, 800);
             }
         }
 

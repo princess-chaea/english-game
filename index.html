@@ -1248,17 +1248,17 @@
                 <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">반</label>
-                        <input type="number" id="inputClass" min="1" placeholder="반" oninput="if(this.value < 1 && this.value !== ''){ this.value = 1; showToast('⚠️ 반 숫자는 1 이상이어야 합니다.'); }"
+                        <input type="number" id="inputClass" min="1" placeholder="반" oninput="if(this.value < 1 && this.value !== ''){ this.value = 1; }"
                             class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced">
                     </div>
                     <div>
                         <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">번호</label>
-                        <input type="number" id="inputNumber" min="1" placeholder="번호" oninput="if(this.value < 1 && this.value !== ''){ this.value = 1; showToast('⚠️ 번호는 1 이상이어야 합니다.'); }"
+                        <input type="number" id="inputNumber" min="1" placeholder="번호" oninput="if(this.value < 1 && this.value !== ''){ this.value = 1; }"
                             class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced">
                     </div>
                     <div>
                         <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">이름 (한글)</label>
-                        <input type="text" id="inputName" placeholder="이름" lang="ko" inputmode="text" oninput="if(/[^가-힣ㄱ-ㅎㅏ-ㅣ\s]/.test(this.value)){ this.value = this.value.replace(/[^가-힣ㄱ-ㅎㅏ-ㅣ\s]/g, ''); showToast('⚠️ 학생 이름은 한글 전용입니다. 한/영 키를 확인해주세요!'); }"
+                        <input type="text" id="inputName" placeholder="이름" lang="ko" inputmode="text" oninput="if(/[^가-힣ㄱ-ㅎㅏ-ㅣ\s]/.test(this.value)){ this.value = this.value.replace(/[^가-힣ㄱ-ㅎㅏ-ㅣ\s]/g, ''); }"
                             class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced">
                     </div>
                 </div>
@@ -3362,15 +3362,6 @@
             showToast(`🏺 고대 유물 ${drawCount}회 소환 완료! 유물 공명 효과가 강화되었습니다.`);
             renderRelicsUI();
             saveLocalCache();
-        }
-
-                drawPetCompanion();
-                buildCompanionPetLab();
-                refreshStateVisuals();
-                saveLocalCache();
-            } else {
-                showToast("🪙 연구 지원 골드가 부족합니다.");
-            }
         }
 
         // ==========================================

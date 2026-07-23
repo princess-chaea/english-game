@@ -1495,52 +1495,52 @@
                         </thead>
                         <tbody class="divide-y divide-gray-800 font-mono">
                             <tr>
-                                <td class="p-1 text-left text-gray-200 font-sans font-bold">⚔️ 전체 공격력</td>
-                                <td>+10%</td>
-                                <td class="text-sky-300">+15%</td>
-                                <td class="text-purple-300">+22%</td>
-                                <td class="text-red-400">+35%</td>
-                                <td class="text-yellow-300 font-bold">+50%</td>
+                                <td class="p-1 text-left text-gray-200 font-sans font-bold">⚔️ 무구 공격력 (개별)</td>
+                                <td>+2%</td>
+                                <td class="text-sky-300">+3%</td>
+                                <td class="text-purple-300">+4%</td>
+                                <td class="text-red-400">+7%</td>
+                                <td class="text-yellow-300 font-bold">+10%</td>
                             </tr>
                             <tr>
-                                <td class="p-1 text-left text-gray-200 font-sans font-bold">🪄 마법 스킬 피해</td>
-                                <td>+15%</td>
-                                <td class="text-sky-300">+22%</td>
-                                <td class="text-purple-300">+33%</td>
-                                <td class="text-red-400">+52%</td>
-                                <td class="text-yellow-300 font-bold">+75%</td>
+                                <td class="p-1 text-left text-gray-200 font-sans font-bold">🪄 무구 마법 피해</td>
+                                <td>+3%</td>
+                                <td class="text-sky-300">+4.5%</td>
+                                <td class="text-purple-300">+6.6%</td>
+                                <td class="text-red-400">+10.4%</td>
+                                <td class="text-yellow-300 font-bold">+15%</td>
                             </tr>
                             <tr>
-                                <td class="p-1 text-left text-gray-200 font-sans font-bold">🐉 보스전 피해량</td>
-                                <td>+20%</td>
-                                <td class="text-sky-300">+30%</td>
-                                <td class="text-purple-300">+44%</td>
-                                <td class="text-red-400">+70%</td>
-                                <td class="text-yellow-300 font-bold">+100%</td>
+                                <td class="p-1 text-left text-gray-200 font-sans font-bold">🐉 무구 보스 피해</td>
+                                <td>+4%</td>
+                                <td class="text-sky-300">+6%</td>
+                                <td class="text-purple-300">+8.8%</td>
+                                <td class="text-red-400">+14%</td>
+                                <td class="text-yellow-300 font-bold">+20%</td>
                             </tr>
                             <tr>
-                                <td class="p-1 text-left text-gray-200 font-sans font-bold">💥 클릭 타격력</td>
-                                <td>+100</td>
-                                <td class="text-sky-300">+150</td>
-                                <td class="text-purple-300">+220</td>
-                                <td class="text-red-400">+350</td>
-                                <td class="text-yellow-300 font-bold">+500</td>
+                                <td class="p-1 text-left text-gray-200 font-sans font-bold">💥 무구 클릭 타격</td>
+                                <td>+20</td>
+                                <td class="text-sky-300">+30</td>
+                                <td class="text-purple-300">+44</td>
+                                <td class="text-red-400">+70</td>
+                                <td class="text-yellow-300 font-bold">+100</td>
                             </tr>
                             <tr>
-                                <td class="p-1 text-left text-gray-200 font-sans font-bold">🪙 정답 골드 수당</td>
-                                <td>+15%</td>
-                                <td class="text-sky-300">+22%</td>
-                                <td class="text-purple-300">+33%</td>
-                                <td class="text-red-400">+52%</td>
-                                <td class="text-yellow-300 font-bold">+75%</td>
+                                <td class="p-1 text-left text-gray-200 font-sans font-bold">🪙 무구 골드 수당</td>
+                                <td>+3%</td>
+                                <td class="text-sky-300">+4.5%</td>
+                                <td class="text-purple-300">+6.6%</td>
+                                <td class="text-red-400">+10.4%</td>
+                                <td class="text-yellow-300 font-bold">+15%</td>
                             </tr>
                             <tr>
-                                <td class="p-1 text-left text-gray-200 font-sans font-bold">🎯 크리티컬 확률</td>
-                                <td>+5%</td>
-                                <td class="text-sky-300">+7%</td>
-                                <td class="text-purple-300">+11%</td>
-                                <td class="text-red-400">+17%</td>
-                                <td class="text-yellow-300 font-bold">+25%</td>
+                                <td class="p-1 text-left text-gray-200 font-sans font-bold">🎯 무구 크리티컬</td>
+                                <td>+1%</td>
+                                <td class="text-sky-300">+1.4%</td>
+                                <td class="text-purple-300">+2.2%</td>
+                                <td class="text-red-400">+3.4%</td>
+                                <td class="text-yellow-300 font-bold">+5%</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1571,7 +1571,7 @@
             <div id="forgeResultIcon" class="text-6xl"></div>
             <div id="forgeResultTitle" class="text-2xl font-bold tracking-wider"></div>
             <div id="forgeResultDesc" class="text-sm text-center text-[#bbbbbb] leading-relaxed"></div>
-            <button onclick="document.getElementById('forgeResultOverlay').classList.remove('flex');document.getElementById('forgeResultOverlay').classList.add('hidden')" class="mt-2 px-8 py-2 bg-[#0066b1] hover:bg-[#0088ee] text-white font-bold text-sm tracking-wider transition">확인</button>
+            <button id="forgeResultConfirmBtn" onclick="document.getElementById('forgeResultOverlay').classList.remove('flex');document.getElementById('forgeResultOverlay').classList.add('hidden')" class="mt-2 px-8 py-2 bg-[#0066b1] hover:bg-[#0088ee] text-white font-bold text-sm tracking-wider transition">확인</button>
         </div>
     </div>
 
@@ -3283,13 +3283,16 @@
                 mythic: "border-amber-500 bg-amber-950 text-yellow-300 shadow-[0_0_15px_rgba(245,158,11,0.8)] animate-pulse"
             };
 
-            for (let i = 0; i < 6; i++) {
+            const gearNames = ["🪖 투구 잠재력", "🛡️ 갑옷 잠재력", "⚔️ 수호검 잠재력", "🛡️ 방패 잠재력", "👟 신발 잠재력"];
+
+            for (let i = 0; i < 5; i++) {
                 const isUnlocked = i < unlockedSlots;
                 if (!isUnlocked) {
                     html += `
                         <div class="border border-gray-900 bg-black/60 p-2.5 text-center flex flex-col items-center justify-center min-h-[75px] opacity-40 rounded-none-forced">
+                            <span class="text-[9px] font-bold text-gray-400 mb-0.5">${gearNames[i]}</span>
                             <span class="text-xs text-gray-500 font-bold">🔒 슬롯 잠김</span>
-                            <span class="text-[8px] text-gray-600 mt-1">평균 ${i === 3 ? '30강' : i === 4 ? '40강' : '50강'} 달성</span>
+                            <span class="text-[8px] text-gray-600 mt-1">평균 ${i === 3 ? '40강' : '50강'} 달성</span>
                         </div>
                     `;
                     continue;
@@ -3305,11 +3308,12 @@
                 const style = gradeColorMap[opt.grade] || gradeColorMap.normal;
 
                 html += `
-                    <div class="border ${style} p-2 text-center flex flex-col justify-between min-h-[75px] relative rounded-none-forced">
+                    <div class="border ${style} p-2 text-center flex flex-col justify-between min-h-[80px] relative rounded-none-forced">
                         <button onclick="toggleLockPotentialSlot(${i})" class="absolute -top-1.5 -right-1.5 px-1 py-0.2 text-[8px] font-black rounded-none-forced transition ${isLocked ? 'bg-yellow-400 text-black border border-yellow-600 shadow-md' : 'bg-gray-800 text-gray-400 hover:text-white'}">
                             ${isLocked ? '🔒 잠금' : '🔓 해제'}
                         </button>
                         <div>
+                            <span class="text-[8px] font-bold text-gray-400 block">${gearNames[i]}</span>
                             <span class="text-[8px] font-bold opacity-80 uppercase block">[${opt.gradeName}]</span>
                             <span class="text-xs font-extrabold block mt-0.5">${opt.icon} ${opt.name}</span>
                         </div>
@@ -3321,8 +3325,8 @@
             grid.innerHTML = html;
 
             const lockedCount = selectedLockedPotentialSlots.length;
-            const costMap = [50000, 150000, 400000, 1000000, 2500000, 6000000];
-            const currentCost = costMap[Math.min(lockedCount, 5)];
+            const costMap = [50000, 150000, 400000, 1000000, 2500000];
+            const currentCost = costMap[Math.min(lockedCount, 4)];
             const costText = document.getElementById("potentialRerollCostText");
             if (costText) costText.innerText = `${currentCost.toLocaleString()} Gold`;
         }
@@ -3338,13 +3342,14 @@
             else if (roll < 0.18) { grade = "hero"; gradeName = "영웅"; mult = 2.2; }
             else if (roll < 0.45) { grade = "rare"; gradeName = "희귀"; mult = 1.5; }
 
+            // 💡 각각의 무구별 5등분 밸런싱 수치 (전체 5개 무구 합산 시 기존과 동일)
             const pool = [
-                { type: "atk", name: "전체 공격력", icon: "⚔️", base: 10, unit: "%" },
-                { type: "skillDmg", name: "마법 스킬 피해", icon: "🪄", base: 15, unit: "%" },
-                { type: "bossDmg", name: "보스전 피해량", icon: "🐉", base: 20, unit: "%" },
-                { type: "clickDmg", name: "클릭 타격력", icon: "💥", base: 100, unit: "" },
-                { type: "goldBonus", name: "정답 골드 수당", icon: "🪙", base: 15, unit: "%" },
-                { type: "critRate", name: "크리티컬 확률", icon: "🎯", base: 5, unit: "%" }
+                { type: "atk", name: "공격력", icon: "⚔️", base: 2, unit: "%" },
+                { type: "skillDmg", name: "마법 피해", icon: "🪄", base: 3, unit: "%" },
+                { type: "bossDmg", name: "보스 피해", icon: "🐉", base: 4, unit: "%" },
+                { type: "clickDmg", name: "클릭 타격", icon: "💥", base: 20, unit: "" },
+                { type: "goldBonus", name: "골드 수당", icon: "🪙", base: 3, unit: "%" },
+                { type: "critRate", name: "크리티컬", icon: "🎯", base: 1, unit: "%" }
             ];
 
             const picked = pool[Math.floor(Math.random() * pool.length)];
@@ -3375,6 +3380,11 @@
             const stage = gameState.stage || 1;
             if (stage < 40) {
                 showToast("⚠️ 무구 잠재력 연구소는 40스테이지 정복 시 해금됩니다!");
+                return;
+            }
+
+            if (!gameState.isPotentialUnlocked) {
+                showToast("⚠️ 무구 잠재력 연구소를 먼저 100,000 Gold로 개설하셔야 잠재력 재설정이 가능합니다!");
                 return;
             }
 
@@ -3483,9 +3493,7 @@
                                     <img src="${info.img}" class="w-4 h-4 object-contain inline">
                                     <span>${info.name}</span>
                                 </h4>
-                                <span class="text-[9px] font-bold ${isUnlocked ? 'text-yellow-300 bg-purple-950/80 border border-purple-700 px-1.5 py-0.5' : 'text-gray-500'} font-mono">
-                                    ${!isUnlocked ? '🔒 미해금' : (currentLvl > 0 ? `Lv.${currentLvl}` : '해금 완료 (연마 가능)')}
-                                </span>
+                                ${currentLvl > 0 ? `<span class="text-[9px] font-bold text-yellow-300 bg-purple-950/80 border border-purple-700 px-1.5 py-0.5 font-mono">Lv.${currentLvl}</span>` : ''}
                             </div>
                             <p class="text-[9px] text-gray-400 mb-1.5">${isUnlocked ? info.desc : `🔒 ${info.unlockStage}스테이지 달성 시 해금`}</p>
                             ${isUnlocked ? `
@@ -6152,7 +6160,9 @@
             const icon = document.getElementById("forgeResultIcon");
             const titleEl = document.getElementById("forgeResultTitle");
             const descEl = document.getElementById("forgeResultDesc");
+            const singleBtn = document.getElementById("forgeResultConfirmBtn");
 
+            if (singleBtn) singleBtn.style.display = "block";
             icon.innerText = isSuccess ? "🎉" : "💔";
             titleEl.innerText = title;
             titleEl.style.color = borderColor;
@@ -6177,15 +6187,18 @@
             const icon = document.getElementById("forgeResultIcon");
             const titleEl = document.getElementById("forgeResultTitle");
             const descEl = document.getElementById("forgeResultDesc");
+            const singleBtn = document.getElementById("forgeResultConfirmBtn");
+
+            if (singleBtn) singleBtn.style.display = "none";
 
             icon.innerText = "🔮";
             titleEl.innerText = "마법 조합 연성 확인";
             titleEl.style.color = "#a855f7";
             descEl.innerHTML = `
                 ${htmlContent}
-                <div class="flex gap-2 mt-4 justify-center">
-                    <button id="cancelCombineBtn" class="px-4 py-2 bg-gray-800 text-gray-300 font-bold text-xs border border-gray-600 rounded-none-forced">취소</button>
-                    <button id="proceedCombineBtn" class="px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-xs rounded-none-forced shadow-lg">연성 시작!</button>
+                <div class="flex gap-3 mt-4 justify-center items-center">
+                    <button id="proceedCombineBtn" class="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-xs rounded-none-forced shadow-lg cursor-pointer">🔮 연성 시작!</button>
+                    <button id="cancelCombineBtn" class="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold text-xs border border-gray-600 rounded-none-forced cursor-pointer">취소</button>
                 </div>
             `;
             box.style.borderColor = "#a855f7";

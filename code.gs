@@ -209,10 +209,12 @@ function getWorldBossStatus(grade, studentKey) {
   }
 }
 
-// 월드보스 공격 가하기 (1일 1회 제약)
+// 월드보스 공격 가하기 (1일 1회 제약 & LockService 기반 충돌 방지)
 function attackWorldBoss(grade, studentKey, damageDealt) {
   initDatabaseSheets();
+  var lock = LockService.getScriptLock();
   try {
+    lock.waitLock(5000); // 5초 락 대기
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var todayStr = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd");
     
@@ -256,6 +258,8 @@ function attackWorldBoss(grade, studentKey, damageDealt) {
     return { success: true, newMyDamage: newMyDamage };
   } catch(e) {
     return { error: e.toString() };
+  } finally {
+    try { lock.releaseLock(); } catch(err) {}
   }
 }
 
@@ -512,9 +516,11 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
   }
 }
 
-// 5. 플레이어 진행도 보존 실시간 업로드 동기화
+// 5. 플레이어 진행도 보존 실시간 업로드 동기화 (LockService 적용)
 function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType, helmetLvl, armorLvl, weaponLvl, shieldLvl, shoesLvl, petLevelsStr, stage, progress, skillsInventory, equippedSkills, masteryPoints) {
+  var lock = LockService.getScriptLock();
   try {
+    lock.waitLock(5000); // 5초 락 대기
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName("Students");
     if (!sheet) return false;
@@ -556,6 +562,8 @@ function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType
     return false;
   } catch(e) {
     return false;
+  } finally {
+    try { lock.releaseLock(); } catch(err) {}
   }
 }
 

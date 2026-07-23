@@ -2099,6 +2099,7 @@
 
         function saveLocalCache() {
             if (!gameState.name) return;
+            isStateDirty = true;
             const cacheKey = `vocahero_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
             localStorage.setItem(cacheKey, JSON.stringify(gameState));
         }
@@ -4118,11 +4119,14 @@
             }
         }
 
+        let isStateDirty = true; // 변경 감지 플래그 (초기 진입 시 저장 허용)
+
         setInterval(() => {
-            if (gameState.name !== "방문자") {
+            if (gameState.name !== "방문자" && isStateDirty) {
                 saveSessionToCloud();
+                isStateDirty = false;
             }
-        }, 20000);
+        }, 60000); // 60초 주기 (API 요청량 66% 감소 최적화)
 
         function switchTab(tabId) {
             const leftPanel = document.getElementById("leftRpgPanel");

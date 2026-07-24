@@ -4108,8 +4108,8 @@
 
                 html += `
                     <div class="border ${style} p-2 text-center flex flex-col justify-between min-h-[80px] relative rounded-none-forced">
-                        <button onclick="toggleLockPotentialSlot('${selectedGearKey}', ${i})" class="absolute -top-1.5 -right-1.5 px-1 py-0.2 text-[8px] font-black rounded-none-forced transition ${isLocked ? 'bg-yellow-400 text-black border border-yellow-600 shadow-md' : 'bg-gray-800 text-gray-400 hover:text-white'}">
-                            ${isLocked ? '🔒 잠금' : '🔓 해제'}
+                        <button onclick="toggleLockPotentialSlot('${selectedGearKey}', ${i})" class="absolute -top-2 -right-2 px-1.5 py-0.5 text-[9px] font-black rounded-none-forced transition border shadow-md cursor-pointer ${isLocked ? 'bg-yellow-400 text-black border-yellow-600' : 'bg-gray-800 text-gray-300 border-gray-600 hover:text-white'}">
+                            ${isLocked ? '🔒 잠금됨' : '🔓 잠금 해제'}
                         </button>
                         <div>
                             <span class="text-[8px] font-bold text-gray-400 block">${i + 1}번 옵션 [${opt.gradeName}]</span>

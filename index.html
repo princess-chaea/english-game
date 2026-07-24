@@ -386,19 +386,19 @@
             class="lg:col-span-5 bg-black border border-[#3c3c3c] p-5 flex flex-col justify-between relative overflow-hidden min-h-[520px] rounded-none-forced">
             
             <!-- Stage Header & Progress -->
-            <div class="z-10 flex justify-between items-center bg-[#0d0d0d] border border-[#3c3c3c] px-4 py-2 rounded-none-forced">
-                <div class="flex items-center gap-3">
-                    <span class="font-bold text-xs uppercase tracking-widest text-[#0066b1] flex items-center gap-1.5">
-                        <i data-lucide="shield" class="w-4 h-4"></i>
-                        <span id="displayStageNum">스테이지 1-1</span>
+            <div class="z-10 flex justify-between items-center bg-[#0d0d0d] border border-[#3c3c3c] px-3 py-2 rounded-none-forced gap-2 overflow-hidden">
+                <div class="flex items-center gap-2.5 shrink-0 whitespace-nowrap">
+                    <span class="font-bold text-xs uppercase tracking-widest text-[#0066b1] flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                        <i data-lucide="shield" class="w-4 h-4 shrink-0"></i>
+                        <span id="displayStageNum" class="whitespace-nowrap">스테이지 1-1</span>
                     </span>
-                    <span class="text-[9px] text-[#7e7e7e] font-mono border-l border-[#3c3c3c] pl-3">
+                    <span class="text-[9px] text-[#7e7e7e] font-mono border-l border-[#3c3c3c] pl-2.5 whitespace-nowrap shrink-0">
                         권장 DPS: <span id="recommendedDpsDisplay" class="text-orange-500 font-bold">0</span>
                     </span>
                 </div>
                 <!-- Active Offline reward flag -->
                 <span id="offlineEarningsBadge"
-                    class="hidden bg-[#e22718]/90 text-white border border-[#e22718] px-2 py-0.5 rounded-none-forced text-[9px] font-bold animate-pulse">
+                    class="hidden bg-[#e22718]/90 text-white border border-[#e22718] px-2 py-0.5 rounded-none-forced text-[9px] font-bold animate-pulse whitespace-nowrap shrink-0">
                     오프라인 보상 골드 획득!
                 </span>
             </div>
@@ -2879,7 +2879,7 @@
                     gameState.gold += goldGained;
                     const badge = document.getElementById("offlineEarningsBadge");
                     badge.classList.remove("hidden");
-                    badge.innerText = `💤 오프라인 자동 사냥 수당 +${goldGained}G 획득!`;
+                    badge.innerText = `💤 오프라인 +${goldGained.toLocaleString()}G`;
                     showToast(`💤 수면 자동 훈련기 작동 완료! 용사단이 부재중에 ${goldGained}G를 축적했습니다.`);
 
                     setTimeout(() => { badge.classList.add("hidden"); }, 8000);

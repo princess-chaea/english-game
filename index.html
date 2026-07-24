@@ -520,9 +520,12 @@
                     </div>
                     <!-- Name tag, Relic & Accessories flex container (이름 중앙, 양옆 장비 배치) -->
                     <div class="flex items-center gap-1.5 mt-1.5 z-20 justify-center w-full">
-                        <!-- 🏺 고대 유물 -->
-                        <div id="heroRelicSlot" class="w-8 h-8 hidden flex-col items-center justify-center bg-black/80 border border-yellow-500/80 p-0.5 shadow-[0_0_15px_rgba(234,179,8,0.6)] animate-pulse" title="장착된 고대 유물">
-                            <img id="heroRelicImg" src="media/relics/relic_1.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23eab308\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'10\'/><path d=\'M12 6v12M6 12h12\'/></svg>'" class="w-full h-full object-contain filter drop-shadow-[0_0_8px_#f59e0b]">
+                        <!-- 🏺 고대 유물 (오라만 깜빡거리고 이미지는 100% 선명하게 보임) -->
+                        <div id="heroRelicSlot" class="w-8 h-8 hidden relative items-center justify-center bg-black/80 border border-yellow-500 p-0.5" title="장착된 고대 유물">
+                            <!-- 뒤편 오라 효과만 깜빡임 -->
+                            <div class="absolute inset-0 bg-yellow-500/30 animate-pulse shadow-[0_0_15px_rgba(234,179,8,0.8)] pointer-events-none"></div>
+                            <!-- 선명한 고대 유물 아이콘 (투명도 100% 유지) -->
+                            <img id="heroRelicImg" src="media/relics/relic_1.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23eab308\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'10\'/><path d=\'M12 6v12M6 12h12\'/></svg>'" class="w-full h-full object-contain relative z-10 filter drop-shadow-[0_0_4px_#f59e0b]">
                         </div>
                         <span id="heroNameTag"
                             class="text-[9px] bg-[#1a1a1a] border border-[#3c3c3c] px-3 py-0.5 font-bold text-[#bbbbbb] tracking-wider uppercase rounded-none-forced">내 영웅</span>
@@ -4078,7 +4081,7 @@
                     currentGearOpts[i] = opt;
                 }
 
-                const isLocked = lockedArr.includes(i);
+                const isLocked = lockedArr.some(item => Number(item) === Number(i));
                 const style = gradeColorMap[opt.grade] || gradeColorMap.normal;
 
                 html += `
@@ -4169,8 +4172,6 @@
             ensureGearPotentialsStructure();
             const gearKey = selectedGearKey;
             const unlockedSlots = getGearUnlockedSlotsCount(gearKey);
-            const currentOpts = gameState.gearPotentials[gearKey] || [];
-
             if (!gameState.lockedPotentialSlots) gameState.lockedPotentialSlots = {};
             const lockedArr = gameState.lockedPotentialSlots[gearKey] || [];
             const isSlotLocked = (slotIdx) => lockedArr.some(item => Number(item) === Number(slotIdx));
@@ -4180,7 +4181,8 @@
                 if (!opt) return false;
                 const g = String(opt.grade || "").toLowerCase();
                 const gn = String(opt.gradeName || "").toLowerCase();
-                return g === "mythic" || gn === "신화" || g.includes("mythic") || gn.includes("신화");
+                const n = String(opt.name || "").toLowerCase();
+                return g === "mythic" || gn === "신화" || g.includes("mythic") || gn.includes("신화") || n.includes("신화");
             };
             let hasMythicUnlocked = false;
 

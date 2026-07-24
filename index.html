@@ -1434,6 +1434,7 @@
                                     <li>🏛️ <b>보스 증표</b> → 고대 유물 소환 (1회=50 증표)</li>
                                 </ul>
                             </div>
+                            </div>
                         </div>
                         <div class="mt-2 text-[8px] text-gray-500 border-t border-gray-800 pt-1.5">
                             💡 팁: 단어를 많이 정복할수록 스탯·재화가 함께 성장! 오답 단어를 반복 학습하면 정답률과 전투력이 올라갑니다.
@@ -1499,7 +1500,7 @@
                     </div>
                     <div>
                         <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">이름</label>
-                        <input type="text" id="inputName" placeholder="이름" lang="ko" inputmode="text" oninput="if(/[^가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9\s]/.test(this.value)){ this.value = this.value.replace(/[^가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9\s]/g, ''); }"
+                        <input type="text" id="inputName" placeholder="이름" lang="ko" autocomplete="name"
                             class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced">
                     </div>
                 </div>
@@ -2505,7 +2506,10 @@
             const grade = parseInt(document.getElementById("inputGrade").value);
             const classNum = parseInt(document.getElementById("inputClass").value);
             const studentNum = parseInt(document.getElementById("inputNumber").value);
-            const name = document.getElementById("inputName").value.trim();
+            // 제출 시점에 특수문자만 제거 (한글 IME 조합은 방해하지 않음)
+            const rawName = document.getElementById("inputName").value.trim();
+            const name = rawName.replace(/[^가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9\s]/g, '');
+            document.getElementById("inputName").value = name;
 
             if (!classNum || classNum < 1 || !studentNum || studentNum < 1 || !name) {
                 showToast("⚠️ 반, 번호는 1 이상의 양수 숫자이어야 하며, 이름도 입력해야 합니다!");

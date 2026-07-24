@@ -5005,11 +5005,11 @@
 
 
         function renderSkillsUI() {
-            const container = document.getElementById("skillsContainer");
+            const container = document.getElementById("quizEquippedSkillsContainer");
             if (!container) return;
 
             if (!gameState.equippedSkills || gameState.equippedSkills.length === 0) {
-                container.innerHTML = `<p class="text-[10px] text-[#7e7e7e] text-center py-4 col-span-2 uppercase tracking-wider">장착된 마법 비기가 없습니다. [스킬] 연구소에서 마법을 선택해 장착하세요!</p>`;
+                container.innerHTML = `<p class="text-[10px] text-[#7e7e7e] text-center py-4 col-span-4 uppercase tracking-wider">장착된 마법 비기가 없습니다. [스킬] 연구소에서 마법을 선택해 장착하세요!</p>`;
                 return;
             }
 
@@ -5386,11 +5386,11 @@
                 modal.classList.add("hidden");
                 showBattleToast("🛡️ 방어 성공! 보스에게 반격 피해!");
                 
-                // 성공 시 반격 폭딜
-                const counterDmg = (calculateClickAttackPower() * 50) + (calculateDPSPower() * 10);
+                // 성공 시 반격 폭딜 (데미지 3배 패링)
+                const counterDmg = ((calculateClickAttackPower() * 50) + (calculateDPSPower() * 10)) * 3;
                 processCombatDamage(counterDmg);
                 const arena = document.getElementById("battleArena");
-                spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `✨ 카운터 어택! -${counterDmg}`);
+                spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `✨ 패링 어택! -${counterDmg}`);
             } else {
                 punishCriticalFailure("스펠링 오답");
             }
@@ -5554,12 +5554,15 @@
             bossTimerInterval = setInterval(() => {
                 bossTimeRemaining -= 0.1;
 
-                // 보스전 전용 크리티컬 방어 기믹 (초당 약 5% 확률로 발동)
-                if (!document.getElementById("criticalDefenseModal").classList.contains("flex") && Math.random() < 0.005) {
-                    if (gameState.wordsPool && gameState.wordsPool.length > 0) {
-                        const rWord = gameState.wordsPool[Math.floor(Math.random() * gameState.wordsPool.length)];
-                        showBattleToast("⚠️ 보스의 강력한 공격이 날아옵니다!");
-                        triggerCriticalAttack(rWord.word, rWord.meaning, true);
+                // 보스전 전용 크리티컬 방어 기믹 (20초, 10초 남았을 때 확정 발동 및 초당 5% 확률 랜덤 발동)
+                if (!document.getElementById("criticalDefenseModal").classList.contains("flex")) {
+                    const intTime = Math.round(bossTimeRemaining * 10) / 10;
+                    if (intTime === 20.0 || intTime === 10.0 || Math.random() < 0.005) {
+                        if (gameState.wordsPool && gameState.wordsPool.length > 0) {
+                            const rWord = gameState.wordsPool[Math.floor(Math.random() * gameState.wordsPool.length)];
+                            showBattleToast("⚠️ 보스의 강력한 공격이 날아옵니다!");
+                            triggerCriticalAttack(rWord.word, rWord.meaning, true);
+                        }
                     }
                 }
 
@@ -5981,15 +5984,18 @@
             // 🔥 [전설 등급 - Legendary]
             { id: "구세주", name: "구세주", tier: "전설", desc: "월드보스 레이드 참전 및 격퇴 성공", condition: (gs) => gs.wbTitle === "수호신" || gs.unlockedTitles?.includes("구세주"), style: "border-[#dc2626] bg-gradient-to-r from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] shadow-[0_0_10px_rgba(220,38,38,0.7)]" },
             { id: "개척자", name: "개척자", tier: "전설", desc: "스테이지 Top 3 이내 진입", condition: (gs, res) => typeof res?.myStageRank === 'number' && res.myStageRank <= 3, style: "border-[#dc2626] bg-gradient-to-r from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] shadow-[0_0_10px_rgba(220,38,38,0.7)]" },
-            { id: "전설의 대장장이", name: "전설의 대장장이", tier: "전설", desc: "모든 무구 30강(MAX) 달성", condition: (gs) => (gs.helmetLvl || 1) >= 30 && (gs.armorLvl || 1) >= 30 && (gs.weaponLvl || 1) >= 30 && (gs.shieldLvl || 1) >= 30 && (gs.shoesLvl || 1) >= 30, style: "border-[#d97706] bg-gradient-to-r from-[#b45309] to-[#78350f] text-[#fde68a] shadow-[0_0_10px_rgba(217,119,6,0.7)]" },
+            { id: "전설의 대장장이", name: "전설의 대장장이", tier: "전설", desc: "모든 무구 50강(MAX) 달성", condition: (gs) => (gs.helmetLvl || 1) >= 50 && (gs.armorLvl || 1) >= 50 && (gs.weaponLvl || 1) >= 50 && (gs.shieldLvl || 1) >= 50 && (gs.shoesLvl || 1) >= 50, style: "border-[#d97706] bg-gradient-to-r from-[#b45309] to-[#78350f] text-[#fde68a] shadow-[0_0_10px_rgba(217,119,6,0.7)]" },
             { id: "고고학자", name: "고고학자", tier: "전설", desc: "고대 유물 10개 이상 수집", condition: (gs) => (gs.unlockedRelics || []).length >= 10, style: "border-[#059669] bg-gradient-to-r from-[#047857] to-[#064e3b] text-[#a7f3d0] shadow-[0_0_10px_rgba(5,150,105,0.7)]" },
+            { id: "잠재력 마스터", name: "잠재력 마스터", tier: "전설", desc: "잠재력 슬롯 15개 이상 해금", condition: (gs) => { let c=0; ["helmet","armor","weapon","shield","shoes"].forEach(k=>c+=Object.keys(gs.gearPotentials?.[k]||{}).length); return c>=15; }, style: "border-[#059669] bg-gradient-to-r from-[#047857] to-[#064e3b] text-[#a7f3d0] shadow-[0_0_10px_rgba(5,150,105,0.7)]" },
+            { id: "신화적 마법사", name: "신화적 마법사", tier: "전설", desc: "신화 등급 스킬 3개 이상 보유", condition: (gs) => (gs.skillsInventory || []).filter(s => s.grade === 'mythic').length >= 3, style: "border-[#059669] bg-gradient-to-r from-[#047857] to-[#064e3b] text-[#a7f3d0] shadow-[0_0_10px_rgba(5,150,105,0.7)]" },
 
             // 💜 [영웅 등급 - Hero]
             { id: "토벌 대장", name: "토벌 대장", tier: "영웅", desc: "월드보스 랭킹 Top 5 이내 진입", condition: (gs, res) => typeof res?.myBossRank === 'number' && res.myBossRank <= 5, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
-            { id: "정복 선봉장", name: "정복 선봉장", tier: "영웅", desc: "스테이지 20 이상 정복 달성", condition: (gs) => (gs.stage || 1) >= 20, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
+            { id: "정복 선봉장", name: "정복 선봉장", tier: "영웅", desc: "스테이지 30 이상 정복 달성", condition: (gs) => (gs.stage || 1) >= 30, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
             { id: "단어 마스터", name: "단어 마스터", tier: "영웅", desc: "단어 정답 200개 이상 정복", condition: (gs) => (gs.totalQuizCorrect || 0) >= 200, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
             { id: "완벽주의자", name: "완벽주의자", tier: "영웅", desc: "영단어 서고 마스터 단어 50개 이상 기록", condition: (gs) => (gs.masteredWords || []).length >= 50, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
-            { id: "검성", name: "검성", tier: "영웅", desc: "무기(수호검) 30강(MAX) 달성", condition: (gs) => (gs.weaponLvl || 1) >= 30, style: "border-[#b91c1c] bg-gradient-to-r from-[#991b1b] to-[#7f1d1d] text-[#fca5a5]" },
+            { id: "검성", name: "검성", tier: "영웅", desc: "무기(수호검) 50강(MAX) 달성", condition: (gs) => (gs.weaponLvl || 1) >= 50, style: "border-[#b91c1c] bg-gradient-to-r from-[#991b1b] to-[#7f1d1d] text-[#fca5a5]" },
+            { id: "부유한 모험가", name: "부유한 모험가", tier: "영웅", desc: "누적 500,000 골드 보유", condition: (gs) => (gs.gold || 0) >= 500000, style: "border-[#d97706] bg-gradient-to-r from-[#b45309] to-[#78350f] text-[#fde68a]" },
 
             // 🔷 [희귀 등급 - Rare]
             { id: "수호자", name: "수호자", tier: "희귀", desc: "스테이지 10 이상 정복 달성", condition: (gs) => (gs.stage || 1) >= 10, style: "border-[#0284c7] bg-gradient-to-r from-[#0369a1] to-[#0c4a6e] text-[#7dd3fc]" },

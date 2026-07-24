@@ -353,7 +353,7 @@
 <body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
 
     <!-- ⏳ FULLSCREEN INITIAL LOADING OVERLAY -->
-    <div id="gameLoadingOverlay" class="fixed inset-0 bg-black z-[10000] flex flex-col items-center justify-center p-6 transition-opacity duration-500">
+    <div id="gameLoadingOverlay" class="fixed inset-0 bg-black z-[10000] hidden opacity-0 pointer-events-none flex-col items-center justify-center p-6 transition-opacity duration-500" style="display: none;">
         <div class="max-w-md w-full text-center flex flex-col items-center">
             <div class="w-24 h-24 mb-6 relative flex items-center justify-center">
                 <div class="absolute inset-0 border-4 border-yellow-500/20 border-t-yellow-400 rounded-full animate-spin"></div>
@@ -2161,8 +2161,7 @@
             }, 120);
         }
 
-        // Execute immediately when JS loads on reload
-        showGameLoadingOverlay();
+        // Removed immediate showGameLoadingOverlay() to keep it hidden until actual login logic fires
 
         // 🛡️ Safety net: 8초 이내에 로딩이 끝나지 않으면 강제로 로그인 화면으로 전환
         let _loadingSafetyTimer = setTimeout(function() {
@@ -7317,6 +7316,7 @@
                 try {
                     const session = JSON.parse(activeSessionRaw);
                     if (session && session.grade && session.name && session.password) {
+                        showGameLoadingOverlay();
                         tempCredentials = { grade: session.grade, classNum: session.classNum, studentNum: session.studentNum, name: session.name };
                         const savedUrl = getGasUrl();
 

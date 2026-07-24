@@ -350,8 +350,13 @@
     </style>
 </head>
 
-<body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
-
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden bg-black">
+    <script>
+        // 새로고침 시 세션이 없으면 게임 UI가 깜빡이는 것을 방지
+        if (!sessionStorage.getItem("vocahero_active_session")) {
+            document.write('<style id="antiFlashStyle">header, main, nav { display: none !important; }</style>');
+        }
+    </script>
     <!-- ⏳ FULLSCREEN INITIAL LOADING OVERLAY -->
     <div id="gameLoadingOverlay" class="fixed inset-0 bg-black z-[10000] hidden opacity-0 pointer-events-none flex-col items-center justify-center p-6 transition-opacity duration-500" style="display: none;">
         <div class="max-w-md w-full text-center flex flex-col items-center">
@@ -2209,6 +2214,13 @@
             if (modalId === "loginModal" || modalId === "pinVerifyModal" || modalId === "newUserRegisterModal") {
                 hideGameLoadingOverlay();
             }
+            if (modalId === 'teacherModal') {
+                const savedUrl = getGasUrl();
+                if (savedUrl) {
+                    const endpointInput = document.getElementById("apiEndpointInput");
+                    if (endpointInput) endpointInput.value = savedUrl;
+                }
+            }
         }
 
         function closeModal(modalId) {
@@ -3064,6 +3076,10 @@
         }
 
         function initGameEngine() {
+            // 로그인 완료 후 숨겨두었던 게임 UI 노출
+            const antiFlash = document.getElementById("antiFlashStyle");
+            if (antiFlash) antiFlash.remove();
+
             document.getElementById("userInfoDisplay").classList.remove("hidden");
             document.getElementById("displayStudentName").innerText = `${gameState.grade}학년 ${gameState.classNum}반 ${gameState.studentNum}번 - [${gameState.name}]`;
             document.getElementById("gradeLevelBadge").innerText = `교과 영단어 ${gameState.grade}학년`;
@@ -7049,28 +7065,8 @@
             });
         }
 
-        function openModal(modalId) {
-            const modal = document.getElementById(modalId);
-            modal.classList.remove("hidden");
-            modal.classList.add("flex");
-
-            // 교사용 창을 열었을 때 현재 저장된 API URL 세팅
-            if (modalId === 'teacherModal') {
-                const savedUrl = getGasUrl();
-                if (savedUrl) {
-                    document.getElementById("apiEndpointInput").value = savedUrl;
-                }
-            }
-        }
-
         function openPotentialProbModal() {
             openModal('potentialProbModal');
-        }
-
-        function closeModal(modalId) {
-            const modal = document.getElementById(modalId);
-            modal.classList.add("hidden");
-            modal.classList.remove("flex");
         }
 
         function showToast(message) {

@@ -2266,8 +2266,9 @@
                 return;
             }
 
-            showToast("⏳ PIN 인증 중...");
             const { grade, classNum, studentNum, name } = tempCredentials;
+            showGameLoadingOverlay(`📜 구글 시트에서 [${name}] 용사님의 기록을 불러오는 중...`);
+            closeModal("pinVerifyModal");
             const savedUrl = getGasUrl();
 
             if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
@@ -2277,10 +2278,13 @@
                     function (response) {
                         if (response) {
                             if (response.error === "password_mismatch") {
+                                hideGameLoadingOverlay();
+                                openModal("pinVerifyModal");
                                 showToast("❌ 비밀번호가 틀렸습니다! 암호를 다시 확인해 주세요.");
                                 return;
                             }
                             syncStateFromServer(response);
+                            closeModal("loginModal");
                             closeModal("pinVerifyModal");
                             sessionStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
                             showToast("🏰 원정대 클라우드 계정 로드 성공!");
@@ -2298,13 +2302,16 @@
         }
 
         function handleLocalVerify(grade, classNum, studentNum, name, password) {
+            showGameLoadingOverlay(`📜 [${name}] 용사님의 로컬 기록을 불러오는 중...`);
             if (loadLocalSimulation(grade, classNum, studentNum, name, password)) {
-                // 모든 로그인 관련 모달 닫기 (새로고침 자동 복원 시 loginModal이 열려있을 수 있음)
+                // 모든 로그인 관련 모달 닫기
                 closeModal("loginModal");
                 closeModal("pinVerifyModal");
                 closeModal("newUserRegisterModal");
                 sessionStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
                 showToast("🏰 로컬 원정대 계정 로드 성공!");
+            } else {
+                hideGameLoadingOverlay();
             }
         }
 
@@ -2315,8 +2322,9 @@
                 return;
             }
 
-            showToast("⏳ 신규 대원 생성 중...");
             const { grade, classNum, studentNum, name } = tempCredentials;
+            showGameLoadingOverlay(`✨ [${name}] 신규 용사를 등록하고 마법 전장을 생성하는 중...`);
+            closeModal("newUserRegisterModal");
             const savedUrl = getGasUrl();
 
             if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
@@ -2326,6 +2334,7 @@
                     function (response) {
                         if (response) {
                             syncStateFromServer(response);
+                            closeModal("loginModal");
                             closeModal("newUserRegisterModal");
                             sessionStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
                             showToast("✨ 새로운 전설의 모험이 시작되었습니다! 환영합니다!");

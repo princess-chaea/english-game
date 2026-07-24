@@ -484,7 +484,7 @@
                             style="width: 100%"></div>
                     </div>
                     <div id="monsterContainer"
-                        class="w-40 h-40 flex items-center justify-center transition-transform duration-100">
+                        class="w-52 h-52 flex items-center justify-center transition-transform duration-100">
                         <svg viewBox="0 0 100 120" class="w-full h-full" id="monsterSvg"></svg>
                     </div>
                     <!-- 전투 알림 (몬스터 아래 화면 중앙에 표시) -->
@@ -559,7 +559,7 @@
         </section>
 
         <!-- RIGHT PANEL: Action Quiz, Equipment Upgrades, Pets (7 Cols) -->
-        <section id="rightMainPanel" class="lg:col-span-7 flex flex-col gap-4 transition-all duration-300">
+        <section id="rightMainPanel" class="lg:col-span-7 flex flex-col gap-2 transition-all duration-300">
 
             <!-- Header Navigation & Title -->
             <nav class="grid grid-cols-3 sm:grid-cols-7 gap-1 bg-[#0d0d0d] p-1 border border-[#3c3c3c] rounded-none-forced">
@@ -687,7 +687,7 @@
 
             <!-- TAB 2: RPG Equipment Blacksmith Upgrade Shop -->
             <div id="gearTab"
-                class="bg-black border border-[#3c3c3c] p-4 flex-grow hidden flex-col justify-between min-h-[420px] rounded-none-forced">
+                class="bg-black border border-[#3c3c3c] p-3 flex-grow hidden flex-col justify-between min-h-0 rounded-none-forced">
                 <div>
                     <h3 class="bmw-label-uppercase text-white flex items-center gap-2 mb-2">
                         <i data-lucide="anvil" class="text-[#0066b1]"></i>
@@ -699,7 +699,7 @@
                     </div>
 
                     <!-- ⚡ 무구 잠재력 -->
-                    <div id="potentialLabContainer" class="mt-4 border-t border-[#262626] pt-3">
+                    <div id="potentialLabContainer" class="mt-2 border-t border-[#262626] pt-2">
                         <div class="flex justify-between items-center mb-2">
                             <h4 class="text-xs font-bold text-yellow-400 flex items-center gap-1.5 uppercase tracking-wider">
                                 <i data-lucide="zap" class="w-4 h-4 text-yellow-400"></i>
@@ -725,7 +725,7 @@
                     </div>
 
                     <!-- 💍 [50스테이지 해금] 전설 장신구 3종 -->
-                    <div id="accessoriesLabContainer" class="mt-6 border-t border-[#262626] pt-4">
+                    <div id="accessoriesLabContainer" class="mt-2 border-t border-[#262626] pt-2">
                         <div class="flex justify-between items-center mb-2">
                             <h4 class="text-xs font-bold text-purple-400 flex items-center gap-1.5 uppercase tracking-wider">
                                 <i data-lucide="gem" class="w-4 h-4 text-purple-400"></i>
@@ -747,7 +747,7 @@
 
             <!-- TAB 3: Companion Pet Lab & Relic Altar (소환수 & 유물 소환) -->
             <div id="petTab"
-                class="bg-black border border-[#3c3c3c] p-5 flex-grow hidden flex-col justify-between min-h-[440px] rounded-none-forced">
+                class="bg-black border border-[#3c3c3c] p-3 flex-grow hidden flex-col justify-between min-h-0 rounded-none-forced">
                 <div>
                     <!-- Top Title: Pet Lab Only -->
                     <div class="flex justify-between items-center mb-3 border-b border-[#262626] pb-2">
@@ -757,7 +757,7 @@
                         </h3>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 mb-4" id="petListContainer">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 mb-2" id="petListContainer">
                         <!-- Dynamic Companion Pet inventory listing -->
                     </div>
 
@@ -851,7 +851,7 @@
 
             <!-- TAB 4: Skill Custom Equip Lab (신규 추가된 스킬 연구소 탭) -->
             <div id="skillTab"
-                class="bg-black border border-[#3c3c3c] p-5 flex-grow hidden flex-col justify-between rounded-none-forced overflow-y-auto">
+                class="bg-black border border-[#3c3c3c] p-3 flex-grow hidden flex-col justify-between rounded-none-forced overflow-y-auto">
                 <div>
                     <div class="flex justify-between items-center mb-2">
                         <h3 class="bmw-label-uppercase text-white flex items-center gap-2">

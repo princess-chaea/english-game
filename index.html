@@ -4184,15 +4184,16 @@
             }
 
             ensureGearPotentialsStructure();
-            const unlockedSlots = getGearUnlockedSlotsCount(selectedGearKey);
-            const currentOpts = gameState.gearPotentials[selectedGearKey] || [];
-            if (!selectedLockedPotentialSlots[selectedGearKey]) {
-                selectedLockedPotentialSlots[selectedGearKey] = [];
+            const gearKey = selectedGearKey;
+            const unlockedSlots = getGearUnlockedSlotsCount(gearKey);
+            const currentOpts = gameState.gearPotentials[gearKey] || [];
+            if (!selectedLockedPotentialSlots[gearKey]) {
+                selectedLockedPotentialSlots[gearKey] = [];
             }
-            const lockedArr = selectedLockedPotentialSlots[selectedGearKey];
+            const lockedArr = selectedLockedPotentialSlots[gearKey];
+            const lockedArrSafe = lockedArr || [];
 
             // ⚠️ 신화 등급 경고 확인 팝업 (객체/배열/명칭 안전 감지)
-            const lockedArrSafe = lockedArr || [];
             let hasMythicUnlocked = false;
             const isMythicOpt = (opt) => opt && (opt.grade === "mythic" || opt.gradeName === "신화" || (typeof opt.grade === "string" && opt.grade.toLowerCase() === "mythic"));
             if (Array.isArray(currentOpts)) {
@@ -4206,40 +4207,16 @@
             }
 
             if (hasMythicUnlocked) {
-                const targetGearKey = selectedGearKey;
                 showConfirm(
                     "선택한 무구의 잠재력 옵션 중 [신화 등급] 옵션이 포함되어 있습니다! 잠그지 않은 상태로 재설정하면 신화 옵션이 사라집니다. 정말 재설정하시겠습니까?",
-                    function() { _doRerollPotential(targetGearKey); },
+                    function() { _doRerollPotential(gearKey); },
                     null,
                     { icon: "⚠️", title: "신화 등급 잠재력 경고", yesLabel: "재설정", noLabel: "취소", danger: true }
                 );
-                return; // 모달 콜백에서 실행
-            }
-
-            const lockedCount = lockedArr.length;
-            const costMap = [50000, 150000, 400000, 1000000, 2500000, 6000000];
-            const cost = costMap[Math.min(lockedCount, 5)];
-
-            if (gameState.gold < cost) {
-                showToast(`🪙 골드가 부족합니다! 리롤을 진행하려면 ${cost.toLocaleString()} Gold가 필요합니다.`);
                 return;
             }
 
-            gameState.gold -= cost;
-            playSoundEffect('hit');
-
-            // lockedArrSafe already defined above
-
-            for (let i = 0; i < unlockedSlots; i++) {
-                if (!lockedArrSafe.includes(i)) {
-                    currentOpts[i] = generateRandomPotentialOption();
-                }
-            }
-
-            renderGearPotentialLabUI();
-            refreshStateVisuals();
-            saveLocalCache();
-            showToast("🎲 선택한 무구의 잠재력 옵션이 새로 재설정되었습니다!");
+            _doRerollPotential(gearKey);
         }
 
         function _doRerollPotential(gearKey) {
@@ -7948,6 +7925,8 @@
         function _openCustomModal(icon, title, message, buttons) {
             const overlay = document.getElementById("customModalOverlay");
             const box = document.getElementById("customModalBox");
+            if (!overlay || !box) return;
+
             document.getElementById("customModalIcon").innerText = icon;
             document.getElementById("customModalTitle").innerText = title;
             document.getElementById("customModalMessage").innerText = message;
@@ -7957,8 +7936,8 @@
                 const el = document.createElement("button");
                 el.innerText = btn.label;
                 el.className = btn.primary
-                    ? "flex-1 py-2.5 px-5 rounded-xl font-extrabold text-sm text-white shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
-                    : "flex-1 py-2.5 px-5 rounded-xl font-bold text-sm transition-all duration-200 hover:scale-105 active:scale-95 border";
+                    ? "flex-1 py-2.5 px-5 rounded-xl font-extrabold text-sm text-white shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+                    : "flex-1 py-2.5 px-5 rounded-xl font-bold text-sm transition-all duration-200 hover:scale-105 active:scale-95 border cursor-pointer";
                 if (btn.primary) {
                     el.style.background = btn.danger
                         ? "linear-gradient(135deg,#dc2626,#b91c1c)"
@@ -7968,7 +7947,9 @@
                     el.style.borderColor = "rgba(255,255,255,0.1)";
                     el.style.color = "#9ca3af";
                 }
-                el.onclick = () => {
+                el.onclick = (e) => {
+                    e.stopPropagation();
+                    overlay.classList.add("hidden");
                     overlay.style.display = "none";
                     if (btn.onClick) btn.onClick();
                 };
@@ -7978,7 +7959,8 @@
             box.style.transform = "scale(1) translateY(0)";
             box.style.opacity = "1";
             box.style.transition = "transform 0.2s cubic-bezier(.22,1,.36,1), opacity 0.15s";
-            overlay.style.zIndex = "999999";
+            overlay.classList.remove("hidden");
+            overlay.style.zIndex = "9999999";
             overlay.style.display = "flex";
             overlay.style.alignItems = "center";
             overlay.style.justifyContent = "center";

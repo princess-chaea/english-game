@@ -1288,129 +1288,141 @@
                 class="bg-black border border-cyan-900/60 p-5 flex-grow hidden flex-col justify-between min-h-[460px] rounded-none-forced shadow-[0_0_20px_rgba(6,182,212,0.1)]">
                 <div>
                     <!-- Header Title -->
-                    <div class="flex justify-between items-center mb-3 border-b border-cyan-900/60 pb-2">
+                    <div class="flex justify-between items-center mb-2 border-b border-cyan-900/60 pb-1.5">
                         <div>
-                            <h3 class="bmw-label-uppercase text-cyan-400 flex items-center gap-2 text-base font-extrabold tracking-wider">
-                                <i data-lucide="user-check" class="w-5 h-5 text-cyan-400"></i>
+                            <h3 class="bmw-label-uppercase text-cyan-400 flex items-center gap-2 text-sm font-extrabold tracking-wider">
+                                <i data-lucide="user-check" class="w-4 h-4 text-cyan-400"></i>
                                 <span>🛡️ 용사 종합 프로필 & 학습 분석 리포트</span>
                             </h3>
-                            <p class="text-[11px] text-gray-400 mt-0.5">내 캐릭터의 종합 전투 스펙, 유물/장신구 합산 버프 및 약점 오답 분석을 확인합니다.</p>
                         </div>
-                        <span id="heroProfileStageBadge" class="text-xs text-yellow-300 font-extrabold bg-cyan-950/80 border border-cyan-700 px-3 py-1 font-mono shadow-md">
+                        <span id="heroProfileStageBadge" class="text-[10px] text-yellow-300 font-extrabold bg-cyan-950/80 border border-cyan-700 px-2.5 py-0.5 font-mono shadow-md">
                             🚩 현재 진행: Stage 1-1
                         </span>
                     </div>
 
-                    <!-- 1. Hero Total Combat Stats (8종 상세 스펙 종합 Grid) -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-                        <div class="bg-[#080c14] p-2 border border-cyan-900/50 rounded-none-forced text-center">
-                            <span class="text-[8px] text-gray-400 font-bold uppercase block">⚔️ 클릭 타격력</span>
-                            <span id="profileClickPower" class="text-sm font-black text-red-400 font-mono">1 Dmg</span>
+                    <!-- 1. Hero Total Combat Stats (8종 상세 스펙 종합 Grid - 1/2행 압축) -->
+                    <div class="grid grid-cols-4 sm:grid-cols-8 gap-1 mb-2">
+                        <div class="bg-[#080c14] p-1.5 border border-cyan-900/50 rounded-none-forced text-center">
+                            <span class="text-[8px] text-gray-400 font-bold uppercase block">⚔️ 클릭 타격</span>
+                            <span id="profileClickPower" class="text-xs font-black text-red-400 font-mono">1 Dmg</span>
                         </div>
-                        <div class="bg-[#080c14] p-2 border border-cyan-900/50 rounded-none-forced text-center">
-                            <span class="text-[8px] text-gray-400 font-bold uppercase block">⚡ 초당 자동 DPS</span>
-                            <span id="profileDpsPower" class="text-sm font-black text-sky-400 font-mono">+0/초</span>
+                        <div class="bg-[#080c14] p-1.5 border border-cyan-900/50 rounded-none-forced text-center">
+                            <span class="text-[8px] text-gray-400 font-bold uppercase block">⚡ 자동 DPS</span>
+                            <span id="profileDpsPower" class="text-xs font-black text-sky-400 font-mono">+0/초</span>
                         </div>
-                        <div class="bg-[#080c14] p-2 border border-cyan-900/50 rounded-none-forced text-center">
-                            <span class="text-[8px] text-gray-400 font-bold uppercase block">🎯 크리티컬 확률</span>
-                            <span id="profileCritChance" class="text-sm font-black text-yellow-300 font-mono">5.0%</span>
+                        <div class="bg-[#080c14] p-1.5 border border-cyan-900/50 rounded-none-forced text-center">
+                            <span class="text-[8px] text-gray-400 font-bold uppercase block">🎯 크리티컬</span>
+                            <span id="profileCritChance" class="text-xs font-black text-yellow-300 font-mono">5.0%</span>
                         </div>
-                        <div class="bg-[#080c14] p-2 border border-cyan-900/50 rounded-none-forced text-center">
-                            <span class="text-[8px] text-gray-400 font-bold uppercase block">💥 보스전 추가 피해</span>
-                            <span id="profileBossDmgBonus" class="text-sm font-black text-orange-400 font-mono">+0%</span>
+                        <div class="bg-[#080c14] p-1.5 border border-cyan-900/50 rounded-none-forced text-center">
+                            <span class="text-[8px] text-gray-400 font-bold uppercase block">💥 보스 피해</span>
+                            <span id="profileBossDmgBonus" class="text-xs font-black text-orange-400 font-mono">+0%</span>
                         </div>
-                        <div class="bg-[#080c14] p-2 border border-cyan-900/50 rounded-none-forced text-center">
-                            <span class="text-[8px] text-gray-400 font-bold uppercase block">⌛ 스킬 쿨타임 감소</span>
-                            <span id="profileCooldownRed" class="text-sm font-black text-pink-400 font-mono">-0.0%</span>
+                        <div class="bg-[#080c14] p-1.5 border border-cyan-900/50 rounded-none-forced text-center">
+                            <span class="text-[8px] text-gray-400 font-bold uppercase block">⌛ 쿨타임 감소</span>
+                            <span id="profileCooldownRed" class="text-xs font-black text-pink-400 font-mono">-0.0%</span>
                         </div>
-                        <div class="bg-[#080c14] p-2 border border-cyan-900/50 rounded-none-forced text-center">
-                            <span class="text-[8px] text-gray-400 font-bold uppercase block">🪙 골드 획득 배율</span>
-                            <span id="profileGoldBonus" class="text-sm font-black text-amber-300 font-mono">×1.0배</span>
+                        <div class="bg-[#080c14] p-1.5 border border-cyan-900/50 rounded-none-forced text-center">
+                            <span class="text-[8px] text-gray-400 font-bold uppercase block">🪙 골드 배율</span>
+                            <span id="profileGoldBonus" class="text-xs font-black text-amber-300 font-mono">×1.0배</span>
                         </div>
-                        <div class="bg-[#080c14] p-2 border border-cyan-900/50 rounded-none-forced text-center">
-                            <span class="text-[8px] text-gray-400 font-bold uppercase block">📚 정복 영단어</span>
-                            <span id="profileMasteredTotalText" class="text-sm font-black text-cyan-300 font-mono">0개</span>
+                        <div class="bg-[#080c14] p-1.5 border border-cyan-900/50 rounded-none-forced text-center">
+                            <span class="text-[8px] text-gray-400 font-bold uppercase block">📚 정복 단어</span>
+                            <span id="profileMasteredTotalText" class="text-xs font-black text-cyan-300 font-mono">0개</span>
                         </div>
-                        <div class="bg-[#080c14] p-2 border border-cyan-900/50 rounded-none-forced text-center">
-                            <span class="text-[8px] text-gray-400 font-bold uppercase block">📊 퀴즈 정답률</span>
-                            <span id="statSuccessRatio" class="text-sm font-black text-emerald-400 font-mono">0%</span>
+                        <div class="bg-[#080c14] p-1.5 border border-cyan-900/50 rounded-none-forced text-center">
+                            <span class="text-[8px] text-gray-400 font-bold uppercase block">📊 정답률</span>
+                            <span id="statSuccessRatio" class="text-xs font-black text-emerald-400 font-mono">0%</span>
                         </div>
                     </div>
 
-                    <!-- 2. Detailed Buff Status & Weak Words Analysis Card -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
-                        <!-- Left: Equipped Relic & Accessories Summary -->
-                        <div class="bg-[#08080c] p-2.5 border border-yellow-900/40 rounded-none-forced flex flex-col justify-between">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="text-[9px] text-yellow-400 font-black uppercase flex items-center gap-1"><i data-lucide="gem" class="w-3 h-3 text-yellow-400"></i> 장착 유물 & 장신구 효과</span>
+                    <!-- 2. Detailed Buff Status & Weak Words Analysis Card (Relic/Acc Card & 2-Col Weak Words TOP 6) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-2">
+                        <!-- Left: Equipped Relic & Accessories Card -->
+                        <div class="bg-[#08080c] p-2 border border-yellow-900/40 rounded-none-forced flex flex-col justify-between h-[105px]">
+                            <div class="flex justify-between items-center mb-0.5">
+                                <span class="text-[9px] text-yellow-400 font-black uppercase flex items-center gap-1"><i data-lucide="gem" class="w-3 h-3 text-yellow-400"></i> 🏺 장착 유물 & 💍 장신구 연마</span>
                             </div>
-                            <div>
-                                <span id="profileEquippedRelicName" class="text-xs font-black text-white block">[장착된 유물 없음]</span>
-                                <span id="profileEquippedRelicEffect" class="text-[9px] text-yellow-300 font-mono block mt-0.5">능력치 적용 미발동</span>
+                            <div class="bg-black/60 p-1.5 border border-yellow-900/30 flex items-center justify-between mb-1">
+                                <div>
+                                    <span id="profileEquippedRelicName" class="text-xs font-black text-white block">[장착된 유물 없음]</span>
+                                    <span id="profileEquippedRelicEffect" class="text-[9px] text-yellow-300 font-mono block mt-0.5">능력치 적용 미발동</span>
+                                </div>
                             </div>
-                            <div class="mt-1 pt-1 border-t border-gray-800 text-[9px] text-purple-300 font-mono">
-                                <span id="profileAccessoriesSummary">장신구: 목:0강 / 팔:0강 / 반:0강</span>
+                            <div id="profileAccessoriesSummary" class="grid grid-cols-3 gap-1 text-center text-[9px]">
+                                <div class="bg-purple-950/40 border border-purple-800/40 p-1 rounded-none-forced">
+                                    <span class="text-purple-300 font-bold block text-[8px]">📿 목걸이</span>
+                                    <span id="profileNecklaceLvl" class="text-white font-mono font-bold">0강</span>
+                                </div>
+                                <div class="bg-purple-950/40 border border-purple-800/40 p-1 rounded-none-forced">
+                                    <span class="text-purple-300 font-bold block text-[8px]">🛡️ 팔찌</span>
+                                    <span id="profileBraceletLvl" class="text-white font-mono font-bold">0강</span>
+                                </div>
+                                <div class="bg-purple-950/40 border border-purple-800/40 p-1 rounded-none-forced">
+                                    <span class="text-purple-300 font-bold block text-[8px]">💍 반지</span>
+                                    <span id="profileRingLvl" class="text-white font-mono font-bold">0강</span>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Right: Weakness Words TOP 5 Analysis (오답 노트) -->
-                        <div class="bg-[#0c0808] p-2.5 border border-red-900/50 rounded-none-forced flex flex-col justify-between">
+                        <!-- Right: Weakness Words TOP 6 Analysis (오답 노트 2열 배치) -->
+                        <div class="bg-[#0c0808] p-2 border border-red-900/50 rounded-none-forced flex flex-col justify-between h-[105px]">
                             <div class="flex justify-between items-center mb-1">
-                                <span class="text-[9px] text-red-400 font-black uppercase flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3 text-red-500"></i> ⚠️ 집중 복습 필요! 오답률 TOP 단어</span>
+                                <span class="text-[9px] text-red-400 font-black uppercase flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3 text-red-500"></i> ⚠️ 집중 복습 TOP 6 오답 단어</span>
                                 <span class="text-[8px] text-gray-500">최근 퀴즈 분석</span>
                             </div>
-                            <div id="weakWordsContainer" class="space-y-1 text-[9px]">
-                                <p class="text-gray-500 text-center py-2">아직 기록된 오답 단어가 없습니다!</p>
+                            <div id="weakWordsContainer" class="grid grid-cols-2 gap-1 text-[9px] max-h-[75px] overflow-y-auto">
+                                <p class="text-gray-500 text-center py-2 col-span-2">아직 기록된 오답 단어가 없습니다!</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- 3. 획득 재화 현황판 -->
-                    <div class="bg-[#080c08] border border-emerald-900/50 p-2.5 mb-3 rounded-none-forced">
-                        <h4 class="text-[9px] font-black text-emerald-400 uppercase flex items-center gap-1 mb-2">
-                            <i data-lucide="coins" class="w-3 h-3"></i> 💰 획득 재화 현황
-                        </h4>
-                        <div class="grid grid-cols-3 gap-2 text-[9px] text-center">
-                            <div class="bg-black/50 border border-yellow-900/40 p-1.5 rounded">
-                                <div class="text-yellow-400 font-black text-lg" id="profileGoldTotal">0</div>
-                                <div class="text-gray-400">🪙 보유 골드</div>
+                    <div class="bg-[#080c08] border border-emerald-900/50 p-2 mb-2 rounded-none-forced">
+                        <div class="grid grid-cols-3 gap-1.5 text-[9px] text-center">
+                            <div class="bg-black/50 border border-yellow-900/40 p-1 rounded flex flex-col items-center justify-center">
+                                <div class="text-yellow-400 font-black text-sm font-mono" id="profileGoldTotal">0</div>
+                                <div class="text-gray-400 text-[8px]">🪙 보유 골드</div>
                             </div>
-                            <div class="bg-black/50 border border-purple-900/40 p-1.5 rounded">
-                                <div class="text-purple-300 font-black text-lg" id="profileFpTotal">0</div>
-                                <div class="text-gray-400">✨ 보유 FP</div>
+                            <div class="bg-black/50 border border-purple-900/40 p-1 rounded flex flex-col items-center justify-center">
+                                <div class="text-purple-300 font-black text-sm font-mono" id="profileFpTotal">0</div>
+                                <div class="text-gray-400 text-[8px]">✨ 보유 FP</div>
                             </div>
-                            <div class="bg-black/50 border border-amber-900/40 p-1.5 rounded">
-                                <div class="text-amber-300 font-black text-lg" id="profileTokenTotal">0</div>
-                                <div class="text-gray-400">🏛️ 보스 증표</div>
+                            <div class="bg-black/50 border border-amber-900/40 p-1 rounded flex flex-col items-center justify-center">
+                                <div class="text-amber-300 font-black text-sm font-mono" id="profileTokenTotal">0</div>
+                                <div class="text-gray-400 text-[8px]">🏛️ 보스 증표</div>
                             </div>
                         </div>
                     </div>
 
                     <!-- 4. Mastered Vocabulary Catalog Title -->
                     <div class="flex justify-between items-center mb-1">
-                        <h4 class="text-xs font-bold text-cyan-300 flex items-center gap-1.5 uppercase tracking-wider">
-                            <i data-lucide="book-marked" class="w-3.5 h-3.5 text-cyan-400"></i>
+                        <h4 class="text-[10px] font-bold text-cyan-300 flex items-center gap-1 uppercase tracking-wider">
+                            <i data-lucide="book-marked" class="w-3 h-3 text-cyan-400"></i>
                             <span>📚 용사가 해독하여 정복한 영단어 서고 목록</span>
                         </h4>
-                        <span class="text-[9px] text-gray-400">초고속 가상화 서고 시스템 적용됨</span>
+                        <span class="text-[8px] text-gray-400">초고속 가상화 서고 시스템</span>
                     </div>
 
-                    <!-- Dynamic Vocab Mastered Grid list (Clean spacious layout) -->
-                    <div class="bg-[#080a0f] border border-cyan-950 p-2.5 max-h-36 overflow-y-auto mb-2 rounded-none-forced"
+                    <!-- Dynamic Vocab Mastered Grid list -->
+                    <div class="bg-[#080a0f] border border-cyan-950 p-2 max-h-24 overflow-y-auto mb-1.5 rounded-none-forced"
                         id="masteredVocabularyCatalog">
-                        <p class="text-xs text-gray-500 text-center py-6 uppercase tracking-wider">아직 학습을 정복한 영단어 목록이 비어 있습니다.</p>
+                        <p class="text-xs text-gray-500 text-center py-4 uppercase tracking-wider">아직 학습을 정복한 영단어 목록이 비어 있습니다.</p>
                     </div>
 
-                    <!-- 5. 📖 게임 매뉴얼 인포그래픽 -->
-                    <div class="bg-[#06060e] border border-indigo-900/50 p-3 rounded-none-forced mb-2">
-                        <h4 class="text-[10px] font-black text-indigo-300 flex items-center gap-1.5 mb-2 uppercase">
-                            <i data-lucide="book-open" class="w-3.5 h-3.5 text-indigo-400"></i>
-                            📖 용사 여정 핵심 매뉴얼
-                        </h4>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[9px]">
+                    <!-- 5. 📖 용사 여정 핵심 매뉴얼 (Collapsible/접이식 처리로 화면 높이 절약!) -->
+                    <details class="group bg-[#06060e] border border-indigo-900/50 p-2 rounded-none-forced mb-1">
+                        <summary class="cursor-pointer font-bold text-[9px] text-indigo-300 flex items-center justify-between select-none">
+                            <span class="flex items-center gap-1.5">
+                                <i data-lucide="book-open" class="w-3 h-3 text-indigo-400"></i>
+                                📖 용사 여정 핵심 매뉴얼 (클릭하여 보기)
+                            </span>
+                            <span class="text-[8px] text-indigo-400 font-mono group-open:rotate-180 transition-transform">▼</span>
+                        </summary>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[8px] mt-2 pt-2 border-t border-indigo-950">
                             <!-- 퀴즈 전투 -->
-                            <div class="bg-black/40 border border-indigo-800/30 p-2 rounded">
-                                <div class="text-indigo-300 font-black mb-1">⚔️ 퀴즈 전투</div>
+                            <div class="bg-black/40 border border-indigo-800/30 p-1.5 rounded">
+                                <div class="text-indigo-300 font-black mb-0.5">⚔️ 퀴즈 전투</div>
                                 <ul class="text-gray-300 space-y-0.5">
                                     <li>✅ 정답 → 몬스터 공격 피해 +보너스 골드 🪙</li>
                                     <li>❌ 오답 → 공격 실패 (틀린 단어 오답 노트 자동 기록)</li>
@@ -1419,8 +1431,8 @@
                                 </ul>
                             </div>
                             <!-- 스테이지 보스 -->
-                            <div class="bg-black/40 border border-orange-800/30 p-2 rounded">
-                                <div class="text-orange-300 font-black mb-1">🐉 스테이지 보스</div>
+                            <div class="bg-black/40 border border-orange-800/30 p-1.5 rounded">
+                                <div class="text-orange-300 font-black mb-0.5">🐉 스테이지 보스</div>
                                 <ul class="text-gray-300 space-y-0.5">
                                     <li>🏆 보스 처치 시 <b>대량 골드 🪙 + 보스 증표 🏛️ 5개</b> 획득</li>
                                     <li>📈 스테이지 클리어로 다음 스테이지 자동 해금</li>
@@ -1428,30 +1440,25 @@
                                 </ul>
                             </div>
                             <!-- 월드보스 -->
-                            <div class="bg-black/40 border border-red-800/30 p-2 rounded">
-                                <div class="text-red-300 font-black mb-1">🌍 월드보스</div>
+                            <div class="bg-black/40 border border-red-800/30 p-1.5 rounded">
+                                <div class="text-red-300 font-black mb-0.5">🌍 월드보스</div>
                                 <ul class="text-gray-300 space-y-0.5">
                                     <li>📅 <b>1일 1회</b> 도전 가능 (자정 초기화)</li>
                                     <li>💎 피해량에 따라 <b>보스 증표 🏛️ 대량 획득</b></li>
                                     <li>🏅 명예의 전당 랭킹 반영 (학년·반 비교)</li>
-                                    <li>⏱️ 제한 시간 내 최대 피해 기록으로 순위 경쟁</li>
                                 </ul>
                             </div>
                             <!-- 재화 사용처 -->
-                            <div class="bg-black/40 border border-yellow-800/30 p-2 rounded">
-                                <div class="text-yellow-300 font-black mb-1">💰 재화 사용처</div>
+                            <div class="bg-black/40 border border-yellow-800/30 p-1.5 rounded">
+                                <div class="text-yellow-300 font-black mb-0.5">💰 재화 사용처</div>
                                 <ul class="text-gray-300 space-y-0.5">
                                     <li>🪙 <b>골드</b> → 장비 강화·소환수 육성·잠재력 재설정</li>
                                     <li>✨ <b>FP</b> → 마법 스킬 캡슐 뽑기 (1회=50 FP)</li>
                                     <li>🏛️ <b>보스 증표</b> → 고대 유물 소환 (1회=50 증표)</li>
                                 </ul>
                             </div>
-                            </div>
                         </div>
-                        <div class="mt-2 text-[8px] text-gray-500 border-t border-gray-800 pt-1.5">
-                            💡 팁: 단어를 많이 정복할수록 스탯·재화가 함께 성장! 오답 단어를 반복 학습하면 정답률과 전투력이 올라갑니다.
-                        </div>
-                    </div>
+                    </details>
                 </div>
 
                 <!-- 6. Save & Reset Action Buttons (Only visible in statsTab) -->
@@ -5640,42 +5647,36 @@
                 if (profileRelicEffect) profileRelicEffect.innerText = "능력치 적용 미발동";
             }
 
-            // 장신구 연마 상태 요약
-            if (profileAccSummary) profileAccSummary.innerText = `장신구: 목:${gameState.necklaceLvl || 0}강 / 팔:${gameState.braceletLvl || 0}강 / 반:${gameState.ringLvl || 0}강`;
+            // 장신구 연마 레벨 실시간 갱신
+            const nLvl = document.getElementById("profileNecklaceLvl");
+            const bLvl = document.getElementById("profileBraceletLvl");
+            const rLvl = document.getElementById("profileRingLvl");
+            if (nLvl) nLvl.innerText = `${gameState.necklaceLvl || 0}강`;
+            if (bLvl) bLvl.innerText = `${gameState.braceletLvl || 0}강`;
+            if (rLvl) rLvl.innerText = `${gameState.ringLvl || 0}강`;
 
-            // 💰 획득 재화 현황 업데이트
-            const goldEl = document.getElementById("profileGoldTotal");
-            const fpEl = document.getElementById("profileFpTotal");
-            const tokenEl = document.getElementById("profileTokenTotal");
-            const bossTokenText = document.getElementById("bossTokenCountText"); // 유물 탭의 증표 표시
-            if (goldEl) goldEl.innerText = Math.floor(gameState.gold || 0).toLocaleString();
-            if (fpEl) fpEl.innerText = Math.floor(gameState.masteryPoints || 0).toLocaleString();
-            if (tokenEl) tokenEl.innerText = Math.floor(gameState.bossTokens || 0).toLocaleString();
-            if (bossTokenText) bossTokenText.innerText = Math.floor(gameState.bossTokens || 0).toLocaleString();
-
-            // ⚠️ 약점 오답 노트 TOP 5 렌더링
+            // ⚠️ 약점 오답 노트 TOP 6 렌더링 (2열 배치)
             const weakContainer = document.getElementById("weakWordsContainer");
             if (weakContainer) {
                 const wrongEntries = Object.entries(gameState.wrongWordCounts || {})
                     .filter(([w, c]) => c > 0)
                     .sort((a, b) => b[1] - a[1])
-                    .slice(0, 5);
+                    .slice(0, 6);
 
                 if (wrongEntries.length === 0) {
-                    weakContainer.innerHTML = `<p class="text-gray-500 text-center py-2">아직 기록된 오답 단어가 없습니다!</p>`;
+                    weakContainer.innerHTML = `<p class="text-gray-500 text-center py-2 col-span-2">아직 기록된 오답 단어가 없습니다!</p>`;
                 } else {
                     let wHtml = "";
                     wrongEntries.forEach(([wordKey, wrongCount]) => {
-                        // find meaning from wordsPool or MOCK_WORDS
                         let foundMeaning = "어휘 복습 필요";
                         if (gameState.wordsPool) {
                             const match = gameState.wordsPool.find(item => item.word.toLowerCase() === wordKey.toLowerCase());
                             if (match) foundMeaning = match.meaning;
                         }
                         wHtml += `
-                            <div class="bg-[#140606] p-1.5 border border-red-950 flex items-center justify-between">
-                                <span class="font-bold text-red-300 font-mono">${capitalizeFirstLetter(wordKey)} (${foundMeaning})</span>
-                                <span class="text-[8px] bg-red-950 text-red-400 border border-red-800 font-black px-1.5 py-0.5">❌ ${wrongCount}회 오답</span>
+                            <div class="bg-[#140606] p-1 border border-red-950/80 flex items-center justify-between min-w-0">
+                                <span class="font-bold text-red-300 font-mono text-[9px] truncate" title="${capitalizeFirstLetter(wordKey)} (${foundMeaning})">${capitalizeFirstLetter(wordKey)}</span>
+                                <span class="text-[8px] bg-red-950 text-red-400 border border-red-800 font-black px-1 shrink-0">❌ ${wrongCount}회</span>
                             </div>
                         `;
                     });

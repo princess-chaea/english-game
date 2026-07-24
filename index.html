@@ -7793,6 +7793,7 @@
             box.style.transform = "scale(1) translateY(0)";
             box.style.opacity = "1";
             box.style.transition = "transform 0.2s cubic-bezier(.22,1,.36,1), opacity 0.15s";
+            overlay.style.zIndex = "999999";
             overlay.style.display = "flex";
             overlay.style.alignItems = "center";
             overlay.style.justifyContent = "center";
@@ -7836,7 +7837,7 @@
     </div>
 
     <!-- ✅ Custom Alert / Confirm Modal (replaces all system alert/confirm) -->
-    <div id="customModalOverlay" class="fixed inset-0 z-[99999] items-center justify-center" style="background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:none;">
+    <div id="customModalOverlay" class="fixed inset-0 items-center justify-center" style="background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);display:none;z-index:999999;">
         <div id="customModalBox" class="relative w-[90%] max-w-sm rounded-2xl border border-white/10 shadow-[0_0_60px_rgba(168,85,247,0.25)] overflow-hidden"
              style="background:linear-gradient(135deg,#1a1030 0%,#0e0820 100%);">
             <!-- 헤더 장식선 -->

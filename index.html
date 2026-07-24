@@ -3487,7 +3487,7 @@
             const baseHp = 100;
             if (isBossBattleActive) {
                 const regularHp = Math.floor(baseHp * Math.pow(growthFactor, gameState.stage - 1));
-                monsterMaxHp = Math.floor(regularHp * 35); // 35배 보스 체력으로 튜닝 (스킬 2~3회 + 퀴즈 정답 병행 필수)
+                monsterMaxHp = Math.floor(regularHp * 110); // 110배 보스 체력 (신화 4개 3사이클 사용 시 30% 차감)
             } else {
                 monsterMaxHp = Math.floor(baseHp * Math.pow(growthFactor, gameState.stage - 1));
             }
@@ -5444,7 +5444,7 @@
                     ? (1.0 + (getEquippedRelicBonus("relic_feather") + getPotentialStatBonus('bossDmg')) / 100)
                     : 1.0;
                 const hpRatioDmg = isBossBattleActive 
-                    ? Math.floor(monsterMaxHp * 0.14) 
+                    ? Math.floor(monsterMaxHp * 0.037) 
                     : Math.floor(monsterMaxHp * 0.45);
                 const statQuizDmg = (calculateClickAttackPower() * 60) + (calculateDPSPower() * 10);
                 const rawQuizDmg = Math.max(statQuizDmg, hpRatioDmg);
@@ -5603,7 +5603,7 @@
                 modal.classList.add("hidden");
                 showBattleToast("🛡️ 방어 성공! 보스에게 반격 피해!");
                 
-                // 성공 시 반격 폭딜 (보스전이면 보스 최대 체력의 10% 데미지 고정)
+                // 성공 시 반격 폭딜 (보스전 크리티컬 방어 1회 성공 시 보스 최대 체력의 10% 데미지 고정 -> 2회 20%)
                 let counterDmg = 0;
                 if (isBossBattleActive) {
                     counterDmg = Math.floor(monsterMaxHp * 0.10);
@@ -5779,10 +5779,10 @@
             if (isBossBattleActive) return;
 
             isBossBattleActive = true;
-            bossTimeRemaining = 30.0;
+            bossTimeRemaining = 180.0;
             bossCriticalsQueue = 2; // 보스 도전 시 무조건 2번의 치명적 공격 대기열 생성
 
-            showBattleToast("🚨 보스 몬스터 출현! 30초 이내 처치!");
+            showBattleToast("🚨 보스 몬스터 출현! 180초 이내 처치!");
             playSoundEffect('levelup');
 
             document.getElementById("bossBattleTimerHeader").classList.remove("hidden");
@@ -5808,7 +5808,7 @@
                 if (bossTimeRemaining <= 0) {
                     failBossBattle();
                 } else {
-                    const pct = (bossTimeRemaining / 30.0) * 100;
+                    const pct = (bossTimeRemaining / 180.0) * 100;
                     document.getElementById("bossTimerBar").style.width = `${pct}%`;
                     document.getElementById("bossTimeLimitCount").innerText = `${bossTimeRemaining.toFixed(1)}초`;
                 }

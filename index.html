@@ -903,7 +903,7 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="bg-black border border-[#3c3c3c] p-2 max-h-[560px] min-h-[220px] overflow-y-auto grid grid-cols-4 gap-1.5 rounded-none-forced"
+                        <div class="bg-black border border-[#3c3c3c] p-2 max-h-[440px] min-h-[220px] overflow-y-auto grid grid-cols-4 gap-1.5 rounded-none-forced"
                             id="skillsInventoryGrid">
                             <!-- Filled dynamically -->
                         </div>
@@ -959,7 +959,7 @@
 
             <!-- TAB 5: Grade World Boss Raid Arena -->
             <div id="worldBossTab"
-                class="bg-black border border-[#3c3c3c] p-3 flex-grow hidden flex-col justify-between rounded-none-forced overflow-hidden">
+                class="bg-black border border-[#3c3c3c] p-2 flex-grow hidden flex-col justify-between rounded-none-forced overflow-hidden">
                 <div>
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="bmw-label-uppercase text-white flex items-center gap-2">
@@ -1067,7 +1067,7 @@
                                     <!-- Equipped Relic & Accessories Loadout Display -->
                                     <div class="bg-[#0d0d0d] p-2 border border-[#3c3c3c]">
                                         <span class="text-[10px] text-gray-400 block font-bold mb-1.5">🏺 장착 유물 & 💍 장신구 연마 현황</span>
-                                        <div id="wbRelicAccPreviewContainer" class="grid gap-1.5" style="grid-template-columns: minmax(0,2fr) minmax(0,3fr)">
+                                        <div id="wbRelicAccPreviewContainer" class="grid gap-1.5" style="grid-template-columns: minmax(0,1.2fr) minmax(0,3.8fr)">
                                             <!-- Dynamic Relic & Accessories Info -->
                                         </div>
                                     </div>
@@ -1344,9 +1344,9 @@
                             <!-- 유물 영역 크기를 콤팩트하게 줄여서 장신구 텍스트 공간 확보 -->
                             <div class="bg-black/60 p-1.5 border border-yellow-900/30 flex items-center gap-2 mb-1.5 rounded">
                                 <img id="profileEquippedRelicImg" src="" alt="유물" class="w-6 h-6 object-contain hidden filter drop-shadow-[0_0_6px_rgba(234,179,8,0.7)] shrink-0">
-                                <div class="min-w-0 flex-1 flex items-center justify-between gap-1">
-                                    <span id="profileEquippedRelicName" class="text-[11px] font-black text-white truncate">[유물 없음]</span>
-                                    <span id="profileEquippedRelicEffect" class="text-[9px] text-yellow-300 font-mono font-bold shrink-0">미발동</span>
+                                <div class="min-w-0 flex-1 flex flex-col justify-center gap-0.5">
+                                    <span id="profileEquippedRelicName" class="text-[10px] font-black text-white truncate">[유물 없음]</span>
+                                    <span id="profileEquippedRelicEffect" class="text-[9px] text-yellow-300 font-mono font-bold break-words leading-tight">미발동</span>
                                 </div>
                             </div>
                             <div class="grid grid-cols-3 gap-1 text-center text-[9px]">
@@ -1428,38 +1428,42 @@
                             <i data-lucide="book-open" class="w-3.5 h-3.5 text-indigo-400"></i>
                             📖 용사 여정 핵심 매뉴얼
                         </h4>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[9px]">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px]">
                             <!-- 퀴즈 전투 -->
-                            <div class="bg-black/40 border border-indigo-800/30 p-1.5 rounded">
-                                <div class="text-indigo-300 font-black mb-0.5">⚔️ 퀴즈 전투</div>
+                            <div class="bg-black/40 border border-indigo-800/30 p-2 rounded">
+                                <div class="text-indigo-300 font-black mb-1 text-[11px]">⚔️ 퀴즈 전투 & 타격 시스템</div>
                                 <ul class="text-gray-300 space-y-0.5 leading-tight">
-                                    <li>✅ 정답 → 몬스터 공격 피해 +보너스 골드 🪙</li>
-                                    <li>❌ 오답 → 공격 실패 (틀린 단어 오답 노트 자동 기록)</li>
-                                    <li>🗡️ 몬스터 격파 시 <b>자동 스테이지 진행</b> | ⭐ FP 적립</li>
+                                    <li>✅ <b>정답:</b> 몬스터에게 기본 피해를 입히며 +보너스 골드 🪙 획득</li>
+                                    <li>💥 <b>크리티컬:</b> 확률에 따라 치명타가 터지면 매우 <b>강력한 공격</b> 발동</li>
+                                    <li>❌ <b>오답:</b> 공격 실패 (틀린 단어는 오답 노트에 자동 기록되어 집중 복습)</li>
+                                    <li>🗡️ <b>진행:</b> 몬스터 체력을 0으로 만들면 자동 스테이지 등반 및 ⭐ FP 적립</li>
                                 </ul>
                             </div>
                             <!-- 스테이지 보스 -->
-                            <div class="bg-black/40 border border-orange-800/30 p-1.5 rounded">
-                                <div class="text-orange-300 font-black mb-0.5">🐉 스테이지 보스</div>
+                            <div class="bg-black/40 border border-orange-800/30 p-2 rounded">
+                                <div class="text-orange-300 font-black mb-1 text-[11px]">🐉 스테이지 보스 & 해금 콘텐츠</div>
                                 <ul class="text-gray-300 space-y-0.5 leading-tight">
-                                    <li>🏆 보스 처치 시 <b>대량 골드 🪙 + 보스 증표 🏛️ 5개</b> 획득</li>
-                                    <li>📈 다음 단계 자동 해금 | 🔓 무구 잠재력 연구소 해금</li>
+                                    <li>🏆 10단위 스테이지마다 강력한 <b>스테이지 보스</b> 출현</li>
+                                    <li>⚔️ 보스 처치 시 대량의 골드 🪙 및 <b>보스 증표 🏛️ 5개</b> 확정 획득</li>
+                                    <li>📈 다음 단계 해금 및 🔓 <b>무구 잠재력 연구소</b>(40 Stage) 추가 이용 가능</li>
                                 </ul>
                             </div>
                             <!-- 월드보스 -->
-                            <div class="bg-black/40 border border-red-800/30 p-1.5 rounded">
-                                <div class="text-red-300 font-black mb-0.5">🌍 월드보스</div>
+                            <div class="bg-black/40 border border-red-800/30 p-2 rounded">
+                                <div class="text-red-300 font-black mb-1 text-[11px]">🌍 전 학년 연합: 월드보스 랭킹전</div>
                                 <ul class="text-gray-300 space-y-0.5 leading-tight">
-                                    <li>📅 <b>1일 1회</b> 도전 가능 (자정 초기화)</li>
-                                    <li>💎 피해량 비례 <b>보스 증표 🏛️ 대량 획득</b> & 랭킹 반영</li>
+                                    <li>📅 <b>도전 기회:</b> 매일 자정 기준 <b>1일 1회</b>만 도전 가능</li>
+                                    <li>🔥 <b>전투 방식:</b> 3분간 장착한 스킬 카드와 무구를 활용하여 극딜 전투</li>
+                                    <li>💎 <b>보상:</b> 가한 피해량에 비례하여 <b>보스 증표 🏛️ 대량 획득</b> 및 랭킹 반영</li>
                                 </ul>
                             </div>
                             <!-- 재화 사용처 -->
-                            <div class="bg-black/40 border border-yellow-800/30 p-1.5 rounded">
-                                <div class="text-yellow-300 font-black mb-0.5">💰 재화 사용처</div>
+                            <div class="bg-black/40 border border-yellow-800/30 p-2 rounded">
+                                <div class="text-yellow-300 font-black mb-1 text-[11px]">💰 핵심 재화 사용처 완벽 가이드</div>
                                 <ul class="text-gray-300 space-y-0.5 leading-tight">
-                                    <li>🪙 <b>골드</b> → 장비 강화 / 펫 육성 / 잠재력 재설정</li>
-                                    <li>✨ <b>FP</b> → 마법 스킬 캡슐 | 🏛️ <b>증표</b> → 고대 유물 소환</li>
+                                    <li>🪙 <b>골드:</b> 대장간 장비 강화 / 신화 잠재력 재설정 / 소환수 육성에 필수</li>
+                                    <li>✨ <b>FP (단어 정복 포인트):</b> 상점 스킬 캡슐을 뽑아 마법 스킬 덱 강화</li>
+                                    <li>🏛️ <b>보스 증표:</b> 전설~신화급 <b>고대 유물 소환</b> 재화로 사용</li>
                                 </ul>
                             </div>
                         </div>

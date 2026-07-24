@@ -6861,7 +6861,7 @@
                 wbTimerRemaining -= 0.1;
                 document.getElementById("wbTimerText").innerText = `${wbTimerRemaining.toFixed(1)}초`;
 
-                // 쿨타임 카운트다운 업데이트
+                // 쿨타임 카운트다운 실시간 인플레이스 업데이트 (DOM 파괴 방지하여 호버링 깜빡임 및 클릭 씹힘 완벽 해결)
                 for (let sId in wbSkillCooldowns) {
                     if (wbSkillCooldowns[sId] > 0) {
                         wbSkillCooldowns[sId] -= 0.1;
@@ -6870,7 +6870,7 @@
                         }
                     }
                 }
-                renderWorldBossRaidSkills();
+                updateWorldBossSkillCooldownsUI();
 
                 // 25초마다 보스의 [🔥 광폭화 파멸 스펠] 패턴 발동!
                 if (lastPatternCheck - wbTimerRemaining >= 25.0) {
@@ -6975,37 +6975,68 @@
                     const maxCd = s.maxCooldown || 30.0;
                     const pct = isCd ? Math.round((cdLeft / maxCd) * 100) : 0;
 
-                    if (isCd) {
-                        html += `
-                            <button disabled class="relative overflow-hidden p-1.5 bg-[#111] ${gradeInfo.colorClass} opacity-60 border text-left rounded-none-forced flex flex-col justify-between h-14 cursor-not-allowed">
-                                <div class="absolute bottom-0 left-0 h-1 bg-red-600 transition-all" style="width: ${pct}%"></div>
-                                <div class="flex justify-between items-center w-full z-10">
-                                    <span class="text-[9px] font-extrabold text-gray-400 font-mono truncate">${capitalizeFirstLetter(s.word)}</span>
-                                    <span class="text-[8px] text-red-400 font-bold font-mono animate-pulse">⏳ ${cdLeft.toFixed(1)}s</span>
-                                </div>
-                                <div class="flex justify-between items-center w-full z-10 text-[8px]">
-                                    <span class="text-gray-500 font-medium truncate">${s.meaning}</span>
-                                    <span class="text-[8px] font-bold text-gray-400">${gradeInfo.name}</span>
-                                </div>
-                            </button>
-                        `;
-                    } else {
-                        html += `
-                            <button onclick="castWorldBossSkill('${s.id}')" class="relative overflow-hidden p-1.5 ${gradeInfo.colorClass} border-2 hover:scale-[1.02] text-left rounded-none-forced flex flex-col justify-between h-14 transition duration-150 group cursor-pointer shadow-lg">
-                                <div class="flex justify-between items-center w-full z-10">
-                                    <span class="text-[9px] font-extrabold font-mono truncate text-white group-hover:text-yellow-300">${capitalizeFirstLetter(s.word)}</span>
-                                    <span class="text-[8px] text-pink-400 font-bold">⚡ ×${mult * 3}배</span>
-                                </div>
-                                <div class="flex justify-between items-center w-full z-10 text-[8px]">
-                                    <span class="text-gray-300 font-medium truncate">${s.meaning}</span>
-                                    <span class="text-[8px] font-extrabold px-1 rounded bg-black/50 border border-white/20">${gradeInfo.name}</span>
-                                </div>
-                            </button>
-                        `;
-                    }
+                    html += `
+                        <button id="wb-skill-btn-${s.id}" onclick="castWorldBossSkill('${s.id}')" ${isCd ? 'disabled' : ''} 
+                                class="relative overflow-hidden p-1.5 ${gradeInfo.colorClass} border-2 hover:scale-[1.02] text-left rounded-none-forced flex flex-col justify-between h-14 transition duration-150 group cursor-pointer shadow-lg ${isCd ? 'opacity-60 cursor-not-allowed' : ''}">
+                            <div class="wb-cd-overlay absolute bottom-0 left-0 h-1 bg-red-600 transition-all pointer-events-none" style="width: ${pct}%; display: ${isCd ? 'block' : 'none'};"></div>
+                            <div class="flex justify-between items-center w-full z-10">
+                                <span class="text-[9px] font-extrabold font-mono truncate text-white group-hover:text-yellow-300">${capitalizeFirstLetter(s.word)}</span>
+                                <span class="wb-cd-timer text-[8px] ${isCd ? 'text-red-400 font-bold font-mono animate-pulse' : 'text-pink-400 font-bold'} z-10 font-mono">
+                                    ${isCd ? `⏳ ${cdLeft.toFixed(1)}s` : `⚡ ×${mult * 3}배`}
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center w-full z-10 text-[8px]">
+                                <span class="text-gray-300 font-medium truncate">${s.meaning}</span>
+                                <span class="text-[8px] font-extrabold px-1 rounded bg-black/50 border border-white/20">${gradeInfo.name}</span>
+                            </div>
+                        </button>
+                    `;
                 }
             });
             container.innerHTML = html;
+        }
+
+        function updateWorldBossSkillCooldownsUI() {
+            if (!gameState.equippedSkills) return;
+            gameState.equippedSkills.forEach(id => {
+                const s = gameState.skillsInventory ? gameState.skillsInventory.find(item => String(item.id) === String(id)) : null;
+                if (!s) return;
+                const btn = document.getElementById(`wb-skill-btn-${s.id}`);
+                if (!btn) return;
+
+                const cdLeft = wbSkillCooldowns[String(s.id)] || wbSkillCooldowns[id] || 0;
+                const isCd = cdLeft > 0;
+                const maxCd = s.maxCooldown || 30.0;
+                const pct = isCd ? Math.round((cdLeft / maxCd) * 100) : 0;
+
+                const cdOverlay = btn.querySelector('.wb-cd-overlay');
+                const cdTimerText = btn.querySelector('.wb-cd-timer');
+
+                if (isCd) {
+                    btn.disabled = true;
+                    btn.classList.add("opacity-60", "cursor-not-allowed");
+                    if (cdOverlay) {
+                        cdOverlay.style.display = "block";
+                        cdOverlay.style.width = `${pct}%`;
+                    }
+                    if (cdTimerText) {
+                        cdTimerText.innerText = `⏳ ${cdLeft.toFixed(1)}s`;
+                        cdTimerText.className = "wb-cd-timer text-[8px] text-red-400 font-bold font-mono animate-pulse z-10";
+                    }
+                } else {
+                    btn.disabled = false;
+                    btn.classList.remove("opacity-60", "cursor-not-allowed");
+                    if (cdOverlay) {
+                        cdOverlay.style.display = "none";
+                        cdOverlay.style.width = "0%";
+                    }
+                    if (cdTimerText) {
+                        const mult = getSkillMultiplier(s);
+                        cdTimerText.innerText = `⚡ ×${mult * 3}배`;
+                        cdTimerText.className = "wb-cd-timer text-[8px] text-pink-400 font-bold z-10";
+                    }
+                }
+            });
         }
 
         let wbPetHintRemaining = 3;

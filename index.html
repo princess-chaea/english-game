@@ -3878,13 +3878,28 @@
             for (let i = 0; i < 6; i++) {
                 const isUnlocked = i < unlockedSlots;
                 if (!isUnlocked) {
-                    html += `
-                        <div class="border border-gray-900 bg-black/60 p-2.5 text-center flex flex-col items-center justify-center min-h-[75px] opacity-40 rounded-none-forced">
-                            <span class="text-[9px] font-bold text-gray-400 mb-0.5">${i + 1}번 잠재력 옵션</span>
-                            <span class="text-xs text-gray-500 font-bold">🔒 슬롯 잠김</span>
-                            <span class="text-[8px] text-gray-600 mt-1">${lockUnlockTextMap[i] || '고강화 달성 필요'}</span>
-                        </div>
-                    `;
+                    if (currentGearOpts[i]) {
+                        let lockedOpt = currentGearOpts[i];
+                        const style = gradeColorMap[lockedOpt.grade] || gradeColorMap.normal;
+                        html += `
+                            <div class="border border-gray-700 bg-gray-900 p-2 text-center flex flex-col justify-between min-h-[80px] relative opacity-50 grayscale rounded-none-forced" title="레벨 하락으로 비활성화되었습니다. 다시 강화하면 활성화됩니다.">
+                                <div>
+                                    <span class="text-[8px] font-bold text-gray-400 block">${i + 1}번 옵션 [비활성화]</span>
+                                    <span class="text-xs font-extrabold text-gray-400 block mt-0.5">${lockedOpt.icon} ${lockedOpt.name}</span>
+                                </div>
+                                <span class="text-[10px] font-bold font-mono text-gray-500 block">${lockedOpt.formatValue}</span>
+                                <span class="text-[8px] font-bold text-red-400 mt-1 block">🔒 ${lockUnlockTextMap[i] || '고강화 달성 필요'}</span>
+                            </div>
+                        `;
+                    } else {
+                        html += `
+                            <div class="border border-gray-900 bg-black/60 p-2.5 text-center flex flex-col items-center justify-center min-h-[75px] opacity-40 rounded-none-forced">
+                                <span class="text-[9px] font-bold text-gray-400 mb-0.5">${i + 1}번 잠재력 옵션</span>
+                                <span class="text-xs text-gray-500 font-bold">🔒 슬롯 잠김</span>
+                                <span class="text-[8px] text-gray-600 mt-1">${lockUnlockTextMap[i] || '고강화 달성 필요'}</span>
+                            </div>
+                        `;
+                    }
                     continue;
                 }
 
@@ -4135,10 +4150,13 @@
                         : 'bg-purple-950/80 text-purple-300 border border-purple-800 hover:bg-purple-900 cursor-pointer');
 
                 const btnText = !isUnlocked
-                    ? `🔒 ${info.unlockStage}스테이지 필요`
+                    ? `<span>🔒 ${info.unlockStage}스테이지 필요</span>`
                     : isMax
-                        ? 'MAX (50강 연마 달성)'
-                        : `🪙 ${cost.toLocaleString()}G + 📖 정복 단어 ${reqWords}개 (${currentMastered}/${reqWords})`;
+                        ? '<span>MAX (50강 연마 달성)</span>'
+                        : `<div class="flex flex-col items-center justify-center leading-tight">
+                               <span class="font-extrabold">🪙 ${cost.toLocaleString()}G 연마</span>
+                               <span class="text-[10px] mt-0.5 font-bold opacity-90">📖 정복단어 (${currentMastered}/${reqWords})</span>
+                           </div>`;
 
                 html += `
                     <div class="bg-[#0d0d0d] border ${isUnlocked ? 'border-purple-900/80 shadow-[0_0_10px_rgba(147,51,234,0.15)]' : 'border-gray-900 opacity-50'} p-3 rounded-none-forced flex flex-col justify-between min-h-[135px]">

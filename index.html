@@ -4247,34 +4247,25 @@
             // currentOpts: 현재 슬롯 옵션 배열 (신화 검사에 사용)
             const currentOpts = gameState.gearPotentials[gearKey] || [];
 
-            // ⚠️ 신화 등급이 해제 상태인 슬롯이 있으면 항상 확인 팝업 (연타 방어)
-            const isMythicOpt = (opt) => {
-                if (!opt) return false;
-                const str = (JSON.stringify(opt) || "").toLowerCase();
-                return str.includes("mythic") || str.includes("신화");
-            };
+            // ⚠️ 신화 등급이 해제 상태인 슬롯이 1개라도 있는지 정밀 검사
             let hasMythicUnlocked = false;
-
             for (let idx = 0; idx < unlockedSlots; idx++) {
                 const opt = currentOpts[idx];
-                if (opt && !isSlotLocked(idx) && isMythicOpt(opt)) {
-                    hasMythicUnlocked = true;
-                    break;
+                if (opt && !isSlotLocked(idx)) {
+                    const str = (JSON.stringify(opt) || "").toLowerCase();
+                    if (str.includes("mythic") || str.includes("신화")) {
+                        hasMythicUnlocked = true;
+                        break;
+                    }
                 }
             }
 
-            // 신화 해제 상태 → 항상 팝업으로 확인 후에만 리롤 실행 (연타해도 팝업 우선)
+            // 신화 해제 상태 → 네이티브 window.confirm 팝업으로 100% 무조건 확인 창 출력
             if (hasMythicUnlocked) {
-                const msg = "⚠️ [신화 등급] 잠재력 옵션이 잠금 해제 상태입니다!\n재설정하면 신화 옵션이 영구 소멸됩니다. 정말 재설정하시겠습니까?";
-                showConfirm(
-                    msg,
-                    function() {
-                        _doRerollPotential(gearKey);
-                    },
-                    null,
-                    { icon: "💀", title: "신화 잠재력 소멸 경고", yesLabel: "🔥 재설정", noLabel: "🔒 취소", danger: true }
-                );
-                return; // 팝업 열린 상태에서 리롤 즉시 실행 차단
+                const confirmed = window.confirm("⚠️ [신화 등급] 잠재력 옵션이 잠금 해제 상태입니다!\n\n재설정하면 신화 옵션이 영구 소멸됩니다. 정말 재설정하시겠습니까?");
+                if (!confirmed) {
+                    return; // 취소 선택 시 리롤 중단
+                }
             }
 
             _doRerollPotential(gearKey);

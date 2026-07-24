@@ -3487,7 +3487,7 @@
             const baseHp = 100;
             if (isBossBattleActive) {
                 const regularHp = Math.floor(baseHp * Math.pow(growthFactor, gameState.stage - 1));
-                monsterMaxHp = Math.floor(regularHp * 15);
+                monsterMaxHp = Math.floor(regularHp * 35); // 35배 보스 체력으로 튜닝 (스킬 2~3회 + 퀴즈 정답 병행 필수)
             } else {
                 monsterMaxHp = Math.floor(baseHp * Math.pow(growthFactor, gameState.stage - 1));
             }
@@ -5421,8 +5421,8 @@
                     gameState.masteredWords.push({ word: current.word, meaning: current.meaning });
                 }
 
-                // 골드 수당 계산 (나침반 유물 +50%)
-                const baseReward = Math.floor((15 * gameState.grade) * Math.pow(1.15, Math.max(0, gameState.stage - 1)));
+                // 골드 수당 계산 (1.07 배율로 고스테이지 골드 인플레이션 정상화)
+                const baseReward = Math.floor((15 * gameState.grade) * Math.pow(1.07, Math.max(0, gameState.stage - 1)));
                 const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
                 const slimeBonus = slimeLvl * PET_PARAMS['slime'].goldBonus;
                 const relicGoldBonus = getEquippedRelicBonus("relic_compass") / 100;
@@ -5438,13 +5438,17 @@
 
                 const arena = document.getElementById("battleArena");
                 
-                // 단어 정답 시 치명타 타격 (고대 성배 유물 + 보스전 시 보스 피해 유물/잠재력 보너스 통째 반영!)
+                // 단어 정답 시 치명타 타격 (보스/일반 Max HP 비례 보정 + 성배/보스유물 버프)
                 const chaliceMult = 1.0 + (getEquippedRelicBonus("relic_chalice") / 100);
                 const bossBonus = isBossBattleActive 
                     ? (1.0 + (getEquippedRelicBonus("relic_feather") + getPotentialStatBonus('bossDmg')) / 100)
                     : 1.0;
-                const baseQuizDmg = (calculateClickAttackPower() * 60) + (calculateDPSPower() * 10);
-                const quizDmg = Math.floor(baseQuizDmg * chaliceMult * bossBonus);
+                const hpRatioDmg = isBossBattleActive 
+                    ? Math.floor(monsterMaxHp * 0.14) 
+                    : Math.floor(monsterMaxHp * 0.45);
+                const statQuizDmg = (calculateClickAttackPower() * 60) + (calculateDPSPower() * 10);
+                const rawQuizDmg = Math.max(statQuizDmg, hpRatioDmg);
+                const quizDmg = Math.floor(rawQuizDmg * chaliceMult * bossBonus);
                 processCombatDamage(quizDmg);
                 spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `⚡ 퀴즈 크리티컬! -${quizDmg.toLocaleString()}`);
 

@@ -705,10 +705,7 @@
                     <!-- ⚡ 무구 잠재력 -->
                     <div id="potentialLabContainer" class="mt-2 border-t border-[#262626] pt-2">
                         <div class="flex justify-between items-center mb-2">
-                            <h4 class="text-xs font-bold text-yellow-400 flex items-center gap-1.5 uppercase tracking-wider">
-                                <i data-lucide="zap" class="w-4 h-4 text-yellow-400"></i>
-                                <span>⚡ 무구 잠재력</span>
-                            </h4>
+                            <h4 class="text-sm font-extrabold text-yellow-400 uppercase tracking-wider">무구 잠재력</h4>
                             <div class="flex items-center gap-2">
                                 <button onclick="openPotentialProbModal()" class="text-[10px] text-yellow-300 bg-yellow-950/80 border border-yellow-600 px-2 py-0.5 font-bold hover:bg-yellow-900 transition flex items-center gap-1">
                                     📊 확률표 보기
@@ -731,10 +728,7 @@
                     <!-- 💍 [50스테이지 해금] 전설 장신구 3종 -->
                     <div id="accessoriesLabContainer" class="mt-2 border-t border-[#262626] pt-2">
                         <div class="flex justify-between items-center mb-2">
-                            <h4 class="text-xs font-bold text-purple-400 flex items-center gap-1.5 uppercase tracking-wider">
-                                <i data-lucide="gem" class="w-4 h-4 text-purple-400"></i>
-                                <span>💍 고대 장신구</span>
-                            </h4>
+                            <h4 class="text-sm font-extrabold text-purple-400 uppercase tracking-wider">고대 장신구</h4>
                         </div>
                         <div class="bg-[#0d0d0d] border border-purple-900/40 p-3 rounded-none-forced">
                             <!-- 장신구 3종 그리드 -->
@@ -3368,10 +3362,10 @@
                     totalDps += PET_PARAMS['dragon'].dps * dragonLvl;
                 }
             }
-            // 💍 영웅의 반지 (ringLvl) 자동 DPS 보정 (+150 per level)
+            // 💍 영웅의 반지 (ringLvl) 자동 DPS 보정 (+1500 per level)
             const ringLvl = gameState.ringLvl || 0;
             if (ringLvl > 0) {
-                totalDps += ringLvl * 150;
+                totalDps += ringLvl * 1500;
             }
             // 🏺 고대 지옥룡의 여의주 (relic_orb): 장착 시 초당 자동 DPS 증가
             if (gameState.equippedRelicId === "relic_orb") {
@@ -3397,8 +3391,8 @@
             
             // ⚡ 잠재력 클릭 타격 보정
             const potentialClick = getPotentialStatBonus('clickDmg');
-            // 💍 투지의 팔찌 (braceletLvl) 클릭 타격력 보정 (+80 per level)
-            const braceletClick = (gameState.braceletLvl || 0) * 80;
+            // 💍 투지의 팔찌 (braceletLvl) 클릭 타격력 보정 (+800 per level)
+            const braceletClick = (gameState.braceletLvl || 0) * 800;
             // 🏺 고대 용사의 성검 조각 (relic_sword): 장착 시 클릭 타격력 증가
             const relicMult = 1.0 + (getEquippedRelicBonus("relic_sword") / 100);
 
@@ -3543,7 +3537,7 @@
 
             // 🎯 크리티컬 확률 & 배율 시스템 (기본 5% + 잠재력 + 팔찌 + 유물)
             const potentialCrit = getPotentialStatBonus('critRate');
-            const braceletCrit = Math.min(25, (gameState.braceletLvl || 0) * 0.5);
+            const braceletCrit = Math.min(50, (gameState.braceletLvl || 0) * 0.5);
             const relicCrit = getEquippedRelicBonus("relic_dice");
             const totalCritChance = 5 + potentialCrit + braceletCrit + relicCrit;
 
@@ -3555,7 +3549,7 @@
             // 🐉 보스 타격 시 보스 피해 보정 (영웅의 반지 + 보스 잠재력 + 유물)
             let bossMult = 1.0;
             if (isBossBattleActive) {
-                const ringBossPct = (gameState.ringLvl || 0) * 2;
+                const ringBossPct = (gameState.ringLvl || 0) * 1.0;
                 const potentialBossPct = getPotentialStatBonus('bossDmg');
                 const relicBossPct = getEquippedRelicBonus("relic_feather");
                 bossMult += (ringBossPct + potentialBossPct + relicBossPct) / 100;
@@ -4185,37 +4179,6 @@
 
             ensureGearPotentialsStructure();
             const gearKey = selectedGearKey;
-            const unlockedSlots = getGearUnlockedSlotsCount(gearKey);
-            const currentOpts = gameState.gearPotentials[gearKey] || [];
-            
-            const lockedArr = selectedLockedPotentialSlots[gearKey] || [];
-            const isSlotLocked = (slotIdx) => lockedArr.some(item => Number(item) === Number(slotIdx));
-
-            // ⚠️ 신화 등급 경고 확인 팝업 (언락 상태인 신화 등급 슬롯이 있을 때만 경고!)
-            let hasMythicUnlocked = false;
-            const isMythicOpt = (opt) => opt && (opt.grade === "mythic" || opt.gradeName === "신화" || String(opt.grade).toLowerCase() === "mythic");
-            if (Array.isArray(currentOpts)) {
-                hasMythicUnlocked = currentOpts.some((opt, idx) => idx < unlockedSlots && !isSlotLocked(idx) && isMythicOpt(opt));
-            } else if (typeof currentOpts === 'object') {
-                hasMythicUnlocked = Object.keys(currentOpts).some(idxKey => {
-                    const idx = Number(idxKey);
-                    const opt = currentOpts[idxKey];
-                    return idx < unlockedSlots && !isSlotLocked(idx) && isMythicOpt(opt);
-                });
-            }
-
-            if (hasMythicUnlocked) {
-                showConfirm(
-                    "선택한 무구의 잠재력 옵션 중 [신화 등급] 옵션이 포함되어 있습니다! 잠그지 않은 상태로 재설정하면 신화 옵션이 사라집니다. 정말 재설정하시겠습니까?",
-                    function() {
-                        _doRerollPotential(gearKey);
-                    },
-                    null,
-                    { icon: "⚠️", title: "신화 등급 잠재력 경고", yesLabel: "재설정", noLabel: "취소", danger: true }
-                );
-                return;
-            }
-
             _doRerollPotential(gearKey);
         }
 
@@ -4269,7 +4232,7 @@
                 const info = ACCESSORY_PARAMS[accKey];
                 const currentLvl = (gameState[info.key]) || 0;
                 const isUnlocked = stage >= info.unlockStage;
-                const isMax = currentLvl >= MAX_GEAR_LEVEL;
+                const isMax = currentLvl >= 100;
                 const cost = isMax ? 0 : Math.floor(info.baseCost * Math.pow(1.15, currentLvl));
 
                 const slotEl = document.getElementById(`accSlot_${accKey}`);
@@ -4277,7 +4240,7 @@
                     if (currentLvl > 0 && isUnlocked) {
                         slotEl.classList.remove("hidden");
                         slotEl.classList.add("flex");
-                        const auraColor = currentLvl >= 30 ? "border-amber-400 shadow-[0_0_15px_#f59e0b]" : (currentLvl >= 15 ? "border-purple-400 shadow-[0_0_10px_#a855f7]" : "border-sky-400");
+                        const auraColor = currentLvl >= 60 ? "border-amber-400 shadow-[0_0_15px_#f59e0b]" : (currentLvl >= 30 ? "border-purple-400 shadow-[0_0_10px_#a855f7]" : "border-sky-400");
                         slotEl.className = `w-6 h-6 bg-black/80 ${auraColor} flex items-center justify-center p-0.5 transition duration-300`;
                     } else {
                         slotEl.classList.add("hidden");
@@ -4285,34 +4248,34 @@
                     }
                 }
 
-                // 구체적 레벨별 연마 수치 수식
+                // 구체적 레벨별 연마 수치 수식 (100강 연마 시스템)
                 let currentBonusText = "";
                 let nextBonusText = "";
 
                 if (accKey === 'necklace') {
-                    // 스킬 마법 피해 & 쿨타임 (+3%/lv, 쿨감 -0.6%/lv)
-                    const dmg = currentLvl * 3;
-                    const cd = Math.min(30, currentLvl * 0.6).toFixed(1);
-                    const nextDmg = (currentLvl + 1) * 3;
-                    const nextCd = Math.min(30, (currentLvl + 1) * 0.6).toFixed(1);
+                    // 스킬 마법 피해 (+1.5%/lv) & 쿨타임 (-0.3%/lv, 최대 -30%)
+                    const dmg = (currentLvl * 1.5).toFixed(1);
+                    const cd = Math.min(30, currentLvl * 0.3).toFixed(1);
+                    const nextDmg = ((currentLvl + 1) * 1.5).toFixed(1);
+                    const nextCd = Math.min(30, (currentLvl + 1) * 0.3).toFixed(1);
                     currentBonusText = `스킬피해 +${dmg}% | 쿨감 -${cd}%`;
                     nextBonusText = `스킬피해 +${nextDmg}% | 쿨감 -${nextCd}%`;
                 } else if (accKey === 'bracelet') {
-                    // 클릭 타격력 & 크리티컬
-                    const click = currentLvl * 80;
-                    const crit = Math.min(25, currentLvl * 0.5).toFixed(1);
-                    const nextClick = (currentLvl + 1) * 80;
-                    const nextCrit = Math.min(25, (currentLvl + 1) * 0.5).toFixed(1);
-                    currentBonusText = `클릭타격 +${click} | 크리티컬 +${crit}%`;
-                    nextBonusText = `클릭타격 +${nextClick} | 크리티컬 +${nextCrit}%`;
+                    // 클릭 타격력 (+800/lv, 10배 상향) & 크리티컬 (+0.25%/lv, 최대 25%)
+                    const click = currentLvl * 800;
+                    const crit = Math.min(25, currentLvl * 0.25).toFixed(1);
+                    const nextClick = (currentLvl + 1) * 800;
+                    const nextCrit = Math.min(25, (currentLvl + 1) * 0.25).toFixed(1);
+                    currentBonusText = `클릭타격 +${click.toLocaleString()} | 크리티컬 +${crit}%`;
+                    nextBonusText = `클릭타격 +${nextClick.toLocaleString()} | 크리티컬 +${nextCrit}%`;
                 } else if (accKey === 'ring') {
-                    // 초당 자동 DPS & 보스 피해
-                    const dps = currentLvl * 150;
-                    const boss = currentLvl * 2;
-                    const nextDps = (currentLvl + 1) * 150;
-                    const nextBoss = (currentLvl + 1) * 2;
-                    currentBonusText = `자동DPS +${dps} | 보스피해 +${boss}%`;
-                    nextBonusText = `자동DPS +${nextDps} | 보스피해 +${nextBoss}%`;
+                    // 초당 자동 DPS (+1500/lv, 10배 상향) & 보스 피해 (+1%/lv)
+                    const dps = currentLvl * 1500;
+                    const boss = currentLvl * 1;
+                    const nextDps = (currentLvl + 1) * 1500;
+                    const nextBoss = (currentLvl + 1) * 1;
+                    currentBonusText = `자동DPS +${dps.toLocaleString()} | 보스피해 +${boss}%`;
+                    nextBonusText = `자동DPS +${nextDps.toLocaleString()} | 보스피해 +${nextBoss}%`;
                 }
 
                 const currentMastered = Math.max(gameState.masteredWords ? gameState.masteredWords.length : 0, gameState.totalQuizCorrect || 0);
@@ -4329,7 +4292,7 @@
                 const btnText = !isUnlocked
                     ? `<span>🔒 ${info.unlockStage}스테이지 필요</span>`
                     : isMax
-                        ? '<span>MAX (50강 연마 달성)</span>'
+                        ? '<span>MAX (100강 연마 달성)</span>'
                         : `<div class="flex flex-col items-center justify-center leading-tight">
                                <span class="font-extrabold">🪙 ${cost.toLocaleString()}G 연마</span>
                                <span class="text-[10px] mt-0.5 font-bold opacity-90">📖 정복단어 (${currentMastered}/${reqWords})</span>
@@ -5386,8 +5349,8 @@
                 window.speechSynthesis.speak(utterance);
             }
 
-            // 💍 지혜의 목걸이 (necklaceLvl) 스킬 마법 피해 +3%/lv & 잠재력 & 유물
-            const necklaceSkillBonus = (gameState.necklaceLvl || 0) * 3;
+            // 💍 지혜의 목걸이 (necklaceLvl) 스킬 마법 피해 +1.5%/lv & 잠재력 & 유물
+            const necklaceSkillBonus = (gameState.necklaceLvl || 0) * 1.5;
             const potentialSkillBonus = getPotentialStatBonus('skillDmg');
             const relicSkillBonus = getEquippedRelicBonus("relic_scroll");
             const totalSkillMult = 1 + (necklaceSkillBonus + potentialSkillBonus + relicSkillBonus) / 100;
@@ -5435,8 +5398,8 @@
 
             showBattleToast(`💥 필살 시전! [${gradeInfo.name}] ${capitalizeFirstLetter(skill.word)}: -${skillDmg.toLocaleString()} 피해!`);
 
-            // 💍 지혜의 목걸이 (necklaceLvl) 쿨타임 감소 적용 (-0.6%/lv, 최대 -30%) + 유물
-            const necklaceCdRed = Math.min(30, (gameState.necklaceLvl || 0) * 0.6);
+            // 💍 지혜의 목걸이 (necklaceLvl) 쿨타임 감소 적용 (-0.3%/lv, 최대 -30%) + 유물
+            const necklaceCdRed = Math.min(30, (gameState.necklaceLvl || 0) * 0.3);
             const relicCdRed = getEquippedRelicBonus("relic_clock");
             const totalCdRed = Math.min(60, necklaceCdRed + relicCdRed);
             const baseCd = skill.maxCooldown || 15;
@@ -5705,13 +5668,15 @@
 
             // 상세 효과 수치 산출
             const critBonus = getEquippedRelicBonus("relic_dice");
-            const critRate = 5.0 + critBonus + getPotentialStatBonus('critRate');
+            const braceletCrit = Math.min(25, (gameState.braceletLvl || 0) * 0.25);
+            const critRate = 5.0 + critBonus + getPotentialStatBonus('critRate') + braceletCrit;
             if (profileCrit) profileCrit.innerText = `${critRate.toFixed(1)}%`;
 
-            const bossDmgBonus = getEquippedRelicBonus("relic_feather") + getPotentialStatBonus('bossDmg');
-            if (profileBossDmg) profileBossDmg.innerText = `+${bossDmgBonus}%`;
+            const ringBossPct = (gameState.ringLvl || 0) * 1.0;
+            const bossDmgBonus = ringBossPct + getEquippedRelicBonus("relic_feather") + getPotentialStatBonus('bossDmg');
+            if (profileBossDmg) profileBossDmg.innerText = `+${bossDmgBonus.toFixed(1)}%`;
 
-            const necklaceCdRed = Math.min(30, (gameState.necklaceLvl || 0) * 0.6);
+            const necklaceCdRed = Math.min(30, (gameState.necklaceLvl || 0) * 0.3);
             const relicCdRed = getEquippedRelicBonus("relic_clock");
             const totalCdRed = Math.min(60, necklaceCdRed + relicCdRed);
             if (profileCdRed) profileCdRed.innerText = `-${totalCdRed.toFixed(1)}%`;
@@ -7138,8 +7103,8 @@
             const cdKey = String(skill.id);
             if (wbSkillCooldowns[cdKey] > 0) return;
 
-            // 💍 지혜의 목걸이 (necklaceLvl) 쿨타임 감소 적용 (-0.6%/lv, 최대 -30%) + 유물
-            const necklaceCdRed = Math.min(30, (gameState.necklaceLvl || 0) * 0.6);
+            // 💍 지혜의 목걸이 (necklaceLvl) 쿨타임 감소 적용 (-0.3%/lv, 최대 -30%) + 유물
+            const necklaceCdRed = Math.min(30, (gameState.necklaceLvl || 0) * 0.3);
             const relicCdRed = getEquippedRelicBonus("relic_clock");
             const totalCdRed = Math.min(60, necklaceCdRed + relicCdRed);
             const baseCd = skill.maxCooldown || 30.0;
@@ -7157,8 +7122,8 @@
             const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
             const mult = getSkillMultiplier(skill);
 
-            // 💍 지혜의 목걸이 (necklaceLvl) 스킬 마법 피해 +3%/lv & 잠재력 & 유물
-            const necklaceSkillBonus = (gameState.necklaceLvl || 0) * 3;
+            // 💍 지혜의 목걸이 (necklaceLvl) 스킬 마법 피해 +1.5%/lv & 잠재력 & 유물
+            const necklaceSkillBonus = (gameState.necklaceLvl || 0) * 1.5;
             const potentialSkillBonus = getPotentialStatBonus('skillDmg');
             const relicSkillBonus = getEquippedRelicBonus("relic_scroll");
             const totalSkillMult = 1 + (necklaceSkillBonus + potentialSkillBonus + relicSkillBonus) / 100;

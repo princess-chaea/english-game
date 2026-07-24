@@ -4322,6 +4322,33 @@
                     }
                 }
 
+                // 구체적 레벨별 연마 수치 수식 (100강 연마 시스템)
+                let currentBonusText = "";
+                let nextBonusText = "";
+
+                if (accKey === 'necklace') {
+                    const dmg = (currentLvl * 1.5).toFixed(1);
+                    const cd = Math.min(30, currentLvl * 0.3).toFixed(1);
+                    const nextDmg = ((currentLvl + 1) * 1.5).toFixed(1);
+                    const nextCd = Math.min(30, (currentLvl + 1) * 0.3).toFixed(1);
+                    currentBonusText = `스킬피해 +${dmg}% | 쿨감 -${cd}%`;
+                    nextBonusText = `스킬피해 +${nextDmg}% | 쿨감 -${nextCd}%`;
+                } else if (accKey === 'bracelet') {
+                    const click = currentLvl * 800;
+                    const crit = Math.min(25, currentLvl * 0.25).toFixed(1);
+                    const nextClick = (currentLvl + 1) * 800;
+                    const nextCrit = Math.min(25, (currentLvl + 1) * 0.25).toFixed(1);
+                    currentBonusText = `클릭타격 +${click.toLocaleString()} | 크리티컬 +${crit}%`;
+                    nextBonusText = `클릭타격 +${nextClick.toLocaleString()} | 크리티컬 +${nextCrit}%`;
+                } else if (accKey === 'ring') {
+                    const dps = currentLvl * 1500;
+                    const boss = currentLvl * 1;
+                    const nextDps = (currentLvl + 1) * 1500;
+                    const nextBoss = (currentLvl + 1) * 1;
+                    currentBonusText = `자동DPS +${dps.toLocaleString()} | 보스피해 +${boss}%`;
+                    nextBonusText = `자동DPS +${nextDps.toLocaleString()} | 보스피해 +${nextBoss}%`;
+                }
+
                 const currentMastered = Math.max(gameState.masteredWords ? gameState.masteredWords.length : 0, gameState.totalQuizCorrect || 0);
                 const reqWords = (currentLvl + 1) * 3;
                 const hasWords = currentMastered >= reqWords;

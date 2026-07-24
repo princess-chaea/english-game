@@ -3958,7 +3958,8 @@
             const lockedArr = selectedLockedPotentialSlots[selectedGearKey];
 
             // ⚠️ 신화 등급 경고 확인 팝업
-            const hasMythicUnlocked = currentOpts.some((opt, idx) => idx < unlockedSlots && !lockedArr.includes(idx) && opt && opt.grade === "mythic");
+            const lockedArrSafe = lockedArr || [];
+            const hasMythicUnlocked = currentOpts.some((opt, idx) => idx < unlockedSlots && !lockedArrSafe.includes(idx) && opt && opt.grade === "mythic");
             if (hasMythicUnlocked) {
                 showConfirm(
                     "선택한 무구의 잠재력 옵션 중 [신화 등급] 옵션이 포함되어 있습니다! 잠그지 않은 상태로 재설정하면 신화 옵션이 사라집니다. 정말 재설정하시겠습니까?",
@@ -4898,6 +4899,27 @@
             buildSkillTabUI();
             renderSkillsUI();
             saveLocalCache();
+        }
+
+        function autoEquipBestSkills() {
+            if (!gameState.skillsInventory || gameState.skillsInventory.length === 0) {
+                showToast("보유한 마법 비기가 없습니다.");
+                return;
+            }
+            const gradeOrder = { 'mythic': 5, 'legendary': 4, 'hero': 3, 'rare': 2, 'normal': 1 };
+            const sorted = [...gameState.skillsInventory].sort((a, b) => {
+                const gA = gradeOrder[a.grade] || 0;
+                const gB = gradeOrder[b.grade] || 0;
+                if (gA !== gB) return gB - gA;
+                return (b.stars || 0) - (a.stars || 0);
+            });
+            const top4 = sorted.slice(0, 4).map(s => s.id);
+            gameState.equippedSkills = top4;
+            renderSkillsUI();
+            buildSkillTabUI();
+            saveLocalCache();
+            showToast("✨ 가장 강력한 마법 비기 4개가 자동 장착되었습니다!");
+            playSoundEffect('levelup');
         }
 
         function buildSkillTabUI() {

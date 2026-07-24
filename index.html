@@ -2274,6 +2274,7 @@
         let ENABLE_PET_STAGES = true; // 펫 레벨별 10개 성장 이미지 준비 완료 시 true로 설정
         let bossTimeRemaining = 30.0;
         let bossTimerInterval = null;
+        let bossCriticalsQueue = 0;
         let gameLoopInterval = null;
         let monsterCurrentHp = 10;
         let monsterMaxHp = 10;
@@ -4383,6 +4384,8 @@
                 return;
             }
 
+            // 랜덤으로 다음 문제 인덱스 선택
+            gameState.currentQuizIndex = Math.floor(Math.random() * gameState.wordsPool.length);
             const current = gameState.wordsPool[gameState.currentQuizIndex];
             document.getElementById("quizWordEng").innerText = capitalizeFirstLetter(current.word);
 
@@ -5408,8 +5411,13 @@
                 modal.classList.add("hidden");
                 showBattleToast("🛡️ 방어 성공! 보스에게 반격 피해!");
                 
-                // 성공 시 반격 폭딜 (데미지 3배 패링)
-                const counterDmg = ((calculateClickAttackPower() * 50) + (calculateDPSPower() * 10)) * 3;
+                // 성공 시 반격 폭딜 (보스전이면 보스 최대 체력의 10% 데미지 고정)
+                let counterDmg = 0;
+                if (isBossBattleActive) {
+                    counterDmg = Math.floor(monsterMaxHp * 0.10);
+                } else {
+                    counterDmg = ((calculateClickAttackPower() * 50) + (calculateDPSPower() * 10)) * 3;
+                }
                 processCombatDamage(counterDmg);
                 const arena = document.getElementById("battleArena");
                 spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `✨ 패링 어택! -${counterDmg}`);
@@ -5562,6 +5570,7 @@
 
             isBossBattleActive = true;
             bossTimeRemaining = 30.0;
+            bossCriticalsQueue = 2; // 보스 도전 시 무조건 2번의 치명적 공격 대기열 생성
 
             showBattleToast("🚨 보스 몬스터 출현! 30초 이내 처치!");
             playSoundEffect('levelup');
@@ -5576,15 +5585,13 @@
             bossTimerInterval = setInterval(() => {
                 bossTimeRemaining -= 0.1;
 
-                // 보스전 전용 크리티컬 방어 기믹 (20초, 10초 남았을 때 확정 발동 및 초당 5% 확률 랜덤 발동)
-                if (!document.getElementById("criticalDefenseModal").classList.contains("flex")) {
-                    const intTime = Math.round(bossTimeRemaining * 10) / 10;
-                    if (intTime === 20.0 || intTime === 10.0 || Math.random() < 0.005) {
-                        if (gameState.wordsPool && gameState.wordsPool.length > 0) {
-                            const rWord = gameState.wordsPool[Math.floor(Math.random() * gameState.wordsPool.length)];
-                            showBattleToast("⚠️ 보스의 강력한 공격이 날아옵니다!");
-                            triggerCriticalAttack(rWord.word, rWord.meaning, true);
-                        }
+                // 보스전 전용 크리티컬 방어 기믹 (시작 직후 2문제 연속 출제 대기열 처리)
+                if (bossCriticalsQueue > 0 && !document.getElementById("criticalDefenseModal").classList.contains("flex")) {
+                    bossCriticalsQueue--;
+                    if (gameState.wordsPool && gameState.wordsPool.length > 0) {
+                        const rWord = gameState.wordsPool[Math.floor(Math.random() * gameState.wordsPool.length)];
+                        showBattleToast("⚠️ 보스의 강력한 연속 공격이 날아옵니다!");
+                        triggerCriticalAttack(rWord.word, rWord.meaning, true);
                     }
                 }
 

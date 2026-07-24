@@ -353,7 +353,7 @@
 <body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
 
     <!-- ⏳ FULLSCREEN INITIAL LOADING OVERLAY -->
-    <div id="gameLoadingOverlay" class="fixed inset-0 bg-black z-[10000] hidden items-center justify-center p-6 transition-opacity duration-500" style="display: none;">
+    <div id="gameLoadingOverlay" class="fixed inset-0 bg-black z-[10000] flex flex-col items-center justify-center p-6 transition-opacity duration-500">
         <div class="max-w-md w-full text-center flex flex-col items-center">
             <div class="w-24 h-24 mb-6 relative flex items-center justify-center">
                 <div class="absolute inset-0 border-4 border-yellow-500/20 border-t-yellow-400 rounded-full animate-spin"></div>
@@ -2037,6 +2037,9 @@
                 }
             }, 120);
         }
+
+        // Execute immediately when JS loads on reload
+        showGameLoadingOverlay();
 
         function hideGameLoadingOverlay() {
             if (loadingProgressInterval) {

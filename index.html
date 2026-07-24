@@ -742,42 +742,50 @@
                 </p>
             </div>
 
-            <!-- TAB 3: Companion Pet Lab & Multipliers (펫/유물 소환) -->
+            <!-- TAB 3: Companion Pet Lab & Relic Altar (소환수 & 유물 소환) -->
             <div id="petTab"
-                class="bg-black border border-[#3c3c3c] p-6 flex-grow hidden flex-col justify-between min-h-[440px] rounded-none-forced">
+                class="bg-black border border-[#3c3c3c] p-5 flex-grow hidden flex-col justify-between min-h-[440px] rounded-none-forced">
                 <div>
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="bmw-label-uppercase text-white flex items-center gap-2">
-                            <i data-lucide="paw-print" class="text-[#0066b1]"></i>
-                            <span>🐾 소환수 연구실 & 🏺 고대 유물 소환 제단</span>
+                    <!-- Top Title: Pet Lab Only -->
+                    <div class="flex justify-between items-center mb-3 border-b border-[#262626] pb-2">
+                        <h3 class="bmw-label-uppercase text-white flex items-center gap-2 text-sm font-extrabold tracking-wider">
+                            <i data-lucide="paw-print" class="w-4 h-4 text-[#0066b1]"></i>
+                            <span>🐾 소환수 연구실</span>
                         </h3>
-                        <span class="text-xs text-yellow-300 font-bold bg-yellow-950/80 border border-yellow-600 px-3 py-1 font-mono shadow-md">
-                            🏛️ 소유 보스 증표: <b id="bossTokenCountText" class="text-yellow-400 font-black text-sm">0</b>개
-                        </span>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" id="petListContainer">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 mb-4" id="petListContainer">
                         <!-- Dynamic Companion Pet inventory listing -->
                     </div>
 
-                    <!-- 🏺 고대 유물 제단 & 10종 소환 -->
-                    <div class="border-t border-purple-900/50 pt-4 mt-2">
+                    <!-- Bottom Title: Ancient Relic Altar + Boss Token Display & Summon Buttons -->
+                    <div class="border-t border-purple-900/50 pt-3 mt-2">
                         <div class="flex justify-between items-center mb-2.5">
                             <h4 class="text-xs font-bold text-yellow-400 flex items-center gap-1.5 uppercase tracking-wider">
                                 <i data-lucide="sparkles" class="w-4 h-4 text-yellow-400"></i>
-                                <span>🏺 고대 유물 소환 제단 (보스 증표 소환)</span>
+                                <span>🏺 고대 유물 소환 제단</span>
                             </h4>
-                            <div class="flex gap-1.5">
-                                <button onclick="drawRelicCapsule(1)" class="px-3 py-1 bg-purple-900 hover:bg-purple-800 text-purple-200 font-bold text-[10px] border border-purple-500 rounded-none-forced">
-                                    🏺 1회 (50 증표)
-                                </button>
-                                <button onclick="drawRelicCapsule(10)" class="px-3 py-1 bg-gradient-to-r from-yellow-600 to-amber-500 hover:from-yellow-500 hover:to-amber-400 text-black font-extrabold text-[10px] shadow-md rounded-none-forced">
-                                    🔥 10연속 (450 증표)
-                                </button>
+                            
+                            <div class="flex items-center gap-2.5">
+                                <!-- 🏛️ Boss Tokens Count Displayed Right Here in Relic Altar Header -->
+                                <span class="text-xs text-yellow-300 font-bold bg-yellow-950/80 border border-yellow-600 px-3 py-1 font-mono shadow-md">
+                                    🏛️ 소유 보스 증표: <b id="bossTokenCountText" class="text-yellow-400 font-black text-sm">0</b>개
+                                </span>
+                                
+                                <div class="flex gap-1.5">
+                                    <button onclick="drawRelicCapsule(1)" class="px-3 py-1 bg-purple-900 hover:bg-purple-800 text-purple-200 font-bold text-[10px] border border-purple-500 rounded-none-forced transition">
+                                        🏺 1회 (50 증표)
+                                    </button>
+                                    <button onclick="drawRelicCapsule(10)" class="px-3 py-1 bg-gradient-to-r from-yellow-600 to-amber-500 hover:from-yellow-500 hover:to-amber-400 text-black font-extrabold text-[10px] shadow-md rounded-none-forced transition">
+                                        🔥 10연속 (450 증표)
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <div id="relicsInventoryGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-2 max-h-48 overflow-y-auto p-2 bg-[#0d0d0d] border border-[#262626] rounded-none-forced">
-                            <!-- Dynamic Relic Cards -->
+
+                        <!-- 🏺 10 Relic Cards Grid (No Scroll, cleanly fits space) -->
+                        <div id="relicsInventoryGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-2 p-2 bg-[#0d0d0d] border border-[#262626] rounded-none-forced">
+                            <!-- Dynamic Relic Cards (Rendered with high quality images & single equip button) -->
                         </div>
                     </div>
                 </div>

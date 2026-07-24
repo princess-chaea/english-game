@@ -2114,7 +2114,7 @@
 
         // 🏺 10종 고대 유물 세부 정의 (1개 전용 장착 시스템)
         const RELIC_DEFINITIONS = [
-            { id: "relic_chalice", name: "고대 지혜의 성배", img: "media/relics/relic_1.png", effectDescTemplate: "단어 정답 피해<br>+{val}%", baseBonus: 0.8 },
+            { id: "relic_chalice", name: "고대 지혜의 성배", img: "media/relics/relic_1.png", effectDescTemplate: "단어 정답 피해<br>+{val}%", baseBonus: 0.2 },
             { id: "relic_orb", name: "지옥룡의 붉은 여의주", img: "media/relics/relic_2.png", effectDescTemplate: "전체 자동 DPS<br>+{val}%", baseBonus: 1.0 },
             { id: "relic_sword", name: "전설 용사의 성검 조각", img: "media/relics/relic_3.png", effectDescTemplate: "클릭 타격력<br>+{val}%", baseBonus: 1.0 },
             { id: "relic_clock", name: "천공의 수호 시계", img: "media/relics/relic_4.png", effectDescTemplate: "스킬 쿨타임<br>-{val}%", baseBonus: 0.05 },
@@ -2336,6 +2336,25 @@
                     osc.frequency.setValueAtTime(150, now);
                     osc.frequency.setValueAtTime(50, now + 0.15);
                     gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'crit') {
+                    // 깊게 베는 챙챙 소리
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
+                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+                    
+                    const osc2 = audioCtx.createOscillator();
+                    osc2.type = 'square';
+                    osc2.frequency.setValueAtTime(1200, now);
+                    osc2.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+                    osc2.connect(gain);
+                    osc2.start(now);
+                    osc2.stop(now + 0.15);
+                    
+                    gain.gain.setValueAtTime(0.5, now);
                     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
                     osc.start(now);
                     osc.stop(now + 0.15);
@@ -3202,7 +3221,8 @@
                 // 💡 초당 자동 골드 수당 실시간 통장 가산
                 const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
                 const slimeBonus = 1 + (slimeLvl * 0.05);
-                const autoGoldPerSec = Math.floor(gameState.stage * 15 * slimeBonus);
+                const compassBonus = 1 + (getEquippedRelicBonus("relic_compass") / 100);
+                const autoGoldPerSec = Math.floor(gameState.stage * 15 * slimeBonus * compassBonus);
                 goldAccumulator += autoGoldPerSec * delta;
                 if (goldAccumulator >= 1) {
                     const addG = Math.floor(goldAccumulator);
@@ -3357,7 +3377,8 @@
             if (deltaSeconds > 15 && dps > 0) {
                 const maxSeconds = 3600 * 4;
                 const eligible = Math.min(deltaSeconds, maxSeconds);
-                const goldGained = Math.floor(dps * eligible * 0.1);
+                const compassBonus = 1 + (getEquippedRelicBonus("relic_compass") / 100);
+                const goldGained = Math.floor(dps * eligible * 0.1 * compassBonus);
 
                 if (goldGained > 0) {
                     gameState.gold += goldGained;
@@ -3388,10 +3409,11 @@
 
         function defeatActiveMonster() {
             let reward = 0;
+            const compassBonus = 1 + (getEquippedRelicBonus("relic_compass") / 100);
             if (typeof gameState.bossTokens === 'undefined') gameState.bossTokens = 0;
 
             if (isBossBattleActive) {
-                reward = gameState.stage * 1500;
+                reward = Math.floor(gameState.stage * 1500 * compassBonus);
                 gameState.gold += reward;
                 const tokenGain = Math.floor(gameState.stage * 3);
                 gameState.bossTokens += tokenGain;
@@ -3399,7 +3421,7 @@
                 playSoundEffect('levelup');
                 concludeBossSuccess();
             } else {
-                reward = gameState.stage * 80 + Math.floor(Math.random() * 50);
+                reward = Math.floor((gameState.stage * 80 + Math.floor(Math.random() * 50)) * compassBonus);
                 gameState.gold += reward;
                 if (Math.random() < 0.5) {
                     gameState.bossTokens += 1;
@@ -3479,7 +3501,7 @@
             const dealtDmg = Math.floor(finalDmg * bossMult);
 
             processCombatDamage(dealtDmg);
-            playSoundEffect(isCrit ? 'levelup' : 'click');
+            playSoundEffect(isCrit ? 'crit' : 'click');
 
             const rect = event.currentTarget.getBoundingClientRect();
             const x = event.clientX - rect.left;
@@ -4152,9 +4174,9 @@
 
                 if (accKey === 'necklace') {
                     // 스킬 마법 피해 & 쿨타임
-                    const dmg = currentLvl * 15;
+                    const dmg = currentLvl * 3;
                     const cd = Math.min(30, currentLvl * 0.6).toFixed(1);
-                    const nextDmg = (currentLvl + 1) * 15;
+                    const nextDmg = (currentLvl + 1) * 3;
                     const nextCd = Math.min(30, (currentLvl + 1) * 0.6).toFixed(1);
                     currentBonusText = `스킬피해 +${dmg}% | 쿨감 -${cd}%`;
                     nextBonusText = `스킬피해 +${nextDmg}% | 쿨감 -${nextCd}%`;
@@ -5383,8 +5405,13 @@
 
                 // 25% 확률로 기습 공격 발동
                 if (Math.random() < 0.25) {
-                    showBattleToast("❌ 오답! 몬스터의 크리티컬 공격 발동!");
-                    triggerCriticalAttack(current.word, current.meaning, false);
+                    const shieldBlockPct = getEquippedRelicBonus("relic_shield");
+                    if (Math.random() * 100 < shieldBlockPct) {
+                        showBattleToast("🛡️ 대지의 수호 방패가 몬스터의 크리티컬 공격을 막아냈습니다!");
+                    } else {
+                        showBattleToast("❌ 오답! 몬스터의 크리티컬 공격 발동!");
+                        triggerCriticalAttack(current.word, current.meaning, false);
+                    }
                 } else {
                     showBattleToast("❌ 오답! 선택지 위치가 셔플됩니다.");
                 }
@@ -5685,8 +5712,13 @@
                     bossCriticalsQueue--;
                     if (gameState.wordsPool && gameState.wordsPool.length > 0) {
                         const rWord = gameState.wordsPool[Math.floor(Math.random() * gameState.wordsPool.length)];
-                        showBattleToast("⚠️ 보스의 강력한 연속 공격이 날아옵니다!");
-                        triggerCriticalAttack(rWord.word, rWord.meaning, true);
+                        const shieldBlockPct = getEquippedRelicBonus("relic_shield");
+                        if (Math.random() * 100 < shieldBlockPct) {
+                            showBattleToast("🛡️ 대지의 수호 방패가 보스의 공격을 완벽히 방어했습니다!");
+                        } else {
+                            showBattleToast("⚠️ 보스의 강력한 연속 공격이 날아옵니다!");
+                            triggerCriticalAttack(rWord.word, rWord.meaning, true);
+                        }
                     }
                 }
 

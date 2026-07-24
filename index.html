@@ -3476,21 +3476,48 @@
             saveLocalCache();
         }
 
+        function calculateSteppedHp(stage, isBoss) {
+            const s = Math.max(1, stage || 1);
+            const tier = Math.floor((s - 1) / 5); // 5스테이지 단위 계단식 스케일링
+            const inTierOffset = (s - 1) % 5;
+
+            // 5스테이지 주기의 계단식 체력 수치 점프 배율 (40스테이지 이후 후반 구간 가파른 폭발 성장)
+            const tierMultipliers = [
+                1.0,        // Tier 0 (Stage 1-5): 일반 ~600 HP, 보스 ~24,000 HP
+                3.5,        // Tier 1 (Stage 6-10): 일반 ~2,100 HP, 보스 ~84,000 HP
+                12.0,       // Tier 2 (Stage 11-15): 일반 ~7,200 HP, 보스 ~288,000 HP
+                40.0,       // Tier 3 (Stage 16-20): 일반 ~24,000 HP, 보스 ~960,000 HP
+                150.0,      // Tier 4 (Stage 21-25): 일반 ~90,000 HP, 보스 ~3.6M HP
+                500.0,      // Tier 5 (Stage 26-30): 일반 ~300,000 HP, 보스 ~12M HP
+                1800.0,     // Tier 6 (Stage 31-35): 일반 ~1.08M HP, 보스 ~43M HP
+                6000.0,     // Tier 7 (Stage 36-40): 일반 ~3.6M HP, 보스 ~144M HP
+            ];
+
+            let baseTierMult = 1.0;
+            if (tier < tierMultipliers.length) {
+                baseTierMult = tierMultipliers[tier];
+            } else {
+                // 40스테이지 이후 (Tier 8 이상): 5스테이지마다 3.2배씩 가파른 계단식 수치 상승!
+                const extraTiers = tier - 7;
+                baseTierMult = 6000.0 * Math.pow(3.2, extraTiers);
+            }
+
+            const subFactor = Math.pow(1.08, inTierOffset);
+            const regularHp = Math.floor(600 * baseTierMult * subFactor);
+
+            if (isBoss) {
+                return Math.floor(regularHp * 40);
+            }
+            return regularHp;
+        }
+
         function respawnActiveMonster() {
             const index = (gameState.stage - 1) % MONSTER_PROFILES.length;
             const profile = isBossBattleActive
                 ? BOSS_PROFILES[(gameState.stage - 1) % BOSS_PROFILES.length]
                 : MONSTER_PROFILES[index];
 
-            const growthFactor = 1.15;
-            const baseHp = 100;
-            if (isBossBattleActive) {
-                const regularHp = Math.floor(baseHp * Math.pow(growthFactor, gameState.stage - 1));
-                monsterMaxHp = Math.floor(regularHp * 50); // 50배 보스 체력 (초반 보스 원샷 방지 및 180초 긴장감 유지)
-            } else {
-                monsterMaxHp = Math.floor(baseHp * Math.pow(growthFactor, gameState.stage - 1));
-            }
-
+            monsterMaxHp = calculateSteppedHp(gameState.stage, isBossBattleActive);
             monsterCurrentHp = monsterMaxHp;
 
             drawTargetMonster();

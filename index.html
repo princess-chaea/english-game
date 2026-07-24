@@ -3352,11 +3352,9 @@
         }
 
         function calculateAutoGoldPerSec() {
-            const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
-            const slimeBonus = 1 + (slimeLvl * 0.05);
             const relicGoldBonus = 1.0 + getEquippedRelicBonus("relic_compass") / 100;
             const potentialGold = 1.0 + (getPotentialStatBonus('goldBonus') / 100);
-            return Math.floor((gameState.stage || 1) * 15 * slimeBonus * relicGoldBonus * potentialGold);
+            return Math.floor((gameState.stage || 1) * 15 * relicGoldBonus * potentialGold);
         }
 
         function calculateDPSPower() {
@@ -3612,9 +3610,11 @@
                 const cost = isMax ? 0 : Math.floor(info.base * Math.pow(GROWTH_RATE, currentLvl));
                 const chanceInfo = isMax ? null : getGearUpgradeInfo(currentLvl);
 
-                const dpsBonusMap = { helmet: 5, armor: 15, weapon: 10, shield: 8, shoes: 6 };
+                const baseDpsMap = { helmet: 25, armor: 60, weapon: 50, shield: 40, shoes: 30 };
+                const orbMult = (gameState.equippedRelicId === "relic_orb") ? (1.0 + getEquippedRelicBonus("relic_orb") / 100) : 1.0;
+                const dpsBonus = Math.floor((baseDpsMap[gearKey] || 0) * orbMult);
+
                 const clickBonusMap = { weapon: 3, armor: 1, shield: 1 };
-                const dpsBonus = dpsBonusMap[gearKey] || 0;
                 const clickBonus = clickBonusMap[gearKey] || 0;
 
                 const isSelectedForPotential = selectedGearKey === gearKey;

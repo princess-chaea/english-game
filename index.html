@@ -2106,7 +2106,10 @@
 
             // Upgraded Advanced Skill Customization System
             skillsInventory: [], // Unlocked skills: { id, word, meaning, grade, cooldownRemaining, maxCooldown }
-            equippedSkills: [] // Array storing up to 4 skill ids currently placed in combat slots
+            equippedSkills: [], // Array storing up to 4 skill ids currently placed in combat slots
+
+            // ⚡ 무구 잠재력 잠금 슬롯 상태 (새로고침 후에도 유지)
+            lockedPotentialSlots: {} // { helmet: [0,1], armor: [], ... }
         };
 
         const BOSS_UNLOCK_LIMIT = 10; // Capped at 10 monster defeats as requested
@@ -2842,6 +2845,7 @@
                 equippedRelicId: gameState.equippedRelicId || null,
                 gearPotentials: compactGearPotentials(gameState.gearPotentials),
                 isPotentialUnlocked: gameState.isPotentialUnlocked || false,
+                lockedPotentialSlots: gameState.lockedPotentialSlots || {},
                 equippedTitle: gameState.equippedTitle || "",
                 wbTitle: gameState.wbTitle || "",
                 unlockedTitles: gameState.unlockedTitles || [],
@@ -3618,7 +3622,7 @@
         }
 
         let selectedGearKey = "helmet"; // default: 'helmet', 'armor', 'weapon', 'shield', 'shoes'
-        let selectedLockedPotentialSlots = {}; // { helmet: [], armor: [], ... }
+        // ⚠️ 잠재력 잠금은 이제 gameState.lockedPotentialSlots에 저장 (새로고침 유지)
 
         function selectGearForPotential(key) {
             selectedGearKey = key;
@@ -4045,10 +4049,11 @@
             const currentLvl = gameState[GEAR_PARAMS[selectedGearKey].key] || 1;
             const unlockedSlots = getGearUnlockedSlotsCount(selectedGearKey);
             const currentGearOpts = gameState.gearPotentials[selectedGearKey] || [];
-            if (!selectedLockedPotentialSlots[selectedGearKey]) {
-                selectedLockedPotentialSlots[selectedGearKey] = [];
+            if (!gameState.lockedPotentialSlots) gameState.lockedPotentialSlots = {};
+            if (!gameState.lockedPotentialSlots[selectedGearKey]) {
+                gameState.lockedPotentialSlots[selectedGearKey] = [];
             }
-            const lockedArr = selectedLockedPotentialSlots[selectedGearKey];
+            const lockedArr = gameState.lockedPotentialSlots[selectedGearKey];
 
             let html = tabsHtml;
             const gradeColorMap = {
@@ -4156,16 +4161,18 @@
         }
 
         function toggleLockPotentialSlot(gearKey, idx) {
-            if (!selectedLockedPotentialSlots[gearKey]) {
-                selectedLockedPotentialSlots[gearKey] = [];
+            if (!gameState.lockedPotentialSlots) gameState.lockedPotentialSlots = {};
+            if (!gameState.lockedPotentialSlots[gearKey]) {
+                gameState.lockedPotentialSlots[gearKey] = [];
             }
-            const arr = selectedLockedPotentialSlots[gearKey];
+            const arr = gameState.lockedPotentialSlots[gearKey];
             const pos = arr.indexOf(idx);
             if (pos >= 0) {
                 arr.splice(pos, 1);
             } else {
                 arr.push(idx);
             }
+            saveLocalCache();
             renderGearPotentialLabUI();
         }
 
@@ -4185,14 +4192,15 @@
             const gearKey = selectedGearKey;
             const unlockedSlots = getGearUnlockedSlotsCount(gearKey);
             const currentOpts = gameState.gearPotentials[gearKey] || [];
-            
-            const lockedArr = selectedLockedPotentialSlots[gearKey] || [];
+
+            if (!gameState.lockedPotentialSlots) gameState.lockedPotentialSlots = {};
+            const lockedArr = gameState.lockedPotentialSlots[gearKey] || [];
             const isSlotLocked = (slotIdx) => lockedArr.some(item => Number(item) === Number(slotIdx));
 
-            // ⚠️ 신화 등급 경고 확인 팝업 (언락 상태인 신화 등급 슬롯이 있을 때만 확인 모달창 팝업!)
-            let hasMythicUnlocked = false;
+            // ⚠️ 신화 등급이 해제 상태인 슬롯이 있으면 항상 확인 팝업 (연타 방어)
             const isMythicOpt = (opt) => opt && (opt.grade === "mythic" || opt.gradeName === "신화" || String(opt.grade).toLowerCase() === "mythic");
-            
+            let hasMythicUnlocked = false;
+
             if (Array.isArray(currentOpts)) {
                 hasMythicUnlocked = currentOpts.some((opt, idx) => idx < unlockedSlots && !isSlotLocked(idx) && isMythicOpt(opt));
             } else if (typeof currentOpts === 'object') {
@@ -4203,16 +4211,17 @@
                 });
             }
 
+            // 신화 해제 상태 → 항상 팝업으로 확인 후에만 리롤 실행 (연타해도 팝업 우선)
             if (hasMythicUnlocked) {
                 showConfirm(
-                    "선택한 무구의 잠재력 옵션 중 [신화 등급] 옵션이 포함되어 있습니다! 잠그지 않은 상태로 재설정하면 신화 옵션이 사라집니다. 정말 재설정하시겠습니까?",
+                    "⚠️ [신화 등급] 잠재력 옵션이 잠금 해제 상태입니다!\n재설정하면 신화 옵션이 영구 소멸됩니다. 정말 재설정하시겠습니까?",
                     function() {
                         _doRerollPotential(gearKey);
                     },
                     null,
-                    { icon: "⚠️", title: "신화 등급 잠재력 경고", yesLabel: "재설정", noLabel: "취소", danger: true }
+                    { icon: "💀", title: "신화 잠재력 소멸 경고", yesLabel: "🔥 재설정", noLabel: "🔒 취소", danger: true }
                 );
-                return;
+                return; // 팝업 열린 상태에서 리롤 즉시 실행 차단
             }
 
             _doRerollPotential(gearKey);
@@ -4222,7 +4231,8 @@
             ensureGearPotentialsStructure();
             const unlockedSlots = getGearUnlockedSlotsCount(gearKey);
             const currentOpts = gameState.gearPotentials[gearKey] || [];
-            const lockedArr = selectedLockedPotentialSlots[gearKey] || [];
+            if (!gameState.lockedPotentialSlots) gameState.lockedPotentialSlots = {};
+            const lockedArr = gameState.lockedPotentialSlots[gearKey] || [];
             const lockedCount = lockedArr.length;
             const costMap = [50000, 150000, 400000, 1000000, 2500000, 6000000];
             const cost = costMap[Math.min(lockedCount, 5)];

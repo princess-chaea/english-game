@@ -6644,9 +6644,10 @@
                 relicAccContainer.innerHTML = relicCardHtml + accCardHtml;
             }
 
-            // 로컬 클라이언트 1일 1회 완료 여부 즉시 사전 검사
+            // 로컬 클라이언트 1일 1회 완료 여부 즉시 사전 검사 (학년, 반, 번호, 이름까지 고유 식별 키 생성)
             const todayStr = new Date().toISOString().slice(0, 10);
-            const lastRaidDate = localStorage.getItem(`vocahero_wb_raid_date_${gameState.name}_${gameState.studentNum}`);
+            const wbRaidKey = `vocahero_wb_raid_date_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+            const lastRaidDate = localStorage.getItem(wbRaidKey);
             const isTodayDone = (lastRaidDate === todayStr);
 
             const btn = document.getElementById("startWorldBossBtn");
@@ -6795,7 +6796,8 @@
             if (isWorldBossRaidActive) return;
 
             const todayStr = new Date().toISOString().slice(0, 10);
-            const lastRaidDate = localStorage.getItem(`vocahero_wb_raid_date_${gameState.name}_${gameState.studentNum}`);
+            const wbRaidKey = `vocahero_wb_raid_date_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+            const lastRaidDate = localStorage.getItem(wbRaidKey);
             if (lastRaidDate === todayStr) {
                 showToast("🔒 오늘 월드보스 참전(1일 1회 제한)을 완료하셨습니다. 내일 다시 도전해 주세요!");
                 return;
@@ -7532,7 +7534,8 @@
 
             // 참전 완료 후 즉시 1일 1회 도전 완료 잠금 처리 (로컬 + 서버 이중 락)
             const todayStr = new Date().toISOString().slice(0, 10);
-            localStorage.setItem(`vocahero_wb_raid_date_${gameState.name}_${gameState.studentNum}`, todayStr);
+            const wbRaidKey = `vocahero_wb_raid_date_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+            localStorage.setItem(wbRaidKey, todayStr);
 
             playSoundEffect('levelup');
             refreshStateVisuals();

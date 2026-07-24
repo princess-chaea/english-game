@@ -1932,31 +1932,50 @@
         // ==========================================
         // ⏳ FULLSCREEN GAME LOADING OVERLAY CONTROLLER
         // ==========================================
+        let loadingProgressInterval = null;
+
         function showGameLoadingOverlay(msg = "✨ 여정을 떠나는 중...") {
             const overlay = document.getElementById("gameLoadingOverlay");
             const text = document.getElementById("loadingStatusText");
             const bar = document.getElementById("loadingProgressBar");
-            if (text) text.innerText = msg;
-            if (bar) bar.style.width = "40%";
+            if (text) text.innerText = "✨ 여정을 떠나는 중...";
+            if (bar) bar.style.width = "15%";
+
             if (overlay) {
                 overlay.style.display = "flex";
                 overlay.classList.remove("hidden", "opacity-0", "pointer-events-none");
                 overlay.classList.add("opacity-100");
             }
+
+            if (loadingProgressInterval) clearInterval(loadingProgressInterval);
+            let currentPct = 15;
+            loadingProgressInterval = setInterval(() => {
+                if (currentPct < 90) {
+                    currentPct += Math.floor(Math.random() * 15) + 8;
+                    if (bar) bar.style.width = `${Math.min(90, currentPct)}%`;
+                }
+            }, 120);
         }
 
         function hideGameLoadingOverlay() {
+            if (loadingProgressInterval) {
+                clearInterval(loadingProgressInterval);
+                loadingProgressInterval = null;
+            }
             const overlay = document.getElementById("gameLoadingOverlay");
             const bar = document.getElementById("loadingProgressBar");
             if (bar) bar.style.width = "100%";
-            if (overlay) {
-                overlay.classList.remove("opacity-100");
-                overlay.classList.add("opacity-0", "pointer-events-none");
-                setTimeout(() => {
-                    overlay.style.display = "none";
-                    overlay.classList.add("hidden");
-                }, 200);
-            }
+
+            setTimeout(() => {
+                if (overlay) {
+                    overlay.classList.remove("opacity-100");
+                    overlay.classList.add("opacity-0", "pointer-events-none");
+                    setTimeout(() => {
+                        overlay.style.display = "none";
+                        overlay.classList.add("hidden");
+                    }, 300);
+                }
+            }, 250);
         }
 
         function openModal(modalId) {
@@ -2267,7 +2286,7 @@
             }
 
             const { grade, classNum, studentNum, name } = tempCredentials;
-            showGameLoadingOverlay(`📜 구글 시트에서 [${name}] 용사님의 기록을 불러오는 중...`);
+            showGameLoadingOverlay();
             closeModal("pinVerifyModal");
             const savedUrl = getGasUrl();
 
@@ -2302,9 +2321,8 @@
         }
 
         function handleLocalVerify(grade, classNum, studentNum, name, password) {
-            showGameLoadingOverlay(`📜 [${name}] 용사님의 로컬 기록을 불러오는 중...`);
+            showGameLoadingOverlay();
             if (loadLocalSimulation(grade, classNum, studentNum, name, password)) {
-                // 모든 로그인 관련 모달 닫기
                 closeModal("loginModal");
                 closeModal("pinVerifyModal");
                 closeModal("newUserRegisterModal");
@@ -2323,7 +2341,7 @@
             }
 
             const { grade, classNum, studentNum, name } = tempCredentials;
-            showGameLoadingOverlay(`✨ [${name}] 신규 용사를 등록하고 마법 전장을 생성하는 중...`);
+            showGameLoadingOverlay();
             closeModal("newUserRegisterModal");
             const savedUrl = getGasUrl();
 
@@ -2902,6 +2920,7 @@
             populateMasteredVocabulary();
             refreshStateVisuals();
             checkWorldBossVictoryOnStartup();
+            hideGameLoadingOverlay();
         }
 
         function checkWorldBossVictoryOnStartup() {

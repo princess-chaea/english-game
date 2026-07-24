@@ -544,7 +544,8 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
           unlockedTitles: extraParsed.unlockedTitles || [],
           bossTokens: Number(extraParsed.bossTokens) || 0,
           totalQuizTries: Number(extraParsed.totalQuizTries) || 0,
-          totalQuizCorrect: Number(extraParsed.totalQuizCorrect) || 0
+          totalQuizCorrect: Number(extraParsed.totalQuizCorrect) || 0,
+          wrongWordCounts: extraParsed.wrongWordCounts || {}
         };
       }
     }

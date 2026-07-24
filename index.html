@@ -1317,7 +1317,7 @@
                         </div>
                         <div class="bg-[#080c14] p-2 border border-cyan-900/50 rounded-none-forced text-center">
                             <span class="text-[8px] text-gray-400 font-bold uppercase block">📚 정복 영단어</span>
-                            <span id="masteredTotalText" class="text-sm font-black text-cyan-300 font-mono">0개</span>
+                            <span id="profileMasteredTotalText" class="text-sm font-black text-cyan-300 font-mono">0개</span>
                         </div>
                         <div class="bg-[#080c14] p-2 border border-cyan-900/50 rounded-none-forced text-center">
                             <span class="text-[8px] text-gray-400 font-bold uppercase block">📊 퀴즈 정답률</span>
@@ -5588,7 +5588,10 @@
             }
 
             const totalEl = document.getElementById("masteredTotalText");
-            if (totalEl) totalEl.innerText = `${masteredList.length}개`;
+            if (totalEl) totalEl.innerText = `${masteredList.length}`;
+
+            const profileTotalEl = document.getElementById("profileMasteredTotalText");
+            if (profileTotalEl) profileTotalEl.innerText = `${masteredList.length}개`;
 
             if (masteredList.length === 0) {
                 listDiv.innerHTML = `<p class="text-xs text-gray-500 text-center py-6 uppercase tracking-wider">아직 학습을 정복한 영단어 목록이 비어 있습니다.</p>`;
@@ -5745,9 +5748,6 @@
             const statRatioEl = document.getElementById("statSuccessRatio");
             if (statRatioEl) statRatioEl.innerText = `${ratio}%`;
 
-            const mTotalEl = document.getElementById("masteredTotalText");
-            if (mTotalEl) mTotalEl.innerText = gameState.totalQuizCorrect;
-
             // ✅ 영웅 칭호 태그 렌더링 (장착된 칭호 사용)
             const nameTagEl = document.getElementById("heroNameTag");
             if (nameTagEl && gameState.name) {
@@ -5834,6 +5834,13 @@
             saveLocalCache();
             showToast("💾 데이터 저장 중... 잠시 후 창을 안전하게 닫습니다.");
             const savedUrl = getGasUrl();
+            const doExit = () => {
+                setTimeout(() => {
+                    window.close();
+                    location.href = "about:blank";
+                }, 1500);
+            };
+
             if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
                 const petStr = JSON.stringify(gameState.petLevels || {});
                 const extraDataStr = buildExtraDataString();
@@ -5848,15 +5855,18 @@
                         extraDataStr
                     ],
                     function () {
-                        showAlert("데이터가 완벽하게 클라우드에 저장되었습니다! 이제 브라우저 창을 닫으셔도 좋습니다.", "💾", "저장 완료");
+                        showAlert("데이터가 완벽하게 클라우드에 저장되었습니다! 이제 창이 닫힙니다.", "💾", "저장 완료");
+                        doExit();
                     },
                     function () {
-                        showAlert("로컬 저장이 완료되었습니다! 브라우저 창을 닫으셔도 좋습니다.", "💾", "저장 완료");
+                        showAlert("로컬 저장이 완료되었습니다! 이제 창이 닫힙니다.", "💾", "저장 완료");
+                        doExit();
                     }
                 );
             } else {
                 setTimeout(() => {
-                    showAlert("데이터가 저장되었습니다! 이제 브라우저 창을 닫으셔도 좋습니다.", "💾", "저장 완료");
+                    showAlert("로컬 저장이 완료되었습니다! 이제 창이 닫힙니다.", "💾", "저장 완료");
+                    doExit();
                 }, 800);
             }
         }
@@ -7548,7 +7558,7 @@
                     el.style.color = "#9ca3af";
                 }
                 el.onclick = () => {
-                    overlay.classList.add("hidden");
+                    overlay.style.display = "none";
                     if (btn.onClick) btn.onClick();
                 };
                 btnsEl.appendChild(el);
@@ -7558,7 +7568,7 @@
             box.style.opacity = "0";
             box.style.transition = "transform 0.25s cubic-bezier(.22,1,.36,1), opacity 0.2s";
             overlay.classList.remove("hidden");
-            overlay.classList.add("flex");
+            overlay.style.display = "flex";
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     box.style.transform = "scale(1) translateY(0)";
@@ -7605,7 +7615,7 @@
     </div>
 
     <!-- ✅ Custom Alert / Confirm Modal (replaces all system alert/confirm) -->
-    <div id="customModalOverlay" class="hidden fixed inset-0 z-[99999] flex items-center justify-center" style="background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);">
+    <div id="customModalOverlay" class="fixed inset-0 z-[99999] items-center justify-center" style="display:none; background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);">
         <div id="customModalBox" class="relative w-[90%] max-w-sm rounded-2xl border border-white/10 shadow-[0_0_60px_rgba(168,85,247,0.25)] overflow-hidden"
              style="background:linear-gradient(135deg,#1a1030 0%,#0e0820 100%);">
             <!-- 헤더 장식선 -->

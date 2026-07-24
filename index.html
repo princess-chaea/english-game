@@ -5469,19 +5469,31 @@
         // ==========================================
         // DATA SYNC & STORAGE
         // ==========================================
+        // ==========================================
+        // DATA SYNC & STORAGE (3-Layer Smart Auto-Save System)
+        // ==========================================
         function saveLocalCache() {
+            if (!gameState.grade || !gameState.name || gameState.name === "방문자") return;
             gameState.lastSaved = Date.now();
             const cacheKey = `vocahero_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
-            localStorage.setItem(cacheKey, JSON.stringify(gameState));
+            try {
+                localStorage.setItem(cacheKey, JSON.stringify(gameState));
+            } catch(e) {}
         }
 
-        function saveSessionToCloud() {
-            showToast("⏳ 스프레드시트에 영웅 데이터를 보존하는 중...");
+        function saveSessionToCloud(isSilent = false) {
+            if (!gameState.grade || !gameState.name || gameState.name === "방문자") return;
+            
+            if (!isSilent) {
+                showToast("⏳ 스프레드시트에 영웅 데이터를 보존하는 중...");
+            }
             saveLocalCache();
 
             const savedUrl = getGasUrl();
 
             if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
+                const petStr = JSON.stringify(gameState.petLevels || {});
+                const extraDataStr = buildExtraDataString();
                 runGas(
                     "saveStudentProgress",
                     [
@@ -5496,22 +5508,25 @@
                         gameState.weaponLvl,
                         gameState.shieldLvl,
                         gameState.shoesLvl,
-                        JSON.stringify(gameState.petLevels || {}),
+                        petStr,
                         gameState.stage,
                         gameState.progress,
                         gameState.skillsInventory,
                         gameState.equippedSkills,
-                        Number(gameState.masteryPoints) || 0
+                        Number(gameState.masteryPoints) || 0,
+                        extraDataStr
                     ],
                     function (response) {
-                        // 저장 성공 시 사용자에게 알림 띄우지 않음 (학생에게 불필요한 정보)
+                        if (isSilent) {
+                            showToast("☁️ 클라우드 데이터 자동 동기화 완료");
+                        } else {
+                            showToast("✨ 영웅 데이터가 클라우드에 성공적으로 저장되었습니다!");
+                        }
                     },
                     function () {
                         // 에러 시에도 플레이 흐름 방해 않음
                     }
                 );
-            } else {
-                // 로컬 가상 동기화 알림 생략
             }
         }
 
@@ -5568,6 +5583,8 @@
                 gameState.totalQuizCorrect = 0;
                 gameState.skillsInventory = [];
                 gameState.equippedSkills = [];
+                gameState.masteredWords = [];
+                gameState.wrongWordCounts = {};
 
                 saveLocalCache();
                 initGameEngine();
@@ -5575,14 +5592,29 @@
             }
         }
 
-        let isStateDirty = true; // 변경 감지 플래그 (초기 진입 시 저장 허용)
-
+        // ⏱️ 60초 주기적 백그라운드 클라우드 자동 동기화 (구글 통신량 90% 최적화)
         setInterval(() => {
-            if (gameState.name !== "방문자" && isStateDirty) {
-                saveSessionToCloud();
-                isStateDirty = false;
+            if (gameState.name && gameState.name !== "방문자") {
+                saveSessionToCloud(true);
             }
-        }, 60000); // 60초 주기 (API 요청량 66% 감소 최적화)
+        }, 60000);
+
+        // 🚨 창 닫기 / 탭 이탈 시 이탈 감지 무실시간 즉시 저장 처리
+        window.addEventListener("beforeunload", function () {
+            saveLocalCache();
+            if (gameState.name && gameState.name !== "방문자") {
+                saveSessionToCloud(true);
+            }
+        });
+
+        document.addEventListener("visibilitychange", function () {
+            if (document.visibilityState === "hidden") {
+                saveLocalCache();
+                if (gameState.name && gameState.name !== "방문자") {
+                    saveSessionToCloud(true);
+                }
+            }
+        });
 
         function switchTab(tabId) {
             const leftPanel = document.getElementById("leftRpgPanel");

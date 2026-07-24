@@ -3244,10 +3244,9 @@
                 const delta = (now - lastTick) / 1000;
                 lastTick = now;
 
-                const isCriticalModalOpen = document.getElementById("criticalDefenseModal") && document.getElementById("criticalDefenseModal").classList.contains("flex");
-
                 const dps = calculateDPSPower();
-                if (dps > 0 && !isCriticalModalOpen) {
+                const isCritModalOpen = document.getElementById("criticalDefenseModal") && document.getElementById("criticalDefenseModal").classList.contains("flex");
+                if (dps > 0 && !isCritModalOpen) {
                     processCombatDamage(dps * delta);
                 }
 

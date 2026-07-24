@@ -4187,29 +4187,29 @@
             const gearKey = selectedGearKey;
             const unlockedSlots = getGearUnlockedSlotsCount(gearKey);
             const currentOpts = gameState.gearPotentials[gearKey] || [];
-            if (!selectedLockedPotentialSlots[gearKey]) {
-                selectedLockedPotentialSlots[gearKey] = [];
-            }
-            const lockedArr = selectedLockedPotentialSlots[gearKey];
-            const lockedArrSafe = lockedArr || [];
+            
+            const lockedArr = selectedLockedPotentialSlots[gearKey] || [];
+            const isSlotLocked = (slotIdx) => lockedArr.some(item => Number(item) === Number(slotIdx));
 
-            // ⚠️ 신화 등급 경고 확인 팝업 (객체/배열/명칭 안전 감지)
+            // ⚠️ 신화 등급 경고 확인 팝업 (언락 상태인 신화 등급 슬롯이 있을 때만 경고!)
             let hasMythicUnlocked = false;
-            const isMythicOpt = (opt) => opt && (opt.grade === "mythic" || opt.gradeName === "신화" || (typeof opt.grade === "string" && opt.grade.toLowerCase() === "mythic"));
+            const isMythicOpt = (opt) => opt && (opt.grade === "mythic" || opt.gradeName === "신화" || String(opt.grade).toLowerCase() === "mythic");
             if (Array.isArray(currentOpts)) {
-                hasMythicUnlocked = currentOpts.some((opt, idx) => idx < unlockedSlots && !lockedArrSafe.includes(idx) && isMythicOpt(opt));
+                hasMythicUnlocked = currentOpts.some((opt, idx) => idx < unlockedSlots && !isSlotLocked(idx) && isMythicOpt(opt));
             } else if (typeof currentOpts === 'object') {
                 hasMythicUnlocked = Object.keys(currentOpts).some(idxKey => {
                     const idx = Number(idxKey);
                     const opt = currentOpts[idxKey];
-                    return idx < unlockedSlots && !lockedArrSafe.includes(idx) && isMythicOpt(opt);
+                    return idx < unlockedSlots && !isSlotLocked(idx) && isMythicOpt(opt);
                 });
             }
 
             if (hasMythicUnlocked) {
                 showConfirm(
                     "선택한 무구의 잠재력 옵션 중 [신화 등급] 옵션이 포함되어 있습니다! 잠그지 않은 상태로 재설정하면 신화 옵션이 사라집니다. 정말 재설정하시겠습니까?",
-                    function() { _doRerollPotential(gearKey); },
+                    function() {
+                        _doRerollPotential(gearKey);
+                    },
                     null,
                     { icon: "⚠️", title: "신화 등급 잠재력 경고", yesLabel: "재설정", noLabel: "취소", danger: true }
                 );
@@ -8021,6 +8021,7 @@
                 <div id="customModalBtns" class="flex gap-3 justify-end"></div>
             </div>
         </div>
+    </div>
     <!-- 🚨 영웅 은퇴 전용 대화상자 (텍스트 직접 입력 확인 모달) -->
     <div id="retireModalOverlay" class="fixed inset-0 items-center justify-center" style="background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);display:none;z-index:999999;">
         <div class="relative w-[90%] max-w-md rounded-2xl border border-red-600/80 shadow-[0_0_60px_rgba(220,38,38,0.4)] overflow-hidden"

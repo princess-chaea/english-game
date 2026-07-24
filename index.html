@@ -1538,11 +1538,11 @@
             </div>
 
             <div class="flex gap-2">
-                <button onclick="closeModal('pinVerifyModal'); openModal('loginModal');" class="flex-1 py-3 bg-[#1a1a1a] border border-[#3c3c3c] text-white font-bold text-xs uppercase rounded-none-forced">
-                    뒤로가기
-                </button>
                 <button onclick="submitVerifyPin()" class="flex-1 py-3 bg-[#e22718] hover:bg-[#b91c1c] text-white font-bold text-xs uppercase rounded-none-forced">
                     출격 승인!
+                </button>
+                <button onclick="closeModal('pinVerifyModal'); openModal('loginModal');" class="flex-1 py-3 bg-[#1a1a1a] border border-[#3c3c3c] text-white font-bold text-xs uppercase rounded-none-forced">
+                    뒤로가기
                 </button>
             </div>
         </div>
@@ -2338,6 +2338,15 @@
                     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
                     osc.start(now);
                     osc.stop(now + 0.15);
+                } else if (type === 'reroll') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, now);
+                    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.2);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
                 } else if (type === 'correct') {
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(440, now);
@@ -4082,7 +4091,7 @@
             }
 
             gameState.gold -= cost;
-            playSoundEffect('hit');
+            playSoundEffect('reroll');
 
             const lockedArrSafe = lockedArr || [];
 
@@ -7588,7 +7597,9 @@
                     el.style.color = "#9ca3af";
                 }
                 el.onclick = () => {
-                    overlay.style.display = "none";
+                    overlay.style.display = "";
+                    overlay.classList.remove("flex");
+                    overlay.classList.add("hidden");
                     if (btn.onClick) btn.onClick();
                 };
                 btnsEl.appendChild(el);
@@ -7597,8 +7608,9 @@
             box.style.transform = "scale(0.85) translateY(20px)";
             box.style.opacity = "0";
             box.style.transition = "transform 0.25s cubic-bezier(.22,1,.36,1), opacity 0.2s";
+            overlay.style.display = "";
             overlay.classList.remove("hidden");
-            overlay.style.display = "flex";
+            overlay.classList.add("flex");
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     box.style.transform = "scale(1) translateY(0)";
@@ -7645,7 +7657,7 @@
     </div>
 
     <!-- ✅ Custom Alert / Confirm Modal (replaces all system alert/confirm) -->
-    <div id="customModalOverlay" class="fixed inset-0 z-[99999] items-center justify-center" style="display:none; background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);">
+    <div id="customModalOverlay" class="fixed inset-0 z-[99999] hidden items-center justify-center" style="background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);">
         <div id="customModalBox" class="relative w-[90%] max-w-sm rounded-2xl border border-white/10 shadow-[0_0_60px_rgba(168,85,247,0.25)] overflow-hidden"
              style="background:linear-gradient(135deg,#1a1030 0%,#0e0820 100%);">
             <!-- 헤더 장식선 -->

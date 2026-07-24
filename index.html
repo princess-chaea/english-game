@@ -493,26 +493,28 @@
                         <span id="heroRelicName" class="text-[7px] text-yellow-300 font-bold font-mono truncate max-w-full">고대성배</span>
                     </div>
 
-                    <!-- 💎 [캐릭터 우측] 장착된 장신구 3종 visual slots (가로 세로 겹침 방지) -->
-                    <div id="heroAccSlotsContainer" class="absolute top-16 left-[calc(50%+4.5rem)] flex flex-row gap-1 z-20">
-                        <div id="accSlot_necklace" class="w-6 h-6 bg-black/80 border border-purple-500 hidden items-center justify-center p-0.5 shadow-[0_0_8px_rgba(168,85,247,0.5)]" title="지혜의 목걸이">
-                            <img id="accImg_necklace" src="media/accessories/necklace.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23c084fc\' stroke-width=\'2\'><circle cx=\'12\' cy=\'14\' r=\'5\'/><path d=\'M7 4a7 7 0 0 0 10 0\'/></svg>'" class="w-full h-full object-contain">
-                        </div>
-                        <div id="accSlot_bracelet" class="w-6 h-6 bg-black/80 border border-sky-500 hidden items-center justify-center p-0.5 shadow-[0_0_8px_rgba(56,189,248,0.5)]" title="투지의 팔찌">
-                            <img id="accImg_bracelet" src="media/accessories/bracelet.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2338bdf8\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'8\'/></svg>'" class="w-full h-full object-contain">
-                        </div>
-                        <div id="accSlot_ring" class="w-6 h-6 bg-black/80 border border-amber-500 hidden items-center justify-center p-0.5 shadow-[0_0_8px_rgba(245,158,11,0.5)]" title="영웅의 반지">
-                            <img id="accImg_ring" src="media/accessories/ring.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23fbbf24\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'6\'/><path d=\'M12 2v4\'/></svg>'" class="w-full h-full object-contain">
-                        </div>
-                    </div>
-
                     <!-- Character Body Avatar -->
                     <div id="heroCharacter" class="w-32 h-36 relative flex items-end justify-center">
                         <svg viewBox="0 0 100 120" class="w-full h-full transition-transform duration-100"
                             id="heroSvg"></svg>
                     </div>
-                    <span id="heroNameTag"
-                        class="text-[9px] bg-[#1a1a1a] border border-[#3c3c3c] px-3 py-0.5 font-bold text-[#bbbbbb] tracking-wider uppercase rounded-none-forced mt-1.5">내 영웅</span>
+                    <!-- Name tag & Accessories flex container (이름/칭호 오른쪽 공간 배치) -->
+                    <div class="flex items-center gap-1.5 mt-1.5 z-20">
+                        <span id="heroNameTag"
+                            class="text-[9px] bg-[#1a1a1a] border border-[#3c3c3c] px-3 py-0.5 font-bold text-[#bbbbbb] tracking-wider uppercase rounded-none-forced">내 영웅</span>
+                        <!-- 💎 장착된 장신구 3종 visual slots (이름 및 칭호 오른쪽에 배치하여 드래곤 겹침 방지) -->
+                        <div id="heroAccSlotsContainer" class="flex flex-row gap-1 items-center">
+                            <div id="accSlot_necklace" class="w-5 h-5 bg-black/80 border border-purple-500 hidden items-center justify-center p-0.5 shadow-[0_0_6px_rgba(168,85,247,0.5)]" title="지혜의 목걸이">
+                                <img id="accImg_necklace" src="media/accessories/necklace.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23c084fc\' stroke-width=\'2\'><circle cx=\'12\' cy=\'14\' r=\'5\'/><path d=\'M7 4a7 7 0 0 0 10 0\'/></svg>'" class="w-full h-full object-contain">
+                            </div>
+                            <div id="accSlot_bracelet" class="w-5 h-5 bg-black/80 border border-sky-500 hidden items-center justify-center p-0.5 shadow-[0_0_6px_rgba(56,189,248,0.5)]" title="투지의 팔찌">
+                                <img id="accImg_bracelet" src="media/accessories/bracelet.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2338bdf8\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'8\'/></svg>'" class="w-full h-full object-contain">
+                            </div>
+                            <div id="accSlot_ring" class="w-5 h-5 bg-black/80 border border-amber-500 hidden items-center justify-center p-0.5 shadow-[0_0_6px_rgba(245,158,11,0.5)]" title="영웅의 반지">
+                                <img id="accImg_ring" src="media/accessories/ring.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23fbbf24\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'6\'/><path d=\'M12 2v4\'/></svg>'" class="w-full h-full object-contain">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -2864,13 +2866,22 @@
         }
 
         function calculateDPSPower() {
-            // 자동 DPS = 대장간 장비 DPS + 드래곤 펫 DPS (슬라임=골드, 요정=강화 전용)
+            // 자동 DPS = 대장간 장비 DPS + 드래곤 펫 DPS + 영웅의 반지 DPS (+150/lv) + 유물
             let totalDps = calculateGearDPS();
             if (gameState.petLevels) {
                 const dragonLvl = gameState.petLevels['dragon'] || 0;
                 if (dragonLvl > 0) {
                     totalDps += PET_PARAMS['dragon'].dps * dragonLvl;
                 }
+            }
+            // 💍 영웅의 반지 (ringLvl) 자동 DPS 보정 (+150 per level)
+            const ringLvl = gameState.ringLvl || 0;
+            if (ringLvl > 0) {
+                totalDps += ringLvl * 150;
+            }
+            // 🏺 고대 지옥룡의 여의주 (relic_orb): 자동 DPS +30%
+            if (gameState.acquiredRelics && gameState.acquiredRelics.includes("relic_orb")) {
+                totalDps = Math.floor(totalDps * 1.3);
             }
             return totalDps;
         }
@@ -2888,9 +2899,17 @@
         function calculateClickAttackPower() {
             // 무기, 갑옷, 방패, 신발 및 완화된 스테이지 클릭 공격력 보정
             const baseGearPower = (gameState.weaponLvl * 6) + (gameState.armorLvl * 3) + (gameState.shieldLvl * 2) + (gameState.shoesLvl * 2);
-            // 지수(pow) 급증을 선형 + 완화된 승수로 조정하여 적정 밸런스 유지 (60스테이지 기준 약 1,500 ~ 2,000 수준)
             const stagePower = Math.floor((gameState.stage || 1) * 20 + Math.pow(1.045, (gameState.stage || 1) - 1) * 10);
-            return Math.max(1, baseGearPower + stagePower);
+            
+            // ⚡ 잠재력 클릭 타격 보정
+            const potentialClick = getPotentialStatBonus('clickDmg');
+            // 💍 투지의 팔찌 (braceletLvl) 클릭 타격력 보정 (+80 per level)
+            const braceletClick = (gameState.braceletLvl || 0) * 80;
+            // 🏺 고대 용사의 성검 조각 (relic_sword): 클릭 타격력 +40%
+            const relicMult = (gameState.acquiredRelics && gameState.acquiredRelics.includes("relic_sword")) ? 1.4 : 1.0;
+
+            const totalBase = baseGearPower + stagePower + potentialClick + braceletClick;
+            return Math.max(1, Math.floor(totalBase * relicMult));
         }
 
         function calculateOfflineGains() {
@@ -2971,12 +2990,11 @@
                 ? BOSS_PROFILES[(gameState.stage - 1) % BOSS_PROFILES.length]
                 : MONSTER_PROFILES[index];
 
-            // 성장 곡선 완화: 스테이지 배율을 1.20에서 1.15로 완화하여 고스테이지(45+) 진입 장벽 조정
             const growthFactor = 1.15;
             const baseHp = 100;
             if (isBossBattleActive) {
                 const regularHp = Math.floor(baseHp * Math.pow(growthFactor, gameState.stage - 1));
-                monsterMaxHp = Math.floor(regularHp * 15); // 보스는 일반의 15배
+                monsterMaxHp = Math.floor(regularHp * 15);
             } else {
                 monsterMaxHp = Math.floor(baseHp * Math.pow(growthFactor, gameState.stage - 1));
             }
@@ -2989,27 +3007,63 @@
 
         function handleArenaClick(event) {
             const hAvatar = document.getElementById("heroCharacter");
-            hAvatar.classList.add("animate-slash");
-            setTimeout(() => { hAvatar.classList.remove("animate-slash"); }, 200);
+            if (hAvatar) {
+                hAvatar.classList.add("animate-slash");
+                setTimeout(() => { hAvatar.classList.remove("animate-slash"); }, 200);
+            }
 
             const mContainer = document.getElementById("monsterContainer");
-            mContainer.classList.add("animate-shake");
-            setTimeout(() => { mContainer.classList.remove("animate-shake"); }, 150);
+            if (mContainer) {
+                mContainer.classList.add("animate-shake");
+                setTimeout(() => { mContainer.classList.remove("animate-shake"); }, 150);
+            }
 
-            const clickDmg = calculateClickAttackPower();
-            processCombatDamage(clickDmg);
-            playSoundEffect('click');
+            const baseClickDmg = calculateClickAttackPower();
+
+            // 🎯 크리티컬 확률 & 배율 시스템 (기본 5% + 잠재력 + 팔찌 + 유물)
+            const potentialCrit = getPotentialStatBonus('critRate');
+            const braceletCrit = Math.min(25, (gameState.braceletLvl || 0) * 0.5);
+            const relicCrit = (gameState.acquiredRelics && gameState.acquiredRelics.includes("relic_dice")) ? 10 : 0;
+            const totalCritChance = 5 + potentialCrit + braceletCrit + relicCrit;
+
+            const roll = Math.random() * 100;
+            const isCrit = roll < totalCritChance;
+            const critMult = 2.0 + ((gameState.acquiredRelics && gameState.acquiredRelics.includes("relic_dice")) ? 0.5 : 0);
+            const finalDmg = isCrit ? Math.floor(baseClickDmg * critMult) : baseClickDmg;
+
+            // 🐉 보스 타격 시 보스 피해 보정 (영웅의 반지 + 보스 잠재력 + 유물)
+            let bossMult = 1.0;
+            if (isBossBattleActive) {
+                const ringBossPct = (gameState.ringLvl || 0) * 2;
+                const potentialBossPct = getPotentialStatBonus('bossDmg');
+                const relicBossPct = (gameState.acquiredRelics && gameState.acquiredRelics.includes("relic_feather")) ? 60 : 0;
+                bossMult += (ringBossPct + potentialBossPct + relicBossPct) / 100;
+            }
+            const dealtDmg = Math.floor(finalDmg * bossMult);
+
+            processCombatDamage(dealtDmg);
+            playSoundEffect(isCrit ? 'levelup' : 'click');
 
             const rect = event.currentTarget.getBoundingClientRect();
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
-            spawnDamageFloatingText(x, y, `-${clickDmg} 체력`);
+            
+            if (isCrit) {
+                spawnDamageFloatingText(x, y, `💥 CRITICAL! -${dealtDmg.toLocaleString()}`, true);
+            } else {
+                spawnDamageFloatingText(x, y, `-${dealtDmg.toLocaleString()}`);
+            }
         }
 
-        function spawnDamageFloatingText(x, y, text) {
+        function spawnDamageFloatingText(x, y, text, isCrit = false) {
             const arena = document.getElementById("battleArena");
+            if (!arena) return;
             const particle = document.createElement("span");
-            particle.className = "damage-particle text-red-500 font-extrabold text-sm fancy-title select-none z-30";
+            if (isCrit) {
+                particle.className = "damage-particle text-yellow-300 drop-shadow-[0_0_10px_rgba(245,158,11,1)] font-black text-base fancy-title select-none z-40 animate-bounce";
+            } else {
+                particle.className = "damage-particle text-red-500 font-extrabold text-sm fancy-title select-none z-30";
+            }
             particle.style.left = `${x}px`;
             particle.style.top = `${y}px`;
             particle.innerText = text;
@@ -4517,16 +4571,22 @@
 
             // 1. 영어 스펠링 단어 TTS 음성 발음 재생
             if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel(); // 이전 음성 취소 후 즉시 발음
+                window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(skill.word);
                 utterance.lang = 'en-US';
                 utterance.rate = 0.9;
                 window.speechSynthesis.speak(utterance);
             }
 
-            // 스킬 데미지 공식 밸런싱: (클릭 타격력 * 스킬 배율 * 3) + (현재 DPS * 2)
-            // 원샷 원킬 방지 및 타격감 넘치는 필살기 딜링 밸런스 유지
-            const skillDmg = (calculateClickAttackPower() * mult * 3) + (calculateDPSPower() * 2);
+            // 💍 지혜의 목걸이 (necklaceLvl) 스킬 마법 피해 +15%/lv & 잠재력 & 유물
+            const necklaceSkillBonus = (gameState.necklaceLvl || 0) * 15;
+            const potentialSkillBonus = getPotentialStatBonus('skillDmg');
+            const relicSkillBonus = (gameState.acquiredRelics && gameState.acquiredRelics.includes("relic_scroll")) ? 40 : 0;
+            const totalSkillMult = 1 + (necklaceSkillBonus + potentialSkillBonus + relicSkillBonus) / 100;
+
+            const baseSkillDmg = (calculateClickAttackPower() * mult * 3) + (calculateDPSPower() * 2);
+            const skillDmg = Math.floor(baseSkillDmg * totalSkillMult);
+
             processCombatDamage(skillDmg);
             playSoundEffect('levelup');
 
@@ -4567,7 +4627,13 @@
 
             showBattleToast(`💥 필살 시전! [${gradeInfo.name}] ${capitalizeFirstLetter(skill.word)}: -${skillDmg.toLocaleString()} 피해!`);
 
-            skill.cooldownRemaining = skill.maxCooldown;
+            // 💍 지혜의 목걸이 (necklaceLvl) 쿨타임 감소 적용 (-0.6%/lv, 최대 -30%) + 유물 (-20%)
+            const necklaceCdRed = Math.min(30, (gameState.necklaceLvl || 0) * 0.6);
+            const relicCdRed = (gameState.acquiredRelics && gameState.acquiredRelics.includes("relic_clock")) ? 20 : 0;
+            const totalCdRed = Math.min(60, necklaceCdRed + relicCdRed);
+            const baseCd = skill.maxCooldown || 15;
+
+            skill.cooldownRemaining = baseCd * (1 - totalCdRed / 100);
             renderSkillsUI();
             buildSkillTabUI();
             saveLocalCache();
@@ -5918,8 +5984,11 @@
             const skill = gameState.skillsInventory.find(s => s.id === skillId);
             if (!skill) return;
 
-            // 30초 쿨타임 적용
-            wbSkillCooldowns[skillId] = 30.0;
+            // 💍 지혜의 목걸이 (necklaceLvl) 쿨타임 감소 적용 (-0.6%/lv, 최대 -30%) + 유물 (-20%)
+            const necklaceCdRed = Math.min(30, (gameState.necklaceLvl || 0) * 0.6);
+            const relicCdRed = (gameState.acquiredRelics && gameState.acquiredRelics.includes("relic_clock")) ? 20 : 0;
+            const totalCdRed = Math.min(60, necklaceCdRed + relicCdRed);
+            wbSkillCooldowns[skillId] = 30.0 * (1 - totalCdRed / 100);
 
             // 스킬 원어민 음성 발음 재생
             if ('speechSynthesis' in window) {
@@ -5932,7 +6001,15 @@
 
             const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
             const mult = getSkillMultiplier(skill);
-            const skillDmg = (calculateClickAttackPower() * mult * 3); // 레이드전 시전 시 3배 추가 보정 폭딜
+
+            // 💍 지혜의 목걸이 (necklaceLvl) 스킬 마법 피해 +15%/lv & 잠재력 & 유물
+            const necklaceSkillBonus = (gameState.necklaceLvl || 0) * 15;
+            const potentialSkillBonus = getPotentialStatBonus('skillDmg');
+            const relicSkillBonus = (gameState.acquiredRelics && gameState.acquiredRelics.includes("relic_scroll")) ? 40 : 0;
+            const totalSkillMult = 1 + (necklaceSkillBonus + potentialSkillBonus + relicSkillBonus) / 100;
+
+            const baseDmg = (calculateClickAttackPower() * mult * 3);
+            const skillDmg = Math.floor(baseDmg * totalSkillMult);
 
             wbTotalDamageDealt += skillDmg;
             updateWorldBossBattleHpBar();

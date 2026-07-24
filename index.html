@@ -3789,11 +3789,44 @@
             // ⚠️ 신화 등급 경고 확인 팝업
             const hasMythicUnlocked = currentOpts.some((opt, idx) => idx < unlockedSlots && !lockedArr.includes(idx) && opt && opt.grade === "mythic");
             if (hasMythicUnlocked) {
-                if (!confirm("⚠️ 선택한 무구의 잠재력 옵션 중 [신화 등급] 옵션이 포함되어 있습니다!\n잠그지 않은 상태로 재설정하면 신화 옵션이 사라집니다. 정말 재설정하시겠습니까?")) {
-                    return;
+                showConfirm(
+                    "선택한 무구의 잠재력 옵션 중 [신화 등급] 옵션이 포함되어 있습니다! 잠그지 않은 상태로 재설정하면 신화 옵션이 사라집니다. 정말 재설정하시겠습니까?",
+                    function() { _doRerollPotential(selectedGearKey); },
+                    null,
+                    { icon: "⚠️", title: "신화 등급 잠재력 경고", yesLabel: "재설정", noLabel: "취소", danger: true }
+                );
+                return; // 모달 콜백에서 실행
+            }
+
+            const lockedCount = lockedArr.length;
+            const costMap = [50000, 150000, 400000, 1000000, 2500000, 6000000];
+            const cost = costMap[Math.min(lockedCount, 5)];
+
+            if (gameState.gold < cost) {
+                showToast(`🪙 골드가 부족합니다! 리롤을 진행하려면 ${cost.toLocaleString()} Gold가 필요합니다.`);
+                return;
+            }
+
+            gameState.gold -= cost;
+            playSoundEffect('hit');
+
+            for (let i = 0; i < unlockedSlots; i++) {
+                if (!lockedArr.includes(i)) {
+                    currentOpts[i] = generateRandomPotentialOption();
                 }
             }
 
+            renderGearPotentialLabUI();
+            refreshStateVisuals();
+            saveLocalCache();
+            showToast("🎲 선택한 무구의 잠재력 옵션이 새로 재설정되었습니다!");
+        }
+
+        function _doRerollPotential(gearKey) {
+            ensureGearPotentialsStructure();
+            const unlockedSlots = getGearUnlockedSlotsCount(gearKey);
+            const currentOpts = gameState.gearPotentials[gearKey] || [];
+            const lockedArr = selectedLockedPotentialSlots[gearKey] || [];
             const lockedCount = lockedArr.length;
             const costMap = [50000, 150000, 400000, 1000000, 2500000, 6000000];
             const cost = costMap[Math.min(lockedCount, 5)];
@@ -5548,48 +5581,51 @@
                         extraDataStr
                     ],
                     function () {
-                        window.close();
-                        alert("💾 데이터가 완벽하게 저장되었습니다! 이제 브라우저 창을 닫으셔도 좋습니다.");
+                        showAlert("데이터가 완벽하게 클라우드에 저장되었습니다! 이제 브라우저 창을 닫으셔도 좋습니다.", "💾", "저장 완료");
                     },
                     function () {
-                        window.close();
-                        alert("💾 로컬 저장 완료! 브라우저 창을 닫으셔도 좋습니다.");
+                        showAlert("로컬 저장이 완료되었습니다! 브라우저 창을 닫으셔도 좋습니다.", "💾", "저장 완료");
                     }
                 );
             } else {
                 setTimeout(() => {
-                    window.close();
-                    alert("💾 데이터가 저장되었습니다! 이제 브라우저 창을 닫으셔도 좋습니다.");
+                    showAlert("데이터가 저장되었습니다! 이제 브라우저 창을 닫으셔도 좋습니다.", "💾", "저장 완료");
                 }, 800);
             }
         }
 
         function resetFullSession() {
-            if (confirm("정말로 캐릭터 상태와 보물을 완전히 지우고 처음부터 출발하시겠습니까?")) {
-                const cacheKey = `vocahero_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
-                localStorage.removeItem(cacheKey);
+            showConfirm(
+                "정말로 캐릭터 상태와 보물을 완전히 지우고 처음부터 출발하시겠습니까? 이 작업은 되돌릴 수 없습니다!",
+                function() { _doResetFullSession(); },
+                null,
+                { icon: "🗑️", title: "영웅 은퇴 확인", yesLabel: "은퇴", noLabel: "취소", danger: true }
+            );
+        }
+        function _doResetFullSession() {
+            const cacheKey = `vocahero_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+            localStorage.removeItem(cacheKey);
 
-                gameState.gold = 0;
-                gameState.helmetLvl = 1;
-                gameState.armorLvl = 1;
-                gameState.weaponLvl = 1;
-                gameState.shieldLvl = 1;
-                gameState.shoesLvl = 1;
-                gameState.petType = "none";
-                gameState.petLvl = 0;
-                gameState.stage = 1;
-                gameState.progress = 0;
-                gameState.totalQuizTries = 0;
-                gameState.totalQuizCorrect = 0;
-                gameState.skillsInventory = [];
-                gameState.equippedSkills = [];
-                gameState.masteredWords = [];
-                gameState.wrongWordCounts = {};
+            gameState.gold = 0;
+            gameState.helmetLvl = 1;
+            gameState.armorLvl = 1;
+            gameState.weaponLvl = 1;
+            gameState.shieldLvl = 1;
+            gameState.shoesLvl = 1;
+            gameState.petType = "none";
+            gameState.petLvl = 0;
+            gameState.stage = 1;
+            gameState.progress = 0;
+            gameState.totalQuizTries = 0;
+            gameState.totalQuizCorrect = 0;
+            gameState.skillsInventory = [];
+            gameState.equippedSkills = [];
+            gameState.masteredWords = [];
+            gameState.wrongWordCounts = {};
 
-                saveLocalCache();
-                initGameEngine();
-                showToast("🧹 용사단이 기지를 완전히 비웠습니다.");
-            }
+            saveLocalCache();
+            initGameEngine();
+            showToast("🧹 용사단이 기지를 완전히 비웠습니다.");
         }
 
         // ⏱️ 60초 주기적 백그라운드 클라우드 자동 동기화 (구글 통신량 90% 최적화)
@@ -7052,7 +7088,7 @@
             // Very basic CSV parser
             const lines = csvText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
             if (lines.length <= 1) {
-                alert("업로드할 단어 데이터가 없습니다.");
+                showAlert("업로드할 단어 데이터가 없습니다.", "📭", "파일 오류");
                 return;
             }
             
@@ -7071,30 +7107,40 @@
             }
 
             if (wordsArray.length === 0) {
-                alert("유효한 단어 데이터를 찾을 수 없습니다.");
+                showAlert("유효한 단어 데이터를 찾을 수 없습니다.", "🔍", "데이터 오류");
                 return;
             }
 
-            if (confirm(`총 ${wordsArray.length}개의 단어를 추가하시겠습니까?`)) {
-                showToast("⏳ 단어 서버 전송 중...");
-                runGas("uploadWordsBatch", [wordsArray], function(res) {
-                    if (res && res.success) {
-                        alert(`✅ 성공적으로 ${res.count}개의 단어를 추가했습니다!`);
-                    } else {
-                        alert(`❌ 단어 업로드 실패: ${res ? res.error : '알 수 없는 오류'}`);
-                    }
-                }, function(err) {
-                    alert(`❌ 통신 오류: ${err.toString()}`);
-                });
-            }
+            showConfirm(
+                `총 ${wordsArray.length}개의 단어를 서버에 추가하시겠습니까?`,
+                function() {
+                    showToast("⏳ 단어 서버 전송 중...");
+                    runGas("uploadWordsBatch", [wordsArray], function(res) {
+                        if (res && res.success) {
+                            showAlert(`성공적으로 ${res.count}개의 단어를 추가했습니다!`, "✅", "업로드 성공");
+                        } else {
+                            showAlert(`단어 업로드 실패: ${res ? res.error : '알 수 없는 오류'}`, "❌", "업로드 실패");
+                        }
+                    }, function(err) {
+                        showAlert(`통신 오류: ${err.toString()}`, "❌", "통신 오류");
+                    });
+                },
+                null,
+                { icon: "📚", title: "단어 업로드 확인", yesLabel: "추가", noLabel: "취소" }
+            );
         }
 
         function logoutUser() {
-            if (confirm("로그아웃하고 로그인 첫 화면으로 돌아가시겠습니까?")) {
-                sessionStorage.removeItem("vocahero_active_session");
-                localStorage.removeItem("vocahero_active_session");
-                location.reload();
-            }
+            showConfirm(
+                "로그아웃하고 로그인 첫 화면으로 돌아가시겠습니까?",
+                function() {
+                    sessionStorage.removeItem("vocahero_active_session");
+                    localStorage.removeItem("vocahero_active_session");
+                    location.reload();
+                },
+                null,
+                { icon: "🚪", title: "로그아웃", yesLabel: "로그아웃", noLabel: "취소" }
+            );
         }
 
         window.onload = function () {
@@ -7199,6 +7245,76 @@
                 document.body.classList.remove("animate-shake");
             }, 3000);
         }
+
+        // ==========================================
+        // 🎨 Custom Modal System (replaces alert/confirm)
+        // ==========================================
+        function _openCustomModal(icon, title, message, buttons) {
+            const overlay = document.getElementById("customModalOverlay");
+            const box = document.getElementById("customModalBox");
+            document.getElementById("customModalIcon").innerText = icon;
+            document.getElementById("customModalTitle").innerText = title;
+            document.getElementById("customModalMessage").innerText = message;
+            const btnsEl = document.getElementById("customModalBtns");
+            btnsEl.innerHTML = "";
+            buttons.forEach(btn => {
+                const el = document.createElement("button");
+                el.innerText = btn.label;
+                el.className = btn.primary
+                    ? "flex-1 py-2.5 px-5 rounded-xl font-extrabold text-sm text-white shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
+                    : "flex-1 py-2.5 px-5 rounded-xl font-bold text-sm transition-all duration-200 hover:scale-105 active:scale-95 border";
+                if (btn.primary) {
+                    el.style.background = btn.danger
+                        ? "linear-gradient(135deg,#dc2626,#b91c1c)"
+                        : "linear-gradient(135deg,#7c3aed,#4f46e5)";
+                } else {
+                    el.style.background = "rgba(255,255,255,0.05)";
+                    el.style.borderColor = "rgba(255,255,255,0.1)";
+                    el.style.color = "#9ca3af";
+                }
+                el.onclick = () => {
+                    overlay.classList.add("hidden");
+                    if (btn.onClick) btn.onClick();
+                };
+                btnsEl.appendChild(el);
+            });
+            // entry animation
+            box.style.transform = "scale(0.85) translateY(20px)";
+            box.style.opacity = "0";
+            box.style.transition = "transform 0.25s cubic-bezier(.22,1,.36,1), opacity 0.2s";
+            overlay.classList.remove("hidden");
+            overlay.classList.add("flex");
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    box.style.transform = "scale(1) translateY(0)";
+                    box.style.opacity = "1";
+                });
+            });
+        }
+
+        /** alert() 대체 */
+        function showAlert(message, icon, title) {
+            icon = icon || "ℹ️";
+            title = title || "알림";
+            _openCustomModal(icon, title, message, [
+                { label: "확인", primary: true, onClick: null }
+            ]);
+        }
+
+        /** confirm() 대체 – onYes/onNo 콜백 */
+        function showConfirm(message, onYes, onNo, opts) {
+            opts = opts || {};
+            const icon = opts.icon || "❓";
+            const title = opts.title || "확인";
+            const yesLabel = opts.yesLabel || "확인";
+            const noLabel = opts.noLabel || "취소";
+            const danger = !!opts.danger;
+            _openCustomModal(icon, title, message, [
+                { label: noLabel,  primary: false, onClick: onNo  || null },
+                { label: yesLabel, primary: true, danger: danger, onClick: onYes || null }
+            ]);
+        }
+
     </script>
 
     <!-- Damage Overlay (Scratch & Flash) -->
@@ -7212,6 +7328,27 @@
             <path d="M80 15 Q 85 55, 75 85" stroke-width="4" stroke-linecap="round"/>
         </svg>
     </div>
+
+    <!-- ✅ Custom Alert / Confirm Modal (replaces all system alert/confirm) -->
+    <div id="customModalOverlay" class="hidden fixed inset-0 z-[99999] flex items-center justify-center" style="background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);">
+        <div id="customModalBox" class="relative w-[90%] max-w-sm rounded-2xl border border-white/10 shadow-[0_0_60px_rgba(168,85,247,0.25)] overflow-hidden"
+             style="background:linear-gradient(135deg,#1a1030 0%,#0e0820 100%);">
+            <!-- 헤더 장식선 -->
+            <div class="h-1 w-full" style="background:linear-gradient(90deg,#7c3aed,#ec4899,#f59e0b);"></div>
+            <div class="p-6">
+                <!-- 아이콘 + 제목 -->
+                <div class="flex items-center gap-3 mb-4">
+                    <span id="customModalIcon" class="text-3xl">⚠️</span>
+                    <span id="customModalTitle" class="text-white font-extrabold text-base leading-tight"></span>
+                </div>
+                <!-- 메시지 -->
+                <p id="customModalMessage" class="text-gray-300 text-sm leading-relaxed mb-6"></p>
+                <!-- 버튼 영역 -->
+                <div id="customModalBtns" class="flex gap-3 justify-end"></div>
+            </div>
+        </div>
+    </div>
+
 </body>
 
 </html>

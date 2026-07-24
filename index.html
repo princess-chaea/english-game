@@ -446,14 +446,18 @@
                 </div>
                 
                 <!-- Telemetry Stats -->
-                <div class="grid grid-cols-2 gap-2 mt-3">
-                    <div class="telemetry-cell text-center rounded-none-forced">
-                        <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest">초당 자동 골드 획득</p>
-                        <p class="text-sm font-bold text-[#0066b1]">+<span id="dpsCount">0</span> 골드/초</p>
+                <div class="grid grid-cols-3 gap-1.5 mt-3">
+                    <div class="telemetry-cell text-center rounded-none-forced p-1.5">
+                        <p class="text-[8px] text-[#7e7e7e] font-bold uppercase tracking-widest">초당 자동 골드</p>
+                        <p class="text-xs font-bold text-amber-300">+<span id="autoGoldCount">0</span> G/초</p>
                     </div>
-                    <div class="telemetry-cell text-center rounded-none-forced">
-                        <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest">마우스 클릭 타격력</p>
-                        <p class="text-sm font-bold text-[#e22718]"><span id="clickPowerCount">1</span> 데미지</p>
+                    <div class="telemetry-cell text-center rounded-none-forced p-1.5">
+                        <p class="text-[8px] text-[#7e7e7e] font-bold uppercase tracking-widest">초당 자동 DPS</p>
+                        <p class="text-xs font-bold text-[#0066b1]">+<span id="dpsCount">0</span> DPS</p>
+                    </div>
+                    <div class="telemetry-cell text-center rounded-none-forced p-1.5">
+                        <p class="text-[8px] text-[#7e7e7e] font-bold uppercase tracking-widest">클릭 타격력</p>
+                        <p class="text-xs font-bold text-[#e22718]"><span id="clickPowerCount">1</span> Dmg</p>
                     </div>
                 </div>
             </div>
@@ -1037,7 +1041,7 @@
                             <div class="bg-[#0d0d0d] p-4 border border-[#3c3c3c] rounded-none-forced flex flex-col gap-3">
                                 <div class="flex items-center justify-between text-xs bg-black p-3 border border-[#262626]">
                                     <span class="text-gray-300 font-bold">내 대장간 장비 생존 HP:</span>
-                                    <span id="playerMaxHpDisplay" class="font-bold text-green-400 font-mono text-sm">💖 100 HP</span>
+                                    <span id="playerMaxHpDisplay" class="font-bold text-green-400 font-mono text-sm">💖 100 HP (무구 강화 수치에 비례)</span>
                                 </div>
 
                                 <!-- Current Loadout Preview (Pet, Skills, Relics & Accessories) -->
@@ -3233,10 +3237,7 @@
                 }
 
                 // 💡 초당 자동 골드 수당 실시간 통장 가산
-                const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
-                const slimeBonus = 1 + (slimeLvl * 0.05);
-                const relicGoldBonus = 1.0 + getEquippedRelicBonus("relic_compass") / 100;
-                const autoGoldPerSec = Math.floor(gameState.stage * 15 * slimeBonus * relicGoldBonus);
+                const autoGoldPerSec = calculateAutoGoldPerSec();
                 goldAccumulator += autoGoldPerSec * delta;
                 if (goldAccumulator >= 1) {
                     const addG = Math.floor(goldAccumulator);
@@ -3334,6 +3335,14 @@
                 }
             });
             return total;
+        }
+
+        function calculateAutoGoldPerSec() {
+            const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
+            const slimeBonus = 1 + (slimeLvl * 0.05);
+            const relicGoldBonus = 1.0 + getEquippedRelicBonus("relic_compass") / 100;
+            const potentialGold = 1.0 + (getPotentialStatBonus('goldBonus') / 100);
+            return Math.floor((gameState.stage || 1) * 15 * slimeBonus * relicGoldBonus * potentialGold);
         }
 
         function calculateDPSPower() {
@@ -5039,12 +5048,11 @@
                 showToast("보유한 마법 비기가 없습니다.");
                 return;
             }
-            const gradeOrder = { 'mythic': 5, 'legendary': 4, 'hero': 3, 'rare': 2, 'normal': 1 };
             const sorted = [...gameState.skillsInventory].sort((a, b) => {
-                const gA = gradeOrder[a.grade] || 0;
-                const gB = gradeOrder[b.grade] || 0;
-                if (gA !== gB) return gB - gA;
-                return (b.stars || 0) - (a.stars || 0);
+                const multA = getSkillMultiplier(a);
+                const multB = getSkillMultiplier(b);
+                if (multB !== multA) return multB - multA;
+                return (b.exp || 0) - (a.exp || 0);
             });
             const top4 = sorted.slice(0, 4).map(s => s.id);
             gameState.equippedSkills = top4;
@@ -5102,12 +5110,12 @@
                 return;
             }
 
-            // 전투력 점수 기준 내림차순 정렬
+            // 마법 피해 배율(×배) 기준 내림차순 정렬
             const sortedInventory = [...gameState.skillsInventory].sort((a, b) => {
-                const rankA = (SKILL_GRADES[a.grade] || SKILL_GRADES.normal).rank;
-                const rankB = (SKILL_GRADES[b.grade] || SKILL_GRADES.normal).rank;
-                if (rankB !== rankA) return rankB - rankA;
-                return getSkillMultiplier(b) - getSkillMultiplier(a);
+                const multA = getSkillMultiplier(a);
+                const multB = getSkillMultiplier(b);
+                if (multB !== multA) return multB - multA;
+                return (b.exp || 0) - (a.exp || 0);
             });
 
             let invHtml = "";
@@ -5788,8 +5796,11 @@
             const bossTokenText = document.getElementById("bossTokenCountText");
             if (bossTokenText) bossTokenText.innerText = Math.floor(gameState.bossTokens || 0).toLocaleString();
 
+            const autoGoldEl = document.getElementById("autoGoldCount");
+            if (autoGoldEl) autoGoldEl.innerText = calculateAutoGoldPerSec().toLocaleString();
+
             const dpsEl = document.getElementById("dpsCount");
-            if (dpsEl) dpsEl.innerText = calculateDPSPower();
+            if (dpsEl) dpsEl.innerText = calculateDPSPower().toLocaleString();
 
             const clickEl = document.getElementById("clickPowerCount");
             if (clickEl) clickEl.innerText = calculateClickAttackPower();
@@ -6352,7 +6363,7 @@
             document.getElementById("wbBossDesc").innerText = `"${bossInfo.desc}"`;
             document.getElementById("wbWeekBadge").innerText = `${seasonIdx + 1}주차 시즌 보스`;
             document.getElementById("wbGradeTitle").innerText = `${gameState.grade}학년 전용 공유 체력`;
-            document.getElementById("playerMaxHpDisplay").innerText = `💖 ${wbPlayerMaxHp} HP`;
+            document.getElementById("playerMaxHpDisplay").innerText = `💖 ${wbPlayerMaxHp} HP (무구 강화 수치에 비례)`;
             const dpsDisplay = document.getElementById("wbDpsPreviewText");
             if (dpsDisplay) dpsDisplay.innerText = calculateDPSPower().toLocaleString();
 
@@ -7695,18 +7706,12 @@
                 btnsEl.appendChild(el);
             });
             // entry animation
-            box.style.transform = "scale(0.85) translateY(20px)";
-            box.style.opacity = "0";
-            box.style.transition = "transform 0.25s cubic-bezier(.22,1,.36,1), opacity 0.2s";
+            box.style.transform = "scale(1) translateY(0)";
+            box.style.opacity = "1";
+            box.style.transition = "transform 0.2s cubic-bezier(.22,1,.36,1), opacity 0.15s";
             overlay.style.display = "flex";
             overlay.style.alignItems = "center";
             overlay.style.justifyContent = "center";
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    box.style.transform = "scale(1) translateY(0)";
-                    box.style.opacity = "1";
-                });
-            });
         }
 
         /** alert() 대체 */

@@ -40,6 +40,8 @@ function doPost(e) {
       result = attackWorldBoss.apply(null, args);
     } else if (action === "getHallOfFame") {
       result = getHallOfFame.apply(null, args);
+    } else if (action === "deleteStudentData") {
+      result = deleteStudentData.apply(null, args);
     } else {
       throw new Error("Unknown action: " + action);
     }
@@ -609,6 +611,33 @@ function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType
     return false;
   } catch(e) {
     return false;
+  } finally {
+    try { lock.releaseLock(); } catch(err) {}
+  }
+}
+
+// 5.5 플레이어 데이터베이스 완벽 삭제 (영웅 은퇴 기능)
+function deleteStudentData(grade, classNum, studentNum, name) {
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(5000);
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName("Students");
+    if (!sheet) return { success: false, error: "시트를 찾을 수 없습니다." };
+    
+    var data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(grade) && 
+          String(data[i][1]) === String(classNum) && 
+          String(data[i][2]) === String(studentNum) && 
+          String(data[i][3]) === String(name)) {
+        sheet.deleteRow(i + 1); // 학생 레코드 행 완전 삭제
+        return { success: true };
+      }
+    }
+    return { success: true };
+  } catch(e) {
+    return { success: false, error: e.toString() };
   } finally {
     try { lock.releaseLock(); } catch(err) {}
   }

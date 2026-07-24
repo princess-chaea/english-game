@@ -1474,7 +1474,7 @@
                         <i data-lucide="save" class="w-4 h-4 text-cyan-400"></i>
                         <span>진행 상황 저장하기</span>
                     </button>
-                    <button onclick="resetFullSession()"
+                    <button onclick="openRetireModal()"
                         class="py-2 px-4 bg-red-950/80 hover:bg-red-900 border border-red-700 text-red-400 font-bold text-xs uppercase tracking-widest transition rounded-none-forced">
                         영웅 은퇴 (초기화)
                     </button>
@@ -6104,38 +6104,67 @@
             }
         }
 
-        function resetFullSession() {
-            showConfirm(
-                "정말로 캐릭터 상태와 보물을 완전히 지우고 처음부터 출발하시겠습니까? 이 작업은 되돌릴 수 없습니다!",
-                function() { _doResetFullSession(); },
-                null,
-                { icon: "🗑️", title: "영웅 은퇴 확인", yesLabel: "은퇴", noLabel: "취소", danger: true }
-            );
+        function openRetireModal() {
+            const input = document.getElementById("retireConfirmInput");
+            const btn = document.getElementById("retireSubmitBtn");
+            if (input) input.value = "";
+            if (btn) {
+                btn.disabled = true;
+                btn.className = "flex-1 py-2.5 px-4 bg-red-950 text-gray-600 font-extrabold text-xs rounded transition opacity-50 cursor-not-allowed border border-red-900";
+            }
+            const overlay = document.getElementById("retireModalOverlay");
+            if (overlay) {
+                overlay.style.zIndex = "999999";
+                overlay.style.display = "flex";
+            }
         }
-        function _doResetFullSession() {
-            const cacheKey = `vocahero_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+
+        function closeRetireModal() {
+            const overlay = document.getElementById("retireModalOverlay");
+            if (overlay) overlay.style.display = "none";
+        }
+
+        function validateRetireInput() {
+            const input = document.getElementById("retireConfirmInput");
+            const btn = document.getElementById("retireSubmitBtn");
+            if (!input || !btn) return;
+            const val = input.value.trim();
+            if (val === "영웅 은퇴") {
+                btn.disabled = false;
+                btn.className = "flex-1 py-2.5 px-4 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-extrabold text-xs rounded shadow-lg transition cursor-pointer border border-red-500 animate-pulse";
+            } else {
+                btn.disabled = true;
+                btn.className = "flex-1 py-2.5 px-4 bg-red-950 text-gray-600 font-extrabold text-xs rounded transition opacity-50 cursor-not-allowed border border-red-900";
+            }
+        }
+
+        function executeFullRetireDataDeletion() {
+            closeRetireModal();
+            showToast("⏳ 구글 시트 데이터베이스 삭제 및 은퇴 처리 중...");
+
+            const g = gameState.grade;
+            const c = gameState.classNum;
+            const s = gameState.studentNum;
+            const n = gameState.name;
+
+            const cacheKey = `vocahero_${g}_${c}_${s}_${n}`;
             localStorage.removeItem(cacheKey);
+            sessionStorage.removeItem("vocahero_active_session");
+            localStorage.removeItem("vocahero_active_session");
 
-            gameState.gold = 0;
-            gameState.helmetLvl = 1;
-            gameState.armorLvl = 1;
-            gameState.weaponLvl = 1;
-            gameState.shieldLvl = 1;
-            gameState.shoesLvl = 1;
-            gameState.petType = "none";
-            gameState.petLvl = 0;
-            gameState.stage = 1;
-            gameState.progress = 0;
-            gameState.totalQuizTries = 0;
-            gameState.totalQuizCorrect = 0;
-            gameState.skillsInventory = [];
-            gameState.equippedSkills = [];
-            gameState.masteredWords = [];
-            gameState.wrongWordCounts = {};
+            // 구글 시트 데이터베이스(Students 시트)의 해당 학생 기록 완벽 제거
+            runGas("deleteStudentData", [g, c, s, n], function(res) {
+                showToast("🗑️ 구글 시트 기록 및 가입 정보가 완전히 삭제되었습니다!");
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            }, function(err) {
+                location.reload();
+            });
+        }
 
-            saveLocalCache();
-            initGameEngine();
-            showToast("🧹 용사단이 기지를 완전히 비웠습니다.");
+        function resetFullSession() {
+            openRetireModal();
         }
 
         // ⏱️ 60초 주기적 백그라운드 클라우드 자동 동기화 (구글 통신량 90% 최적화)
@@ -7929,6 +7958,39 @@
                 <p id="customModalMessage" class="text-gray-300 text-sm leading-relaxed mb-6"></p>
                 <!-- 버튼 영역 -->
                 <div id="customModalBtns" class="flex gap-3 justify-end"></div>
+            </div>
+        </div>
+    <!-- 🚨 영웅 은퇴 전용 대화상자 (텍스트 직접 입력 확인 모달) -->
+    <div id="retireModalOverlay" class="fixed inset-0 items-center justify-center" style="background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);display:none;z-index:999999;">
+        <div class="relative w-[90%] max-w-md rounded-2xl border border-red-600/80 shadow-[0_0_60px_rgba(220,38,38,0.4)] overflow-hidden"
+             style="background:linear-gradient(135deg,#1f0a0a 0%,#0f0505 100%);">
+            <div class="h-1 w-full bg-gradient-to-r from-red-600 via-amber-500 to-red-600"></div>
+            <div class="p-6 text-white">
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="text-3xl animate-pulse">🚨</span>
+                    <div>
+                        <h3 class="font-extrabold text-base text-red-400">영웅 은퇴 및 데이터 영구 삭제</h3>
+                        <p class="text-[10px] text-gray-400">이 작업은 서버 시트와 브라우저 데이터를 완전히 지우며 되돌릴 수 없습니다.</p>
+                    </div>
+                </div>
+                <div class="bg-black/60 border border-red-900/50 p-3 rounded mb-4 text-xs leading-relaxed text-gray-300">
+                    <p class="mb-1.5 font-bold text-red-300">⚠️ 정말로 은퇴하시겠습니까?</p>
+                    <p class="text-[11px] text-gray-400">
+                        구글 시트(데이터베이스)에 저장된 **골드, 연마한 장비, 펫, 유물, 장신구, 영단어 서고** 기록이 통째로 완전히 삭제되며 로그인 화면으로 돌아갑니다.
+                    </p>
+                </div>
+                <p class="text-xs font-bold text-yellow-300 mb-2">
+                    확인을 위해 아래 입력창에 <span class="text-red-400 font-mono font-black underline">[영웅 은퇴]</span> 라고 정확히 입력해 주세요:
+                </p>
+                <input id="retireConfirmInput" type="text" oninput="validateRetireInput()" placeholder="영웅 은퇴"
+                       class="w-full px-4 py-2.5 bg-black border border-red-800 rounded text-center text-sm font-bold text-red-300 focus:outline-none focus:border-red-500 mb-5">
+                <div class="flex gap-2 justify-end">
+                    <button onclick="closeRetireModal()" class="flex-1 py-2.5 px-4 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold text-xs rounded transition">취소</button>
+                    <button id="retireSubmitBtn" disabled onclick="executeFullRetireDataDeletion()"
+                            class="flex-1 py-2.5 px-4 bg-red-950 text-gray-600 font-extrabold text-xs rounded transition opacity-50 cursor-not-allowed border border-red-900">
+                        🔥 은퇴 및 데이터 삭제
+                    </button>
+                </div>
             </div>
         </div>
     </div>

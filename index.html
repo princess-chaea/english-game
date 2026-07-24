@@ -3625,6 +3625,10 @@
                     const bonusLine = clickBonus > 0
                         ? `자동 DPS +${dpsBonus} &nbsp;|&nbsp; 클릭 타격 +${clickBonus}`
                         : `자동 DPS +${dpsBonus}`;
+
+                    const shieldRate = getEquippedRelicBonus("relic_shield");
+                    const effectiveDropChance = Math.max(0, chanceInfo.dropChance - shieldRate);
+
                     rateHtml = `
                         <div class="text-[10px] text-[#7e7e7e] mb-0.5">
                             <span class="font-bold text-white">Lv.${currentLvl}</span>
@@ -3635,7 +3639,9 @@
                         <div class="text-[9px] mt-0.5 flex flex-col gap-0.5">
                             <span>성공: <span class="text-green-500 font-bold">${chanceInfo.success}%</span></span>
                             ${chanceInfo.dropChance > 0
-                                ? `<span class="text-[#e22718] font-bold">실패 시 ${chanceInfo.dropChance}% 확률 하락</span>`
+                                ? (shieldRate > 0
+                                    ? `<span class="text-[#e22718] font-bold">실패 시 ${effectiveDropChance}% 확률 하락 <span class="text-emerald-400 text-[8px]">(방패 -${shieldRate}%)</span></span>`
+                                    : `<span class="text-[#e22718] font-bold">실패 시 ${chanceInfo.dropChance}% 확률 하락</span>`)
                                 : '<span class="text-green-500">실패해도 강화 유지</span>'}
                         </div>
                     `;
@@ -3702,9 +3708,9 @@
                     playSoundEffect('hit');
                     const dropRoll = Math.random() * 100;
                     const shieldRate = getEquippedRelicBonus("relic_shield");
-                    const isProtected = shieldRate > 0 && (Math.random() * 100 < shieldRate);
+                    const effectiveDropChance = Math.max(0, chanceInfo.dropChance - shieldRate);
 
-                    if (chanceInfo.dropChance > 0 && dropRoll <= chanceInfo.dropChance && !isProtected) {
+                    if (effectiveDropChance > 0 && dropRoll <= effectiveDropChance) {
                         const dropAmt = Math.floor(Math.random() * 3) + 1;
                         const newLvl = Math.max(1, currentLvl - dropAmt);
                         const loss = currentLvl - newLvl;
@@ -3713,10 +3719,10 @@
                             '💥 강화 실패!',
                             `장비 기운이 흔들려 <strong class="text-[#e22718]">Lv.${newLvl}</strong>로 <strong class="text-[#e22718]">-${loss}강</strong> 하락했습니다.`,
                             '#e22718');
-                    } else if (isProtected && chanceInfo.dropChance > 0 && dropRoll <= chanceInfo.dropChance) {
+                    } else if (shieldRate > 0 && chanceInfo.dropChance > 0) {
                         showForgeResult(false,
-                            '🛡️ 대지의 수호 방패 발동!',
-                            `강화가 실패했지만 <strong class="text-emerald-400">대지의 수호 방패 (${shieldRate}%)</strong> 효과로 단계 하락을 방지했습니다!`,
+                            '🛡️ 대지의 수호 방패 방어!',
+                            `강화 실패했지만 <strong class="text-emerald-400">대지의 수호 방패 (${shieldRate}% 감쇄)</strong> 효과로 하락 확률이 ${effectiveDropChance}%로 축소되어 단계 하락을 방지했습니다!`,
                             '#10b981');
                     } else {
                         showForgeResult(false,

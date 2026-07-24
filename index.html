@@ -1349,14 +1349,17 @@
                                 <div class="bg-purple-950/40 border border-purple-800/40 p-1.5 rounded flex flex-col items-center justify-center">
                                     <span class="text-purple-300 font-bold text-[8px] flex items-center gap-0.5"><img src="media/accessories/necklace.png" class="w-3.5 h-3.5 object-contain" onerror="this.style.display='none'"> 목걸이</span>
                                     <span id="profileNecklaceLvl" class="text-white font-mono font-extrabold text-xs">0강</span>
+                                    <span id="profileNecklaceVal" class="text-[8px] text-purple-300 font-mono block mt-0.5">미연마</span>
                                 </div>
                                 <div class="bg-sky-950/40 border border-sky-800/40 p-1.5 rounded flex flex-col items-center justify-center">
                                     <span class="text-sky-300 font-bold text-[8px] flex items-center gap-0.5"><img src="media/accessories/bracelet.png" class="w-3.5 h-3.5 object-contain" onerror="this.style.display='none'"> 팔찌</span>
                                     <span id="profileBraceletLvl" class="text-white font-mono font-extrabold text-xs">0강</span>
+                                    <span id="profileBraceletVal" class="text-[8px] text-sky-300 font-mono block mt-0.5">미연마</span>
                                 </div>
                                 <div class="bg-amber-950/40 border border-amber-800/40 p-1.5 rounded flex flex-col items-center justify-center">
                                     <span class="text-amber-300 font-bold text-[8px] flex items-center gap-0.5"><img src="media/accessories/ring.png" class="w-3.5 h-3.5 object-contain" onerror="this.style.display='none'"> 반지</span>
                                     <span id="profileRingLvl" class="text-white font-mono font-extrabold text-xs">0강</span>
+                                    <span id="profileRingVal" class="text-[8px] text-amber-300 font-mono block mt-0.5">미연마</span>
                                 </div>
                             </div>
                         </div>
@@ -4109,7 +4112,7 @@
                 html += `
                     <div class="border ${style} p-2 text-center flex flex-col justify-between min-h-[80px] relative rounded-none-forced">
                         <button onclick="toggleLockPotentialSlot('${selectedGearKey}', ${i})" class="absolute -top-2 -right-2 px-1.5 py-0.5 text-[9px] font-black rounded-none-forced transition border shadow-md cursor-pointer ${isLocked ? 'bg-yellow-400 text-black border-yellow-600' : 'bg-gray-800 text-gray-300 border-gray-600 hover:text-white'}">
-                            ${isLocked ? '🔒 잠금됨' : '🔓 잠금 해제'}
+                            ${isLocked ? '잠금' : '해제'}
                         </button>
                         <div>
                             <span class="text-[8px] font-bold text-gray-400 block">${i + 1}번 옵션 [${opt.gradeName}]</span>
@@ -4201,17 +4204,20 @@
             const isSlotLocked = (slotIdx) => lockedArr.some(item => Number(item) === Number(slotIdx));
 
             // ⚠️ 신화 등급이 해제 상태인 슬롯이 있으면 항상 확인 팝업 (연타 방어)
-            const isMythicOpt = (opt) => opt && (opt.grade === "mythic" || opt.gradeName === "신화" || String(opt.grade).toLowerCase() === "mythic");
+            const isMythicOpt = (opt) => {
+                if (!opt) return false;
+                const g = String(opt.grade || "").toLowerCase();
+                const gn = String(opt.gradeName || "").toLowerCase();
+                return g === "mythic" || gn === "신화" || g.includes("mythic") || gn.includes("신화");
+            };
             let hasMythicUnlocked = false;
 
-            if (Array.isArray(currentOpts)) {
-                hasMythicUnlocked = currentOpts.some((opt, idx) => idx < unlockedSlots && !isSlotLocked(idx) && isMythicOpt(opt));
-            } else if (typeof currentOpts === 'object') {
-                hasMythicUnlocked = Object.keys(currentOpts).some(idxKey => {
-                    const idx = Number(idxKey);
-                    const opt = currentOpts[idxKey];
-                    return idx < unlockedSlots && !isSlotLocked(idx) && isMythicOpt(opt);
-                });
+            for (let idx = 0; idx < unlockedSlots; idx++) {
+                const opt = currentOpts[idx];
+                if (opt && !isSlotLocked(idx) && isMythicOpt(opt)) {
+                    hasMythicUnlocked = true;
+                    break;
+                }
             }
 
             // 신화 해제 상태 → 항상 팝업으로 확인 후에만 리롤 실행 (연타해도 팝업 우선)
@@ -4265,6 +4271,25 @@
         // ==========================================
         // 💍 ACCESSORIES & 🏺 RELICS SYSTEM (50+ 콘텐츠)
         // ==========================================
+        function getAccessoryEffectSummary(accKey, lvl) {
+            lvl = lvl || 0;
+            if (lvl <= 0) return "미연마";
+            if (accKey === 'necklace') {
+                const dmg = (lvl * 1.5).toFixed(1);
+                const cd = Math.min(30, lvl * 0.3).toFixed(1);
+                return `마법+${dmg}%/쿨-${cd}%`;
+            } else if (accKey === 'bracelet') {
+                const click = lvl * 800;
+                const crit = Math.min(25, lvl * 0.25).toFixed(1);
+                return `타격+${click >= 10000 ? (click/10000).toFixed(1)+'만' : click}/크리+${crit}%`;
+            } else if (accKey === 'ring') {
+                const dps = lvl * 1500;
+                const boss = lvl * 1;
+                return `DPS+${dps >= 10000 ? (dps/10000).toFixed(1)+'만' : dps}/보스+${boss}%`;
+            }
+            return "";
+        }
+
         function renderAccessoriesAndRelicsUI() {
             renderAccessoriesUI();
             renderRelicsUI();
@@ -4295,36 +4320,6 @@
                         slotEl.classList.add("hidden");
                         slotEl.classList.remove("flex");
                     }
-                }
-
-                // 구체적 레벨별 연마 수치 수식 (100강 연마 시스템)
-                let currentBonusText = "";
-                let nextBonusText = "";
-
-                if (accKey === 'necklace') {
-                    // 스킬 마법 피해 (+1.5%/lv) & 쿨타임 (-0.3%/lv, 최대 -30%)
-                    const dmg = (currentLvl * 1.5).toFixed(1);
-                    const cd = Math.min(30, currentLvl * 0.3).toFixed(1);
-                    const nextDmg = ((currentLvl + 1) * 1.5).toFixed(1);
-                    const nextCd = Math.min(30, (currentLvl + 1) * 0.3).toFixed(1);
-                    currentBonusText = `스킬피해 +${dmg}% | 쿨감 -${cd}%`;
-                    nextBonusText = `스킬피해 +${nextDmg}% | 쿨감 -${nextCd}%`;
-                } else if (accKey === 'bracelet') {
-                    // 클릭 타격력 (+800/lv, 10배 상향) & 크리티컬 (+0.25%/lv, 최대 25%)
-                    const click = currentLvl * 800;
-                    const crit = Math.min(25, currentLvl * 0.25).toFixed(1);
-                    const nextClick = (currentLvl + 1) * 800;
-                    const nextCrit = Math.min(25, (currentLvl + 1) * 0.25).toFixed(1);
-                    currentBonusText = `클릭타격 +${click.toLocaleString()} | 크리티컬 +${crit}%`;
-                    nextBonusText = `클릭타격 +${nextClick.toLocaleString()} | 크리티컬 +${nextCrit}%`;
-                } else if (accKey === 'ring') {
-                    // 초당 자동 DPS (+1500/lv, 10배 상향) & 보스 피해 (+1%/lv)
-                    const dps = currentLvl * 1500;
-                    const boss = currentLvl * 1;
-                    const nextDps = (currentLvl + 1) * 1500;
-                    const nextBoss = (currentLvl + 1) * 1;
-                    currentBonusText = `자동DPS +${dps.toLocaleString()} | 보스피해 +${boss}%`;
-                    nextBonusText = `자동DPS +${nextDps.toLocaleString()} | 보스피해 +${nextBoss}%`;
                 }
 
                 const currentMastered = Math.max(gameState.masteredWords ? gameState.masteredWords.length : 0, gameState.totalQuizCorrect || 0);
@@ -5766,13 +5761,21 @@
             if (tokenEl) tokenEl.innerText = Math.floor(gameState.bossTokens || 0).toLocaleString();
             if (bossTokenText) bossTokenText.innerText = Math.floor(gameState.bossTokens || 0).toLocaleString();
 
-            // 장신구 연마 레벨 실시간 갱신
+            // 장신구 연마 레벨 및 효과 수치 실시간 갱신
             const nLvl = document.getElementById("profileNecklaceLvl");
             const bLvl = document.getElementById("profileBraceletLvl");
             const rLvl = document.getElementById("profileRingLvl");
+            const nVal = document.getElementById("profileNecklaceVal");
+            const bVal = document.getElementById("profileBraceletVal");
+            const rVal = document.getElementById("profileRingVal");
+
             if (nLvl) nLvl.innerText = `${gameState.necklaceLvl || 0}강`;
             if (bLvl) bLvl.innerText = `${gameState.braceletLvl || 0}강`;
             if (rLvl) rLvl.innerText = `${gameState.ringLvl || 0}강`;
+
+            if (nVal) nVal.innerText = getAccessoryEffectSummary('necklace', gameState.necklaceLvl);
+            if (bVal) bVal.innerText = getAccessoryEffectSummary('bracelet', gameState.braceletLvl);
+            if (rVal) rVal.innerText = getAccessoryEffectSummary('ring', gameState.ringLvl);
 
             // ⚠️ 약점 오답 노트 TOP 6 렌더링 (2열 배치)
             const weakContainer = document.getElementById("weakWordsContainer");
@@ -6612,22 +6615,22 @@
                         <div class="bg-black/70 p-1 border border-purple-900/60 flex items-center gap-1 min-w-0">
                             <img src="media/accessories/necklace.png" class="w-5 h-5 object-contain shrink-0" onerror="this.style.display='none'">
                             <div class="min-w-0 flex-1">
-                                <span class="text-[8px] text-purple-300 font-bold block truncate">목걸이</span>
-                                <span class="text-[9px] text-white font-mono font-extrabold block">${gameState.necklaceLvl || 0}강</span>
+                                <span class="text-[8px] text-purple-300 font-bold block truncate">목걸이 ${gameState.necklaceLvl || 0}강</span>
+                                <span class="text-[8px] text-purple-200 font-mono font-extrabold block truncate">${getAccessoryEffectSummary('necklace', gameState.necklaceLvl)}</span>
                             </div>
                         </div>
                         <div class="bg-black/70 p-1 border border-sky-900/60 flex items-center gap-1 min-w-0">
                             <img src="media/accessories/bracelet.png" class="w-5 h-5 object-contain shrink-0" onerror="this.style.display='none'">
                             <div class="min-w-0 flex-1">
-                                <span class="text-[8px] text-sky-300 font-bold block truncate">팔찌</span>
-                                <span class="text-[9px] text-white font-mono font-extrabold block">${gameState.braceletLvl || 0}강</span>
+                                <span class="text-[8px] text-sky-300 font-bold block truncate">팔찌 ${gameState.braceletLvl || 0}강</span>
+                                <span class="text-[8px] text-sky-200 font-mono font-extrabold block truncate">${getAccessoryEffectSummary('bracelet', gameState.braceletLvl)}</span>
                             </div>
                         </div>
                         <div class="bg-black/70 p-1 border border-amber-900/60 flex items-center gap-1 min-w-0">
                             <img src="media/accessories/ring.png" class="w-5 h-5 object-contain shrink-0" onerror="this.style.display='none'">
                             <div class="min-w-0 flex-1">
-                                <span class="text-[8px] text-amber-300 font-bold block truncate">반지</span>
-                                <span class="text-[9px] text-white font-mono font-extrabold block">${gameState.ringLvl || 0}강</span>
+                                <span class="text-[8px] text-amber-300 font-bold block truncate">반지 ${gameState.ringLvl || 0}강</span>
+                                <span class="text-[8px] text-amber-200 font-mono font-extrabold block truncate">${getAccessoryEffectSummary('ring', gameState.ringLvl)}</span>
                             </div>
                         </div>
                     </div>

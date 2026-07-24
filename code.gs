@@ -512,6 +512,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
           braceletLvl: Number(extraParsed.braceletLvl) || 0,
           ringLvl: Number(extraParsed.ringLvl) || 0,
           acquiredRelics: extraParsed.acquiredRelics || [],
+          equippedRelicId: extraParsed.equippedRelicId || null,
           gearPotentials: extraParsed.gearPotentials || [],
           isPotentialUnlocked: extraParsed.isPotentialUnlocked || false,
           masteredWords: extraParsed.masteredWords || [],

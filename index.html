@@ -5413,9 +5413,13 @@
 
                 const arena = document.getElementById("battleArena");
                 
-                // 단어 정답 시 치명타 타격 (고대 성배 유물 장착 시 배율 증가)
+                // 단어 정답 시 치명타 타격 (고대 성배 유물 + 보스전 시 보스 피해 유물/잠재력 보너스 통째 반영!)
                 const chaliceMult = 1.0 + (getEquippedRelicBonus("relic_chalice") / 100);
-                const quizDmg = Math.floor(((calculateClickAttackPower() * 10) + (calculateDPSPower() * 2)) * chaliceMult);
+                const bossBonus = isBossBattleActive 
+                    ? (1.0 + (getEquippedRelicBonus("relic_feather") + getPotentialStatBonus('bossDmg')) / 100)
+                    : 1.0;
+                const baseQuizDmg = (calculateClickAttackPower() * 60) + (calculateDPSPower() * 10);
+                const quizDmg = Math.floor(baseQuizDmg * chaliceMult * bossBonus);
                 processCombatDamage(quizDmg);
                 spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `⚡ 퀴즈 크리티컬! -${quizDmg.toLocaleString()}`);
 
@@ -5640,17 +5644,24 @@
             const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus + (getPotentialStatBonus('goldBonus') / 100);
             if (profileGold) profileGold.innerText = `×${goldMultiplier.toFixed(2)}배`;
 
-            // 유물 장착 상태 요약
+            // 유물 장착 상태 요약 (실제 유물 이미지 표시)
             if (gameState.equippedRelicId) {
                 const eqR = RELIC_DEFINITIONS.find(item => item.id === gameState.equippedRelicId);
                 const acR = (gameState.acquiredRelics || []).find(item => item.id === gameState.equippedRelicId);
                 if (eqR) {
                     if (profileRelicName) profileRelicName.innerText = `🏺 ${eqR.name}`;
                     if (profileRelicEffect) profileRelicEffect.innerHTML = getRelicEffectString(eqR, acR);
+                    const profileRelicImg = document.getElementById("profileEquippedRelicImg");
+                    if (profileRelicImg) {
+                        profileRelicImg.src = eqR.img;
+                        profileRelicImg.classList.remove("hidden");
+                    }
                 }
             } else {
                 if (profileRelicName) profileRelicName.innerText = "[장착된 유물 없음]";
                 if (profileRelicEffect) profileRelicEffect.innerText = "능력치 적용 미발동";
+                const profileRelicImg = document.getElementById("profileEquippedRelicImg");
+                if (profileRelicImg) profileRelicImg.classList.add("hidden");
             }
 
             // 💰 획득 재화 현황 실시간 업데이트 (데이터 동기화 보장)

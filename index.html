@@ -1087,6 +1087,7 @@
                                     <ul class="text-[10px] text-gray-400 flex flex-col gap-1 list-disc list-inside">
                                         <li><strong class="text-gray-200">참여 보상:</strong> 누적 피해량 비례 즉시 <span class="text-pink-300 font-bold">FP</span> 획득</li>
                                         <li><strong class="text-gray-200">토벌 성공 (HP 0):</strong> 격파 시 학년 전체에 <span class="text-yellow-400 font-bold">100,000 FP</span> 기여도 비례 분배</li>
+                                        <li><strong class="text-gray-200">토벌 실패 시:</strong> 깎은 HP의 기여도만큼 비례하여 <span class="text-yellow-400 font-bold">FP</span> 분배</li>
                                         <li><strong class="text-gray-200">명예의 전당:</strong> 기여도 1위 용사에게 <span class="text-purple-400 font-bold">[수호신] 칭호</span> 부여</li>
                                     </ul>
                                 </div>
@@ -6653,12 +6654,14 @@
                 let acR = gameState.equippedRelicId ? (gameState.acquiredRelics || []).find(item => item.id === gameState.equippedRelicId) : null;
                 
                 let relicCardHtml = eqR ? `
-                    <div class="bg-[#0d0d0d] p-1.5 border border-yellow-500/50 flex flex-col gap-1 rounded-none-forced min-w-0">
-                        <div class="flex items-center gap-1.5">
-                            <img src="${eqR.img}" alt="${eqR.name}" class="w-7 h-7 object-contain shrink-0 filter drop-shadow-[0_0_6px_rgba(234,179,8,0.7)]">
+                    <div class="bg-[#0d0d0d] p-1.5 border border-yellow-500/50 flex flex-col justify-center rounded-none-forced min-w-0">
+                        <div class="flex items-center justify-center gap-1.5 mb-1">
+                            <img src="${eqR.img}" alt="${eqR.name}" class="w-6 h-6 object-contain shrink-0 filter drop-shadow-[0_0_6px_rgba(234,179,8,0.7)]">
                             <span class="text-[9px] text-yellow-300 font-extrabold leading-tight">${eqR.name}</span>
                         </div>
-                        <span class="text-[9px] text-yellow-200 font-mono font-bold leading-tight break-all">${getRelicEffectString(eqR, acR)}</span>
+                        <div class="text-center">
+                            <span class="text-[9px] text-yellow-200 font-mono font-bold leading-tight break-words">${getRelicEffectString(eqR, acR)}</span>
+                        </div>
                     </div>
                 ` : `
                     <div class="bg-[#0d0d0d] p-1.5 border border-dashed border-[#3c3c3c] flex items-center justify-center text-[9px] text-gray-500 font-bold">
@@ -6668,26 +6671,32 @@
 
                 let accCardHtml = `
                     <div class="bg-[#0d0d0d] p-1.5 border border-purple-500/40 grid grid-cols-3 gap-1 rounded-none-forced">
-                        <div class="bg-black/70 p-1 border border-purple-900/60 flex flex-col gap-0.5 min-w-0">
-                            <span class="text-[9px] text-purple-300 font-bold flex items-center gap-0.5">
-                                <img src="media/accessories/necklace.png" class="w-4 h-4 object-contain shrink-0" onerror="this.style.display='none'">
-                                목걸이 ${gameState.necklaceLvl || 0}강
-                            </span>
-                            <span class="text-[9px] text-purple-200 font-mono font-extrabold leading-tight break-all">${getAccessoryEffectSummary('necklace', gameState.necklaceLvl)}</span>
+                        <div class="bg-black/70 p-1 border border-purple-900/60 flex flex-col justify-center min-w-0">
+                            <div class="flex items-center justify-center gap-1 mb-1">
+                                <img src="media/accessories/necklace.png" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'">
+                                <span class="text-[9px] text-purple-300 font-bold">목걸이 ${gameState.necklaceLvl || 0}강</span>
+                            </div>
+                            <div class="text-center">
+                                <span class="text-[9px] text-purple-200 font-mono font-extrabold leading-tight break-words">${getAccessoryEffectSummary('necklace', gameState.necklaceLvl)}</span>
+                            </div>
                         </div>
-                        <div class="bg-black/70 p-1 border border-sky-900/60 flex flex-col gap-0.5 min-w-0">
-                            <span class="text-[9px] text-sky-300 font-bold flex items-center gap-0.5">
-                                <img src="media/accessories/bracelet.png" class="w-4 h-4 object-contain shrink-0" onerror="this.style.display='none'">
-                                팔찌 ${gameState.braceletLvl || 0}강
-                            </span>
-                            <span class="text-[9px] text-sky-200 font-mono font-extrabold leading-tight break-all">${getAccessoryEffectSummary('bracelet', gameState.braceletLvl)}</span>
+                        <div class="bg-black/70 p-1 border border-sky-900/60 flex flex-col justify-center min-w-0">
+                            <div class="flex items-center justify-center gap-1 mb-1">
+                                <img src="media/accessories/bracelet.png" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'">
+                                <span class="text-[9px] text-sky-300 font-bold">팔찌 ${gameState.braceletLvl || 0}강</span>
+                            </div>
+                            <div class="text-center">
+                                <span class="text-[9px] text-sky-200 font-mono font-extrabold leading-tight break-words">${getAccessoryEffectSummary('bracelet', gameState.braceletLvl)}</span>
+                            </div>
                         </div>
-                        <div class="bg-black/70 p-1 border border-amber-900/60 flex flex-col gap-0.5 min-w-0">
-                            <span class="text-[9px] text-amber-300 font-bold flex items-center gap-0.5">
-                                <img src="media/accessories/ring.png" class="w-4 h-4 object-contain shrink-0" onerror="this.style.display='none'">
-                                반지 ${gameState.ringLvl || 0}강
-                            </span>
-                            <span class="text-[9px] text-amber-200 font-mono font-extrabold leading-tight break-all">${getAccessoryEffectSummary('ring', gameState.ringLvl)}</span>
+                        <div class="bg-black/70 p-1 border border-amber-900/60 flex flex-col justify-center min-w-0">
+                            <div class="flex items-center justify-center gap-1 mb-1">
+                                <img src="media/accessories/ring.png" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'">
+                                <span class="text-[9px] text-amber-300 font-bold">반지 ${gameState.ringLvl || 0}강</span>
+                            </div>
+                            <div class="text-center">
+                                <span class="text-[9px] text-amber-200 font-mono font-extrabold leading-tight break-words">${getAccessoryEffectSummary('ring', gameState.ringLvl)}</span>
+                            </div>
                         </div>
                     </div>
                 `;

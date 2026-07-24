@@ -541,7 +541,24 @@
         <!-- RIGHT PANEL: Action Quiz, Equipment Upgrades, Pets (7 Cols) -->
         <section id="rightMainPanel" class="lg:col-span-7 flex flex-col gap-4 transition-all duration-300">
 
-            <!-- Dynamic Navigation Tab Bar -->
+            <!-- ⏳ FULLSCREEN INITIAL LOADING OVERLAY -->
+    <div id="gameLoadingOverlay" class="fixed inset-0 bg-black z-[10000] flex flex-col items-center justify-center p-6 transition-opacity duration-500">
+        <div class="max-w-md w-full text-center flex flex-col items-center">
+            <div class="w-24 h-24 mb-6 relative flex items-center justify-center">
+                <div class="absolute inset-0 border-4 border-yellow-500/20 border-t-yellow-400 rounded-full animate-spin"></div>
+                <span class="text-4xl animate-bounce">⚔️</span>
+            </div>
+            <h2 class="text-2xl font-black text-white tracking-widest uppercase font-mono mb-2">VOCA HERO!</h2>
+            <p id="loadingStatusText" class="text-sm font-bold text-yellow-400 tracking-wider mb-6 animate-pulse">✨ 여정을 떠나는 중...</p>
+            
+            <div class="w-full bg-[#111] border border-[#333] h-3 rounded-none-forced overflow-hidden relative mb-3">
+                <div id="loadingProgressBar" class="h-full bg-gradient-to-r from-yellow-600 via-amber-400 to-yellow-300 w-1/4 transition-all duration-300 shadow-[0_0_10px_#f59e0b]"></div>
+            </div>
+            <span class="text-[10px] text-gray-500 uppercase tracking-widest font-mono">Loading Game Resources & Cloud Progress...</span>
+        </div>
+    </div>
+
+    <!-- Header Navigation & Title -->
             <nav class="grid grid-cols-3 sm:grid-cols-7 gap-1 bg-[#0d0d0d] p-1 border border-[#3c3c3c] rounded-none-forced">
                 <button onclick="switchTab('quizTab')" id="quizTabBtn"
                     class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-black bg-white rounded-none-forced flex items-center justify-center gap-1 transition">
@@ -694,7 +711,6 @@
                                 <button onclick="openPotentialProbModal()" class="text-[10px] text-yellow-300 bg-yellow-950/80 border border-yellow-600 px-2 py-0.5 font-bold hover:bg-yellow-900 transition flex items-center gap-1">
                                     📊 확률표 보기
                                 </button>
-                                <span class="text-[10px] text-gray-400">소유 보스 증표: <b id="bossTokenCountText" class="text-yellow-300 font-bold">0</b>개</span>
                             </div>
                         </div>
                         <div class="bg-[#0d0d0d] border border-[#3c3c3c] p-3 rounded-none-forced">
@@ -735,10 +751,15 @@
             <div id="petTab"
                 class="bg-black border border-[#3c3c3c] p-6 flex-grow hidden flex-col justify-between min-h-[440px] rounded-none-forced">
                 <div>
-                    <h3 class="bmw-label-uppercase text-white flex items-center gap-2 mb-4">
-                        <i data-lucide="paw-print" class="text-[#0066b1]"></i>
-                        <span>🐾 소환수 연구실 & 🏺 고대 유물 소환 제단</span>
-                    </h3>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="bmw-label-uppercase text-white flex items-center gap-2">
+                            <i data-lucide="paw-print" class="text-[#0066b1]"></i>
+                            <span>🐾 소환수 연구실 & 🏺 고대 유물 소환 제단</span>
+                        </h3>
+                        <span class="text-xs text-yellow-300 font-bold bg-yellow-950/80 border border-yellow-600 px-3 py-1 font-mono shadow-md">
+                            🏛️ 소유 보스 증표: <b id="bossTokenCountText" class="text-yellow-400 font-black text-sm">0</b>개
+                        </span>
+                    </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" id="petListContainer">
                         <!-- Dynamic Companion Pet inventory listing -->
@@ -1619,14 +1640,22 @@
                 <!-- Dynamically filled -->
             </div>
 
-            <div class="flex gap-2 w-full justify-center">
-                <button onclick="drawSkillCapsuleInstantSkip(10)" class="flex-1 py-2.5 bg-gradient-to-r from-purple-700 via-pink-600 to-yellow-500 hover:from-purple-600 hover:to-yellow-400 text-white font-extrabold text-xs tracking-wider transition shadow-lg flex items-center justify-center gap-1">
-                    <span>⚡ 10연속 Skip 다시 뽑기 (450 FP)</span>
-                </button>
-                <button onclick="document.getElementById('gacha10xResultModal').classList.remove('flex');document.getElementById('gacha10xResultModal').classList.add('hidden')" class="px-8 py-2.5 bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold text-xs tracking-wider transition shadow-lg">
-                    확인 완료
-                </button>
+    <!-- 🏺 Relic Capsule Draw Result Modal -->
+    <div id="relicDrawResultModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4">
+        <div class="bg-[#0b0612] border-2 border-yellow-500 max-w-2xl w-full p-6 shadow-[0_0_50px_rgba(234,179,8,0.4)] flex flex-col items-center rounded-none-forced">
+            <h2 class="text-xl font-black text-yellow-400 uppercase tracking-widest flex items-center gap-2 mb-1">
+                <span>🏺 고대 유물 소환 성공!</span>
+            </h2>
+            <p class="text-xs text-gray-400 mb-5">고대 제단에서 강력한 유물이 공명하여 모습을 드러냈습니다.</p>
+
+            <!-- Relics Result Grid -->
+            <div id="relicDrawResultGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-3 w-full mb-6 max-h-[360px] overflow-y-auto p-2">
+                <!-- Dynamically filled -->
             </div>
+
+            <button onclick="document.getElementById('relicDrawResultModal').classList.remove('flex');document.getElementById('relicDrawResultModal').classList.add('hidden')" class="px-10 py-3 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-black text-xs tracking-wider transition shadow-lg uppercase">
+                ✨ 확인 및 유물함 보관
+            </button>
         </div>
     </div>
 
@@ -1865,18 +1894,18 @@
             ring: { name: "영웅의 반지", unlockStage: 70, baseCost: 200000, key: "ringLvl", img: "media/accessories/ring.png", desc: "👑 전체 자동 DPS & 보스 타격 피해 특화" }
         };
 
-        // 🏺 10종 고대 유물 세부 정의
+        // 🏺 10종 고대 유물 세부 정의 (1개 전용 장착 시스템)
         const RELIC_DEFINITIONS = [
-            { id: "relic_chalice", name: "고대 지혜의 성배", img: "media/relics/relic_1.png", effectDesc: "단어 퀴즈 정답 시 공격력 급상승", baseBonus: 0.5 },
-            { id: "relic_orb", name: "지옥룡의 붉은 여의주", img: "media/relics/relic_2.png", effectDesc: "전체 자동 DPS 대폭 증대", baseBonus: 0.3 },
-            { id: "relic_sword", name: "전설 용사의 성검 조각", img: "media/relics/relic_3.png", effectDesc: "마우스 클릭 타격력 극대화", baseBonus: 0.4 },
-            { id: "relic_clock", name: "천공의 수호 시계", img: "media/relics/relic_4.png", effectDesc: "마법 스킬 쿨타임 대폭 감소", baseBonus: 0.2 },
-            { id: "relic_compass", name: "황금 풍요의 번개 나침반", img: "media/relics/relic_5.png", effectDesc: "퀴즈 및 몬스터 골드 수당 증대", baseBonus: 0.5 },
-            { id: "relic_dice", name: "파괴의 거인 마법 주사위", img: "media/relics/relic_6.png", effectDesc: "크리티컬 확률 & 크리티컬 피해 증대", baseBonus: 0.3 },
-            { id: "relic_feather", name: "불사조의 깃털 부적", img: "media/relics/relic_7.png", effectDesc: "월드보스전 전용 보스 타격 피해 극대화", baseBonus: 0.6 },
-            { id: "relic_scroll", name: "심해의 비밀 주문서", img: "media/relics/relic_8.png", effectDesc: "스킬 마법 시전 시 추가 폭발 피해", baseBonus: 0.4 },
-            { id: "relic_crown", name: "태양의 왕관 훈장", img: "media/relics/relic_9.png", effectDesc: "정복 포인트(FP) 획득량 증가", baseBonus: 0.3 },
-            { id: "relic_shield", name: "대지의 수호 방패", img: "media/relics/relic_10.png", effectDesc: "보스 공격 방어막 & 생존력 강화", baseBonus: 0.5 }
+            { id: "relic_chalice", name: "고대 지혜의 성배", img: "media/relics/relic_1.png", effectDesc: "단어 퀴즈 정답 피해 +50% 급상승", baseBonus: 0.5 },
+            { id: "relic_orb", name: "지옥룡의 붉은 여의주", img: "media/relics/relic_2.png", effectDesc: "전체 초당 자동 DPS +30% 증대", baseBonus: 0.3 },
+            { id: "relic_sword", name: "전설 용사의 성검 조각", img: "media/relics/relic_3.png", effectDesc: "마우스 클릭 타격력 +40% 극대화", baseBonus: 0.4 },
+            { id: "relic_clock", name: "천공의 수호 시계", img: "media/relics/relic_4.png", effectDesc: "마법 비기 스킬 쿨타임 -20% 감소", baseBonus: 0.2 },
+            { id: "relic_compass", name: "황금 풍요의 번개 나침반", img: "media/relics/relic_5.png", effectDesc: "퀴즈 및 몬스터 획득 골드 +50% 증대", baseBonus: 0.5 },
+            { id: "relic_dice", name: "파괴의 거인 마법 주사위", img: "media/relics/relic_6.png", effectDesc: "크리티컬 타격 확률 +30% 증대", baseBonus: 0.3 },
+            { id: "relic_feather", name: "불사조의 깃털 부적", img: "media/relics/relic_7.png", effectDesc: "보스전 타격 피해 +60% 극대화", baseBonus: 0.6 },
+            { id: "relic_scroll", name: "심해의 비밀 주문서", img: "media/relics/relic_8.png", effectDesc: "스킬 시전 시 추가 폭발 피해 +40%", baseBonus: 0.4 },
+            { id: "relic_crown", name: "태양의 왕관 훈장", img: "media/relics/relic_9.png", effectDesc: "퀴즈 정답 FP 적립량 +30% 증가", baseBonus: 0.3 },
+            { id: "relic_shield", name: "대지의 수호 방패", img: "media/relics/relic_10.png", effectDesc: "몬스터 치명타 공격 방어 성공률 +50%", baseBonus: 0.5 }
         ];
 
         // Skill Grade Configs (색상 코드 및 배율 계수)
@@ -2900,8 +2929,8 @@
             if (ringLvl > 0) {
                 totalDps += ringLvl * 150;
             }
-            // 🏺 고대 지옥룡의 여의주 (relic_orb): 자동 DPS +30%
-            if (gameState.acquiredRelics && gameState.acquiredRelics.includes("relic_orb")) {
+            // 🏺 고대 지옥룡의 여의주 (relic_orb): 장착 시 초당 자동 DPS +30%
+            if (gameState.equippedRelicId === "relic_orb") {
                 totalDps = Math.floor(totalDps * 1.3);
             }
             return totalDps;
@@ -2926,8 +2955,8 @@
             const potentialClick = getPotentialStatBonus('clickDmg');
             // 💍 투지의 팔찌 (braceletLvl) 클릭 타격력 보정 (+80 per level)
             const braceletClick = (gameState.braceletLvl || 0) * 80;
-            // 🏺 고대 용사의 성검 조각 (relic_sword): 클릭 타격력 +40%
-            const relicMult = (gameState.acquiredRelics && gameState.acquiredRelics.includes("relic_sword")) ? 1.4 : 1.0;
+            // 🏺 고대 용사의 성검 조각 (relic_sword): 장착 시 클릭 타격력 +40%
+            const relicMult = (gameState.equippedRelicId === "relic_sword") ? 1.4 : 1.0;
 
             const totalBase = baseGearPower + stagePower + potentialClick + braceletClick;
             return Math.max(1, Math.floor(totalBase * relicMult));
@@ -3781,43 +3810,100 @@
             if (!grid) return;
 
             if (!gameState.acquiredRelics) gameState.acquiredRelics = [];
+            if (typeof gameState.equippedRelicId === 'undefined') gameState.equippedRelicId = null;
 
             let html = "";
             RELIC_DEFINITIONS.forEach(r => {
                 const acquired = gameState.acquiredRelics.find(item => item.id === r.id);
                 const isAcquired = !!acquired;
+                const isEquipped = gameState.equippedRelicId === r.id;
                 const gradeInfo = acquired ? (SKILL_GRADES[acquired.grade] || SKILL_GRADES.normal) : SKILL_GRADES.normal;
                 const starsCount = acquired ? (acquired.stars || 0) : 0;
                 const starsHtml = starsCount > 0 ? "⭐".repeat(starsCount) : "0성";
 
-                // 대표 유물 전투 화면 연동 (첫번째 유물)
-                if (isAcquired && r.id === RELIC_DEFINITIONS[0].id) {
+                // 장착 중인 유물 1개를 전장 화면에 시각화 업데이트
+                if (isEquipped) {
                     const heroRelicSlot = document.getElementById("heroRelicSlot");
                     const heroRelicName = document.getElementById("heroRelicName");
+                    const heroRelicImg = document.getElementById("heroRelicImg");
                     if (heroRelicSlot) {
                         heroRelicSlot.classList.remove("hidden");
                         heroRelicSlot.classList.add("flex");
-                        if (heroRelicName) heroRelicName.innerText = r.name.substring(0, 4);
+                        if (heroRelicName) heroRelicName.innerText = r.name.substring(0, 5);
+                        if (heroRelicImg) heroRelicImg.src = r.img;
                     }
                 }
 
+                const cardBorder = isEquipped 
+                    ? "border-2 border-yellow-400 bg-yellow-950/60 shadow-[0_0_15px_rgba(250,204,21,0.7)]" 
+                    : (isAcquired ? gradeInfo.colorClass : 'border-gray-900 bg-black/60 opacity-40');
+
                 html += `
-                    <div class="border ${isAcquired ? gradeInfo.colorClass : 'border-gray-900 bg-black/50 opacity-40'} p-2 text-center flex flex-col justify-between min-h-[90px] rounded-none-forced">
+                    <div class="border ${cardBorder} p-2 text-center flex flex-col justify-between min-h-[145px] rounded-none-forced relative group transition">
                         <div>
-                            <div class="flex justify-between items-center text-[7px] text-gray-400 font-bold">
-                                <span>${isAcquired ? gradeInfo.name : '미해금'}</span>
-                                <span class="text-yellow-400">${starsHtml}</span>
+                            <div class="flex justify-between items-center text-[8px] text-gray-300 font-bold mb-1">
+                                <span class="${isAcquired ? 'text-yellow-300 font-black' : 'text-gray-500'}">${isAcquired ? gradeInfo.name : '미해금'}</span>
+                                <span class="text-yellow-400 font-mono">${starsHtml}</span>
                             </div>
-                            <h5 class="text-[10px] font-extrabold text-white truncate mt-0.5">${r.name}</h5>
+                            
+                            <!-- 🏺 유물 고유 이미지 포함 -->
+                            <div class="w-12 h-12 mx-auto my-1 flex items-center justify-center bg-black/50 border border-gray-800 rounded-none-forced p-1">
+                                <img src="${r.img}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23eab308\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'10\'/><path d=\'M12 6v12M6 12h12\'/></svg>'" class="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]">
+                            </div>
+
+                            <h5 class="text-[10px] font-black text-white truncate leading-tight">${r.name}</h5>
+                            <p class="text-[8px] text-yellow-300/90 leading-tight mt-1 truncate" title="${r.effectDesc}">${r.effectDesc}</p>
                         </div>
-                        <div>
-                            <p class="text-[8px] text-gray-400 truncate">${r.effectDesc}</p>
+
+                        <div class="mt-2">
+                            ${isAcquired ? `
+                                <button onclick="equipRelic('${r.id}')" class="w-full py-1 text-[9px] font-black rounded-none-forced transition ${isEquipped ? 'bg-yellow-400 text-black border border-yellow-500 shadow-md' : 'bg-gray-800 hover:bg-gray-700 text-gray-200'}">
+                                    ${isEquipped ? '✨ 장착중' : '⚔️ 장착하기'}
+                                </button>
+                            ` : `
+                                <span class="block py-1 text-[8px] font-bold text-gray-500 bg-gray-950 border border-gray-900">🔒 소환 필요</span>
+                            `}
                         </div>
                     </div>
                 `;
             });
 
             grid.innerHTML = html;
+
+            // 만약 아무 유물도 장착되지 않았거나 장착 유물이 해제된 경우 전장 슬롯 숨김
+            if (!gameState.equippedRelicId) {
+                const heroRelicSlot = document.getElementById("heroRelicSlot");
+                if (heroRelicSlot) {
+                    heroRelicSlot.classList.add("hidden");
+                    heroRelicSlot.classList.remove("flex");
+                }
+            }
+        }
+
+        function equipRelic(relicId) {
+            if (!gameState.acquiredRelics) return;
+            const acquired = gameState.acquiredRelics.find(item => item.id === relicId);
+            if (!acquired) {
+                showToast("⚠️ 아직 소환하여 획득하지 못한 유물입니다!");
+                return;
+            }
+
+            if (gameState.equippedRelicId === relicId) {
+                // 이미 장착된 유물 클릭 시 해제
+                gameState.equippedRelicId = null;
+                showToast("🛡️ 유물 장착을 해제했습니다.");
+            } else {
+                // 새 유물 1개 전용 장착
+                gameState.equippedRelicId = relicId;
+                const rDef = RELIC_DEFINITIONS.find(item => item.id === relicId);
+                const rName = rDef ? rDef.name : "고대 유물";
+                playSoundEffect('levelup');
+                showToast(`🏺 [${rName}] 유물을 전용 장착했습니다! 유물 능력이 개발됩니다.`);
+            }
+
+            renderRelicsUI();
+            refreshStateVisuals();
+            saveLocalCache();
         }
 
         function drawRelicCapsule(drawCount = 1) {
@@ -3834,6 +3920,8 @@
 
             if (!gameState.acquiredRelics) gameState.acquiredRelics = [];
 
+            let drawnResults = [];
+
             for (let i = 0; i < drawCount; i++) {
                 const pickedRelicDef = RELIC_DEFINITIONS[Math.floor(Math.random() * RELIC_DEFINITIONS.length)];
                 const roll = Math.random();
@@ -3846,20 +3934,58 @@
                 let existing = gameState.acquiredRelics.find(item => item.id === pickedRelicDef.id);
                 if (existing) {
                     existing.stars = Math.min(6, (existing.stars || 0) + 1);
-                    existing.grade = rolledGrade;
+                    // 더 높은 등급이 뽑힌 경우 상위 등급 업데이트
+                    const oldRank = (SKILL_GRADES[existing.grade] || SKILL_GRADES.normal).rank;
+                    const newRank = (SKILL_GRADES[rolledGrade] || SKILL_GRADES.normal).rank;
+                    if (newRank > oldRank) existing.grade = rolledGrade;
                 } else {
-                    gameState.acquiredRelics.push({
+                    existing = {
                         id: pickedRelicDef.id,
                         grade: rolledGrade,
                         stars: 0
-                    });
+                    };
+                    gameState.acquiredRelics.push(existing);
                 }
+                drawnResults.push({ def: pickedRelicDef, grade: rolledGrade, stars: existing.stars });
             }
 
             playSoundEffect('levelup');
-            showToast(`🏺 고대 유물 ${drawCount}회 소환 완료! 유물 공명 효과가 강화되었습니다.`);
+            
+            // 🏺 유물 소환 결과 팝업 모달 출력
+            showRelicDrawResultModal(drawnResults);
             renderRelicsUI();
             saveLocalCache();
+        }
+
+        function showRelicDrawResultModal(results) {
+            const grid = document.getElementById("relicDrawResultGrid");
+            if (!grid) return;
+
+            let html = "";
+            results.forEach(res => {
+                const gradeInfo = SKILL_GRADES[res.grade] || SKILL_GRADES.normal;
+                const starsHtml = res.stars > 0 ? "⭐".repeat(res.stars) : "0성";
+                html += `
+                    <div class="border ${gradeInfo.colorClass} p-2 text-center flex flex-col justify-between min-h-[120px] rounded-none-forced">
+                        <div class="flex justify-between items-center text-[7px] text-gray-300 font-bold mb-1">
+                            <span>${gradeInfo.name}</span>
+                            <span class="text-yellow-400">${starsHtml}</span>
+                        </div>
+                        <div class="w-10 h-10 mx-auto my-1 flex items-center justify-center bg-black/50 border border-gray-800 p-1">
+                            <img src="${res.def.img}" class="w-full h-full object-contain filter drop-shadow-[0_0_8px_#fbbf24]">
+                        </div>
+                        <h5 class="text-[9px] font-black text-white truncate">${res.def.name}</h5>
+                        <p class="text-[7px] text-yellow-300 truncate mt-0.5">${res.def.effectDesc}</p>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML = html;
+            const modal = document.getElementById("relicDrawResultModal");
+            if (modal) {
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+            }
         }
 
         // ==========================================
@@ -4657,7 +4783,7 @@
             // 💍 지혜의 목걸이 (necklaceLvl) 스킬 마법 피해 +15%/lv & 잠재력 & 유물
             const necklaceSkillBonus = (gameState.necklaceLvl || 0) * 15;
             const potentialSkillBonus = getPotentialStatBonus('skillDmg');
-            const relicSkillBonus = (gameState.acquiredRelics && gameState.acquiredRelics.includes("relic_scroll")) ? 40 : 0;
+            const relicSkillBonus = (gameState.equippedRelicId === "relic_scroll") ? 40 : 0;
             const totalSkillMult = 1 + (necklaceSkillBonus + potentialSkillBonus + relicSkillBonus) / 100;
 
             const baseSkillDmg = (calculateClickAttackPower() * mult * 3) + (calculateDPSPower() * 2);
@@ -4705,7 +4831,7 @@
 
             // 💍 지혜의 목걸이 (necklaceLvl) 쿨타임 감소 적용 (-0.6%/lv, 최대 -30%) + 유물 (-20%)
             const necklaceCdRed = Math.min(30, (gameState.necklaceLvl || 0) * 0.6);
-            const relicCdRed = (gameState.acquiredRelics && gameState.acquiredRelics.includes("relic_clock")) ? 20 : 0;
+            const relicCdRed = (gameState.equippedRelicId === "relic_clock") ? 20 : 0;
             const totalCdRed = Math.min(60, necklaceCdRed + relicCdRed);
             const baseCd = skill.maxCooldown || 15;
 
@@ -4739,22 +4865,26 @@
                     gameState.masteredWords.push({ word: current.word, meaning: current.meaning });
                 }
 
-                // 초반에 골드가 너무 많이 풀려 강화가 너무 쉬워지는 현상을 방지하기 위해 기본급을 낮추고, 
-                // 대신 스테이지 진행에 따른 복리 증가율을 1.15로 상향 조정
+                // 골드 수당 계산 (나침반 유물 +50%)
                 const baseReward = Math.floor((15 * gameState.grade) * Math.pow(1.15, Math.max(0, gameState.stage - 1)));
-                // 슬라임 펫 골드 배율 적용 (레벨당 +5%)
                 const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
-                const goldMultiplier = 1.0 + (slimeLvl * PET_PARAMS['slime'].goldBonus);
+                const slimeBonus = slimeLvl * PET_PARAMS['slime'].goldBonus;
+                const relicGoldBonus = (gameState.equippedRelicId === "relic_compass") ? 0.5 : 0;
+                const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus;
                 const reward = Math.floor(baseReward * goldMultiplier);
 
                 gameState.gold += reward;
                 if (typeof gameState.masteryPoints === 'undefined') gameState.masteryPoints = 0;
-                gameState.masteryPoints += 10; // 퀴즈 정답 시 10 FP 적립
+                
+                // 퀴즈 정답 시 FP 적립 (태양의 왕관 유물 장착 시 +30%)
+                const fpGained = (gameState.equippedRelicId === "relic_crown") ? 13 : 10;
+                gameState.masteryPoints += fpGained;
 
                 const arena = document.getElementById("battleArena");
                 
-                // 단어 정답 시 치명타 타격: 클릭력×10 + DPS×2 (스킬 신화×150배보다 항상 훨씬 약하게 균형 유지)
-                const quizDmg = (calculateClickAttackPower() * 10) + (calculateDPSPower() * 2);
+                // 단어 정답 시 치명타 타격 (고대 성배 유물 장착 시 +50% 급상승)
+                const chaliceMult = (gameState.equippedRelicId === "relic_chalice") ? 1.5 : 1.0;
+                const quizDmg = Math.floor(((calculateClickAttackPower() * 10) + (calculateDPSPower() * 2)) * chaliceMult);
                 processCombatDamage(quizDmg);
                 spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `⚡ 퀴즈 크리티컬! -${quizDmg.toLocaleString()}`);
 
@@ -6230,6 +6360,68 @@
                 `;
             }
         }
+
+        window.onload = function () {
+            lucide.createIcons();
+            checkConnectionState();
+
+            // Auto fill last logged in student info from localStorage cache
+            const lastStudentRaw = localStorage.getItem("vocahero_last_student");
+            if (lastStudentRaw) {
+                try {
+                    const last = JSON.parse(lastStudentRaw);
+                    if (last.grade) document.getElementById("inputGrade").value = last.grade;
+                    if (last.classNum) document.getElementById("inputClass").value = last.classNum;
+                    if (last.studentNum) document.getElementById("inputNumber").value = last.studentNum;
+                    if (last.name) document.getElementById("inputName").value = last.name;
+                } catch(e) {}
+            }
+
+            // 🔄 새로고침 시 자동 로그인 세션 복원 장치 (브라우저 종료 시 삭제됨)
+            localStorage.removeItem("vocahero_active_session"); // 기존 localStorage 잔여 세션 삭제
+            const activeSessionRaw = sessionStorage.getItem("vocahero_active_session");
+            if (activeSessionRaw) {
+                try {
+                    const session = JSON.parse(activeSessionRaw);
+                    if (session && session.grade && session.name && session.password) {
+                        showGameLoadingOverlay("📜 클라우드에서 영단어 용사 기록을 불러오는 중...");
+                        tempCredentials = { grade: session.grade, classNum: session.classNum, studentNum: session.studentNum, name: session.name };
+                        const savedUrl = getGasUrl();
+
+                        if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
+                            runGas(
+                                "loadOrCreateStudent",
+                                [session.grade, session.classNum, session.studentNum, session.name, "male", session.password],
+                                function (response) {
+                                    if (response && response.error !== "password_mismatch") {
+                                        // 클라우드 자동 복원 성공
+                                        closeModal("loginModal");
+                                        closeModal("pinVerifyModal");
+                                        closeModal("newUserRegisterModal");
+                                        syncStateFromServer(response);
+                                        showToast(`👋 어서오세요, ${session.name} 용사님! 자동 로그인되었습니다.`);
+                                    } else {
+                                        // 비밀번호 불일치 시 로컬 시도
+                                        handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
+                                    }
+                                },
+                                function () {
+                                    // 클라우드 연결 실패 → 로컬 자동 복원
+                                    handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
+                                }
+                            );
+                        } else {
+                            // 로컬 모드 자동 복원
+                            handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
+                        }
+                        return; // 로그인 모달 팝업 방지
+                    }
+                } catch(e) {}
+            }
+
+            hideGameLoadingOverlay();
+            openModal("loginModal");
+        };
 
         function checkWbShortAnswerAutoSubmit(inputEl) {
             if (!isWorldBossRaidActive || !wbCurrentWordObj || !inputEl) return;

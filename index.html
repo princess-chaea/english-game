@@ -1199,38 +1199,88 @@
 
             <!-- TAB 7: Dedicated My Hero Info Profile & Vocabulary Catalog (독립 내 영웅 정보 메인 탭) -->
             <div id="statsTab"
-                    </h3>
-
-                    <!-- Dynamic Vocab Mastered Grid list -->
-                    <div class="bg-[#0d0d0d] border border-[#3c3c3c] p-4 max-h-56 overflow-y-auto mb-4 rounded-none-forced"
-                        id="masteredVocabularyCatalog">
-                        <p class="text-xs text-[#7e7e7e] text-center py-10 uppercase tracking-wider">아직 학습을 정복한 영단어 목록이 비어 있습니다.</p>
+                class="bg-black border border-cyan-900/60 p-5 flex-grow hidden flex-col justify-between min-h-[460px] rounded-none-forced shadow-[0_0_20px_rgba(6,182,212,0.1)]">
+                <div>
+                    <!-- Header Title -->
+                    <div class="flex justify-between items-center mb-3 border-b border-cyan-900/60 pb-2.5">
+                        <div>
+                            <h3 class="bmw-label-uppercase text-cyan-400 flex items-center gap-2 text-base font-extrabold tracking-wider">
+                                <i data-lucide="user-check" class="w-5 h-5 text-cyan-400"></i>
+                                <span>🛡️ 용사 종합 프로필 & 전투 리포트</span>
+                            </h3>
+                            <p class="text-[11px] text-gray-400 mt-0.5">내 캐릭터의 전투 스펙, 능동 버프 및 정복한 영단어 서고 기록을 종합 확인합니다.</p>
+                        </div>
+                        <span id="heroProfileStageBadge" class="text-xs text-yellow-300 font-extrabold bg-cyan-950/80 border border-cyan-700 px-3 py-1 font-mono">
+                            🚩 현재 진행: Stage 1-1
+                        </span>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-3 mb-4">
-                        <div class="telemetry-cell text-center rounded-none-forced">
-                            <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest">누적 정답 수</p>
-                            <span id="statCorrectCount" class="text-lg font-bold text-white">0</span>
+                    <!-- 1. Hero Overview Stats Grid (전투 스펙 & 종합 지표) -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                        <div class="bg-[#090d14] p-2.5 border border-cyan-900/50 rounded-none-forced text-center">
+                            <span class="text-[9px] text-gray-400 font-bold uppercase block">마우스 클릭 타격력</span>
+                            <span id="profileClickPower" class="text-base font-extrabold text-red-400 font-mono">1 데미지</span>
                         </div>
-                        <div class="telemetry-cell text-center rounded-none-forced">
-                            <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest">오답 도전 횟수</p>
-                            <span id="statIncorrectCount" class="text-lg font-bold text-[#7e7e7e]">0</span>
+                        <div class="bg-[#090d14] p-2.5 border border-cyan-900/50 rounded-none-forced text-center">
+                            <span class="text-[9px] text-gray-400 font-bold uppercase block">초당 자동 DPS</span>
+                            <span id="profileDpsPower" class="text-base font-extrabold text-sky-400 font-mono">+0 G/초</span>
                         </div>
-                        <div class="telemetry-cell text-center rounded-none-forced">
-                            <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest">정답 격파 비율</p>
-                            <span id="statSuccessRatio" class="text-lg font-bold text-[#e22718]">0%</span>
+                        <div class="bg-[#090d14] p-2.5 border border-cyan-900/50 rounded-none-forced text-center">
+                            <span class="text-[9px] text-gray-400 font-bold uppercase block">정복한 영단어</span>
+                            <span id="masteredTotalText" class="text-base font-extrabold text-yellow-300 font-mono">0개</span>
                         </div>
+                        <div class="bg-[#090d14] p-2.5 border border-cyan-900/50 rounded-none-forced text-center">
+                            <span class="text-[9px] text-gray-400 font-bold uppercase block">퀴즈 정답률</span>
+                            <span id="statSuccessRatio" class="text-base font-extrabold text-emerald-400 font-mono">0%</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. Detailed Buff Status Card (장착 유물 & 장신구 버프) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+                        <div class="bg-[#0a0a0d] p-2.5 border border-yellow-900/50 rounded-none-forced flex items-center justify-between">
+                            <div>
+                                <span class="text-[9px] text-yellow-400 font-bold uppercase block">🏺 전용 장착 유물</span>
+                                <span id="profileEquippedRelicName" class="text-xs font-black text-white mt-0.5 block">[장착된 유물 없음]</span>
+                            </div>
+                            <span id="profileEquippedRelicEffect" class="text-[9px] text-yellow-300 font-mono max-w-[150px] text-right truncate">능력치 적용 미발동</span>
+                        </div>
+                        <div class="bg-[#0a0a0d] p-2.5 border border-purple-900/50 rounded-none-forced flex items-center justify-between">
+                            <div>
+                                <span class="text-[9px] text-purple-300 font-bold uppercase block">💍 연마 완료 장신구</span>
+                                <span id="profileAccessoriesSummary" class="text-xs font-black text-purple-200 mt-0.5 block">0개 소유중</span>
+                            </div>
+                            <div class="text-[9px] text-gray-400 font-mono text-right">
+                                <span>퀴즈 통계: </span>
+                                <span id="statCorrectCount" class="text-white font-bold">0</span>정 / 
+                                <span id="statIncorrectCount" class="text-gray-400 font-bold">0</span>오
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Mastered Vocabulary Catalog Title -->
+                    <div class="flex justify-between items-center mb-1.5">
+                        <h4 class="text-xs font-bold text-cyan-300 flex items-center gap-1.5 uppercase tracking-wider">
+                            <i data-lucide="book-marked" class="w-3.5 h-3.5 text-cyan-400"></i>
+                            <span>📚 용사가 해독하여 정복한 영단어 서고 목록</span>
+                        </h4>
+                    </div>
+
+                    <!-- Dynamic Vocab Mastered Grid list (Clean spacious layout) -->
+                    <div class="bg-[#080a0f] border border-cyan-950 p-3 max-h-56 overflow-y-auto mb-3 rounded-none-forced"
+                        id="masteredVocabularyCatalog">
+                        <p class="text-xs text-gray-500 text-center py-8 uppercase tracking-wider">아직 학습을 정복한 영단어 목록이 비어 있습니다.</p>
                     </div>
                 </div>
 
-                <div class="flex gap-2 mt-4">
+                <!-- 4. Save & Reset Action Buttons (Cleanly contained INSIDE statsTab only) -->
+                <div class="flex gap-2 mt-2 pt-2 border-t border-cyan-900/50">
                     <button onclick="saveSessionToCloud()"
-                        class="flex-1 bmw-btn-primary py-3.5 flex items-center justify-center gap-1.5 shadow-md">
-                        <i data-lucide="save" class="w-4 h-4 text-[#0066b1]"></i>
+                        class="flex-1 py-2.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-600 text-cyan-200 font-bold text-xs uppercase tracking-widest transition rounded-none-forced flex items-center justify-center gap-1.5 shadow-md">
+                        <i data-lucide="save" class="w-4 h-4 text-cyan-400"></i>
                         <span>진행 상황 저장하기</span>
                     </button>
                     <button onclick="resetFullSession()"
-                        class="bmw-btn-danger text-xs px-3.5">
+                        class="py-2.5 px-4 bg-red-950/80 hover:bg-red-900 border border-red-700 text-red-400 font-bold text-xs uppercase tracking-widest transition rounded-none-forced">
                         영웅 은퇴 (초기화)
                     </button>
                 </div>

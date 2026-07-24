@@ -3724,8 +3724,6 @@
             }
             container.innerHTML = html;
             lucide.createIcons();
-            renderGearPotentialLabUI();
-            renderAccessoriesAndRelicsUI();
         }
 
         function getGearIcon(key) {
@@ -6317,6 +6315,8 @@
                 renderTitleInventoryUI();
             } else if (tabId === 'gearTab') {
                 buildUpgradeblacksmith();
+                renderGearPotentialLabUI();
+                renderAccessoriesAndRelicsUI();
             } else if (tabId === 'statsTab') {
                 refreshStateVisuals();
                 populateMasteredVocabulary();

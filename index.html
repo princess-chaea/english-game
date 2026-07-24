@@ -405,7 +405,7 @@
 
         <!-- LEFT PANEL: Dynamic RPG Battle Arena (5 Cols) -->
         <section id="leftRpgPanel"
-            class="lg:col-span-5 bg-black border border-[#3c3c3c] p-5 flex flex-col justify-between relative overflow-hidden min-h-[520px] rounded-none-forced">
+            class="lg:col-span-5 bg-black border border-[#3c3c3c] p-3 flex flex-col justify-between relative overflow-hidden min-h-[580px] rounded-none-forced">
             
             <!-- Stage Header & Progress -->
             <div class="z-10 flex justify-between items-center bg-[#0d0d0d] border border-[#3c3c3c] px-3 py-2 rounded-none-forced gap-2 overflow-hidden">
@@ -460,7 +460,7 @@
 
             <!-- Interactive Combat Arena Viewport (Vertical Racetrack) -->
             <div id="battleArena"
-                class="relative z-10 w-full h-[480px] border border-[#3c3c3c] bg-[#000000] flex flex-col items-center justify-between py-4 cursor-pointer select-none overflow-hidden my-2 rounded-none-forced"
+                class="relative z-10 w-full flex-1 min-h-[520px] border border-[#3c3c3c] bg-[#000000] flex flex-col items-center justify-between py-4 cursor-pointer select-none overflow-hidden my-1 rounded-none-forced"
                 onclick="handleArenaClick(event)">
 
                 <!-- Racetrack vertical center stripes in the background -->
@@ -484,7 +484,7 @@
                             style="width: 100%"></div>
                     </div>
                     <div id="monsterContainer"
-                        class="w-32 h-32 flex items-center justify-center transition-transform duration-100">
+                        class="w-40 h-40 flex items-center justify-center transition-transform duration-100">
                         <svg viewBox="0 0 100 120" class="w-full h-full" id="monsterSvg"></svg>
                     </div>
                     <!-- 전투 알림 (몬스터 아래 화면 중앙에 표시) -->
@@ -505,7 +505,7 @@
                     <div id="petContainer_dragon" class="absolute top-10 left-[calc(50%+4rem)] w-20 h-20 z-20 animate-hover-pet hidden" style="animation-delay: -0.5s;">
                         <svg viewBox="0 0 100 100" class="w-full h-full" id="petSvg_dragon"></svg>
                     </div>
-                    <div id="petContainer_fairy" class="absolute -top-8 left-[calc(50%-1.75rem)] w-14 h-14 z-20 animate-hover-pet hidden" style="animation-delay: -1s;">
+                    <div id="petContainer_fairy" class="absolute -top-14 left-[calc(50%-1.75rem)] w-14 h-14 z-20 animate-hover-pet hidden" style="animation-delay: -1s;">
                         <svg viewBox="0 0 100 100" class="w-full h-full" id="petSvg_fairy"></svg>
                     </div>
 

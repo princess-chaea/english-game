@@ -1080,7 +1080,7 @@
                                     <ul class="text-xs text-gray-400 flex flex-col gap-1.5 list-disc list-inside">
                                         <li><strong class="text-gray-200">참여 보상:</strong> 누적 피해량 비례 즉시 <span class="text-pink-300 font-bold">FP</span> 획득</li>
                                         <li><strong class="text-gray-200">토벌 성공 (HP 0):</strong> 격파 시 학년 전체에 <span class="text-yellow-400 font-bold">100,000 FP</span> 기여도 비례 분배</li>
-                                        <li><strong class="text-gray-200">최후의 일격:</strong> 막타를 친 용사에게 <span class="text-purple-400 font-bold">[수호신] 칭호</span> 부여</li>
+                                        <li><strong class="text-gray-200">명예의 전당:</strong> 기여도 1위 용사에게 <span class="text-purple-400 font-bold">[수호신] 칭호</span> 부여</li>
                                     </ul>
                                 </div>
                             </div>
@@ -3192,7 +3192,7 @@
             runGas("getWorldBossStatus", [gameState.grade, studentKey], function(res) {
                 if (res && res.success && res.curHp <= 0) {
                     const cappedShare = Math.min(100.0, Math.max(0, parseFloat(res.sharePct) || 0)).toFixed(2);
-                    const earnedFp = Math.floor(res.myDamage / 1000);
+                    const earnedFp = Math.floor(100000 * (parseFloat(res.sharePct) || 0) / 100);
 
                     // ✅ 실제 FP 보상 지급 (최초 1회만)
                     if (!alreadyRewarded && earnedFp > 0) {
@@ -5976,21 +5976,27 @@
             { id: "수호신", name: "수호신", tier: "신화", desc: "월드보스 타격 기여도 전체 1위", condition: (gs, res) => res?.myBossRank === 1 || gs.wbTitle === "수호신", style: "mythic-aurora-card border-[#f59e0b] text-yellow-300 shadow-[0_0_15px_rgba(245,158,11,0.8)]" },
             { id: "정복왕", name: "정복왕", tier: "신화", desc: "스테이지 정복 랭킹 전체 1위", condition: (gs, res) => res?.myStageRank === 1, style: "mythic-aurora-card border-[#3b82f6] text-sky-300 shadow-[0_0_15px_rgba(59,130,246,0.8)]" },
             { id: "황금 거상", name: "황금 거상", tier: "신화", desc: "누적 3,000,000(300만) 골드 이상 보유", condition: (gs) => (gs.gold || 0) >= 3000000, style: "mythic-aurora-card border-[#eab308] text-yellow-200 shadow-[0_0_15px_rgba(234,179,8,0.8)]" },
+            { id: "단어의 신", name: "단어의 신", tier: "신화", desc: "단어 정답 500개 이상 누적 달성", condition: (gs) => (gs.totalQuizCorrect || 0) >= 500, style: "mythic-aurora-card border-[#10b981] text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.8)]" },
 
             // 🔥 [전설 등급 - Legendary]
             { id: "구세주", name: "구세주", tier: "전설", desc: "월드보스 레이드 참전 및 격퇴 성공", condition: (gs) => gs.wbTitle === "수호신" || gs.unlockedTitles?.includes("구세주"), style: "border-[#dc2626] bg-gradient-to-r from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] shadow-[0_0_10px_rgba(220,38,38,0.7)]" },
             { id: "개척자", name: "개척자", tier: "전설", desc: "스테이지 Top 3 이내 진입", condition: (gs, res) => typeof res?.myStageRank === 'number' && res.myStageRank <= 3, style: "border-[#dc2626] bg-gradient-to-r from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] shadow-[0_0_10px_rgba(220,38,38,0.7)]" },
-            { id: "황금 대부호", name: "황금 대부호", tier: "전설", desc: "누적 1,000,000(100만) 골드 이상 보유", condition: (gs) => (gs.gold || 0) >= 1000000, style: "border-[#d97706] bg-gradient-to-r from-[#b45309] to-[#78350f] text-[#fde68a] shadow-[0_0_10px_rgba(217,119,6,0.7)]" },
+            { id: "전설의 대장장이", name: "전설의 대장장이", tier: "전설", desc: "모든 무구 30강(MAX) 달성", condition: (gs) => (gs.helmetLvl || 1) >= 30 && (gs.armorLvl || 1) >= 30 && (gs.weaponLvl || 1) >= 30 && (gs.shieldLvl || 1) >= 30 && (gs.shoesLvl || 1) >= 30, style: "border-[#d97706] bg-gradient-to-r from-[#b45309] to-[#78350f] text-[#fde68a] shadow-[0_0_10px_rgba(217,119,6,0.7)]" },
+            { id: "고고학자", name: "고고학자", tier: "전설", desc: "고대 유물 10개 이상 수집", condition: (gs) => (gs.unlockedRelics || []).length >= 10, style: "border-[#059669] bg-gradient-to-r from-[#047857] to-[#064e3b] text-[#a7f3d0] shadow-[0_0_10px_rgba(5,150,105,0.7)]" },
 
             // 💜 [영웅 등급 - Hero]
             { id: "토벌 대장", name: "토벌 대장", tier: "영웅", desc: "월드보스 랭킹 Top 5 이내 진입", condition: (gs, res) => typeof res?.myBossRank === 'number' && res.myBossRank <= 5, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
             { id: "정복 선봉장", name: "정복 선봉장", tier: "영웅", desc: "스테이지 20 이상 정복 달성", condition: (gs) => (gs.stage || 1) >= 20, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
             { id: "단어 마스터", name: "단어 마스터", tier: "영웅", desc: "단어 정답 200개 이상 정복", condition: (gs) => (gs.totalQuizCorrect || 0) >= 200, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
+            { id: "완벽주의자", name: "완벽주의자", tier: "영웅", desc: "영단어 서고 마스터 단어 50개 이상 기록", condition: (gs) => (gs.masteredWords || []).length >= 50, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
+            { id: "검성", name: "검성", tier: "영웅", desc: "무기(수호검) 30강(MAX) 달성", condition: (gs) => (gs.weaponLvl || 1) >= 30, style: "border-[#b91c1c] bg-gradient-to-r from-[#991b1b] to-[#7f1d1d] text-[#fca5a5]" },
 
             // 🔷 [희귀 등급 - Rare]
             { id: "수호자", name: "수호자", tier: "희귀", desc: "스테이지 10 이상 정복 달성", condition: (gs) => (gs.stage || 1) >= 10, style: "border-[#0284c7] bg-gradient-to-r from-[#0369a1] to-[#0c4a6e] text-[#7dd3fc]" },
             { id: "단어의 지배자", name: "단어의 지배자", tier: "희귀", desc: "단어 정답 100개 이상 정복", condition: (gs) => (gs.totalQuizCorrect || 0) >= 100, style: "border-[#0284c7] bg-gradient-to-r from-[#0369a1] to-[#0c4a6e] text-[#7dd3fc]" },
             { id: "자산가", name: "자산가", tier: "희귀", desc: "누적 100,000 골드 이상 보유", condition: (gs) => (gs.gold || 0) >= 100000, style: "border-[#0284c7] bg-gradient-to-r from-[#0369a1] to-[#0c4a6e] text-[#7dd3fc]" },
+            { id: "칠전팔기", name: "칠전팔기", tier: "희귀", desc: "치열한 도전의 흔적 (오답 100회 극복)", condition: (gs) => ((gs.totalQuizTries || 0) - (gs.totalQuizCorrect || 0)) >= 100, style: "border-[#ea580c] bg-gradient-to-r from-[#c2410c] to-[#9a3412] text-[#fdba74]" },
+            { id: "유물 탐험가", name: "유물 탐험가", tier: "희귀", desc: "고대 유물 3개 이상 수집", condition: (gs) => (gs.unlockedRelics || []).length >= 3, style: "border-[#0284c7] bg-gradient-to-r from-[#0369a1] to-[#0c4a6e] text-[#7dd3fc]" },
 
             // ⚪ [일반 등급 - Normal]
             { id: "견습 모험가", name: "견습 모험가", tier: "일반", desc: "기본 지급 칭호", condition: () => true, style: "border-[#4b5563] bg-[#111827] text-gray-300" },

@@ -2132,9 +2132,9 @@
 
         // 💍 장신구 3종 설정 (50/60/70스테이지 해금 & 50강)
         const ACCESSORY_PARAMS = {
-            necklace: { name: "지혜의 목걸이", unlockStage: 50, baseCost: 10000, key: "necklaceLvl", img: "media/accessories/necklace.png", desc: "🪄 스킬 마법 피해 & 쿨타임 감소 특화" },
-            bracelet: { name: "투지의 팔찌", unlockStage: 60, baseCost: 50000, key: "braceletLvl", img: "media/accessories/bracelet.png", desc: "⚔️ 클릭 타격력 & 크리티컬 확율 특화" },
-            ring: { name: "영웅의 반지", unlockStage: 70, baseCost: 200000, key: "ringLvl", img: "media/accessories/ring.png", desc: "👑 전체 자동 DPS & 보스 타격 피해 특화" }
+            necklace: { name: "지혜의 목걸이", unlockStage: 50, baseCost: 1000, key: "necklaceLvl", img: "media/accessories/necklace.png", desc: "🪄 스킬 마법 피해 & 쿨타임 감소 특화" },
+            bracelet: { name: "투지의 팔찌", unlockStage: 60, baseCost: 5000, key: "braceletLvl", img: "media/accessories/bracelet.png", desc: "⚔️ 클릭 타격력 & 크리티컬 확률 특화" },
+            ring: { name: "영웅의 반지", unlockStage: 70, baseCost: 20000, key: "ringLvl", img: "media/accessories/ring.png", desc: "👑 전체 자동 DPS & 보스 타격 피해 특화" }
         };
 
         // 🏺 10종 고대 유물 세부 정의 (1개 전용 장착 시스템)
@@ -3499,9 +3499,9 @@
             if (tier < tierMultipliers.length) {
                 baseTierMult = tierMultipliers[tier];
             } else {
-                // 40스테이지 이후 (Tier 8 이상): 5스테이지마다 3.2배씩 가파른 계단식 수치 상승!
+                // 40스테이지 이후 (Tier 8 이상): 5스테이지마다 1.55배씩 밸런스있게 상승
                 const extraTiers = tier - 7;
-                baseTierMult = 6000.0 * Math.pow(3.2, extraTiers);
+                baseTierMult = 6000.0 * Math.pow(1.55, extraTiers);
             }
 
             const subFactor = Math.pow(1.08, inTierOffset);
@@ -3636,7 +3636,7 @@
                 const info = GEAR_PARAMS[gearKey];
                 const currentLvl = gameState[info.key];
                 const isMax = currentLvl >= MAX_GEAR_LEVEL;
-                const cost = isMax ? 0 : Math.floor(info.base * Math.pow(GROWTH_RATE, currentLvl));
+                const cost = isMax ? 0 : Math.floor(info.base * 3.0 * Math.pow(GROWTH_RATE, currentLvl));
                 const chanceInfo = isMax ? null : getGearUpgradeInfo(currentLvl);
 
                 const baseDpsMap = { helmet: 25, armor: 60, weapon: 50, shield: 40, shoes: 30 };
@@ -3719,7 +3719,7 @@
                 return;
             }
 
-            const cost = Math.floor(info.base * Math.pow(GROWTH_RATE, currentLvl));
+            const cost = Math.floor(info.base * 3.0 * Math.pow(GROWTH_RATE, currentLvl));
 
             if (gameState.gold >= cost) {
                 gameState.gold -= cost;
@@ -4206,9 +4206,10 @@
             }
 
             if (hasMythicUnlocked) {
+                const targetGearKey = selectedGearKey;
                 showConfirm(
                     "선택한 무구의 잠재력 옵션 중 [신화 등급] 옵션이 포함되어 있습니다! 잠그지 않은 상태로 재설정하면 신화 옵션이 사라집니다. 정말 재설정하시겠습니까?",
-                    function() { _doRerollPotential(selectedGearKey); },
+                    function() { _doRerollPotential(targetGearKey); },
                     null,
                     { icon: "⚠️", title: "신화 등급 잠재력 경고", yesLabel: "재설정", noLabel: "취소", danger: true }
                 );
@@ -5493,8 +5494,8 @@
                     gameState.masteredWords.push({ word: current.word, meaning: current.meaning });
                 }
 
-                // 골드 수당 계산 (1.07 배율로 고스테이지 골드 인플레이션 정상화)
-                const baseReward = Math.floor((15 * gameState.grade) * Math.pow(1.07, Math.max(0, gameState.stage - 1)));
+                // 골드 수당 계산 (70스테이지 기준 정답당 10만원 상당 수당 획득)
+                const baseReward = Math.floor((25 * gameState.grade) * Math.pow(1.10, Math.max(0, gameState.stage - 1)));
                 const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
                 const slimeBonus = slimeLvl * PET_PARAMS['slime'].goldBonus;
                 const relicGoldBonus = getEquippedRelicBonus("relic_compass") / 100;

@@ -382,13 +382,18 @@
                 <h1 class="text-xl font-bold uppercase tracking-wider" style="letter-spacing: -0.5px;">Voca Hero!</h1>
             </div>
 
-            <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-2">
                 <!-- User Status Info -->
                 <div id="userInfoDisplay"
                     class="hidden bg-[#1a1a1a] border border-[#3c3c3c] px-4 py-1.5 rounded-none-forced text-xs font-bold flex items-center gap-1.5 text-[#e6e6e6] tracking-wider uppercase">
                     <i data-lucide="user" class="w-4 h-4 text-white"></i>
                     <span id="displayStudentName">불러오는 중...</span>
                 </div>
+                <!-- ⚙️ 환경 설정 버튼 -->
+                <button onclick="openSettingsModal()" title="환경 설정"
+                    class="bg-[#1a1a1a] hover:bg-[#262626] border border-[#3c3c3c] hover:border-yellow-500 text-yellow-400 p-1.5 rounded-none-forced transition flex items-center justify-center cursor-pointer shadow-md">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                </button>
                 <!-- Save & Exit Button (저장 + 로그아웃 통합) -->
                 <button onclick="saveAndExit()" 
                     class="bg-[#e22718] hover:bg-[#b91c1c] border border-[#e22718] text-white px-3 py-1.5 rounded-none-forced text-xs font-bold transition flex items-center gap-1.5 tracking-wider uppercase">
@@ -1299,7 +1304,7 @@
                         </span>
                     </div>
 
-                    <!-- 1. Hero Total Combat Stats (8종 상세 스펙 깔끔 4열 Grid) -->
+                    <!-- 1. Hero Total Combat Stats (12종 상세 스펙 깔끔 4열 Grid) -->
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
                         <div class="bg-[#080c14] p-2 border border-cyan-900/50 rounded-none-forced text-center">
                             <span class="text-[8px] text-gray-400 font-bold uppercase block">⚔️ 클릭 타격력</span>
@@ -1308,6 +1313,10 @@
                         <div class="bg-[#080c14] p-2 border border-cyan-900/50 rounded-none-forced text-center">
                             <span class="text-[8px] text-gray-400 font-bold uppercase block">⚡ 초당 자동 DPS</span>
                             <span id="profileDpsPower" class="text-sm font-black text-sky-400 font-mono">+0/초</span>
+                        </div>
+                        <div class="bg-[#080c14] p-2 border border-cyan-900/50 rounded-none-forced text-center">
+                            <span class="text-[8px] text-gray-400 font-bold uppercase block">✨ 추가 스킬 피해량</span>
+                            <span id="profileSkillDmgBonus" class="text-sm font-black text-purple-400 font-mono">+0%</span>
                         </div>
                         <div class="bg-[#080c14] p-2 border border-cyan-900/50 rounded-none-forced text-center">
                             <span class="text-[8px] text-gray-400 font-bold uppercase block">🎯 크리티컬 확률</span>
@@ -1324,6 +1333,14 @@
                         <div class="bg-[#080c14] p-2 border border-cyan-900/50 rounded-none-forced text-center">
                             <span class="text-[8px] text-gray-400 font-bold uppercase block">🪙 골드 획득 배율</span>
                             <span id="profileGoldBonus" class="text-sm font-black text-amber-300 font-mono">×1.0배</span>
+                        </div>
+                        <div class="bg-[#080c14] p-2 border border-cyan-900/50 rounded-none-forced text-center">
+                            <span class="text-[8px] text-gray-400 font-bold uppercase block">📖 퀴즈 정답 피해량</span>
+                            <span id="profileQuizCorrectBonus" class="text-sm font-black text-emerald-300 font-mono">+0%</span>
+                        </div>
+                        <div class="bg-[#080c14] p-2 border border-cyan-900/50 rounded-none-forced text-center">
+                            <span class="text-[8px] text-gray-400 font-bold uppercase block">⚡ 크리티컬 피해 배율</span>
+                            <span id="profileCritDmgMult" class="text-sm font-black text-yellow-400 font-mono">200% (×2.0배)</span>
                         </div>
                         <div class="bg-[#080c14] p-2 border border-cyan-900/50 rounded-none-forced text-center">
                             <span class="text-[8px] text-gray-400 font-bold uppercase block">📚 정복 영단어</span>
@@ -1743,28 +1760,28 @@
                         <tbody class="divide-y divide-gray-800">
                             <tr class="text-yellow-300 bg-amber-950/30">
                                 <td class="p-1.5 text-left font-extrabold text-amber-400">🟡 신화 (Mythic)</td>
-                                <td class="p-1.5 font-mono text-yellow-300 font-bold">1.0%</td>
-                                <td class="p-1.5 font-mono text-amber-300 font-bold">× 5.0배 (최상위)</td>
+                                <td class="p-1.5 font-mono text-yellow-300 font-bold">0.05%</td>
+                                <td class="p-1.5 font-mono text-amber-300 font-bold">최고 수치 (T1~T4)</td>
                             </tr>
                             <tr class="text-red-300">
                                 <td class="p-1.5 text-left font-bold text-red-400">🔴 전설 (Legendary)</td>
-                                <td class="p-1.5 font-mono">5.0%</td>
-                                <td class="p-1.5 font-mono text-red-400">× 3.5배</td>
+                                <td class="p-1.5 font-mono">1.95%</td>
+                                <td class="p-1.5 font-mono text-red-400">상위 수치 (T1~T4)</td>
                             </tr>
                             <tr class="text-purple-300">
                                 <td class="p-1.5 text-left font-bold text-purple-400">🟣 영웅 (Hero)</td>
-                                <td class="p-1.5 font-mono">12.0%</td>
-                                <td class="p-1.5 font-mono text-purple-300">× 2.2배</td>
+                                <td class="p-1.5 font-mono">5.00%</td>
+                                <td class="p-1.5 font-mono text-purple-300">중상 수치 (T1~T4)</td>
                             </tr>
                             <tr class="text-sky-300">
                                 <td class="p-1.5 text-left font-bold text-sky-400">🔹 희귀 (Rare)</td>
-                                <td class="p-1.5 font-mono">27.0%</td>
-                                <td class="p-1.5 font-mono text-sky-300">× 1.5배</td>
+                                <td class="p-1.5 font-mono">18.00%</td>
+                                <td class="p-1.5 font-mono text-sky-300">중위 수치 (T1~T4)</td>
                             </tr>
                             <tr class="text-gray-300">
                                 <td class="p-1.5 text-left font-bold text-gray-400">⚪ 일반 (Normal)</td>
-                                <td class="p-1.5 font-mono">55.0%</td>
-                                <td class="p-1.5 font-mono text-gray-400">× 1.0 (기본)</td>
+                                <td class="p-1.5 font-mono">75.00%</td>
+                                <td class="p-1.5 font-mono text-gray-400">기본 수치 (T1~T4)</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1848,6 +1865,70 @@
             <div class="border-t border-yellow-900/40 pt-3 flex justify-end">
                 <button onclick="closeModal('potentialProbModal')" class="bg-yellow-600 hover:bg-yellow-500 text-black font-extrabold px-5 py-2 text-xs rounded-none-forced shadow-md">
                     확인
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ⚙️ 환경 설정 모달 팝업 -->
+    <div id="settingsModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[15000] items-center justify-center p-4">
+        <div class="bg-[#0a0a0c] border border-yellow-500/50 max-w-md w-full p-4 rounded-none-forced shadow-[0_0_30px_rgba(234,179,8,0.2)] text-white flex flex-col justify-between">
+            <div>
+                <div class="flex justify-between items-center mb-3 border-b border-gray-800 pb-2">
+                    <h3 class="font-extrabold text-yellow-400 text-sm flex items-center gap-2">
+                        <i data-lucide="settings" class="w-4 h-4 text-yellow-400"></i>
+                        <span>⚙️ 게임 환경 설정</span>
+                    </h3>
+                    <button onclick="closeModal('settingsModal')" class="text-gray-400 hover:text-white text-lg font-bold">✕</button>
+                </div>
+
+                <div class="space-y-3 my-2 text-xs">
+                    <!-- 전체 음소거 토글 -->
+                    <div class="bg-[#121216] p-3 border border-yellow-900/40 flex justify-between items-center">
+                        <div>
+                            <span class="font-black text-yellow-300 block text-xs">🔇 전체 음소거</span>
+                            <span class="text-[9px] text-gray-400 block mt-0.5">모든 게임 사운드 및 효과음을 한 번에 켜거나 끕니다.</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="settingMasterMute" class="sr-only peer" onchange="toggleMasterMute(this.checked)">
+                            <div class="w-11 h-6 bg-gray-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
+                        </label>
+                    </div>
+
+                    <!-- 세부 효과음 켜고 끄기 토글 영역 -->
+                    <div class="bg-[#121216] p-3 border border-gray-800 space-y-2.5">
+                        <h4 class="font-bold text-gray-300 text-[10px] uppercase tracking-wider mb-1 border-b border-gray-800 pb-1">🔊 세부 효과음 설정</h4>
+                        
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-300 text-[11px] font-bold">⚔️ 공격 및 타격 소림 (Click/Hit/Crit)</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="settingSfxAttack" class="sr-only peer" onchange="toggleSoundSetting('sfxAttack', this.checked)">
+                                <div class="w-9 h-5 bg-gray-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-300 text-[11px] font-bold">📖 퀴즈 정답 / 오답 알림음 (Correct/Incorrect)</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="settingSfxQuiz" class="sr-only peer" onchange="toggleSoundSetting('sfxQuiz', this.checked)">
+                                <div class="w-9 h-5 bg-gray-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-300 text-[11px] font-bold">⭐ 레벨업 & 획득 축하음 (Levelup/Reroll)</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="settingSfxLevelup" class="sr-only peer" onchange="toggleSoundSetting('sfxLevelup', this.checked)">
+                                <div class="w-9 h-5 bg-gray-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-500"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 pt-3 flex justify-end gap-2 mt-2">
+                <button onclick="closeModal('settingsModal')" class="bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold px-4 py-1.5 text-xs rounded-none-forced">
+                    닫기
                 </button>
             </div>
         </div>
@@ -2391,6 +2472,16 @@
 
         function playSoundEffect(type) {
             try {
+                if (!gameState.soundSettings) {
+                    gameState.soundSettings = { masterMute: false, sfxAttack: true, sfxQuiz: true, sfxLevelup: true };
+                }
+                const ss = gameState.soundSettings;
+                if (ss.masterMute) return;
+
+                if ((type === 'click' || type === 'hit' || type === 'crit') && !ss.sfxAttack) return;
+                if ((type === 'correct' || type === 'incorrect') && !ss.sfxQuiz) return;
+                if ((type === 'levelup' || type === 'reroll') && !ss.sfxLevelup) return;
+
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.connect(gain);
@@ -2870,6 +2961,7 @@
             gameState.bossTokens = extra.bossTokens || data.bossTokens || 0;
             gameState.totalQuizTries = extra.totalQuizTries || data.totalQuizTries || 0;
             gameState.totalQuizCorrect = extra.totalQuizCorrect || data.totalQuizCorrect || 0;
+            gameState.soundSettings = extra.soundSettings || { masterMute: false, sfxAttack: true, sfxQuiz: true, sfxLevelup: true };
 
             fetchWordsFromSpreadsheet();
         }
@@ -2917,7 +3009,8 @@
                 totalQuizTries: gameState.totalQuizTries || 0,
                 totalQuizCorrect: gameState.totalQuizCorrect || 0,
                 masteredWords: gameState.masteredWords || [],
-                wrongWordCounts: gameState.wrongWordCounts || {}
+                wrongWordCounts: gameState.wrongWordCounts || {},
+                soundSettings: gameState.soundSettings || { masterMute: false, sfxAttack: true, sfxQuiz: true, sfxLevelup: true }
             });
         }
 
@@ -3962,7 +4055,7 @@
         // ==========================================
         const POTENTIAL_TYPE_INFO = {
             atk: { name: "공격력", icon: "⚔️", unit: "%" },
-            skillDmg: { name: "마법 피해", icon: "🪄", unit: "%" },
+            skillDmg: { name: "스킬 피해", icon: "✨", unit: "%" },
             bossDmg: { name: "보스 피해", icon: "🐉", unit: "%" },
             clickDmg: { name: "클릭 타격", icon: "💥", unit: "" },
             goldBonus: { name: "골드 수당", icon: "🪙", unit: "%" },
@@ -4201,7 +4294,7 @@
                             ${isLocked ? '🔒 잠금' : '🔓 해제'}
                         </button>
                         <div>
-                            <span class="text-[8px] font-bold text-gray-400 block">${i + 1}번 옵션 [${opt.gradeName}]</span>
+                            <span class="text-[8px] font-bold text-gray-400 block">${i + 1}번 옵션 [${opt.gradeName} ${opt.tier || 'T1'}]</span>
                             <span class="text-xs font-extrabold block mt-0.5">${opt.icon} ${opt.name}</span>
                         </div>
                         <span class="text-[10px] font-bold font-mono text-yellow-300 block">${opt.formatValue}</span>
@@ -4222,28 +4315,41 @@
             const roll = Math.random();
             let grade = "normal";
             let gradeName = "일반";
-            let mult = 1;
 
-            if (roll < 0.01) { grade = "mythic"; gradeName = "신화"; mult = 5; }
-            else if (roll < 0.06) { grade = "legendary"; gradeName = "전설"; mult = 3.5; }
-            else if (roll < 0.18) { grade = "hero"; gradeName = "영웅"; mult = 2.2; }
-            else if (roll < 0.45) { grade = "rare"; gradeName = "희귀"; mult = 1.5; }
+            if (roll < 0.0005) { grade = "mythic"; gradeName = "신화"; }
+            else if (roll < 0.02) { grade = "legendary"; gradeName = "전설"; }
+            else if (roll < 0.07) { grade = "hero"; gradeName = "영웅"; }
+            else if (roll < 0.25) { grade = "rare"; gradeName = "희귀"; }
 
             const pool = [
-                { type: "atk", name: "공격력", icon: "⚔️", base: 2, unit: "%" },
-                { type: "skillDmg", name: "마법 피해", icon: "🪄", base: 3, unit: "%" },
-                { type: "bossDmg", name: "보스 피해", icon: "🐉", base: 4, unit: "%" },
-                { type: "clickDmg", name: "클릭 타격", icon: "💥", base: 20, unit: "" },
-                { type: "goldBonus", name: "골드 수당", icon: "🪙", base: 3, unit: "%" },
-                { type: "critRate", name: "크리티컬", icon: "🎯", base: 1, unit: "%" }
+                { type: "atk", name: "공격력", icon: "⚔️", unit: "%", ranges: { mythic: [9, 12], legendary: [6, 8], hero: [4, 5], rare: [3, 3.5], normal: [2, 2.5] } },
+                { type: "skillDmg", name: "스킬 피해", icon: "✨", unit: "%", ranges: { mythic: [13, 18], legendary: [9, 12], hero: [6, 8], rare: [4, 5.5], normal: [3, 3.5] } },
+                { type: "bossDmg", name: "보스 피해", icon: "🐉", unit: "%", ranges: { mythic: [18, 24], legendary: [12, 16], hero: [8, 10], rare: [5, 7], normal: [4, 4.5] } },
+                { type: "clickDmg", name: "클릭 타격", icon: "💥", unit: "", ranges: { mythic: [90, 120], legendary: [60, 80], hero: [40, 50], rare: [28, 35], normal: [18, 22] } },
+                { type: "goldBonus", name: "골드 수당", icon: "🪙", unit: "%", ranges: { mythic: [13, 18], legendary: [9, 12], hero: [6, 8], rare: [4, 5.5], normal: [3, 3.5] } },
+                { type: "critRate", name: "크리티컬", icon: "🎯", unit: "%", ranges: { mythic: [4.5, 6], legendary: [3, 4], hero: [2, 2.5], rare: [1.3, 1.6], normal: [1, 1.1] } }
             ];
 
             const picked = pool[Math.floor(Math.random() * pool.length)];
-            const val = Math.floor(picked.base * mult);
+            const range = picked.ranges[grade] || [1, 1];
+
+            // 동일 등급 내 4개 세부 티어 (Tier 1 최상 ~ Tier 4)
+            const tierRoll = Math.floor(Math.random() * 4); // 0 (Tier 1), 1 (Tier 2), 2 (Tier 3), 3 (Tier 4)
+            const tierStep = (range[1] - range[0]) / 3;
+            const rawVal = range[0] + (3 - tierRoll) * tierStep; // Tier 1이 최댓값
+            const tierName = `T${tierRoll + 1}`;
+
+            let val;
+            if (picked.type === 'clickDmg') {
+                val = Math.round(rawVal);
+            } else {
+                val = Math.round(rawVal * 10) / 10;
+            }
 
             return {
                 grade: grade,
                 gradeName: gradeName,
+                tier: tierName,
                 type: picked.type,
                 name: picked.name,
                 icon: picked.icon,
@@ -4620,10 +4726,10 @@
                 const pickedRelicDef = RELIC_DEFINITIONS[Math.floor(Math.random() * RELIC_DEFINITIONS.length)];
                 const roll = Math.random();
                 let rolledGrade = "normal";
-                if (roll < 0.0005) rolledGrade = "mythic";
-                else if (roll < 0.02) rolledGrade = "legendary";
-                else if (roll < 0.07) rolledGrade = "hero";
-                else if (roll < 0.25) rolledGrade = "rare";
+                if (roll < 0.0005) rolledGrade = "mythic";        // 0.05%
+                else if (roll < 0.02) rolledGrade = "legendary";   // 1.95% (0.05%~2.00%)
+                else if (roll < 0.07) rolledGrade = "hero";        // 5.00% (2.00%~7.00%)
+                else if (roll < 0.25) rolledGrade = "rare";        // 18.00% (7.00%~25.00%)
 
                 let existing = gameState.acquiredRelics.find(item => item.id === pickedRelicDef.id);
                 if (existing) {
@@ -4923,10 +5029,10 @@
                             const picked = fullPool[Math.floor(Math.random() * fullPool.length)];
                             const roll = Math.random();
                             let rolledGrade = "normal";
-                            if (roll < 0.0008) rolledGrade = "mythic";        // 0.08%
-                            else if (roll < 0.03) rolledGrade = "legendary";   // 2.92%
-                            else if (roll < 0.10) rolledGrade = "hero";        // 7.00%
-                            else if (roll < 0.35) rolledGrade = "rare";        // 25.0%
+                            if (roll < 0.0005) rolledGrade = "mythic";        // 0.05%
+                            else if (roll < 0.02) rolledGrade = "legendary";   // 1.95%
+                            else if (roll < 0.07) rolledGrade = "hero";        // 5.00%
+                            else if (roll < 0.25) rolledGrade = "rare";        // 18.00%
 
                             if (i === 9 && !acquiredList.some(item => item.grade !== "normal")) {
                                 rolledGrade = "rare";
@@ -5005,10 +5111,10 @@
                 const picked = fullPool[Math.floor(Math.random() * fullPool.length)];
                 const roll = Math.random();
                 let rolledGrade = "normal";
-                if (roll < 0.0008) rolledGrade = "mythic";
-                else if (roll < 0.03) rolledGrade = "legendary";
-                else if (roll < 0.10) rolledGrade = "hero";
-                else if (roll < 0.35) rolledGrade = "rare";
+                if (roll < 0.0005) rolledGrade = "mythic";        // 0.05%
+                else if (roll < 0.02) rolledGrade = "legendary";   // 1.95%
+                else if (roll < 0.07) rolledGrade = "hero";        // 5.00%
+                else if (roll < 0.25) rolledGrade = "rare";        // 18.00%
 
                 if (i === 9 && !acquiredList.some(item => item.grade !== "normal")) {
                     rolledGrade = "rare";
@@ -5799,10 +5905,14 @@
             // 🛡️ 내 영웅 정보 프로필 전용 종합 스펙 실시간 동기화
             const profileClick = document.getElementById("profileClickPower");
             const profileDps = document.getElementById("profileDpsPower");
+            const profileSkillDmg = document.getElementById("profileSkillDmgBonus");
             const profileCrit = document.getElementById("profileCritChance");
             const profileBossDmg = document.getElementById("profileBossDmgBonus");
             const profileCdRed = document.getElementById("profileCooldownRed");
             const profileGold = document.getElementById("profileGoldBonus");
+            const profileQuizCorrect = document.getElementById("profileQuizCorrectBonus");
+            const profileGearTotal = document.getElementById("profileGearTotalBonus");
+            const profilePetTotal = document.getElementById("profilePetBonusTotal");
             
             const profileRelicName = document.getElementById("profileEquippedRelicName");
             const profileRelicEffect = document.getElementById("profileEquippedRelicEffect");
@@ -5814,6 +5924,13 @@
             if (profileStageBadge) profileStageBadge.innerText = `🚩 현재 진행: Stage ${gameState.stage || 1}-${(gameState.progress || 0) + 1}`;
 
             // 상세 효과 수치 산출
+            // 추가 스킬 피해량 (목걸이 + 잠재력 + 유물)
+            const necklaceSkillBonus = (gameState.necklaceLvl || 0) * 1.5;
+            const potentialSkillBonus = getPotentialStatBonus('skillDmg');
+            const relicSkillBonus = getEquippedRelicBonus("relic_scroll");
+            const totalSkillBonusPct = necklaceSkillBonus + potentialSkillBonus + relicSkillBonus;
+            if (profileSkillDmg) profileSkillDmg.innerText = `+${totalSkillBonusPct.toFixed(1)}%`;
+
             const critBonus = getEquippedRelicBonus("relic_dice");
             const braceletCrit = Math.min(25, (gameState.braceletLvl || 0) * 0.25);
             const critRate = 5.0 + critBonus + getPotentialStatBonus('critRate') + braceletCrit;
@@ -5834,12 +5951,23 @@
             const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus + (getPotentialStatBonus('goldBonus') / 100);
             if (profileGold) profileGold.innerText = `×${goldMultiplier.toFixed(2)}배`;
 
-            // 유물 장착 상태 요약 (실제 유물 이미지 표시)
+            // 📖 퀴즈 단어 정답 타격 피해 증폭률 (고대 지혜의 성배 유물 + 퀴즈 콤보 보정)
+            const relicChaliceDmg = getEquippedRelicBonus("relic_chalice");
+            const quizCombo = gameState.combo || 0;
+            const comboDmgPct = Math.min(150, quizCombo * 5); // 콤보당 +5% (최대 +150%)
+            const totalQuizDmgBonus = relicChaliceDmg + comboDmgPct;
+            if (profileQuizCorrect) profileQuizCorrect.innerText = `+${totalQuizDmgBonus.toFixed(0)}%`;
+
+            // ⚡ 크리티컬 피해 배율 (기본 200% = ×2.0배, 추후 장비/유물 스탯 업데이트 연동 준비)
+            const profileCritDmg = document.getElementById("profileCritDmgMult");
+            if (profileCritDmg) profileCritDmg.innerText = "200% (×2.0배)";
+
+            // 유물 장착 상태 요약 (실제 유물 이미지 표시, 이름 앞 🏺 아이콘 제거)
             if (gameState.equippedRelicId) {
                 const eqR = RELIC_DEFINITIONS.find(item => item.id === gameState.equippedRelicId);
                 const acR = (gameState.acquiredRelics || []).find(item => item.id === gameState.equippedRelicId);
                 if (eqR) {
-                    if (profileRelicName) profileRelicName.innerText = `🏺 ${eqR.name}`;
+                    if (profileRelicName) profileRelicName.innerText = eqR.name;
                     if (profileRelicEffect) profileRelicEffect.innerHTML = getRelicEffectString(eqR, acR).replace(/<br>/gi, ' ');
                     const profileRelicImg = document.getElementById("profileEquippedRelicImg");
                     if (profileRelicImg) {
@@ -6109,6 +6237,39 @@
                     nameTagEl.style.textShadow = "";
                 }
             }
+        }
+
+        // ⚙️ 환경 설정 모달 & 사운드 컨트롤러
+        function openSettingsModal() {
+            if (!gameState.soundSettings) {
+                gameState.soundSettings = { masterMute: false, sfxAttack: true, sfxQuiz: true, sfxLevelup: true };
+            }
+            const ss = gameState.soundSettings;
+
+            const masterMuteEl = document.getElementById("settingMasterMute");
+            const sfxAttackEl = document.getElementById("settingSfxAttack");
+            const sfxQuizEl = document.getElementById("settingSfxQuiz");
+            const sfxLevelupEl = document.getElementById("settingSfxLevelup");
+
+            if (masterMuteEl) masterMuteEl.checked = !!ss.masterMute;
+            if (sfxAttackEl) sfxAttackEl.checked = !!ss.sfxAttack;
+            if (sfxQuizEl) sfxQuizEl.checked = !!ss.sfxQuiz;
+            if (sfxLevelupEl) sfxLevelupEl.checked = !!ss.sfxLevelup;
+
+            openModal("settingsModal");
+        }
+
+        function toggleMasterMute(isMuted) {
+            if (!gameState.soundSettings) gameState.soundSettings = {};
+            gameState.soundSettings.masterMute = isMuted;
+            showToast(isMuted ? "🔇 전체 사운드가 음소거되었습니다." : "🔊 전체 사운드 음소거가 해제되었습니다.");
+            saveSessionToCloud(true);
+        }
+
+        function toggleSoundSetting(key, isEnabled) {
+            if (!gameState.soundSettings) gameState.soundSettings = {};
+            gameState.soundSettings[key] = isEnabled;
+            saveSessionToCloud(true);
         }
 
         // ==========================================
@@ -6864,6 +7025,10 @@
                             openModal("wbVictoryNoticeModal");
                             playSoundEffect('levelup');
                         }
+                    }
+
+                    if (!res.canAttack) {
+                        localStorage.setItem(wbRaidKey, todayStr);
                     }
 
                     if (!res.canAttack || isTodayDone || wbCurBossHp <= 0) {

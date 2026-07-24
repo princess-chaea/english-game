@@ -5834,6 +5834,9 @@
             if (bossTimerInterval) clearInterval(bossTimerInterval);
 
             bossTimerInterval = setInterval(() => {
+                const isCritModalOpen = document.getElementById("criticalDefenseModal") && document.getElementById("criticalDefenseModal").classList.contains("flex");
+                if (isCritModalOpen) return; // 강력한 공격 팝업 열려있는 동안 보스 도전 타이머 일시정지!
+
                 bossTimeRemaining -= 0.1;
 
                 // 보스전 전용 크리티컬 방어 기믹 (시작 직후 2문제 연속 출제 대기열 처리)

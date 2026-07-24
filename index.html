@@ -509,30 +509,28 @@
                         <svg viewBox="0 0 100 100" class="w-full h-full" id="petSvg_fairy"></svg>
                     </div>
 
-                    <!-- 🏺 [캐릭터 좌측 하단] 해금/장착된 대표 고대 유물 visual slot -->
-                    <div id="heroRelicSlot" class="absolute bottom-4 right-[calc(50%+4.5rem)] w-12 h-12 z-20 hidden flex-col items-center justify-center bg-black/80 border border-yellow-500/80 p-1 shadow-[0_0_15px_rgba(234,179,8,0.6)] animate-pulse">
-                        <img id="heroRelicImg" src="media/relics/relic_1.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23eab308\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'10\'/><path d=\'M12 6v12M6 12h12\'/></svg>'" class="w-full h-full object-contain filter drop-shadow-[0_0_8px_#f59e0b]">
-                        <span id="heroRelicName" class="text-[7px] text-yellow-300 font-bold font-mono truncate max-w-full">고대성배</span>
-                    </div>
-
                     <!-- Character Body Avatar -->
                     <div id="heroCharacter" class="w-32 h-36 relative flex items-end justify-center">
                         <svg viewBox="0 0 100 120" class="w-full h-full transition-transform duration-100"
                             id="heroSvg"></svg>
                     </div>
-                    <!-- Name tag & Accessories flex container (이름/칭호 오른쪽 공간 배치) -->
-                    <div class="flex items-center gap-1.5 mt-1.5 z-20">
+                    <!-- Name tag, Relic & Accessories flex container (이름 중앙, 양옆 장비 배치) -->
+                    <div class="flex items-center gap-1.5 mt-1.5 z-20 justify-center w-full">
+                        <!-- 🏺 고대 유물 -->
+                        <div id="heroRelicSlot" class="w-8 h-8 hidden flex-col items-center justify-center bg-black/80 border border-yellow-500/80 p-0.5 shadow-[0_0_15px_rgba(234,179,8,0.6)] animate-pulse" title="장착된 고대 유물">
+                            <img id="heroRelicImg" src="media/relics/relic_1.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23eab308\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'10\'/><path d=\'M12 6v12M6 12h12\'/></svg>'" class="w-full h-full object-contain filter drop-shadow-[0_0_8px_#f59e0b]">
+                        </div>
                         <span id="heroNameTag"
                             class="text-[9px] bg-[#1a1a1a] border border-[#3c3c3c] px-3 py-0.5 font-bold text-[#bbbbbb] tracking-wider uppercase rounded-none-forced">내 영웅</span>
-                        <!-- 💎 장착된 장신구 3종 visual slots (이름 및 칭호 오른쪽에 배치하여 드래곤 겹침 방지) -->
+                        <!-- 💎 장착된 장신구 3종 -->
                         <div id="heroAccSlotsContainer" class="flex flex-row gap-1 items-center">
-                            <div id="accSlot_necklace" class="w-5 h-5 bg-black/80 border border-purple-500 hidden items-center justify-center p-0.5 shadow-[0_0_6px_rgba(168,85,247,0.5)]" title="지혜의 목걸이">
+                            <div id="accSlot_necklace" class="w-8 h-8 bg-black/80 border border-purple-500 hidden items-center justify-center p-0.5 shadow-[0_0_6px_rgba(168,85,247,0.5)]" title="지혜의 목걸이">
                                 <img id="accImg_necklace" src="media/accessories/necklace.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23c084fc\' stroke-width=\'2\'><circle cx=\'12\' cy=\'14\' r=\'5\'/><path d=\'M7 4a7 7 0 0 0 10 0\'/></svg>'" class="w-full h-full object-contain">
                             </div>
-                            <div id="accSlot_bracelet" class="w-5 h-5 bg-black/80 border border-sky-500 hidden items-center justify-center p-0.5 shadow-[0_0_6px_rgba(56,189,248,0.5)]" title="투지의 팔찌">
+                            <div id="accSlot_bracelet" class="w-8 h-8 bg-black/80 border border-sky-500 hidden items-center justify-center p-0.5 shadow-[0_0_6px_rgba(56,189,248,0.5)]" title="투지의 팔찌">
                                 <img id="accImg_bracelet" src="media/accessories/bracelet.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2338bdf8\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'8\'/></svg>'" class="w-full h-full object-contain">
                             </div>
-                            <div id="accSlot_ring" class="w-5 h-5 bg-black/80 border border-amber-500 hidden items-center justify-center p-0.5 shadow-[0_0_6px_rgba(245,158,11,0.5)]" title="영웅의 반지">
+                            <div id="accSlot_ring" class="w-8 h-8 bg-black/80 border border-amber-500 hidden items-center justify-center p-0.5 shadow-[0_0_6px_rgba(245,158,11,0.5)]" title="영웅의 반지">
                                 <img id="accImg_ring" src="media/accessories/ring.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23fbbf24\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'6\'/><path d=\'M12 2v4\'/></svg>'" class="w-full h-full object-contain">
                             </div>
                         </div>
@@ -1848,9 +1846,16 @@
             <p class="text-xs text-gray-400 mb-4">획득 및 흡수 성장한 마법 스킬 목록입니다.</p>
 
             <!-- 10 Cards Grid (5x2) -->
+            <!-- 10 Cards Grid (5x2) -->
             <div id="gacha10xGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 w-full mb-5">
                 <!-- Dynamically filled -->
             </div>
+            <div class="flex items-center justify-center gap-3 w-full">
+                <button onclick="document.getElementById('gacha10xResultModal').classList.remove('flex');document.getElementById('gacha10xResultModal').classList.add('hidden')" class="px-8 py-3 bg-gray-800 hover:bg-gray-700 text-white font-bold text-xs uppercase tracking-wider transition">닫기</button>
+                <button onclick="document.getElementById('gacha10xResultModal').classList.remove('flex');document.getElementById('gacha10xResultModal').classList.add('hidden'); drawGacha(10);" class="px-8 py-3 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-black text-xs uppercase tracking-wider shadow-lg transition">💎 다시 10연속 소환</button>
+            </div>
+        </div>
+    </div>
 
     <!-- 🏺 Relic Capsule Draw Result Modal -->
     <div id="relicDrawResultModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4">
@@ -2108,16 +2113,16 @@
 
         // 🏺 10종 고대 유물 세부 정의 (1개 전용 장착 시스템)
         const RELIC_DEFINITIONS = [
-            { id: "relic_chalice", name: "고대 지혜의 성배", img: "media/relics/relic_1.png", effectDesc: "단어 퀴즈 정답 피해 +50% 급상승", baseBonus: 0.5 },
-            { id: "relic_orb", name: "지옥룡의 붉은 여의주", img: "media/relics/relic_2.png", effectDesc: "전체 초당 자동 DPS +30% 증대", baseBonus: 0.3 },
-            { id: "relic_sword", name: "전설 용사의 성검 조각", img: "media/relics/relic_3.png", effectDesc: "마우스 클릭 타격력 +40% 극대화", baseBonus: 0.4 },
-            { id: "relic_clock", name: "천공의 수호 시계", img: "media/relics/relic_4.png", effectDesc: "마법 비기 스킬 쿨타임 -20% 감소", baseBonus: 0.2 },
-            { id: "relic_compass", name: "황금 풍요의 번개 나침반", img: "media/relics/relic_5.png", effectDesc: "퀴즈 및 몬스터 획득 골드 +50% 증대", baseBonus: 0.5 },
-            { id: "relic_dice", name: "파괴의 거인 마법 주사위", img: "media/relics/relic_6.png", effectDesc: "크리티컬 타격 확률 +30% 증대", baseBonus: 0.3 },
-            { id: "relic_feather", name: "불사조의 깃털 부적", img: "media/relics/relic_7.png", effectDesc: "보스전 타격 피해 +60% 극대화", baseBonus: 0.6 },
-            { id: "relic_scroll", name: "심해의 비밀 주문서", img: "media/relics/relic_8.png", effectDesc: "스킬 시전 시 추가 폭발 피해 +40%", baseBonus: 0.4 },
-            { id: "relic_crown", name: "태양의 왕관 훈장", img: "media/relics/relic_9.png", effectDesc: "퀴즈 정답 FP 적립량 +30% 증가", baseBonus: 0.3 },
-            { id: "relic_shield", name: "대지의 수호 방패", img: "media/relics/relic_10.png", effectDesc: "몬스터 치명타 공격 방어 성공률 +50%", baseBonus: 0.5 }
+            { id: "relic_chalice", name: "고대 지혜의 성배", img: "media/relics/relic_1.png", effectDescTemplate: "단어 퀴즈 정답 피해 +{val}% 급상승", baseBonus: 0.5 },
+            { id: "relic_orb", name: "지옥룡의 붉은 여의주", img: "media/relics/relic_2.png", effectDescTemplate: "전체 초당 자동 DPS +{val}% 증대", baseBonus: 0.3 },
+            { id: "relic_sword", name: "전설 용사의 성검 조각", img: "media/relics/relic_3.png", effectDescTemplate: "마우스 클릭 타격력 +{val}% 극대화", baseBonus: 0.4 },
+            { id: "relic_clock", name: "천공의 수호 시계", img: "media/relics/relic_4.png", effectDescTemplate: "마법 비기 스킬 쿨타임 -{val}% 감소", baseBonus: 0.2 },
+            { id: "relic_compass", name: "황금 풍요의 번개 나침반", img: "media/relics/relic_5.png", effectDescTemplate: "퀴즈 및 몬스터 획득 골드 +{val}% 증대", baseBonus: 0.5 },
+            { id: "relic_dice", name: "파괴의 거인 마법 주사위", img: "media/relics/relic_6.png", effectDescTemplate: "크리티컬 타격 확률 +{val}% 증대", baseBonus: 0.3 },
+            { id: "relic_feather", name: "불사조의 깃털 부적", img: "media/relics/relic_7.png", effectDescTemplate: "보스전 타격 피해 +{val}% 극대화", baseBonus: 0.6 },
+            { id: "relic_scroll", name: "심해의 비밀 주문서", img: "media/relics/relic_8.png", effectDescTemplate: "스킬 시전 시 추가 폭발 피해 +{val}%", baseBonus: 0.4 },
+            { id: "relic_crown", name: "태양의 왕관 훈장", img: "media/relics/relic_9.png", effectDescTemplate: "퀴즈 정답 FP 적립량 +{val}% 증가", baseBonus: 0.3 },
+            { id: "relic_shield", name: "대지의 수호 방패", img: "media/relics/relic_10.png", effectDescTemplate: "몬스터 치명타 공격 방어 성공률 +{val}%", baseBonus: 0.5 }
         ];
 
         // Skill Grade Configs (색상 코드 및 배율 계수)
@@ -2150,6 +2155,33 @@
                 desc: "🔨 강화 축복 — 레벨당 대장간 강화 성공률 +0.3% (100렙시 +30%)"
             }
         };
+
+        // Helper: get specific relic efficiency
+        function getEquippedRelicBonus(relicId) {
+            if (gameState.equippedRelicId !== relicId) return 0;
+            return getRelicTotalValue(relicId);
+        }
+        
+        function getRelicTotalValue(relicId) {
+            const r = (gameState.acquiredRelics || []).find(item => item.id === relicId);
+            if (!r) return 0;
+            const def = RELIC_DEFINITIONS.find(d => d.id === relicId);
+            if (!def) return 0;
+            
+            const baseValue = def.baseBonus * 100;
+            const rankMults = { normal: 1.0, rare: 1.2, hero: 1.5, legendary: 2.0, mythic: 3.0 };
+            const rMult = rankMults[r.grade] || 1.0;
+            const starMult = 1.0 + (r.stars * 0.1); // +10% per star
+            
+            return Math.floor(baseValue * rMult * starMult);
+        }
+
+        function getRelicEffectString(relicDef, r) {
+            if (!relicDef) return "";
+            if (!r) return relicDef.effectDescTemplate.replace("{val}", Math.floor(relicDef.baseBonus * 100));
+            const val = getRelicTotalValue(relicDef.id);
+            return relicDef.effectDescTemplate.replace("{val}", val);
+        }
 
         // ==========================================
         // ⏳ FULLSCREEN GAME LOADING OVERLAY CONTROLLER
@@ -3252,9 +3284,9 @@
             if (ringLvl > 0) {
                 totalDps += ringLvl * 150;
             }
-            // 🏺 고대 지옥룡의 여의주 (relic_orb): 장착 시 초당 자동 DPS +30%
+            // 🏺 고대 지옥룡의 여의주 (relic_orb): 장착 시 초당 자동 DPS 증가
             if (gameState.equippedRelicId === "relic_orb") {
-                totalDps = Math.floor(totalDps * 1.3);
+                totalDps = Math.floor(totalDps * (1.0 + getEquippedRelicBonus("relic_orb") / 100));
             }
             return totalDps;
         }
@@ -3278,8 +3310,8 @@
             const potentialClick = getPotentialStatBonus('clickDmg');
             // 💍 투지의 팔찌 (braceletLvl) 클릭 타격력 보정 (+80 per level)
             const braceletClick = (gameState.braceletLvl || 0) * 80;
-            // 🏺 고대 용사의 성검 조각 (relic_sword): 장착 시 클릭 타격력 +40%
-            const relicMult = (gameState.equippedRelicId === "relic_sword") ? 1.4 : 1.0;
+            // 🏺 고대 용사의 성검 조각 (relic_sword): 장착 시 클릭 타격력 증가
+            const relicMult = 1.0 + (getEquippedRelicBonus("relic_sword") / 100);
 
             const totalBase = baseGearPower + stagePower + potentialClick + braceletClick;
             return Math.max(1, Math.floor(totalBase * relicMult));
@@ -4183,12 +4215,10 @@
                 // 장착 중인 유물 1개를 전장 화면에 시각화 업데이트
                 if (isEquipped) {
                     const heroRelicSlot = document.getElementById("heroRelicSlot");
-                    const heroRelicName = document.getElementById("heroRelicName");
                     const heroRelicImg = document.getElementById("heroRelicImg");
                     if (heroRelicSlot) {
                         heroRelicSlot.classList.remove("hidden");
                         heroRelicSlot.classList.add("flex");
-                        if (heroRelicName) heroRelicName.innerText = r.name.substring(0, 5);
                         if (heroRelicImg) heroRelicImg.src = r.img;
                     }
                 }
@@ -4210,8 +4240,8 @@
                                 <img src="${r.img}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23eab308\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'10\'/><path d=\'M12 6v12M6 12h12\'/></svg>'" class="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]">
                             </div>
 
-                            <h5 class="text-[10px] font-black text-white leading-tight">${r.name}</h5>
-                            <p class="text-[8px] text-yellow-300/90 leading-tight mt-1 break-words whitespace-normal">${r.effectDesc}</p>
+                            <h5 class="text-[9px] font-black text-white leading-tight whitespace-nowrap overflow-hidden text-ellipsis px-1 tracking-tighter">${r.name}</h5>
+                            <p class="text-[8px] text-yellow-300/90 leading-tight mt-1 break-words whitespace-normal">${getRelicEffectString(r, acquired)}</p>
                         </div>
 
                         <div class="mt-2">
@@ -4333,8 +4363,8 @@
                         <div class="w-10 h-10 mx-auto my-1 flex items-center justify-center bg-black/50 border border-gray-800 p-1">
                             <img src="${res.def.img}" class="w-full h-full object-contain filter drop-shadow-[0_0_8px_#fbbf24]">
                         </div>
-                        <h5 class="text-[9px] font-black text-white truncate">${res.def.name}</h5>
-                        <p class="text-[7px] text-yellow-300 truncate mt-0.5">${res.def.effectDesc}</p>
+                        <h5 class="text-[9px] font-black text-white whitespace-nowrap overflow-hidden text-ellipsis px-1 tracking-tighter">${res.def.name}</h5>
+                        <p class="text-[7px] text-yellow-300 break-words mt-0.5 whitespace-normal">${getRelicEffectString(res.def, {grade: res.grade, stars: res.stars})}</p>
                     </div>
                 `;
             });
@@ -5165,7 +5195,7 @@
             // 💍 지혜의 목걸이 (necklaceLvl) 스킬 마법 피해 +15%/lv & 잠재력 & 유물
             const necklaceSkillBonus = (gameState.necklaceLvl || 0) * 15;
             const potentialSkillBonus = getPotentialStatBonus('skillDmg');
-            const relicSkillBonus = (gameState.equippedRelicId === "relic_scroll") ? 40 : 0;
+            const relicSkillBonus = getEquippedRelicBonus("relic_scroll");
             const totalSkillMult = 1 + (necklaceSkillBonus + potentialSkillBonus + relicSkillBonus) / 100;
 
             const baseSkillDmg = (calculateClickAttackPower() * mult * 3) + (calculateDPSPower() * 2);
@@ -5211,9 +5241,9 @@
 
             showBattleToast(`💥 필살 시전! [${gradeInfo.name}] ${capitalizeFirstLetter(skill.word)}: -${skillDmg.toLocaleString()} 피해!`);
 
-            // 💍 지혜의 목걸이 (necklaceLvl) 쿨타임 감소 적용 (-0.6%/lv, 최대 -30%) + 유물 (-20%)
+            // 💍 지혜의 목걸이 (necklaceLvl) 쿨타임 감소 적용 (-0.6%/lv, 최대 -30%) + 유물
             const necklaceCdRed = Math.min(30, (gameState.necklaceLvl || 0) * 0.6);
-            const relicCdRed = (gameState.equippedRelicId === "relic_clock") ? 20 : 0;
+            const relicCdRed = getEquippedRelicBonus("relic_clock");
             const totalCdRed = Math.min(60, necklaceCdRed + relicCdRed);
             const baseCd = skill.maxCooldown || 15;
 
@@ -5251,21 +5281,21 @@
                 const baseReward = Math.floor((15 * gameState.grade) * Math.pow(1.15, Math.max(0, gameState.stage - 1)));
                 const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
                 const slimeBonus = slimeLvl * PET_PARAMS['slime'].goldBonus;
-                const relicGoldBonus = (gameState.equippedRelicId === "relic_compass") ? 0.5 : 0;
+                const relicGoldBonus = getEquippedRelicBonus("relic_compass") / 100;
                 const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus;
                 const reward = Math.floor(baseReward * goldMultiplier);
 
                 gameState.gold += reward;
                 if (typeof gameState.masteryPoints === 'undefined') gameState.masteryPoints = 0;
                 
-                // 퀴즈 정답 시 FP 적립 (태양의 왕관 유물 장착 시 +30%)
-                const fpGained = (gameState.equippedRelicId === "relic_crown") ? 13 : 10;
+                // 퀴즈 정답 시 FP 적립 (태양의 왕관 유물 장착 시 증가)
+                const fpGained = Math.floor(10 * (1.0 + getEquippedRelicBonus("relic_crown") / 100));
                 gameState.masteryPoints += fpGained;
 
                 const arena = document.getElementById("battleArena");
                 
-                // 단어 정답 시 치명타 타격 (고대 성배 유물 장착 시 +50% 급상승)
-                const chaliceMult = (gameState.equippedRelicId === "relic_chalice") ? 1.5 : 1.0;
+                // 단어 정답 시 치명타 타격 (고대 성배 유물 장착 시 배율 증가)
+                const chaliceMult = 1.0 + (getEquippedRelicBonus("relic_chalice") / 100);
                 const quizDmg = Math.floor(((calculateClickAttackPower() * 10) + (calculateDPSPower() * 2)) * chaliceMult);
                 processCombatDamage(quizDmg);
                 spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `⚡ 퀴즈 크리티컬! -${quizDmg.toLocaleString()}`);
@@ -5465,30 +5495,31 @@
             if (profileStageBadge) profileStageBadge.innerText = `🚩 현재 진행: Stage ${gameState.stage || 1}-${(gameState.progress || 0) + 1}`;
 
             // 상세 효과 수치 산출
-            const critBonus = (gameState.equippedRelicId === "relic_dice") ? 30 : 0;
+            const critBonus = getEquippedRelicBonus("relic_dice");
             const critRate = 5.0 + critBonus + getPotentialStatBonus('critRate');
             if (profileCrit) profileCrit.innerText = `${critRate.toFixed(1)}%`;
 
-            const bossDmgBonus = ((gameState.equippedRelicId === "relic_feather") ? 60 : 0) + getPotentialStatBonus('bossDmg');
+            const bossDmgBonus = getEquippedRelicBonus("relic_feather") + getPotentialStatBonus('bossDmg');
             if (profileBossDmg) profileBossDmg.innerText = `+${bossDmgBonus}%`;
 
             const necklaceCdRed = Math.min(30, (gameState.necklaceLvl || 0) * 0.6);
-            const relicCdRed = (gameState.equippedRelicId === "relic_clock") ? 20 : 0;
+            const relicCdRed = getEquippedRelicBonus("relic_clock");
             const totalCdRed = Math.min(60, necklaceCdRed + relicCdRed);
             if (profileCdRed) profileCdRed.innerText = `-${totalCdRed.toFixed(1)}%`;
 
             const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
             const slimeBonus = slimeLvl * PET_PARAMS['slime'].goldBonus;
-            const relicGoldBonus = (gameState.equippedRelicId === "relic_compass") ? 0.5 : 0;
+            const relicGoldBonus = getEquippedRelicBonus("relic_compass") / 100;
             const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus + (getPotentialStatBonus('goldBonus') / 100);
             if (profileGold) profileGold.innerText = `×${goldMultiplier.toFixed(2)}배`;
 
             // 유물 장착 상태 요약
             if (gameState.equippedRelicId) {
                 const eqR = RELIC_DEFINITIONS.find(item => item.id === gameState.equippedRelicId);
+                const acR = (gameState.acquiredRelics || []).find(item => item.id === gameState.equippedRelicId);
                 if (eqR) {
                     if (profileRelicName) profileRelicName.innerText = `🏺 ${eqR.name}`;
-                    if (profileRelicEffect) profileRelicEffect.innerText = eqR.effectDesc;
+                    if (profileRelicEffect) profileRelicEffect.innerText = getRelicEffectString(eqR, acR);
                 }
             } else {
                 if (profileRelicName) profileRelicName.innerText = "[장착된 유물 없음]";

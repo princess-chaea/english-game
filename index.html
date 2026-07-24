@@ -2109,7 +2109,8 @@
             equippedSkills: [], // Array storing up to 4 skill ids currently placed in combat slots
 
             // ⚡ 무구 잠재력 잠금 슬롯 상태 (새로고침 후에도 유지)
-            lockedPotentialSlots: {} // { helmet: [0,1], armor: [], ... }
+            lockedPotentialSlots: {}, // { helmet: [0,1], armor: [], ... }
+            wrongWordCounts: {} // { "apple": 2, "banana": 1 }
         };
 
         const BOSS_UNLOCK_LIMIT = 10; // Capped at 10 monster defeats as requested
@@ -2800,6 +2801,7 @@
 
             // 📚 정복 단어, 칭호, 퀴즈 통계 복원
             gameState.masteredWords = data.masteredWords || [];
+            gameState.wrongWordCounts = data.wrongWordCounts || {};
             gameState.equippedTitle = data.equippedTitle || "";
             gameState.wbTitle = data.wbTitle || "";
             gameState.unlockedTitles = data.unlockedTitles || [];
@@ -2852,7 +2854,8 @@
                 bossTokens: gameState.bossTokens || 0,
                 totalQuizTries: gameState.totalQuizTries || 0,
                 totalQuizCorrect: gameState.totalQuizCorrect || 0,
-                masteredWords: gameState.masteredWords || []
+                masteredWords: gameState.masteredWords || [],
+                wrongWordCounts: gameState.wrongWordCounts || {}
             });
         }
 

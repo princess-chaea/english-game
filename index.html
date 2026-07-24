@@ -3870,9 +3870,18 @@
                 });
             } else {
                 keys.forEach(k => {
-                    if (!Array.isArray(gameState.gearPotentials[k])) {
-                        gameState.gearPotentials[k] = [];
+                    let opts = gameState.gearPotentials[k];
+                    if (!opts || typeof opts !== 'object') {
+                        opts = [];
                     }
+                    if (!Array.isArray(opts)) {
+                        const arr = [];
+                        Object.keys(opts).forEach(idxKey => {
+                            arr[Number(idxKey)] = opts[idxKey];
+                        });
+                        opts = arr;
+                    }
+                    gameState.gearPotentials[k] = opts;
                     const unlockedCount = getGearUnlockedSlotsCount(k);
                     for (let i = 0; i < 6; i++) {
                         if (gameState.gearPotentials[k][i]) {
@@ -4105,9 +4114,19 @@
             }
             const lockedArr = selectedLockedPotentialSlots[selectedGearKey];
 
-            // ⚠️ 신화 등급 경고 확인 팝업
+            // ⚠️ 신화 등급 경고 확인 팝업 (객체/배열 안전 감지)
             const lockedArrSafe = lockedArr || [];
-            const hasMythicUnlocked = currentOpts.some((opt, idx) => idx < unlockedSlots && !lockedArrSafe.includes(idx) && opt && opt.grade === "mythic");
+            let hasMythicUnlocked = false;
+            if (Array.isArray(currentOpts)) {
+                hasMythicUnlocked = currentOpts.some((opt, idx) => idx < unlockedSlots && !lockedArrSafe.includes(idx) && opt && opt.grade === "mythic");
+            } else if (typeof currentOpts === 'object') {
+                hasMythicUnlocked = Object.keys(currentOpts).some(idxKey => {
+                    const idx = Number(idxKey);
+                    const opt = currentOpts[idxKey];
+                    return idx < unlockedSlots && !lockedArrSafe.includes(idx) && opt && opt.grade === "mythic";
+                });
+            }
+
             if (hasMythicUnlocked) {
                 showConfirm(
                     "선택한 무구의 잠재력 옵션 중 [신화 등급] 옵션이 포함되어 있습니다! 잠그지 않은 상태로 재설정하면 신화 옵션이 사라집니다. 정말 재설정하시겠습니까?",

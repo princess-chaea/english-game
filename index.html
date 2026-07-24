@@ -5156,13 +5156,33 @@
             runGas("getHallOfFame", [gameState.grade, studentKey], function(res) {
                 if (res && res.success) {
                     cachedHofData = res;
+
+                    const getTitleBadgeHtml = (item) => {
+                        let titleName = item.equippedTitle;
+                        if ((!titleName || titleName.trim() === "") && item.key === studentKey) {
+                            titleName = gameState.equippedTitle || "";
+                        }
+                        if (!titleName || titleName.trim() === "") return "";
+
+                        const titleDef = AVAILABLE_TITLES.find(t => t.name === titleName || t.id === titleName);
+                        let badgeClass = "text-amber-300 bg-amber-950/90 border-amber-600";
+                        if (titleDef) {
+                            if (titleDef.tier === "신화") badgeClass = "text-yellow-300 bg-amber-950/90 border-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]";
+                            else if (titleDef.tier === "전설") badgeClass = "text-red-300 bg-red-950/90 border-red-600 shadow-[0_0_6px_rgba(220,38,38,0.5)]";
+                            else if (titleDef.tier === "영웅") badgeClass = "text-purple-300 bg-purple-950/90 border-purple-600";
+                            else if (titleDef.tier === "희귀") badgeClass = "text-sky-300 bg-sky-950/90 border-sky-600";
+                            else badgeClass = "text-gray-300 bg-gray-900 border-gray-700";
+                        }
+                        return `<span class="text-[9px] font-bold px-1 py-0.5 border mr-1 rounded-none-forced ${badgeClass}">[${titleName}]</span>`;
+                    };
+
                     // 1. 스테이지 랭킹
                     document.getElementById("myStageRankText").innerText = `${res.myStageRank}위`;
                     let stageHtml = "";
                     if (res.stageTop5 && res.stageTop5.length > 0) {
                         res.stageTop5.forEach((item, idx) => {
                             const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}.`;
-                            const titleBadge = (idx === 0) ? `<span class="text-[9px] text-amber-300 font-bold bg-amber-950 px-1 py-0.5 border border-amber-600 mr-1">[정복왕]</span>` : "";
+                            const titleBadge = getTitleBadgeHtml(item);
                             stageHtml += `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs"><span class="text-white font-medium flex items-center gap-1">${medal} ${titleBadge}${item.name}</span><span class="text-sky-400 font-bold font-mono">Stage ${item.stage}-${item.progress + 1}</span></div>`;
                         });
                     } else {
@@ -5176,7 +5196,7 @@
                     if (res.bossTop5 && res.bossTop5.length > 0) {
                         res.bossTop5.forEach((item, idx) => {
                             const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}.`;
-                            const titleBadge = (idx === 0) ? `<span class="text-[9px] text-red-300 font-bold bg-red-950 px-1 py-0.5 border border-red-600 mr-1">[구세주]</span>` : `<span class="text-[9px] text-amber-300 font-bold bg-amber-950 px-1 py-0.5 border border-amber-700 mr-1">[수호신]</span>`;
+                            const titleBadge = getTitleBadgeHtml(item);
                             bossHtml += `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs"><span class="text-white font-medium flex items-center gap-1">${medal} ${titleBadge}${item.name}</span><span class="text-red-400 font-bold font-mono">${item.damage.toLocaleString()} DMG</span></div>`;
                         });
                     } else {
@@ -5190,7 +5210,7 @@
                     if (res.goldTop5 && res.goldTop5.length > 0) {
                         res.goldTop5.forEach((item, idx) => {
                             const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}.`;
-                            const titleBadge = (idx === 0) ? `<span class="text-[9px] text-yellow-300 font-bold bg-yellow-950 px-1 py-0.5 border border-yellow-600 mr-1">[황금 거상]</span>` : "";
+                            const titleBadge = getTitleBadgeHtml(item);
                             goldHtml += `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs"><span class="text-white font-medium flex items-center gap-1">${medal} ${titleBadge}${item.name}</span><span class="text-yellow-400 font-bold font-mono">${item.gold.toLocaleString()} G</span></div>`;
                         });
                     } else {
@@ -5291,6 +5311,7 @@
             }
             refreshStateVisuals();
             renderTitleInventoryUI();
+            fetchHallOfFameUI();
             saveLocalCache();
             saveSessionToCloud();
         }

@@ -273,8 +273,9 @@ function getHallOfFame(grade, studentKey) {
     
     var stageRankList = [];
     var goldRankList = [];
+    var titleMap = {};
     
-    // Students 필드 탐색: Grade(0), Class(1), Number(2), Name(3), Gold(4), Stage(12), Progress(13)
+    // Students 필드 탐색: Grade(0), Class(1), Number(2), Name(3), Gold(4), Stage(12), Progress(13), ExtraData(19)
     for (var i = 1; i < studentData.length; i++) {
       var sGrade = String(studentData[i][0]);
       if (sGrade === String(grade)) {
@@ -287,18 +288,30 @@ function getHallOfFame(grade, studentKey) {
         var key = sGrade + "_" + sClass + "_" + sNum + "_" + sName;
         var displayName = sClass + "반 " + sName;
         
+        var extraStr = studentData[i][19] || "";
+        var equippedTitle = "";
+        if (extraStr) {
+          try {
+            var parsed = JSON.parse(extraStr);
+            equippedTitle = parsed.equippedTitle || "";
+          } catch(e) {}
+        }
+        titleMap[key] = equippedTitle;
+        
         stageRankList.push({
           key: key,
           name: displayName,
           stage: sStage,
           progress: sProg,
-          score: (sStage * 100) + sProg
+          score: (sStage * 100) + sProg,
+          equippedTitle: equippedTitle
         });
         
         goldRankList.push({
           key: key,
           name: displayName,
-          gold: sGold
+          gold: sGold,
+          equippedTitle: equippedTitle
         });
       }
     }
@@ -324,7 +337,8 @@ function getHallOfFame(grade, studentKey) {
         bossRankList.push({
           key: bKey,
           name: bName,
-          damage: bDmg
+          damage: bDmg,
+          equippedTitle: titleMap[bKey] || ""
         });
       }
     }

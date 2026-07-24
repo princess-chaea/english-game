@@ -3786,8 +3786,6 @@
 
         function renderGearPotentialLabUI() {
             ensureGearPotentialsStructure();
-            const tokenText = document.getElementById("bossTokenCountText");
-            if (tokenText) tokenText.innerText = (gameState.bossTokens || 0).toLocaleString();
 
             const grid = document.getElementById("potentialSlotsGrid");
             if (!grid) return;
@@ -3983,8 +3981,10 @@
             gameState.gold -= cost;
             playSoundEffect('hit');
 
+            const lockedArrSafe = lockedArr || [];
+
             for (let i = 0; i < unlockedSlots; i++) {
-                if (!lockedArr.includes(i)) {
+                if (!lockedArrSafe.includes(i)) {
                     currentOpts[i] = generateRandomPotentialOption();
                 }
             }
@@ -4012,8 +4012,10 @@
             gameState.gold -= cost;
             playSoundEffect('hit');
 
+            const lockedArrSafe = lockedArr || [];
+
             for (let i = 0; i < unlockedSlots; i++) {
-                if (!lockedArr.includes(i)) {
+                if (!lockedArrSafe.includes(i)) {
                     currentOpts[i] = generateRandomPotentialOption();
                 }
             }
@@ -5464,10 +5466,10 @@
 
             // 상세 효과 수치 산출
             const critBonus = (gameState.equippedRelicId === "relic_dice") ? 30 : 0;
-            const critRate = 5.0 + critBonus;
+            const critRate = 5.0 + critBonus + getPotentialStatBonus('critRate');
             if (profileCrit) profileCrit.innerText = `${critRate.toFixed(1)}%`;
 
-            const bossDmgBonus = (gameState.equippedRelicId === "relic_feather") ? 60 : 0;
+            const bossDmgBonus = ((gameState.equippedRelicId === "relic_feather") ? 60 : 0) + getPotentialStatBonus('bossDmg');
             if (profileBossDmg) profileBossDmg.innerText = `+${bossDmgBonus}%`;
 
             const necklaceCdRed = Math.min(30, (gameState.necklaceLvl || 0) * 0.6);
@@ -5478,7 +5480,7 @@
             const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
             const slimeBonus = slimeLvl * PET_PARAMS['slime'].goldBonus;
             const relicGoldBonus = (gameState.equippedRelicId === "relic_compass") ? 0.5 : 0;
-            const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus;
+            const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus + (getPotentialStatBonus('goldBonus') / 100);
             if (profileGold) profileGold.innerText = `×${goldMultiplier.toFixed(2)}배`;
 
             // 유물 장착 상태 요약
@@ -5500,9 +5502,11 @@
             const goldEl = document.getElementById("profileGoldTotal");
             const fpEl = document.getElementById("profileFpTotal");
             const tokenEl = document.getElementById("profileTokenTotal");
+            const bossTokenText = document.getElementById("bossTokenCountText"); // 유물 탭의 증표 표시
             if (goldEl) goldEl.innerText = Math.floor(gameState.gold || 0).toLocaleString();
             if (fpEl) fpEl.innerText = Math.floor(gameState.masteryPoints || 0).toLocaleString();
             if (tokenEl) tokenEl.innerText = Math.floor(gameState.bossTokens || 0).toLocaleString();
+            if (bossTokenText) bossTokenText.innerText = Math.floor(gameState.bossTokens || 0).toLocaleString();
 
             // ⚠️ 약점 오답 노트 TOP 5 렌더링
             const weakContainer = document.getElementById("weakWordsContainer");

@@ -6964,26 +6964,40 @@
 
             let html = "";
             gameState.equippedSkills.forEach(id => {
-                const s = gameState.skillsInventory ? gameState.skillsInventory.find(item => item.id === id) : null;
+                const s = gameState.skillsInventory ? gameState.skillsInventory.find(item => String(item.id) === String(id)) : null;
                 if (s) {
                     const gradeInfo = SKILL_GRADES[s.grade] || SKILL_GRADES.normal;
                     const mult = getSkillMultiplier(s);
-                    const cdLeft = wbSkillCooldowns[id] || 0;
+                    const cdLeft = wbSkillCooldowns[String(s.id)] || wbSkillCooldowns[id] || 0;
                     const isCd = cdLeft > 0;
+                    const maxCd = s.maxCooldown || 30.0;
+                    const pct = isCd ? Math.round((cdLeft / maxCd) * 100) : 0;
 
                     if (isCd) {
                         html += `
-                            <button disabled class="p-1.5 bg-[#111] border border-gray-800 text-left rounded-none-forced flex flex-col justify-between h-12 opacity-60 cursor-not-allowed relative overflow-hidden">
-                                <div class="absolute inset-0 bg-red-950/40 pointer-events-none"></div>
-                                <span class="text-[9px] font-bold text-gray-400 font-mono truncate z-10">${capitalizeFirstLetter(s.word)}</span>
-                                <span class="text-[8px] text-red-400 font-bold z-10 animate-pulse">⏳ ${cdLeft.toFixed(1)}초</span>
+                            <button disabled class="relative overflow-hidden p-1.5 bg-[#111] ${gradeInfo.colorClass} opacity-60 border text-left rounded-none-forced flex flex-col justify-between h-14 cursor-not-allowed">
+                                <div class="absolute bottom-0 left-0 h-1 bg-red-600 transition-all" style="width: ${pct}%"></div>
+                                <div class="flex justify-between items-center w-full z-10">
+                                    <span class="text-[9px] font-extrabold text-gray-400 font-mono truncate">${capitalizeFirstLetter(s.word)}</span>
+                                    <span class="text-[8px] text-red-400 font-bold font-mono animate-pulse">⏳ ${cdLeft.toFixed(1)}s</span>
+                                </div>
+                                <div class="flex justify-between items-center w-full z-10 text-[8px]">
+                                    <span class="text-gray-500 font-medium truncate">${s.meaning}</span>
+                                    <span class="text-[8px] font-bold text-gray-400">${gradeInfo.name}</span>
+                                </div>
                             </button>
                         `;
                     } else {
                         html += `
-                            <button onclick="castWorldBossSkill('${s.id}')" class="p-1.5 bg-gradient-to-b from-[#1a1a1a] to-[#0d0d0d] hover:from-red-950 hover:to-black border border-red-600 hover:border-yellow-400 text-left rounded-none-forced flex flex-col justify-between h-12 transition group cursor-pointer shadow-md">
-                                <span class="text-[9px] font-bold text-yellow-300 font-mono truncate group-hover:text-white">${capitalizeFirstLetter(s.word)}</span>
-                                <span class="text-[8px] text-pink-400 font-bold flex items-center gap-0.5">⚡ ×${mult * 3}배 폭딜</span>
+                            <button onclick="castWorldBossSkill('${s.id}')" class="relative overflow-hidden p-1.5 ${gradeInfo.colorClass} border-2 hover:scale-[1.02] text-left rounded-none-forced flex flex-col justify-between h-14 transition duration-150 group cursor-pointer shadow-lg">
+                                <div class="flex justify-between items-center w-full z-10">
+                                    <span class="text-[9px] font-extrabold font-mono truncate text-white group-hover:text-yellow-300">${capitalizeFirstLetter(s.word)}</span>
+                                    <span class="text-[8px] text-pink-400 font-bold">⚡ ×${mult * 3}배</span>
+                                </div>
+                                <div class="flex justify-between items-center w-full z-10 text-[8px]">
+                                    <span class="text-gray-300 font-medium truncate">${s.meaning}</span>
+                                    <span class="text-[8px] font-extrabold px-1 rounded bg-black/50 border border-white/20">${gradeInfo.name}</span>
+                                </div>
                             </button>
                         `;
                     }
@@ -7107,16 +7121,18 @@
 
         function castWorldBossSkill(skillId) {
             if (!isWorldBossRaidActive || !gameState.skillsInventory) return;
-            if (wbSkillCooldowns[skillId] > 0) return;
-
-            const skill = gameState.skillsInventory.find(s => s.id === skillId);
+            const skill = gameState.skillsInventory.find(s => String(s.id) === String(skillId));
             if (!skill) return;
+
+            const cdKey = String(skill.id);
+            if (wbSkillCooldowns[cdKey] > 0) return;
 
             // 💍 지혜의 목걸이 (necklaceLvl) 쿨타임 감소 적용 (-0.6%/lv, 최대 -30%) + 유물
             const necklaceCdRed = Math.min(30, (gameState.necklaceLvl || 0) * 0.6);
             const relicCdRed = getEquippedRelicBonus("relic_clock");
             const totalCdRed = Math.min(60, necklaceCdRed + relicCdRed);
-            wbSkillCooldowns[skillId] = 30.0 * (1 - totalCdRed / 100);
+            const baseCd = skill.maxCooldown || 30.0;
+            wbSkillCooldowns[cdKey] = baseCd * (1 - totalCdRed / 100);
 
             // 스킬 원어민 음성 발음 재생
             if ('speechSynthesis' in window) {
@@ -7427,8 +7443,20 @@
                 playSoundEffect('correct');
                 wbComboCount++;
 
-                // 기본 용사 정답 폭딜 (클릭 타격력 300배 + DPS 50배)
-                let heroDmg = (calculateClickAttackPower() * 300) + (calculateDPSPower() * 50);
+                // 문제 유형별 난이도 데미지 가산 배율 적용 (4지선다: 1.0배, 단답형 스펠링: 2.5배, 순서 맞추기: 4.0배)
+                let typeMultiplier = 1.0;
+                let typeNoticeText = "4지선다";
+
+                if (wbCurrentQuizType === "short_answer") {
+                    typeMultiplier = 2.5;
+                    typeNoticeText = "⚡ 단답 스펠링 2.5배";
+                } else if (wbCurrentQuizType === "unscramble") {
+                    typeMultiplier = 4.0;
+                    typeNoticeText = "🔥 철자 순서 맞추기 4.0배 초폭딜";
+                }
+
+                let baseHeroDmg = (calculateClickAttackPower() * 300) + (calculateDPSPower() * 50);
+                let heroDmg = Math.floor(baseHeroDmg * typeMultiplier);
                 
                 // 펫 레벨 기반 비례 데미지 및 연속 정답 콤보에 따른 펫 순차 협공
                 const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;

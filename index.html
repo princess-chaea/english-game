@@ -592,18 +592,18 @@
                 </button>
                 <button onclick="switchTab('statsTab')" id="statsTabBtn"
                     class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition">
-                    <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
-                    <span>서고</span>
+                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-cyan-400"></i>
+                    <span>내 영웅 정보</span>
                 </button>
             </nav>
 
             <!-- TAB 1: Combat Learning Quiz View -->
             <div id="quizTab"
-                class="bg-black border border-[#3c3c3c] p-6 flex-grow flex flex-col justify-between min-h-[440px] rounded-none-forced">
+                class="bg-black border border-[#3c3c3c] p-5 flex-grow flex flex-col justify-between min-h-[420px] rounded-none-forced">
 
                 <!-- Boss Timer Visualizer (Visible during Boss Combat) -->
                 <div id="bossBattleTimerHeader"
-                    class="hidden bg-[#0d0d0d] border border-[#e22718] p-3 flex flex-col gap-1 mb-3 animate-pulse rounded-none-forced">
+                    class="hidden bg-[#0d0d0d] border border-[#e22718] p-2.5 flex flex-col gap-1 mb-2 animate-pulse rounded-none-forced">
                     <div class="flex justify-between text-xs text-[#e22718] font-bold uppercase tracking-wider">
                         <span class="flex items-center gap-1.5">
                             <i data-lucide="timer" class="w-4 h-4"></i>
@@ -619,7 +619,7 @@
                 </div>
 
                 <!-- Learning Mode Label Header -->
-                <div class="flex justify-between items-center pb-3 border-b border-[#3c3c3c]">
+                <div class="flex justify-between items-center pb-2.5 border-b border-[#3c3c3c]">
                     <span class="text-[#0066b1] font-bold text-xs uppercase tracking-widest flex items-center gap-1.5">
                         <i data-lucide="info" class="w-3.5 h-3.5"></i>
                         <span id="gradeLevelBadge">교과 영단어 3학년</span>
@@ -631,67 +631,62 @@
                 </div>
 
                 <!-- Main Active Question Area -->
-                <div id="quizContainer" class="my-6 text-center">
-                    <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest mb-1.5">몬스터의 약점 영단어</p>
-                    <h2 id="quizWordEng" class="text-4xl font-bold text-white tracking-wider mb-3">
+                <div id="quizContainer" class="my-4 text-center">
+                    <p class="text-[9px] text-[#7e7e7e] font-bold uppercase tracking-widest mb-1">몬스터의 약점 영단어</p>
+                    <h2 id="quizWordEng" class="text-4xl font-bold text-white tracking-wider mb-2.5">
                         ...</h2>
 
                     <!-- Sound Synthesizer Button -->
                     <button onclick="speakTargetWord()"
-                        class="inline-flex items-center gap-1.5 text-[10px] bg-transparent hover:bg-white text-white hover:text-black font-bold px-4 py-2 border border-[#3c3c3c] hover:border-white transition rounded-none-forced uppercase tracking-widest cursor-pointer">
-                        <span>🔊 발음 듣기</span>
+                        class="bg-[#1a1a1a] hover:bg-[#262626] border border-[#3c3c3c] text-white text-[10px] font-bold px-3 py-1 rounded-none-forced transition inline-flex items-center gap-1.5">
+                        <i data-lucide="volume-2" class="w-3 h-3 text-[#0066b1]"></i>
+                        <span>발음 듣기</span>
                     </button>
+                </div>
 
-                    <!-- Answer Options Matrix - 정렬 및 번호 제거 개편 -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6" id="choiceButtonsContainer">
-                        <button onclick="evaluateAnswer(0)"
-                            class="choice-btn p-3.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group">
-                            <span class="choice-text text-center w-full uppercase tracking-wider">선택지 1</span>
-                        </button>
-                        <button onclick="evaluateAnswer(1)"
-                            class="choice-btn p-3.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group">
-                            <span class="choice-text text-center w-full uppercase tracking-wider">선택지 2</span>
-                        </button>
-                        <button onclick="evaluateAnswer(2)"
-                            class="choice-btn p-3.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group">
-                            <span class="choice-text text-center w-full uppercase tracking-wider">선택지 3</span>
-                        </button>
-                        <button onclick="evaluateAnswer(3)"
-                            class="choice-btn p-3.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group">
-                            <span class="choice-text text-center w-full uppercase tracking-wider">선택지 4</span>
-                        </button>
+                <!-- Multiple Choice Response Grid (2x2 Grid Layout) -->
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <button onclick="evaluateAnswer(0)"
+                        class="choice-btn p-3 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group">
+                        <span class="choice-text text-sm">선택지 1</span>
+                    </button>
+                    <button onclick="evaluateAnswer(1)"
+                        class="choice-btn p-3 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group">
+                        <span class="choice-text text-sm">선택지 2</span>
+                    </button>
+                    <button onclick="evaluateAnswer(2)"
+                        class="choice-btn p-3 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group">
+                        <span class="choice-text text-sm">선택지 3</span>
+                    </button>
+                    <button onclick="evaluateAnswer(3)"
+                        class="choice-btn p-3 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group">
+                        <span class="choice-text text-sm">선택지 4</span>
+                    </button>
+                </div>
+
+                <!-- Combat Spell Slot Shortcut Bar -->
+                <div class="bg-[#0d0d0d] border border-[#3c3c3c] p-2.5 rounded-none-forced">
+                    <div class="flex justify-between items-center text-[9px] text-gray-400 font-bold uppercase mb-1.5">
+                        <span class="flex items-center gap-1"><i data-lucide="zap" class="w-3 h-3 text-pink-400"></i> 장착된 영단어 비기 스킬 (전투 슬롯)</span>
+                    </div>
+                    <div id="quizEquippedSkillsContainer" class="grid grid-cols-4 gap-2">
+                        <!-- Dynamic Skills Bar -->
                     </div>
                 </div>
 
-                <!-- ACTIVE SKILLS SECTION: Displays Equipped English Skills -->
-                <div class="mt-4 border-t border-[#3c3c3c] pt-4">
-                    <p
-                        class="text-[9px] text-[#0066b1] font-bold uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
-                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                        <span>🔥 장착된 영단어 비기 스킬 (전투 슬롯)</span>
-                    </p>
-                    <div id="skillsContainer" class="grid grid-cols-2 gap-2">
-                        <!-- Instantiated Dynamically via renderSkillsUI() -->
-                    </div>
-                </div>
-
-                <!-- Tip Informational Panel -->
+                <!-- Bottom Guide Banner -->
                 <div
-                    class="bg-[#0d0d0d] p-3 flex items-start gap-2 border border-[#3c3c3c] text-[10px] text-[#bbbbbb] mt-4 rounded-none-forced">
+                    class="bg-[#0d0d0d] p-2.5 border border-[#3c3c3c] text-[10px] text-[#bbbbbb] flex items-start gap-2 rounded-none-forced mt-2">
                     <i data-lucide="swords" class="w-4 h-4 text-[#e22718] flex-shrink-0 mt-0.5"></i>
-                    <div>
-                        <p class="font-bold text-[#e6e6e6] uppercase tracking-wider">약점 퀴즈 격파 및 스킬 장착 가이드</p>
-                        <p class="text-[#7e7e7e] mt-0.5">퀴즈를 풀면 무작위 등급의 <span class="text-white font-bold">마법 스킬</span>을 획득하며, <span
-                                class="text-white font-bold">[스킬] 탭</span>에서 직접 장착해야 전투에서 수동으로 시전할 수 있습니다.</p>
-                    </div>
+                    <p class="leading-snug"><strong>약점 퀴즈 격파 및 스킬 장착 가이드:</strong> 퀴즈를 풀면 무작위 등급의 <strong>마법 스킬</strong>을 획득하며, <strong>[스킬] 탭</strong>에서 직접 장착해야 전투에서 수동으로 시전할 수 있습니다.</p>
                 </div>
             </div>
 
             <!-- TAB 2: RPG Equipment Blacksmith Upgrade Shop -->
             <div id="gearTab"
-                class="bg-black border border-[#3c3c3c] p-6 flex-grow hidden flex-col justify-between min-h-[440px] rounded-none-forced">
+                class="bg-black border border-[#3c3c3c] p-5 flex-grow hidden flex-col justify-between min-h-[420px] rounded-none-forced">
                 <div>
-                    <h3 class="bmw-label-uppercase text-white flex items-center gap-2 mb-4">
+                    <h3 class="bmw-label-uppercase text-white flex items-center gap-2 mb-3">
                         <i data-lucide="anvil" class="text-[#0066b1]"></i>
                         <span>대장간 무구 연마 & 캐릭터 외형 변환</span>
                     </h3>
@@ -1190,8 +1185,8 @@
                         </div>
                         <div class="bg-[#0b0c10] border border-yellow-900/40 p-3 rounded-none-forced">
                             <p class="text-[10px] text-gray-400 mb-2.5">업적 및 레이드를 달성해 해금한 칭호를 선택하여 영웅 태그에 장착할 수 있습니다.</p>
-                            <div id="titleInventoryContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1">
-                                <!-- Dynamic Title Cards -->
+                            <div id="titleInventoryContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                                <!-- Dynamic Title Cards (No Scroll, cleanly fits space) -->
                             </div>
                         </div>
                     </div>
@@ -1202,13 +1197,8 @@
                 </div>
             </div>
 
-            <!-- TAB 7: Core Educational Logs (독립 서고 전용 메인 탭) -->
+            <!-- TAB 7: Dedicated My Hero Info Profile & Vocabulary Catalog (독립 내 영웅 정보 메인 탭) -->
             <div id="statsTab"
-                class="bg-black border border-[#3c3c3c] p-6 flex-grow hidden flex-col justify-between min-h-[440px] rounded-none-forced">
-                <div>
-                    <h3 class="bmw-label-uppercase text-white flex items-center gap-2 mb-3">
-                        <i data-lucide="bookmark-check" class="text-[#0066b1]"></i>
-                        <span>📚 용사가 격파하고 해독한 고대 마법 단어 서고 목록</span>
                     </h3>
 
                     <!-- Dynamic Vocab Mastered Grid list -->
@@ -5044,34 +5034,65 @@
             const correctEl = document.getElementById("statCorrectCount");
             const incorrectEl = document.getElementById("statIncorrectCount");
             const ratioEl = document.getElementById("statSuccessRatio");
-            if (correctEl) correctEl.innerText = gameState.totalQuizCorrect || 0;
-            if (incorrectEl) incorrectEl.innerText = (gameState.totalQuizTries || 0) - (gameState.totalQuizCorrect || 0);
+            if (correctEl) correctEl.innerText = (gameState.totalQuizCorrect || 0).toLocaleString();
+            if (incorrectEl) incorrectEl.innerText = Math.max(0, (gameState.totalQuizTries || 0) - (gameState.totalQuizCorrect || 0)).toLocaleString();
             if (ratioEl) {
                 const tries = gameState.totalQuizTries || 0;
                 const correct = gameState.totalQuizCorrect || 0;
                 ratioEl.innerText = tries > 0 ? `${Math.round((correct / tries) * 100)}%` : "0%";
             }
 
+            // 🛡️ 내 영웅 정보 프로필 전용 스펙 실시간 동기화
+            const profileClick = document.getElementById("profileClickPower");
+            const profileDps = document.getElementById("profileDpsPower");
+            const profileRelicName = document.getElementById("profileEquippedRelicName");
+            const profileRelicEffect = document.getElementById("profileEquippedRelicEffect");
+            const profileAccSummary = document.getElementById("profileAccessoriesSummary");
+            const profileStageBadge = document.getElementById("heroProfileStageBadge");
+
+            if (profileClick) profileClick.innerText = `${calculateClickAttackPower().toLocaleString()} 데미지`;
+            if (profileDps) profileDps.innerText = `+${calculateDPSPower().toLocaleString()} 골드/초`;
+            if (profileStageBadge) profileStageBadge.innerText = `🚩 현재 진행: Stage ${gameState.stage || 1}-${(gameState.progress || 0) + 1}`;
+
+            // 유물 장착 상태 요약
+            if (gameState.equippedRelicId) {
+                const eqR = RELIC_DEFINITIONS.find(item => item.id === gameState.equippedRelicId);
+                if (eqR) {
+                    if (profileRelicName) profileRelicName.innerText = `🏺 ${eqR.name}`;
+                    if (profileRelicEffect) profileRelicEffect.innerText = eqR.effectDesc;
+                }
+            } else {
+                if (profileRelicName) profileRelicName.innerText = "[장착된 유물 없음]";
+                if (profileRelicEffect) profileRelicEffect.innerText = "능력치 적용 미발동";
+            }
+
+            // 장신구 연마 상태 요약
+            let accCount = 0;
+            if ((gameState.necklaceLvl || 0) > 0) accCount++;
+            if ((gameState.braceletLvl || 0) > 0) accCount++;
+            if ((gameState.ringLvl || 0) > 0) accCount++;
+            if (profileAccSummary) profileAccSummary.innerText = `${accCount}종 소유중 (목:${gameState.necklaceLvl || 0}강 / 팔:${gameState.braceletLvl || 0}강 / 반:${gameState.ringLvl || 0}강)`;
+
             const totalEl = document.getElementById("masteredTotalText");
-            if (totalEl) totalEl.innerText = masteredList.length;
+            if (totalEl) totalEl.innerText = `${masteredList.length}개`;
 
             if (masteredList.length === 0) {
-                listDiv.innerHTML = `<p class="text-xs text-[#7e7e7e] text-center py-10 uppercase tracking-wider">아직 학습을 정복한 영단어 목록이 비어 있습니다.</p>`;
+                listDiv.innerHTML = `<p class="text-xs text-gray-500 text-center py-6 uppercase tracking-wider">아직 학습을 정복한 영단어 목록이 비어 있습니다.</p>`;
                 return;
             }
 
-            let html = `<div class="grid grid-cols-2 gap-2">`;
+            let html = `<div class="grid grid-cols-2 sm:grid-cols-3 gap-2">`;
             // 최근 정복 단어부터 앞에 표시
             const displayList = [...masteredList].reverse();
             displayList.forEach(item => {
                 if (item && item.word) {
                     html += `
-                        <div class="bg-[#0d0d0d] p-2.5 border border-[#3c3c3c] rounded-none-forced flex items-center justify-between text-2xs">
+                        <div class="bg-[#04060a] p-2 border border-cyan-900/60 rounded-none-forced flex items-center justify-between text-2xs">
                             <div>
-                                <p class="font-bold text-[#0066b1] font-mono">${capitalizeFirstLetter(item.word)}</p>
-                                <p class="text-[#bbbbbb] mt-0.5">${item.meaning}</p>
+                                <p class="font-black text-cyan-300 font-mono text-xs">${capitalizeFirstLetter(item.word)}</p>
+                                <p class="text-gray-300 text-[10px] mt-0.5">${item.meaning}</p>
                             </div>
-                            <span class="text-[8px] bg-black text-[#0066b1] border border-[#0066b1] font-bold px-2 py-0.5 rounded-none-forced">정복 완료</span>
+                            <span class="text-[8px] bg-black text-cyan-400 border border-cyan-700 font-bold px-1.5 py-0.5 rounded-none-forced">정복</span>
                         </div>
                     `;
                 }

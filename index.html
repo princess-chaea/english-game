@@ -4013,7 +4013,7 @@
             gameState.gold -= cost;
             playSoundEffect('hit');
 
-            const lockedArrSafe = lockedArr || [];
+            // lockedArrSafe already defined above
 
             for (let i = 0; i < unlockedSlots; i++) {
                 if (!lockedArrSafe.includes(i)) {

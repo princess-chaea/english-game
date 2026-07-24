@@ -2816,11 +2816,21 @@
         }
 
         function syncStateFromServer(data) {
-            gameState.grade = data.grade;
-            gameState.classNum = data.classNum;
-            gameState.studentNum = data.studentNum;
-            gameState.name = data.name;
-            gameState.gold = data.gold;
+            if (!data) return;
+            let extra = {};
+            if (data.extraData) {
+                try {
+                    extra = typeof data.extraData === 'string' ? JSON.parse(data.extraData) : data.extraData;
+                } catch(e) {
+                    console.error("Failed to parse extraData:", e);
+                }
+            }
+
+            gameState.grade = data.grade || gameState.grade;
+            gameState.classNum = data.classNum || gameState.classNum;
+            gameState.studentNum = data.studentNum || gameState.studentNum;
+            gameState.name = data.name || gameState.name;
+            gameState.gold = typeof data.gold !== 'undefined' ? data.gold : gameState.gold;
             gameState.avatarType = data.avatarType || "male";
             gameState.helmetLvl = data.helmetLvl || 1;
             gameState.armorLvl = data.armorLvl || 1;
@@ -2832,31 +2842,31 @@
             gameState.progress = data.progress || 0;
             gameState.totalQuizTries = data.totalQuizTries || 0;
             gameState.totalQuizCorrect = data.totalQuizCorrect || 0;
-            gameState.masteredWords = data.masteredWords || [];
+            gameState.masteredWords = extra.masteredWords || data.masteredWords || [];
             gameState.lastSaved = data.lastSaved;
 
             gameState.skillsInventory = data.skillsInventory || [];
             gameState.equippedSkills = data.equippedSkills || [];
             gameState.masteryPoints = data.masteryPoints || 0;
 
-            // 💍 50+ 콘텐츠 확장 필드 클라우드 동기화 셋업
-            gameState.necklaceLvl = data.necklaceLvl || 0;
-            gameState.braceletLvl = data.braceletLvl || 0;
-            gameState.ringLvl = data.ringLvl || 0;
-            gameState.acquiredRelics = data.acquiredRelics || [];
-            gameState.equippedRelicId = data.equippedRelicId || null;
-            gameState.gearPotentials = data.gearPotentials || [];
-            gameState.isPotentialUnlocked = data.isPotentialUnlocked || false;
+            // 💍 50+ 콘텐츠 확장 필드 클라우드 동기화 셋업 (extraData 파싱 지원)
+            gameState.necklaceLvl = extra.necklaceLvl || data.necklaceLvl || 0;
+            gameState.braceletLvl = extra.braceletLvl || data.braceletLvl || 0;
+            gameState.ringLvl = extra.ringLvl || data.ringLvl || 0;
+            gameState.acquiredRelics = extra.acquiredRelics || data.acquiredRelics || [];
+            gameState.equippedRelicId = extra.equippedRelicId || data.equippedRelicId || null;
+            gameState.gearPotentials = extra.gearPotentials || data.gearPotentials || {};
+            gameState.isPotentialUnlocked = typeof extra.isPotentialUnlocked !== 'undefined' ? extra.isPotentialUnlocked : (data.isPotentialUnlocked || false);
+            gameState.lockedPotentialSlots = extra.lockedPotentialSlots || data.lockedPotentialSlots || {};
 
             // 📚 정복 단어, 칭호, 퀴즈 통계 복원
-            gameState.masteredWords = data.masteredWords || [];
-            gameState.wrongWordCounts = data.wrongWordCounts || {};
-            gameState.equippedTitle = data.equippedTitle || "";
-            gameState.wbTitle = data.wbTitle || "";
-            gameState.unlockedTitles = data.unlockedTitles || [];
-            gameState.bossTokens = data.bossTokens || 0;
-            gameState.totalQuizTries = data.totalQuizTries || 0;
-            gameState.totalQuizCorrect = data.totalQuizCorrect || 0;
+            gameState.wrongWordCounts = extra.wrongWordCounts || data.wrongWordCounts || {};
+            gameState.equippedTitle = extra.equippedTitle || data.equippedTitle || "";
+            gameState.wbTitle = extra.wbTitle || data.wbTitle || "";
+            gameState.unlockedTitles = extra.unlockedTitles || data.unlockedTitles || [];
+            gameState.bossTokens = extra.bossTokens || data.bossTokens || 0;
+            gameState.totalQuizTries = extra.totalQuizTries || data.totalQuizTries || 0;
+            gameState.totalQuizCorrect = extra.totalQuizCorrect || data.totalQuizCorrect || 0;
 
             fetchWordsFromSpreadsheet();
         }
@@ -4260,12 +4270,18 @@
                 }
             }
 
-            // 신화 해제 상태 → 네이티브 window.confirm 팝업으로 100% 무조건 확인 창 출력
+            // 신화 해제 상태 → 게임 전용 커스텀 모달(showConfirm)로 아름답고 선명한 팝업 출력
             if (hasMythicUnlocked) {
-                const confirmed = window.confirm("⚠️ [신화 등급] 잠재력 옵션이 잠금 해제 상태입니다!\n\n재설정하면 신화 옵션이 영구 소멸됩니다. 정말 재설정하시겠습니까?");
-                if (!confirmed) {
-                    return; // 취소 선택 시 리롤 중단
-                }
+                const msg = "⚠️ [신화 등급] 잠재력 옵션이 잠금 해제 상태입니다!\n재설정하면 신화 옵션이 영구 소멸됩니다. 정말 재설정하시겠습니까?";
+                showConfirm(
+                    msg,
+                    function() {
+                        _doRerollPotential(gearKey);
+                    },
+                    null,
+                    { icon: "💀", title: "신화 잠재력 소멸 경고", yesLabel: "🔥 재설정", noLabel: "🔒 취소", danger: true }
+                );
+                return; // 팝업 열린 상태에서 리롤 즉시 실행 차단
             }
 
             _doRerollPotential(gearKey);

@@ -6521,11 +6521,6 @@
             lucide.createIcons();
             checkConnectionState();
 
-            // 💡 1.5초 후 무조건 로딩 오버레이 닫는 안전 장치 (통신 지연 시 멈춤 방지)
-            setTimeout(() => {
-                hideGameLoadingOverlay();
-            }, 1500);
-
             // Auto fill last logged in student info from localStorage cache
             const lastStudentRaw = localStorage.getItem("vocahero_last_student");
             if (lastStudentRaw) {
@@ -6538,14 +6533,15 @@
                 } catch(e) {}
             }
 
-            // 🔄 새로고침 시 자동 로그인 세션 복원 장치 (브라우저 종료 시 삭제됨)
+            // 🔄 새로고침 시 자동 로그인 세션 복원 장치
             localStorage.removeItem("vocahero_active_session"); // 기존 localStorage 잔여 세션 삭제
             const activeSessionRaw = sessionStorage.getItem("vocahero_active_session");
             if (activeSessionRaw) {
                 try {
                     const session = JSON.parse(activeSessionRaw);
                     if (session && session.grade && session.name && session.password) {
-                        showGameLoadingOverlay("📜 클라우드에서 영단어 용사 기록을 불러오는 중...");
+                        // ✨ 새로고침 자동 복원 시에도 로딩바 오버레이 출력
+                        showGameLoadingOverlay();
                         tempCredentials = { grade: session.grade, classNum: session.classNum, studentNum: session.studentNum, name: session.name };
                         const savedUrl = getGasUrl();
 

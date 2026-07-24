@@ -4120,16 +4120,17 @@
             }
             const lockedArr = selectedLockedPotentialSlots[selectedGearKey];
 
-            // ⚠️ 신화 등급 경고 확인 팝업 (객체/배열 안전 감지)
+            // ⚠️ 신화 등급 경고 확인 팝업 (객체/배열/명칭 안전 감지)
             const lockedArrSafe = lockedArr || [];
             let hasMythicUnlocked = false;
+            const isMythicOpt = (opt) => opt && (opt.grade === "mythic" || opt.gradeName === "신화" || (typeof opt.grade === "string" && opt.grade.toLowerCase() === "mythic"));
             if (Array.isArray(currentOpts)) {
-                hasMythicUnlocked = currentOpts.some((opt, idx) => idx < unlockedSlots && !lockedArrSafe.includes(idx) && opt && opt.grade === "mythic");
+                hasMythicUnlocked = currentOpts.some((opt, idx) => idx < unlockedSlots && !lockedArrSafe.includes(idx) && isMythicOpt(opt));
             } else if (typeof currentOpts === 'object') {
                 hasMythicUnlocked = Object.keys(currentOpts).some(idxKey => {
                     const idx = Number(idxKey);
                     const opt = currentOpts[idxKey];
-                    return idx < unlockedSlots && !lockedArrSafe.includes(idx) && opt && opt.grade === "mythic";
+                    return idx < unlockedSlots && !lockedArrSafe.includes(idx) && isMythicOpt(opt);
                 });
             }
 
@@ -6159,6 +6160,7 @@
             } else if (tabId === 'gearTab') {
                 buildUpgradeblacksmith();
             } else if (tabId === 'statsTab') {
+                refreshStateVisuals();
                 populateMasteredVocabulary();
             }
         }

@@ -6220,21 +6220,72 @@
             const statRatioEl = document.getElementById("statSuccessRatio");
             if (statRatioEl) statRatioEl.innerText = `${ratio}%`;
 
-            // ✅ 영웅 칭호 태그 렌더링 (장착된 칭호 사용)
+            // ✅ 영웅 칭호 태그 렌더링 (아바타 명찰 및 상단 헤더 내 이름 상자에 장착 칭호 및 등급별 전용 테두리/광원 효과 연동)
+            const activeTitle = gameState.equippedTitle || gameState.wbTitle || "";
+            const titleStr = activeTitle ? `[${activeTitle}] ` : "";
+            const titleDef = AVAILABLE_TITLES.find(t => t.name === activeTitle || t.id === activeTitle);
+
+            const applyTitleStyle = (el, isHeader = false) => {
+                if (!el) return;
+                const prefix = isHeader ? `${gameState.grade}학년 ${gameState.classNum}반 ${gameState.studentNum}번 - ` : "";
+                el.innerText = `${prefix}${titleStr}${gameState.name}`;
+
+                if (titleDef) {
+                    if (titleDef.tier === "신화") {
+                        el.style.color = "#fef08a"; // yellow-200
+                        el.style.borderColor = "#f59e0b"; // amber-500
+                        el.style.backgroundColor = isHeader ? "rgba(45, 20, 3, 0.9)" : "rgba(69, 26, 3, 0.9)";
+                        el.style.boxShadow = "0 0 12px rgba(245, 158, 11, 0.8)";
+                        el.style.textShadow = "0 0 8px rgba(254, 240, 138, 0.9)";
+                    } else if (titleDef.tier === "전설") {
+                        el.style.color = "#fca5a5"; // red-300
+                        el.style.borderColor = "#dc2626"; // red-600
+                        el.style.backgroundColor = isHeader ? "rgba(45, 8, 8, 0.9)" : "rgba(69, 10, 10, 0.9)";
+                        el.style.boxShadow = "0 0 10px rgba(220, 38, 38, 0.7)";
+                        el.style.textShadow = "0 0 6px rgba(252, 165, 165, 0.8)";
+                    } else if (titleDef.tier === "영웅") {
+                        el.style.color = "#e9d5ff"; // purple-200
+                        el.style.borderColor = "#9333ea"; // purple-600
+                        el.style.backgroundColor = isHeader ? "rgba(38, 8, 58, 0.9)" : "rgba(58, 12, 90, 0.9)";
+                        el.style.boxShadow = "0 0 8px rgba(147, 51, 234, 0.6)";
+                        el.style.textShadow = "0 0 6px rgba(233, 213, 255, 0.8)";
+                    } else if (titleDef.tier === "희귀") {
+                        el.style.color = "#7dd3fc"; // sky-300
+                        el.style.borderColor = "#0284c7"; // sky-600
+                        el.style.backgroundColor = isHeader ? "rgba(8, 48, 70, 0.9)" : "rgba(12, 74, 110, 0.9)";
+                        el.style.boxShadow = "0 0 8px rgba(2, 132, 199, 0.5)";
+                        el.style.textShadow = "0 0 5px rgba(125, 211, 252, 0.7)";
+                    } else {
+                        el.style.color = "#d1d5db"; // gray-300
+                        el.style.borderColor = "#4b5563"; // gray-600
+                        el.style.backgroundColor = "#1a1a1a";
+                        el.style.boxShadow = "none";
+                        el.style.textShadow = "none";
+                    }
+                } else if (activeTitle) {
+                    el.style.color = "#fbbf24";
+                    el.style.borderColor = "#d97706";
+                    el.style.backgroundColor = "#1a1a1a";
+                    el.style.boxShadow = "0 0 8px rgba(251,191,36,0.6)";
+                    el.style.textShadow = "0 0 8px rgba(251,191,36,0.6)";
+                } else {
+                    el.style.color = isHeader ? "#e6e6e6" : "#bbbbbb";
+                    el.style.borderColor = "#3c3c3c";
+                    el.style.backgroundColor = "#1a1a1a";
+                    el.style.boxShadow = "none";
+                    el.style.textShadow = "none";
+                }
+            };
+
             const nameTagEl = document.getElementById("heroNameTag");
             if (nameTagEl && gameState.name) {
-                const activeTitle = gameState.equippedTitle || gameState.wbTitle || "";
-                const titleStr = activeTitle ? `[${activeTitle}] ` : "";
-                nameTagEl.innerText = `${titleStr}${gameState.name}`;
-                if (activeTitle) {
-                    nameTagEl.style.color = "#fbbf24";
-                    nameTagEl.style.borderColor = "#d97706";
-                    nameTagEl.style.textShadow = "0 0 8px rgba(251,191,36,0.6)";
-                } else {
-                    nameTagEl.style.color = "";
-                    nameTagEl.style.borderColor = "";
-                    nameTagEl.style.textShadow = "";
-                }
+                applyTitleStyle(nameTagEl, false);
+            }
+
+            const headerUserBox = document.getElementById("userInfoDisplay");
+            const headerNameEl = document.getElementById("displayStudentName");
+            if (headerUserBox && headerNameEl && gameState.name) {
+                applyTitleStyle(headerUserBox, true);
             }
         }
 

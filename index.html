@@ -702,7 +702,7 @@
                             <div class="flex justify-between items-center pt-2 border-t border-[#222]">
                                 <span class="text-[10px] text-gray-400">재설정 비용: <b id="potentialRerollCostText" class="text-yellow-300">50,000 Gold</b></span>
                                 <button onclick="rerollGearPotentials()" class="px-4 py-1.5 bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold text-xs transition rounded-none-forced shadow-md">
-                                    🎲 골드 잠재력 재설정
+                                    🎲 잠재력 재설정
                                 </button>
                             </div>
                         </div>
@@ -713,7 +713,7 @@
                         <div class="flex justify-between items-center mb-2">
                             <h4 class="text-xs font-bold text-purple-400 flex items-center gap-1.5 uppercase tracking-wider">
                                 <i data-lucide="gem" class="w-4 h-4 text-purple-400"></i>
-                                <span>💍 고대 장신구 (50/60/70스테이지 10단위 해금)</span>
+                                <span>💍 고대 장신구</span>
                             </h4>
                         </div>
                         <div class="bg-[#0d0d0d] border border-purple-900/40 p-3 rounded-none-forced">
@@ -2828,7 +2828,6 @@
                         gameState.wbTitle = "수호신";
                         refreshStateVisuals();
                         saveLocalCache();
-                        saveSessionToCloud();
                         showToast(`🎁 [월드보스 토벌 보상] +${earnedFp} FP가 정복 포인트에 적립되었습니다! 👑 [수호신] 칭호가 부여되었습니다!`);
                     }
 
@@ -2845,6 +2844,25 @@
             });
         }
 
+        function getPotentialStatBonus(type) {
+            if (!gameState.gearPotentials || !gameState.isPotentialUnlocked) return 0;
+            ensureGearPotentialsStructure();
+            let total = 0;
+            const keys = ["helmet", "armor", "weapon", "shield", "shoes"];
+            keys.forEach(key => {
+                const unlocked = getGearUnlockedSlotsCount(key);
+                const opts = gameState.gearPotentials[key];
+                if (Array.isArray(opts)) {
+                    for (let i = 0; i < unlocked; i++) {
+                        if (opts[i] && opts[i].type === type) {
+                            total += Number(opts[i].value) || 0;
+                        }
+                    }
+                }
+            });
+            return total;
+        }
+
         function calculateDPSPower() {
             // 자동 DPS = 대장간 장비 DPS + 드래곤 펫 DPS (슬라임=골드, 요정=강화 전용)
             let totalDps = calculateGearDPS();
@@ -2855,6 +2873,16 @@
                 }
             }
             return totalDps;
+        }
+
+        function calculateGearDPS() {
+            let base = (gameState.helmetLvl - 1) * 25 +
+                   (gameState.armorLvl - 1) * 60 +
+                   (gameState.weaponLvl - 1) * 50 +
+                   (gameState.shieldLvl - 1) * 40 +
+                   (gameState.shoesLvl - 1) * 30;
+            const potentialAtkPct = getPotentialStatBonus('atk');
+            return Math.floor(base * (1 + potentialAtkPct / 100));
         }
 
         function calculateClickAttackPower() {
@@ -3016,12 +3044,13 @@
             };
         }
 
-        function calculateGearDPS() {
-            return (gameState.helmetLvl - 1) * 25 +
-                   (gameState.armorLvl - 1) * 60 +
-                   (gameState.weaponLvl - 1) * 50 +
-                   (gameState.shieldLvl - 1) * 40 +
-                   (gameState.shoesLvl - 1) * 30;
+        let selectedGearKey = "helmet"; // default: 'helmet', 'armor', 'weapon', 'shield', 'shoes'
+        let selectedLockedPotentialSlots = {}; // { helmet: [], armor: [], ... }
+
+        function selectGearForPotential(key) {
+            selectedGearKey = key;
+            buildUpgradeblacksmith();
+            renderGearPotentialLabUI();
         }
 
         function buildUpgradeblacksmith() {
@@ -3039,6 +3068,8 @@
                 const clickBonusMap = { weapon: 3, armor: 1, shield: 1 };
                 const dpsBonus = dpsBonusMap[gearKey] || 0;
                 const clickBonus = clickBonusMap[gearKey] || 0;
+
+                const isSelectedForPotential = selectedGearKey === gearKey;
 
                 let rateHtml = "";
                 if (isMax) {
@@ -3064,15 +3095,16 @@
                 }
 
                 html += `
-                    <div class="flex items-stretch gap-0 bg-[#0d0d0d] border border-[#262626] rounded-none-forced overflow-hidden">
+                    <div onclick="selectGearForPotential('${gearKey}')" class="cursor-pointer flex items-stretch gap-0 bg-[#0d0d0d] border ${isSelectedForPotential ? 'border-yellow-400 shadow-[0_0_10px_rgba(234,179,8,0.5)]' : 'border-[#262626]'} hover:border-yellow-500/70 transition rounded-none-forced overflow-hidden relative group">
+                        ${isSelectedForPotential ? '<span class="absolute top-0 right-0 bg-yellow-500 text-black text-[8px] font-black px-1.5 py-0.2 rounded-none-forced z-10">⚡ 잠재력 선택됨</span>' : ''}
                         <div class="flex items-center justify-center w-11 bg-[#111] border-r border-[#262626] flex-shrink-0">
-                            <i data-lucide="${getGearIcon(gearKey)}" class="w-5 h-5 text-[#0066b1]"></i>
+                            <i data-lucide="${getGearIcon(gearKey)}" class="w-5 h-5 ${isSelectedForPotential ? 'text-yellow-400' : 'text-[#0066b1]'}"></i>
                         </div>
                         <div class="flex flex-col justify-center px-3 py-2.5 flex-1 min-w-0">
                             <h4 class="font-bold text-white text-[11px] uppercase tracking-wider leading-tight">${info.name}</h4>
                             <div class="mt-1">${rateHtml}</div>
                         </div>
-                        <button onclick="${isMax ? '' : `upgradeGearItem('${gearKey}')`}" ${isMax ? 'disabled' : ''}
+                        <button onclick="event.stopPropagation(); ${isMax ? '' : `upgradeGearItem('${gearKey}')`}" ${isMax ? 'disabled' : ''}
                             class="flex-shrink-0 flex flex-col items-center justify-center w-20 ${isMax ? 'bg-[#1a1a1a] opacity-50 cursor-not-allowed' : 'bg-[#0066b1] hover:bg-[#0088ee] cursor-pointer'} transition px-2 py-3 border-l border-[#262626]">
                             ${isMax
                                 ? '<span class="text-white text-[10px] font-bold">MAX</span>'
@@ -3230,9 +3262,46 @@
         }
 
         // ==========================================
-        // ⚡ GEAR POTENTIAL SYSTEM (무구 잠재력 리롤 & 잠금)
+        // ⚡ GEAR POTENTIAL SYSTEM (5종 무구별 3~6줄 잠재력 리롤 & 잠금)
         // ==========================================
-        let selectedLockedPotentialSlots = [];
+        function ensureGearPotentialsStructure() {
+            const keys = ["helmet", "armor", "weapon", "shield", "shoes"];
+            if (!gameState.gearPotentials || typeof gameState.gearPotentials !== "object") {
+                gameState.gearPotentials = {};
+            }
+            if (Array.isArray(gameState.gearPotentials)) {
+                const oldArr = gameState.gearPotentials;
+                gameState.gearPotentials = {};
+                keys.forEach((k, idx) => {
+                    gameState.gearPotentials[k] = [];
+                    if (oldArr[idx]) gameState.gearPotentials[k][0] = oldArr[idx];
+                    for (let i = 0; i < 6; i++) {
+                        if (!gameState.gearPotentials[k][i]) {
+                            gameState.gearPotentials[k][i] = generateRandomPotentialOption();
+                        }
+                    }
+                });
+            } else {
+                keys.forEach(k => {
+                    if (!Array.isArray(gameState.gearPotentials[k])) {
+                        gameState.gearPotentials[k] = [];
+                    }
+                    for (let i = 0; i < 6; i++) {
+                        if (!gameState.gearPotentials[k][i]) {
+                            gameState.gearPotentials[k][i] = generateRandomPotentialOption();
+                        }
+                    }
+                });
+            }
+        }
+
+        function getGearUnlockedSlotsCount(gearKey) {
+            const gearLvl = gameState[GEAR_PARAMS[gearKey] ? GEAR_PARAMS[gearKey].key : 'weaponLvl'] || 1;
+            if (gearLvl >= 50) return 6;
+            if (gearLvl >= 40) return 5;
+            if (gearLvl >= 30) return 4;
+            return 3;
+        }
 
         function unlockPotentialLab() {
             const stage = gameState.stage || 1;
@@ -3249,6 +3318,7 @@
 
             gameState.gold -= cost;
             gameState.isPotentialUnlocked = true;
+            ensureGearPotentialsStructure();
             playSoundEffect('levelup');
             showToast("⚡ 축하합니다! [무구 잠재력 연구소]가 정식 개설되었습니다!");
             renderGearPotentialLabUI();
@@ -3257,6 +3327,7 @@
         }
 
         function renderGearPotentialLabUI() {
+            ensureGearPotentialsStructure();
             const tokenText = document.getElementById("bossTokenCountText");
             if (tokenText) tokenText.innerText = (gameState.bossTokens || 0).toLocaleString();
 
@@ -3264,7 +3335,6 @@
             if (!grid) return;
 
             const stage = gameState.stage || 1;
-            const avgGearLvl = Math.floor(((gameState.helmetLvl || 1) + (gameState.armorLvl || 1) + (gameState.weaponLvl || 1) + (gameState.shieldLvl || 1) + (gameState.shoesLvl || 1)) / 5);
 
             // 미해금 시 개설 버튼 표시
             if (!gameState.isPotentialUnlocked) {
@@ -3281,14 +3351,32 @@
                 return;
             }
 
-            let unlockedSlots = 3;
-            if (avgGearLvl >= 30) unlockedSlots = 4;
-            if (avgGearLvl >= 40) unlockedSlots = 5;
-            if (avgGearLvl >= 50) unlockedSlots = 6;
+            const gearKeys = ["helmet", "armor", "weapon", "shield", "shoes"];
+            const gearShortNames = { helmet: "🪖 투구", armor: "🛡️ 갑옷", weapon: "⚔️ 수호검", shield: "🛡️ 방패", shoes: "👟 신발" };
 
-            if (!gameState.gearPotentials) gameState.gearPotentials = [];
+            let tabsHtml = `<div class="col-span-2 sm:col-span-3 flex flex-wrap gap-1.5 mb-2 pb-2 border-b border-[#222]">`;
+            gearKeys.forEach(k => {
+                const info = GEAR_PARAMS[k];
+                const lvl = gameState[info.key] || 1;
+                const isSelected = selectedGearKey === k;
+                tabsHtml += `
+                    <button onclick="selectGearForPotential('${k}')" class="px-2.5 py-1 text-[10px] font-bold rounded-none-forced transition flex items-center gap-1 cursor-pointer ${isSelected ? 'bg-yellow-500 text-black border border-yellow-400 shadow-md font-black' : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-[#333]'}">
+                        <span>${gearShortNames[k]}</span>
+                        <span class="${isSelected ? 'text-black/80' : 'text-yellow-400'} font-mono text-[9px]">(Lv.${lvl})</span>
+                    </button>
+                `;
+            });
+            tabsHtml += `</div>`;
 
-            let html = "";
+            const currentLvl = gameState[GEAR_PARAMS[selectedGearKey].key] || 1;
+            const unlockedSlots = getGearUnlockedSlotsCount(selectedGearKey);
+            const currentGearOpts = gameState.gearPotentials[selectedGearKey] || [];
+            if (!selectedLockedPotentialSlots[selectedGearKey]) {
+                selectedLockedPotentialSlots[selectedGearKey] = [];
+            }
+            const lockedArr = selectedLockedPotentialSlots[selectedGearKey];
+
+            let html = tabsHtml;
             const gradeColorMap = {
                 normal: "border-gray-700 bg-gray-950 text-gray-300",
                 rare: "border-sky-600 bg-sky-950 text-sky-300",
@@ -3297,38 +3385,37 @@
                 mythic: "border-amber-500 bg-amber-950 text-yellow-300 shadow-[0_0_15px_rgba(245,158,11,0.8)] animate-pulse"
             };
 
-            const gearNames = ["🪖 투구 잠재력", "🛡️ 갑옷 잠재력", "⚔️ 수호검 잠재력", "🛡️ 방패 잠재력", "👟 신발 잠재력"];
+            const lockUnlockTextMap = { 3: "30강 달성 시 해금", 4: "40강 달성 시 해금", 5: "50강 달성 시 해금" };
 
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 6; i++) {
                 const isUnlocked = i < unlockedSlots;
                 if (!isUnlocked) {
                     html += `
                         <div class="border border-gray-900 bg-black/60 p-2.5 text-center flex flex-col items-center justify-center min-h-[75px] opacity-40 rounded-none-forced">
-                            <span class="text-[9px] font-bold text-gray-400 mb-0.5">${gearNames[i]}</span>
+                            <span class="text-[9px] font-bold text-gray-400 mb-0.5">${i + 1}번 잠재력 옵션</span>
                             <span class="text-xs text-gray-500 font-bold">🔒 슬롯 잠김</span>
-                            <span class="text-[8px] text-gray-600 mt-1">평균 ${i === 3 ? '40강' : '50강'} 달성</span>
+                            <span class="text-[8px] text-gray-600 mt-1">${lockUnlockTextMap[i] || '고강화 달성 필요'}</span>
                         </div>
                     `;
                     continue;
                 }
 
-                let opt = gameState.gearPotentials[i];
+                let opt = currentGearOpts[i];
                 if (!opt) {
                     opt = generateRandomPotentialOption();
-                    gameState.gearPotentials[i] = opt;
+                    currentGearOpts[i] = opt;
                 }
 
-                const isLocked = selectedLockedPotentialSlots.includes(i);
+                const isLocked = lockedArr.includes(i);
                 const style = gradeColorMap[opt.grade] || gradeColorMap.normal;
 
                 html += `
                     <div class="border ${style} p-2 text-center flex flex-col justify-between min-h-[80px] relative rounded-none-forced">
-                        <button onclick="toggleLockPotentialSlot(${i})" class="absolute -top-1.5 -right-1.5 px-1 py-0.2 text-[8px] font-black rounded-none-forced transition ${isLocked ? 'bg-yellow-400 text-black border border-yellow-600 shadow-md' : 'bg-gray-800 text-gray-400 hover:text-white'}">
+                        <button onclick="toggleLockPotentialSlot('${selectedGearKey}', ${i})" class="absolute -top-1.5 -right-1.5 px-1 py-0.2 text-[8px] font-black rounded-none-forced transition ${isLocked ? 'bg-yellow-400 text-black border border-yellow-600 shadow-md' : 'bg-gray-800 text-gray-400 hover:text-white'}">
                             ${isLocked ? '🔒 잠금' : '🔓 해제'}
                         </button>
                         <div>
-                            <span class="text-[8px] font-bold text-gray-400 block">${gearNames[i]}</span>
-                            <span class="text-[8px] font-bold opacity-80 uppercase block">[${opt.gradeName}]</span>
+                            <span class="text-[8px] font-bold text-gray-400 block">${i + 1}번 옵션 [${opt.gradeName}]</span>
                             <span class="text-xs font-extrabold block mt-0.5">${opt.icon} ${opt.name}</span>
                         </div>
                         <span class="text-[10px] font-bold font-mono text-yellow-300 block">${opt.formatValue}</span>
@@ -3338,9 +3425,9 @@
 
             grid.innerHTML = html;
 
-            const lockedCount = selectedLockedPotentialSlots.length;
-            const costMap = [50000, 150000, 400000, 1000000, 2500000];
-            const currentCost = costMap[Math.min(lockedCount, 4)];
+            const lockedCount = lockedArr.length;
+            const costMap = [50000, 150000, 400000, 1000000, 2500000, 6000000];
+            const currentCost = costMap[Math.min(lockedCount, 5)];
             const costText = document.getElementById("potentialRerollCostText");
             if (costText) costText.innerText = `${currentCost.toLocaleString()} Gold`;
         }
@@ -3356,7 +3443,6 @@
             else if (roll < 0.18) { grade = "hero"; gradeName = "영웅"; mult = 2.2; }
             else if (roll < 0.45) { grade = "rare"; gradeName = "희귀"; mult = 1.5; }
 
-            // 💡 각각의 무구별 5등분 밸런싱 수치 (전체 5개 무구 합산 시 기존과 동일)
             const pool = [
                 { type: "atk", name: "공격력", icon: "⚔️", base: 2, unit: "%" },
                 { type: "skillDmg", name: "마법 피해", icon: "🪄", base: 3, unit: "%" },
@@ -3380,12 +3466,16 @@
             };
         }
 
-        function toggleLockPotentialSlot(idx) {
-            const pos = selectedLockedPotentialSlots.indexOf(idx);
+        function toggleLockPotentialSlot(gearKey, idx) {
+            if (!selectedLockedPotentialSlots[gearKey]) {
+                selectedLockedPotentialSlots[gearKey] = [];
+            }
+            const arr = selectedLockedPotentialSlots[gearKey];
+            const pos = arr.indexOf(idx);
             if (pos >= 0) {
-                selectedLockedPotentialSlots.splice(pos, 1);
+                arr.splice(pos, 1);
             } else {
-                selectedLockedPotentialSlots.push(idx);
+                arr.push(idx);
             }
             renderGearPotentialLabUI();
         }
@@ -3402,7 +3492,23 @@
                 return;
             }
 
-            const lockedCount = selectedLockedPotentialSlots.length;
+            ensureGearPotentialsStructure();
+            const unlockedSlots = getGearUnlockedSlotsCount(selectedGearKey);
+            const currentOpts = gameState.gearPotentials[selectedGearKey] || [];
+            if (!selectedLockedPotentialSlots[selectedGearKey]) {
+                selectedLockedPotentialSlots[selectedGearKey] = [];
+            }
+            const lockedArr = selectedLockedPotentialSlots[selectedGearKey];
+
+            // ⚠️ 신화 등급 경고 확인 팝업
+            const hasMythicUnlocked = currentOpts.some((opt, idx) => idx < unlockedSlots && !lockedArr.includes(idx) && opt && opt.grade === "mythic");
+            if (hasMythicUnlocked) {
+                if (!confirm("⚠️ 선택한 무구의 잠재력 옵션 중 [신화 등급] 옵션이 포함되어 있습니다!\n잠그지 않은 상태로 재설정하면 신화 옵션이 사라집니다. 정말 재설정하시겠습니까?")) {
+                    return;
+                }
+            }
+
+            const lockedCount = lockedArr.length;
             const costMap = [50000, 150000, 400000, 1000000, 2500000, 6000000];
             const cost = costMap[Math.min(lockedCount, 5)];
 
@@ -3414,24 +3520,16 @@
             gameState.gold -= cost;
             playSoundEffect('hit');
 
-            const avgGearLvl = Math.floor(((gameState.helmetLvl || 1) + (gameState.armorLvl || 1) + (gameState.weaponLvl || 1) + (gameState.shieldLvl || 1) + (gameState.shoesLvl || 1)) / 5);
-            let unlockedSlots = 3;
-            if (avgGearLvl >= 30) unlockedSlots = 4;
-            if (avgGearLvl >= 40) unlockedSlots = 5;
-            if (avgGearLvl >= 50) unlockedSlots = 6;
-
-            if (!gameState.gearPotentials) gameState.gearPotentials = [];
-
             for (let i = 0; i < unlockedSlots; i++) {
-                if (!selectedLockedPotentialSlots.includes(i)) {
-                    gameState.gearPotentials[i] = generateRandomPotentialOption();
+                if (!lockedArr.includes(i)) {
+                    currentOpts[i] = generateRandomPotentialOption();
                 }
             }
 
             renderGearPotentialLabUI();
             refreshStateVisuals();
             saveLocalCache();
-            showToast("🎲 무구 잠재력 옵션이 새로 재설정되었습니다!");
+            showToast("🎲 선택한 무구의 잠재력 옵션이 새로 재설정되었습니다!");
         }
 
         // ==========================================

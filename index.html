@@ -2330,9 +2330,11 @@
         let isGoogleScriptActive = false;
         let isBossBattleActive = false;
         let ENABLE_PET_STAGES = true; // 펫 레벨별 10개 성장 이미지 준비 완료 시 true로 설정
-        let bossTimeRemaining = 30.0;
+        let bossTimeRemaining = 60.0;
         let bossTimerInterval = null;
         let bossCriticalsQueue = 0;
+        let hasTriggeredCrit30s = false;
+        let hasTriggeredCrit3s = false;
         let gameLoopInterval = null;
         let monsterCurrentHp = 10;
         let monsterMaxHp = 10;
@@ -5670,18 +5672,18 @@
                 const modal = document.getElementById("criticalDefenseModal");
                 modal.classList.remove("flex");
                 modal.classList.add("hidden");
-                showBattleToast("🛡️ 방어 성공! 보스에게 반격 피해!");
-                
-                // 성공 시 반격 폭딜 (보스전에서는 보스 최대 체력의 10% 반격 고정)
+                // 성공 시 반격 폭딜 (보스전에서는 보스 최대 체력의 10% 반격 고정 및 명확한 문구 표시)
                 let counterDmg = 0;
                 if (isBossBattleActive) {
                     counterDmg = Math.floor(monsterMaxHp * 0.10);
+                    showBattleToast(`🛡️ 방어 성공! 보스 체력 10% 감소! (-${counterDmg.toLocaleString()})`);
                 } else {
                     counterDmg = Math.floor(((calculateClickAttackPower() * 20) + (calculateDPSPower() * 4)) * 2);
+                    showBattleToast(`🛡️ 방어 성공! 반격 타격! (-${counterDmg.toLocaleString()})`);
                 }
                 processCombatDamage(counterDmg);
                 const arena = document.getElementById("battleArena");
-                spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `✨ 패링 어택! -${counterDmg.toLocaleString()}`);
+                spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `✨ 방어 성공! 보스 체력 10% 감소! (-${counterDmg.toLocaleString()})`);
             } else {
                 punishCriticalFailure("스펠링 오답");
             }
@@ -5848,10 +5850,12 @@
             if (isBossBattleActive) return;
 
             isBossBattleActive = true;
-            bossTimeRemaining = 180.0;
-            bossCriticalsQueue = 2; // 보스 도전 시 무조건 2번의 치명적 공격 대기열 생성
+            bossTimeRemaining = 60.0;
+            bossCriticalsQueue = 1; // 1차 기습: 보스 전투 시작 직후 1회
+            hasTriggeredCrit30s = false;
+            hasTriggeredCrit3s = false;
 
-            showBattleToast("🚨 보스 몬스터 출현! 180초 이내 처치!");
+            showBattleToast("🚨 보스 몬스터 출현! 60초 이내 처치!");
             playSoundEffect('levelup');
 
             document.getElementById("bossBattleTimerHeader").classList.remove("hidden");
@@ -5867,12 +5871,24 @@
 
                 bossTimeRemaining -= 0.1;
 
-                // 보스전 전용 크리티컬 방어 기믹 (시작 직후 2문제 연속 출제 대기열 처리)
+                // 2차 기습: 30.0초 남았을 때 1회 발동
+                if (!hasTriggeredCrit30s && bossTimeRemaining <= 30.0) {
+                    hasTriggeredCrit30s = true;
+                    bossCriticalsQueue++;
+                }
+
+                // 3차 기습: 3.0초 남았을 때 1회 발동
+                if (!hasTriggeredCrit3s && bossTimeRemaining <= 3.0) {
+                    hasTriggeredCrit3s = true;
+                    bossCriticalsQueue++;
+                }
+
+                // 보스전 전용 크리티컬 방어 기믹 대기열 처리
                 if (bossCriticalsQueue > 0 && !document.getElementById("criticalDefenseModal").classList.contains("flex")) {
                     bossCriticalsQueue--;
                     if (gameState.wordsPool && gameState.wordsPool.length > 0) {
                         const rWord = gameState.wordsPool[Math.floor(Math.random() * gameState.wordsPool.length)];
-                        showBattleToast("⚠️ 보스의 강력한 연속 공격이 날아옵니다!");
+                        showBattleToast("⚠️ 보스의 치명적인 강력한 공격이 날아옵니다!");
                         triggerCriticalAttack(rWord.word, rWord.meaning, true);
                     }
                 }
@@ -5880,7 +5896,7 @@
                 if (bossTimeRemaining <= 0) {
                     failBossBattle();
                 } else {
-                    const pct = (bossTimeRemaining / 180.0) * 100;
+                    const pct = (bossTimeRemaining / 60.0) * 100;
                     document.getElementById("bossTimerBar").style.width = `${pct}%`;
                     document.getElementById("bossTimeLimitCount").innerText = `${bossTimeRemaining.toFixed(1)}초`;
                 }

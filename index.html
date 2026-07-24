@@ -3762,11 +3762,14 @@
                 keys.forEach((k, idx) => {
                     gameState.gearPotentials[k] = [];
                     if (oldArr[idx]) gameState.gearPotentials[k][0] = hydratePotentialOption(oldArr[idx]);
+                    const unlockedCount = getGearUnlockedSlotsCount(k);
                     for (let i = 0; i < 6; i++) {
-                        if (!gameState.gearPotentials[k][i]) {
+                        if (gameState.gearPotentials[k][i]) {
+                            gameState.gearPotentials[k][i] = hydratePotentialOption(gameState.gearPotentials[k][i]);
+                        } else if (i < unlockedCount) {
                             gameState.gearPotentials[k][i] = generateRandomPotentialOption();
                         } else {
-                            gameState.gearPotentials[k][i] = hydratePotentialOption(gameState.gearPotentials[k][i]);
+                            gameState.gearPotentials[k][i] = null;
                         }
                     }
                 });
@@ -3775,11 +3778,14 @@
                     if (!Array.isArray(gameState.gearPotentials[k])) {
                         gameState.gearPotentials[k] = [];
                     }
+                    const unlockedCount = getGearUnlockedSlotsCount(k);
                     for (let i = 0; i < 6; i++) {
-                        if (!gameState.gearPotentials[k][i]) {
+                        if (gameState.gearPotentials[k][i]) {
+                            gameState.gearPotentials[k][i] = hydratePotentialOption(gameState.gearPotentials[k][i]);
+                        } else if (i < unlockedCount) {
                             gameState.gearPotentials[k][i] = generateRandomPotentialOption();
                         } else {
-                            gameState.gearPotentials[k][i] = hydratePotentialOption(gameState.gearPotentials[k][i]);
+                            gameState.gearPotentials[k][i] = null;
                         }
                     }
                 });

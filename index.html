@@ -1876,7 +1876,6 @@
             <div>
                 <div class="flex justify-between items-center mb-3 border-b border-gray-800 pb-2">
                     <h3 class="font-extrabold text-yellow-400 text-sm flex items-center gap-2">
-                        <i data-lucide="settings" class="w-4 h-4 text-yellow-400"></i>
                         <span>⚙️ 게임 환경 설정</span>
                     </h3>
                     <button onclick="closeModal('settingsModal')" class="text-gray-400 hover:text-white text-lg font-bold">✕</button>
@@ -1896,7 +1895,7 @@
                     </div>
 
                     <!-- 세부 효과음 켜고 끄기 토글 영역 -->
-                    <div class="bg-[#121216] p-3 border border-gray-800 space-y-2.5">
+                    <div id="detailSoundSettingsContainer" class="bg-[#121216] p-3 border border-gray-800 space-y-2.5 transition-all duration-200">
                         <h4 class="font-bold text-gray-300 text-[10px] uppercase tracking-wider mb-1 border-b border-gray-800 pb-1">🔊 세부 효과음 설정</h4>
                         
                         <div class="flex justify-between items-center">
@@ -6240,7 +6239,7 @@
         }
 
         // ⚙️ 환경 설정 모달 & 사운드 컨트롤러
-        function openSettingsModal() {
+        function updateSoundSettingsUI() {
             if (!gameState.soundSettings) {
                 gameState.soundSettings = { masterMute: false, sfxAttack: true, sfxQuiz: true, sfxLevelup: true };
             }
@@ -6250,18 +6249,40 @@
             const sfxAttackEl = document.getElementById("settingSfxAttack");
             const sfxQuizEl = document.getElementById("settingSfxQuiz");
             const sfxLevelupEl = document.getElementById("settingSfxLevelup");
+            const detailContainer = document.getElementById("detailSoundSettingsContainer");
 
             if (masterMuteEl) masterMuteEl.checked = !!ss.masterMute;
-            if (sfxAttackEl) sfxAttackEl.checked = !!ss.sfxAttack;
-            if (sfxQuizEl) sfxQuizEl.checked = !!ss.sfxQuiz;
-            if (sfxLevelupEl) sfxLevelupEl.checked = !!ss.sfxLevelup;
+            if (sfxAttackEl) {
+                sfxAttackEl.checked = ss.masterMute ? false : !!ss.sfxAttack;
+                sfxAttackEl.disabled = !!ss.masterMute;
+            }
+            if (sfxQuizEl) {
+                sfxQuizEl.checked = ss.masterMute ? false : !!ss.sfxQuiz;
+                sfxQuizEl.disabled = !!ss.masterMute;
+            }
+            if (sfxLevelupEl) {
+                sfxLevelupEl.checked = ss.masterMute ? false : !!ss.sfxLevelup;
+                sfxLevelupEl.disabled = !!ss.masterMute;
+            }
 
+            if (detailContainer) {
+                if (ss.masterMute) {
+                    detailContainer.classList.add("opacity-40", "pointer-events-none");
+                } else {
+                    detailContainer.classList.remove("opacity-40", "pointer-events-none");
+                }
+            }
+        }
+
+        function openSettingsModal() {
+            updateSoundSettingsUI();
             openModal("settingsModal");
         }
 
         function toggleMasterMute(isMuted) {
             if (!gameState.soundSettings) gameState.soundSettings = {};
             gameState.soundSettings.masterMute = isMuted;
+            updateSoundSettingsUI();
             showToast(isMuted ? "🔇 전체 사운드가 음소거되었습니다." : "🔊 전체 사운드 음소거가 해제되었습니다.");
             saveSessionToCloud(true);
         }

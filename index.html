@@ -4333,15 +4333,15 @@
             if (accKey === 'necklace') {
                 const dmg = (lvl * 1.5).toFixed(1);
                 const cd = Math.min(30, lvl * 0.3).toFixed(1);
-                return `마법+${dmg}%/쿨-${cd}%`;
+                return `마법+${dmg}%<br>쿨-${cd}%`;
             } else if (accKey === 'bracelet') {
                 const click = lvl * 800;
                 const crit = Math.min(25, lvl * 0.25).toFixed(1);
-                return `타격+${click >= 10000 ? (click/10000).toFixed(1)+'만' : click}/크리+${crit}%`;
+                return `타격+${click >= 10000 ? (click/10000).toFixed(1)+'만' : click}<br>크리+${crit}%`;
             } else if (accKey === 'ring') {
                 const dps = lvl * 1500;
                 const boss = lvl * 1;
-                return `DPS+${dps >= 10000 ? (dps/10000).toFixed(1)+'만' : dps}/보스+${boss}%`;
+                return `DPS+${dps >= 10000 ? (dps/10000).toFixed(1)+'만' : dps}<br>보스+${boss}%`;
             }
             return "";
         }
@@ -5856,9 +5856,9 @@
             if (bLvl) bLvl.innerText = `${gameState.braceletLvl || 0}강`;
             if (rLvl) rLvl.innerText = `${gameState.ringLvl || 0}강`;
 
-            if (nVal) nVal.innerText = getAccessoryEffectSummary('necklace', gameState.necklaceLvl);
-            if (bVal) bVal.innerText = getAccessoryEffectSummary('bracelet', gameState.braceletLvl);
-            if (rVal) rVal.innerText = getAccessoryEffectSummary('ring', gameState.ringLvl);
+            if (nVal) nVal.innerHTML = getAccessoryEffectSummary('necklace', gameState.necklaceLvl);
+            if (bVal) bVal.innerHTML = getAccessoryEffectSummary('bracelet', gameState.braceletLvl);
+            if (rVal) rVal.innerHTML = getAccessoryEffectSummary('ring', gameState.ringLvl);
 
             // ⚠️ 약점 오답 노트 전체 렌더링 (스크롤 기능 추가)
             const weakContainer = document.getElementById("weakWordsContainer");

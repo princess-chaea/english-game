@@ -128,12 +128,12 @@ function initDatabaseSheets() {
                    .setHorizontalAlignment("center");
     bossSheet.setFrozenRows(1);
     
-    // 학년별 보스 기본 체력 10,000,000 탑재
+    // 학년별 보스 기본 체력 10,000,000,000 (100억) 탑재
     var defaultBosses = [
-      [3, 10000000, 10000000, Date.now()],
-      [4, 10000000, 10000000, Date.now()],
-      [5, 10000000, 10000000, Date.now()],
-      [6, 10000000, 10000000, Date.now()]
+      [3, 10000000000, 10000000000, Date.now()],
+      [4, 10000000000, 10000000000, Date.now()],
+      [5, 10000000000, 10000000000, Date.now()],
+      [6, 10000000000, 10000000000, Date.now()]
     ];
     for (var j = 0; j < defaultBosses.length; j++) {
       bossSheet.appendRow(defaultBosses[j]);
@@ -163,27 +163,47 @@ function getWorldBossStatus(grade, studentKey) {
     var bossSheet = ss.getSheetByName("WorldBoss");
     var bossData = bossSheet.getDataRange().getValues();
     
-    var curHp = 10000000;
-    var maxHp = 10000000;
+    var curHp = 10000000000;
+    var maxHp = 10000000000;
     
     for (var i = 1; i < bossData.length; i++) {
       if (String(bossData[i][0]) === String(grade)) {
         curHp = Number(bossData[i][1]);
         maxHp = Number(bossData[i][2]);
+        if (maxHp < 10000000000) {
+          maxHp = 10000000000;
+          if (curHp < maxHp) curHp = maxHp;
+          bossSheet.getRange(i + 1, 2).setValue(curHp);
+          bossSheet.getRange(i + 1, 3).setValue(maxHp);
+        }
         break;
       }
     }
     
-    // 학생 개인 기여도 계산
+    // 학생 개인 기여도 및 랭킹 순위 계산
     var logSheet = ss.getSheetByName("WorldBossLog");
     var logData = logSheet.getDataRange().getValues();
     var myDamage = 0;
     var lastAttackDate = "";
+    var gradeLogList = [];
     
     for (var k = 1; k < logData.length; k++) {
-      if (String(logData[k][0]) === String(grade) && String(logData[k][1]) === String(studentKey)) {
-        myDamage = Number(logData[k][2]);
-        lastAttackDate = String(logData[k][3]);
+      if (String(logData[k][0]) === String(grade)) {
+        var bKey = String(logData[k][1]);
+        var bDmg = Number(logData[k][2]) || 0;
+        gradeLogList.push({ key: bKey, dmg: bDmg });
+        if (bKey === String(studentKey)) {
+          myDamage = bDmg;
+          lastAttackDate = String(logData[k][3]);
+        }
+      }
+    }
+    
+    gradeLogList.sort(function(a, b) { return b.dmg - a.dmg; });
+    var myRank = 999;
+    for (var r = 0; r < gradeLogList.length; r++) {
+      if (gradeLogList[r].key === String(studentKey)) {
+        myRank = r + 1;
         break;
       }
     }
@@ -204,6 +224,7 @@ function getWorldBossStatus(grade, studentKey) {
       maxHp: maxHp,
       myDamage: myDamage,
       sharePct: sharePct.toFixed(2),
+      myRank: myRank,
       canAttack: canAttack
     };
   } catch(e) {

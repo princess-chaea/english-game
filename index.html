@@ -3303,16 +3303,20 @@
                 if (res && res.success && res.curHp <= 0) {
                     const cappedShare = Math.min(100.0, Math.max(0, parseFloat(res.sharePct) || 0)).toFixed(2);
                     const earnedFp = Math.floor(100000 * (parseFloat(res.sharePct) || 0) / 100);
+                    const isRank1 = (res.myRank === 1 || parseFloat(res.sharePct) >= 50);
 
                     // ✅ 실제 FP 보상 지급 (최초 1회만)
                     if (!alreadyRewarded && earnedFp > 0) {
                         localStorage.setItem(victoryRewardKey, "true");
                         gameState.masteryPoints = (gameState.masteryPoints || 0) + earnedFp;
-                        // ✅ [수호신] 칭호 영구 부여 (gameState에 저장)
-                        gameState.wbTitle = "수호신";
+                        if (isRank1) {
+                            gameState.wbTitle = "추호신";
+                            showToast(`🎁 [월드보스 토벌 보상] +${earnedFp.toLocaleString()} FP 적립! 👑 1위 공적으로 [추호신] 칭호 수여!`);
+                        } else {
+                            showToast(`🎁 [월드보스 토벌 보상] +${earnedFp.toLocaleString()} FP 적립! (칭호는 1위 격퇴자 전용)`);
+                        }
                         refreshStateVisuals();
                         saveLocalCache();
-                        showToast(`🎁 [월드보스 토벌 보상] +${earnedFp} FP가 정복 포인트에 적립되었습니다! 👑 [수호신] 칭호가 부여되었습니다!`);
                     }
 
                     // 모달은 한 번만 표시
@@ -6311,7 +6315,7 @@
             { id: "단어의 신", name: "단어의 신", tier: "신화", desc: "단어 정답 500개 이상 누적 달성", condition: (gs) => (gs.totalQuizCorrect || 0) >= 500, style: "mythic-aurora-card border-[#10b981] text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.8)]" },
 
             // 🔥 [전설 등급 - Legendary]
-            { id: "구세주", name: "구세주", tier: "전설", desc: "월드보스 레이드 참전 및 격퇴 성공", condition: (gs) => gs.wbTitle === "수호신" || gs.unlockedTitles?.includes("구세주"), style: "border-[#dc2626] bg-gradient-to-r from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] shadow-[0_0_10px_rgba(220,38,38,0.7)]" },
+            { id: "추호신", name: "추호신", tier: "전설", desc: "월드보스 레이드 1위로 완전 격퇴 성공", condition: (gs) => gs.wbTitle === "추호신" || gs.unlockedTitles?.includes("추호신"), style: "border-[#dc2626] bg-gradient-to-r from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] shadow-[0_0_10px_rgba(220,38,38,0.7)]" },
             { id: "개척자", name: "개척자", tier: "전설", desc: "스테이지 Top 3 이내 진입", condition: (gs, res) => typeof res?.myStageRank === 'number' && res.myStageRank <= 3, style: "border-[#dc2626] bg-gradient-to-r from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] shadow-[0_0_10px_rgba(220,38,38,0.7)]" },
             { id: "전설의 대장장이", name: "전설의 대장장이", tier: "전설", desc: "모든 무구 50강(MAX) 달성", condition: (gs) => (gs.helmetLvl || 1) >= 50 && (gs.armorLvl || 1) >= 50 && (gs.weaponLvl || 1) >= 50 && (gs.shieldLvl || 1) >= 50 && (gs.shoesLvl || 1) >= 50, style: "border-[#d97706] bg-gradient-to-r from-[#b45309] to-[#78350f] text-[#fde68a] shadow-[0_0_10px_rgba(217,119,6,0.7)]" },
             { id: "고고학자", name: "고고학자", tier: "전설", desc: "고대 유물 10개 이상 수집", condition: (gs) => (gs.unlockedRelics || []).length >= 10, style: "border-[#059669] bg-gradient-to-r from-[#047857] to-[#064e3b] text-[#a7f3d0] shadow-[0_0_10px_rgba(5,150,105,0.7)]" },
@@ -7502,9 +7506,12 @@
 
             document.getElementById("worldBossReadyBox").classList.remove("hidden");
 
-            // ✅ 참전 보상: 피해량 비례 골드만 지급 (FP 보상은 격파 확인 후 checkWorldBossVictoryOnStartup에서 통합 처리)
+            // ✅ 참전 즉시 보상: 피해량 비례 골드 + 대량 FP 적립!
             const rewardGold = Math.max(500, Math.floor(wbTotalDamageDealt / 500));
+            const rewardFp = Math.max(100, Math.floor(wbTotalDamageDealt / 2000));
+
             gameState.gold = (gameState.gold || 0) + rewardGold;
+            gameState.masteryPoints = (gameState.masteryPoints || 0) + rewardFp;
 
             // 참전 완료 후 즉시 1일 1회 도전 완료 잠금 처리 (로컬 + 서버 이중 락)
             const todayStr = new Date().toISOString().slice(0, 10);
@@ -7516,11 +7523,11 @@
             saveLocalCache();
 
             updateWorldBossUI();
-            showToast(`${reasonMessage} 🪙 참전 골드 보상: +${rewardGold.toLocaleString()}G 획득! FP 보상은 클리어 팝업을 확인해주세요.`);
+            showToast(`${reasonMessage} 🪙 골드: +${rewardGold.toLocaleString()}G / 🎁 대량 FP: +${rewardFp.toLocaleString()} FP 획득!`);
 
             // 서버 전송 전 즉시 로컬 데이터 가상 반영
             document.getElementById("myWorldBossDmgDisplay").innerText = wbTotalDamageDealt.toLocaleString();
-            document.getElementById("myWorldBossRewardDisplay").innerText = `+${Math.floor(wbTotalDamageDealt / 1000)} FP / [수호신] 칭호`;
+            document.getElementById("myWorldBossRewardDisplay").innerText = `+${rewardFp.toLocaleString()} FP / 👑 [추호신] 칭호 (1위 격퇴 전용)`;
 
             // ✅ 서버에 피해량 전송 → 완료 후 즉시 클리어 보상 체크 (격파자 포함 통합 처리)
             const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;

@@ -2164,7 +2164,20 @@
         // Execute immediately when JS loads on reload
         showGameLoadingOverlay();
 
-        function hideGameLoadingOverlay() {
+        // 🛡️ Safety net: 8초 이내에 로딩이 끝나지 않으면 강제로 로그인 화면으로 전환
+        let _loadingSafetyTimer = setTimeout(function() {
+            const overlay = document.getElementById("gameLoadingOverlay");
+            if (overlay && overlay.style.display !== "none" && !overlay.classList.contains("hidden")) {
+                console.warn("[VocaHero] 로딩 타임아웃 - 강제로 로그인 화면 전환");
+                _doHideGameLoadingOverlay();
+                if (!gameState.name || gameState.name === "방문자") {
+                    setTimeout(() => openModal("loginModal"), 350);
+                }
+            }
+        }, 8000);
+
+        function _doHideGameLoadingOverlay() {
+            clearTimeout(_loadingSafetyTimer);
             if (loadingProgressInterval) {
                 clearInterval(loadingProgressInterval);
                 loadingProgressInterval = null;
@@ -2172,7 +2185,6 @@
             const overlay = document.getElementById("gameLoadingOverlay");
             const bar = document.getElementById("loadingProgressBar");
             if (bar) bar.style.width = "100%";
-
             setTimeout(() => {
                 if (overlay) {
                     overlay.classList.remove("opacity-100");
@@ -2183,6 +2195,10 @@
                     }, 300);
                 }
             }, 250);
+        }
+
+        function hideGameLoadingOverlay() {
+            _doHideGameLoadingOverlay();
         }
 
         function openModal(modalId) {
@@ -2535,8 +2551,12 @@
                 closeModal("newUserRegisterModal");
                 sessionStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
                 showToast("🏰 로컬 원정대 계정 로드 성공!");
+                // initGameEngine() 내에서 hideGameLoadingOverlay()가 이미 호출되지만, 안전망으로도 보장
+                hideGameLoadingOverlay();
             } else {
                 hideGameLoadingOverlay();
+                // 로컬 인증 실패 시 로그인 모달 복원
+                openModal("loginModal");
             }
         }
 
@@ -7301,10 +7321,23 @@
                         const savedUrl = getGasUrl();
 
                         if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
+                            // ⏱️ 클라우드 자동 로그인에 6초 타임아웃 - 응답 없으면 로컬로 대체
+                            let cloudLoginDone = false;
+                            const cloudLoginTimeout = setTimeout(() => {
+                                if (!cloudLoginDone) {
+                                    cloudLoginDone = true;
+                                    console.warn("[VocaHero] 클라우드 자동 로그인 타임아웃 → 로컬 복원 시도");
+                                    handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
+                                }
+                            }, 6000);
+
                             runGas(
                                 "loadOrCreateStudent",
                                 [session.grade, session.classNum, session.studentNum, session.name, "male", session.password],
                                 function (response) {
+                                    if (cloudLoginDone) return; // 타임아웃이 먼저 실행된 경우 무시
+                                    cloudLoginDone = true;
+                                    clearTimeout(cloudLoginTimeout);
                                     if (response && response.error !== "password_mismatch") {
                                         // 클라우드 자동 복원 성공
                                         closeModal("loginModal");
@@ -7318,6 +7351,9 @@
                                     }
                                 },
                                 function () {
+                                    if (cloudLoginDone) return;
+                                    cloudLoginDone = true;
+                                    clearTimeout(cloudLoginTimeout);
                                     // 클라우드 연결 실패 → 로컬 자동 복원
                                     handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
                                 }
@@ -7328,7 +7364,9 @@
                         }
                         return; // 로그인 모달 팝업 방지
                     }
-                } catch(e) {}
+                } catch(e) {
+                    console.error("[VocaHero] 세션 복원 실패:", e);
+                }
             }
 
             // 저장된 세션 없음 → 로그인 모달 표시

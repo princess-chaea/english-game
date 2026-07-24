@@ -3224,10 +3224,12 @@
                     processCombatDamage(dps * delta);
                 }
 
-                // 💡 초당 자동 골드 수당 실시간 통장 가산
+                // 💡 초당 자동 골드 수당 실시간 통장 가산 (슬라임 펫 + 나침반 유물 + 잠재력 적용)
                 const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
                 const slimeBonus = 1 + (slimeLvl * 0.05);
-                const autoGoldPerSec = Math.floor(gameState.stage * 15 * slimeBonus);
+                const compassBonus = 1 + (getEquippedRelicBonus("relic_compass") / 100);
+                const goldPotentialBonus = 1 + (getPotentialStatBonus('goldBonus') / 100);
+                const autoGoldPerSec = Math.floor(gameState.stage * 15 * slimeBonus * compassBonus * goldPotentialBonus);
                 goldAccumulator += autoGoldPerSec * delta;
                 if (goldAccumulator >= 1) {
                     const addG = Math.floor(goldAccumulator);

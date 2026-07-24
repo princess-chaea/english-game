@@ -8146,8 +8146,8 @@
                 const box = document.getElementById("customModalBox");
                 if (overlay && box) {
                     _openCustomModal(icon, title, message, [
-                        { label: noLabel,  primary: false, onClick: onNo  || null },
-                        { label: yesLabel, primary: true, danger: danger, onClick: onYes || null }
+                        { label: yesLabel, primary: true, danger: danger, onClick: onYes || null },
+                        { label: noLabel,  primary: false, onClick: onNo  || null }
                     ]);
                     return;
                 }

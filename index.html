@@ -1342,35 +1342,36 @@
                             <div class="flex justify-between items-center mb-1">
                                 <span class="text-[9px] text-yellow-400 font-black uppercase flex items-center gap-1"><i data-lucide="gem" class="w-3 h-3 text-yellow-400"></i> 🏺 장착 유물 & 💍 장신구 연마 현황</span>
                             </div>
-                            <!-- 유물 영역 크기를 콤팩트하게 줄여서 장신구 텍스트 공간 확보 -->
-                            <div class="bg-black/60 p-1.5 border border-yellow-900/30 flex items-center gap-2 mb-1.5 rounded">
-                                <img id="profileEquippedRelicImg" src="" alt="유물" class="w-6 h-6 object-contain hidden filter drop-shadow-[0_0_6px_rgba(234,179,8,0.7)] shrink-0">
-                                <div class="min-w-0 flex-1 flex flex-col justify-center gap-0.5">
+                            <!-- 유물 영역: 1개이므로 중앙 정렬 배치 -->
+                            <div class="bg-black/60 p-2 border border-yellow-900/30 flex flex-col items-center justify-center text-center mb-1.5 rounded min-h-[55px]">
+                                <div class="flex items-center justify-center gap-1.5 mb-0.5">
+                                    <img id="profileEquippedRelicImg" src="" alt="유물" class="w-6 h-6 object-contain hidden filter drop-shadow-[0_0_6px_rgba(234,179,8,0.7)] shrink-0">
                                     <span id="profileEquippedRelicName" class="text-[10px] font-black text-white truncate">[유물 없음]</span>
-                                    <span id="profileEquippedRelicEffect" class="text-[9px] text-yellow-300 font-mono font-bold break-words leading-tight">미발동</span>
                                 </div>
+                                <span id="profileEquippedRelicEffect" class="text-[9px] text-yellow-300 font-mono font-bold break-words leading-tight">미발동</span>
                             </div>
+                            <!-- 장신구 3개: 선명한 대형 이미지 + 이름강화 + 효과1 + 효과2 (3줄 배치) -->
                             <div class="grid grid-cols-3 gap-1 text-center text-[9px]">
-                                <div class="bg-purple-950/40 border border-purple-800/40 p-1 rounded flex flex-col items-center justify-center">
-                                    <span class="text-purple-300 font-extrabold text-[9px] flex items-center justify-center gap-0.5 whitespace-nowrap">
-                                        <img src="media/accessories/necklace.png" class="w-3 h-3 object-contain" onerror="this.style.display='none'">
-                                        목걸이 <b id="profileNecklaceLvl" class="text-white font-mono">0강</b>
-                                    </span>
-                                    <span id="profileNecklaceVal" class="text-[8.5px] text-purple-200 font-mono font-bold block mt-0.5 leading-none">미연마</span>
+                                <div class="bg-purple-950/40 border border-purple-800/40 p-1.5 rounded flex flex-col items-center justify-center min-w-0">
+                                    <div class="flex items-center justify-center gap-1 mb-1">
+                                        <img src="media/accessories/necklace.png" class="w-5 h-5 object-contain shrink-0" onerror="this.style.display='none'">
+                                        <span class="text-purple-300 font-extrabold text-[9px] whitespace-nowrap">목걸이 <b id="profileNecklaceLvl" class="text-white font-mono">0강</b></span>
+                                    </div>
+                                    <span id="profileNecklaceVal" class="text-[8.5px] text-purple-200 font-mono font-bold block leading-tight break-words">미연마</span>
                                 </div>
-                                <div class="bg-sky-950/40 border border-sky-800/40 p-1 rounded flex flex-col items-center justify-center">
-                                    <span class="text-sky-300 font-extrabold text-[9px] flex items-center justify-center gap-0.5 whitespace-nowrap">
-                                        <img src="media/accessories/bracelet.png" class="w-3 h-3 object-contain" onerror="this.style.display='none'">
-                                        팔찌 <b id="profileBraceletLvl" class="text-white font-mono">0강</b>
-                                    </span>
-                                    <span id="profileBraceletVal" class="text-[8.5px] text-sky-200 font-mono font-bold block mt-0.5 leading-none">미연마</span>
+                                <div class="bg-sky-950/40 border border-sky-800/40 p-1.5 rounded flex flex-col items-center justify-center min-w-0">
+                                    <div class="flex items-center justify-center gap-1 mb-1">
+                                        <img src="media/accessories/bracelet.png" class="w-5 h-5 object-contain shrink-0" onerror="this.style.display='none'">
+                                        <span class="text-sky-300 font-extrabold text-[9px] whitespace-nowrap">팔찌 <b id="profileBraceletLvl" class="text-white font-mono">0강</b></span>
+                                    </div>
+                                    <span id="profileBraceletVal" class="text-[8.5px] text-sky-200 font-mono font-bold block leading-tight break-words">미연마</span>
                                 </div>
-                                <div class="bg-amber-950/40 border border-amber-800/40 p-1 rounded flex flex-col items-center justify-center">
-                                    <span class="text-amber-300 font-extrabold text-[9px] flex items-center justify-center gap-0.5 whitespace-nowrap">
-                                        <img src="media/accessories/ring.png" class="w-3 h-3 object-contain" onerror="this.style.display='none'">
-                                        반지 <b id="profileRingLvl" class="text-white font-mono">0강</b>
-                                    </span>
-                                    <span id="profileRingVal" class="text-[8.5px] text-amber-200 font-mono font-bold block mt-0.5 leading-none">미연마</span>
+                                <div class="bg-amber-950/40 border border-amber-800/40 p-1.5 rounded flex flex-col items-center justify-center min-w-0">
+                                    <div class="flex items-center justify-center gap-1 mb-1">
+                                        <img src="media/accessories/ring.png" class="w-5 h-5 object-contain shrink-0" onerror="this.style.display='none'">
+                                        <span class="text-amber-300 font-extrabold text-[9px] whitespace-nowrap">반지 <b id="profileRingLvl" class="text-white font-mono">0강</b></span>
+                                    </div>
+                                    <span id="profileRingVal" class="text-[8.5px] text-amber-200 font-mono font-bold block leading-tight break-words">미연마</span>
                                 </div>
                             </div>
                         </div>
@@ -1387,23 +1388,20 @@
                         </div>
                     </div>
 
-                    <!-- 3. 획득 재화 현황판 (깔끔 수치 표기) -->
-                    <div class="bg-[#080c08] border border-emerald-900/50 p-3 mb-3 rounded-none-forced">
-                        <h4 class="text-[10px] font-black text-emerald-400 uppercase flex items-center gap-1 mb-2">
-                            <i data-lucide="coins" class="w-3 h-3"></i> 💰 획득 재화 현황
-                        </h4>
+                    <!-- 3. 획득 재화 현황판 (상하 높이 축소 콤팩트 디자인) -->
+                    <div class="bg-[#080c08] border border-emerald-900/50 p-2 mb-2 rounded-none-forced">
                         <div class="grid grid-cols-3 gap-2 text-[9px] text-center">
-                            <div class="bg-black/50 border border-yellow-900/40 p-2.5 rounded">
-                                <div class="text-yellow-400 font-black text-2xl font-mono" id="profileGoldTotal">0</div>
-                                <div class="text-gray-400 text-[10px] mt-0.5">🪙 보유 골드</div>
+                            <div class="bg-black/50 border border-yellow-900/40 p-1.5 rounded flex items-center justify-center gap-2">
+                                <span class="text-gray-400 text-[10px] font-bold">🪙 보유 골드</span>
+                                <span class="text-yellow-400 font-black text-lg font-mono" id="profileGoldTotal">0</span>
                             </div>
-                            <div class="bg-black/50 border border-purple-900/40 p-2.5 rounded">
-                                <div class="text-purple-300 font-black text-2xl font-mono" id="profileFpTotal">0</div>
-                                <div class="text-gray-400 text-[10px] mt-0.5">✨ 보유 FP</div>
+                            <div class="bg-black/50 border border-purple-900/40 p-1.5 rounded flex items-center justify-center gap-2">
+                                <span class="text-gray-400 text-[10px] font-bold">✨ 보유 FP</span>
+                                <span class="text-purple-300 font-black text-lg font-mono" id="profileFpTotal">0</span>
                             </div>
-                            <div class="bg-black/50 border border-amber-900/40 p-2.5 rounded">
-                                <div class="text-amber-300 font-black text-2xl font-mono" id="profileTokenTotal">0</div>
-                                <div class="text-gray-400 text-[10px] mt-0.5">🏛️ 보스 증표</div>
+                            <div class="bg-black/50 border border-amber-900/40 p-1.5 rounded flex items-center justify-center gap-2">
+                                <span class="text-gray-400 text-[10px] font-bold">🏛️ 보스 증표</span>
+                                <span class="text-amber-300 font-black text-lg font-mono" id="profileTokenTotal">0</span>
                             </div>
                         </div>
                     </div>
@@ -4252,10 +4250,8 @@
             // ⚠️ 신화 등급이 해제 상태인 슬롯이 있으면 항상 확인 팝업 (연타 방어)
             const isMythicOpt = (opt) => {
                 if (!opt) return false;
-                const g = String(opt.grade || "").toLowerCase();
-                const gn = String(opt.gradeName || "").toLowerCase();
-                const n = String(opt.name || "").toLowerCase();
-                return g === "mythic" || gn === "신화" || g.includes("mythic") || gn.includes("신화") || n.includes("신화");
+                const str = (JSON.stringify(opt) || "").toLowerCase();
+                return str.includes("mythic") || str.includes("신화");
             };
             let hasMythicUnlocked = false;
 
@@ -4269,8 +4265,9 @@
 
             // 신화 해제 상태 → 항상 팝업으로 확인 후에만 리롤 실행 (연타해도 팝업 우선)
             if (hasMythicUnlocked) {
+                const msg = "⚠️ [신화 등급] 잠재력 옵션이 잠금 해제 상태입니다!\n재설정하면 신화 옵션이 영구 소멸됩니다. 정말 재설정하시겠습니까?";
                 showConfirm(
-                    "⚠️ [신화 등급] 잠재력 옵션이 잠금 해제 상태입니다!\n재설정하면 신화 옵션이 영구 소멸됩니다. 정말 재설정하시겠습니까?",
+                    msg,
                     function() {
                         _doRerollPotential(gearKey);
                     },
@@ -4324,15 +4321,15 @@
             if (accKey === 'necklace') {
                 const dmg = (lvl * 1.5).toFixed(1);
                 const cd = Math.min(30, lvl * 0.3).toFixed(1);
-                return `마법+${dmg}%<br>쿨-${cd}%`;
+                return `스킬 마법 피해 +${dmg}%<br>스킬 쿨타임 감소 -${cd}%`;
             } else if (accKey === 'bracelet') {
                 const click = lvl * 800;
                 const crit = Math.min(25, lvl * 0.25).toFixed(1);
-                return `타격+${click >= 10000 ? (click/10000).toFixed(1)+'만' : click}<br>크리+${crit}%`;
+                return `클릭 타격력 +${click >= 10000 ? (click/10000).toFixed(1)+'만' : click}<br>크리티컬 확률 +${crit}%`;
             } else if (accKey === 'ring') {
                 const dps = lvl * 1500;
                 const boss = lvl * 1;
-                return `DPS+${dps >= 10000 ? (dps/10000).toFixed(1)+'만' : dps}<br>보스+${boss}%`;
+                return `초당 자동 DPS +${dps >= 10000 ? (dps/10000).toFixed(1)+'만' : dps}<br>보스 타격 피해 +${boss}%`;
             }
             return "";
         }

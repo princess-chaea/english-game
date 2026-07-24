@@ -3485,13 +3485,13 @@
 
             if (currentLvl >= 5 && currentLvl < 15) {
                 success = Math.max(50, 100 - (currentLvl - 4) * 5);
-                dropChance = Math.min(30, (currentLvl - 4) * 3);
+                dropChance = Math.min(15, (currentLvl - 4) * 2);
             } else if (currentLvl >= 15 && currentLvl < 25) {
                 success = Math.max(20, 50 - (currentLvl - 14) * 3);
-                dropChance = Math.min(50, 30 + (currentLvl - 14) * 2);
+                dropChance = Math.min(30, Math.floor(15 + (currentLvl - 14) * 1.5));
             } else if (currentLvl >= 25) {
                 success = Math.max(5, 20 - (currentLvl - 24) * 3);
-                dropChance = 60;
+                dropChance = 40;
             }
 
             // 요정 펫 레벨당 강화 성공률 +1% 보정 (최대 95%까지)
@@ -3566,7 +3566,7 @@
                             class="flex-shrink-0 flex flex-col items-center justify-center w-20 ${isMax ? 'bg-[#1a1a1a] opacity-50 cursor-not-allowed' : 'bg-[#0066b1] hover:bg-[#0088ee] cursor-pointer'} transition px-2 py-3 border-l border-[#262626]">
                             ${isMax
                                 ? '<span class="text-white text-[10px] font-bold">MAX</span>'
-                                : `<span class="text-yellow-300 text-[11px] font-bold">🪙 ${cost}G</span>
+                                : `<span class="text-yellow-300 text-[11px] font-bold">🪙 ${cost.toLocaleString()}G</span>
                                    <span class="text-white text-[9px] mt-0.5 opacity-80">강화 시도</span>`}
                         </button>
                     </div>
@@ -3702,7 +3702,7 @@
                             </div>
                             <button onclick="${isMax ? '' : `interactUpgradePet('${petKey}')`}" ${isMax ? 'disabled' : ''} class="w-full mt-2 bmw-btn-primary py-2.5 flex flex-col items-center justify-center ${isMax ? 'opacity-50 cursor-not-allowed' : ''}">
                                 ${isMax ? '<span class="text-white font-bold text-[9px]">진화 최종 도달 (Lv.100)</span>' : `
-                                    <span class="text-[#e22718] font-bold text-[9px]">🪙 ${cost}G</span>
+                                    <span class="text-[#e22718] font-bold text-[9px]">🪙 ${cost.toLocaleString()}G</span>
                                     <span class="text-[8px] opacity-70">${petLevel === 0 ? '연구 및 소환' : '연구 및 진화'}</span>
                                 `}
                             </button>

@@ -538,6 +538,8 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
           equippedRelicId: extraParsed.equippedRelicId || null,
           gearPotentials: extraParsed.gearPotentials || [],
           isPotentialUnlocked: extraParsed.isPotentialUnlocked || false,
+          lockedPotentialSlots: extraParsed.lockedPotentialSlots || {},
+          extraData: extraParsed,
           masteredWords: extraParsed.masteredWords || [],
           equippedTitle: extraParsed.equippedTitle || "",
           wbTitle: extraParsed.wbTitle || "",
@@ -572,7 +574,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
       petLevels: {}, stage: newRow[12], progress: newRow[13], 
       lastSaved: newRow[14], skillsInventory: [], equippedSkills: [], masteryPoints: 0,
       necklaceLvl: 0, braceletLvl: 0, ringLvl: 0,
-      acquiredRelics: [], gearPotentials: [], isPotentialUnlocked: false,
+      acquiredRelics: [], gearPotentials: [], isPotentialUnlocked: false, lockedPotentialSlots: {},
       masteredWords: [], equippedTitle: "", wbTitle: "", unlockedTitles: [],
       bossTokens: 0, totalQuizTries: 0, totalQuizCorrect: 0
     };

@@ -2793,6 +2793,23 @@
             });
         }
 
+        function getReadableSaveMetadata() {
+            let mStr = "";
+            if (gameState.masteredWords) {
+                mStr = gameState.masteredWords.map(w => w.word).join(', ');
+            }
+            let wStr = "";
+            if (gameState.wrongWordCounts) {
+                const wObj = gameState.wrongWordCounts;
+                wStr = Object.keys(wObj)
+                    .map(k => ({ w: k, c: wObj[k] }))
+                    .sort((a, b) => b.c - a.c)
+                    .map(item => `${item.w}(${item.c}회)`)
+                    .join(', ');
+            }
+            return { mastered: mStr, wrong: wStr };
+        }
+
         function saveSessionToCloud() {
             saveLocalCache();
             const savedUrl = getGasUrl();
@@ -2804,6 +2821,7 @@
             showToast("⏳ 구글 시트 클라우드 동기화 저장 중...");
             const petStr = JSON.stringify(gameState.petLevels || {});
             const extraDataStr = buildExtraDataString();
+            const meta = getReadableSaveMetadata();
             
             runGas(
                 "saveStudentProgress",
@@ -2813,7 +2831,7 @@
                     gameState.weaponLvl, gameState.shieldLvl, gameState.shoesLvl, petStr,
                     gameState.stage, gameState.progress, gameState.skillsInventory, gameState.equippedSkills,
                     Number(gameState.masteryPoints) || 0,
-                    extraDataStr
+                    extraDataStr, meta.mastered, meta.wrong
                 ],
                 function (success) {
                     if (success) {
@@ -5802,6 +5820,7 @@
             if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
                 const petStr = JSON.stringify(gameState.petLevels || {});
                 const extraDataStr = buildExtraDataString();
+                const meta = getReadableSaveMetadata();
                 runGas(
                     "saveStudentProgress",
                     [
@@ -5822,7 +5841,9 @@
                         gameState.skillsInventory,
                         gameState.equippedSkills,
                         Number(gameState.masteryPoints) || 0,
-                        extraDataStr
+                        extraDataStr,
+                        meta.mastered,
+                        meta.wrong
                     ],
                     function (response) {
                         if (isSilent) {
@@ -5852,6 +5873,7 @@
             if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
                 const petStr = JSON.stringify(gameState.petLevels || {});
                 const extraDataStr = buildExtraDataString();
+                const meta = getReadableSaveMetadata();
                 runGas(
                     "saveStudentProgress",
                     [
@@ -5860,7 +5882,7 @@
                         gameState.weaponLvl, gameState.shieldLvl, gameState.shoesLvl, petStr,
                         gameState.stage, gameState.progress, gameState.skillsInventory, gameState.equippedSkills,
                         Number(gameState.masteryPoints) || 0,
-                        extraDataStr
+                        extraDataStr, meta.mastered, meta.wrong
                     ],
                     function () {
                         showAlert("데이터가 완벽하게 클라우드에 저장되었습니다! 이제 창이 닫힙니다.", "💾", "저장 완료");

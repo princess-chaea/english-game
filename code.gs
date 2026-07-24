@@ -557,7 +557,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
 }
 
 // 5. 플레이어 진행도 보존 실시간 업로드 동기화 (LockService 적용)
-function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType, helmetLvl, armorLvl, weaponLvl, shieldLvl, shoesLvl, petLevelsStr, stage, progress, skillsInventory, equippedSkills, masteryPoints, extraDataStr) {
+function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType, helmetLvl, armorLvl, weaponLvl, shieldLvl, shoesLvl, petLevelsStr, stage, progress, skillsInventory, equippedSkills, masteryPoints, extraDataStr, readableMastered, readableWrong) {
   var lock = LockService.getScriptLock();
   try {
     lock.waitLock(5000); // 5초 락 대기
@@ -587,18 +587,20 @@ function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType
         // extraDataStr: 신규 50+ 콘텐츠 (장신구, 유물, 잠재력 해금여부) 안전 동기화
         var extraStr = extraDataStr || "";
 
-        // 5번째 열(E, Gold)부터 20번째 열(T, ExtraData)까지 기록
+        // 5번째 열(E, Gold)부터 22번째 열(V, WrongWords)까지 기록
         var rowValues = [
           [
-            gold, avatarType, helmetLvl, armorLvl, weaponLvl, shieldLvl, shoesLvl,
-            petLevelsStr, stage, progress, Date.now(),
+            Number(gold) || 0, avatarType, Number(helmetLvl), Number(armorLvl), Number(weaponLvl),
+            Number(shieldLvl), Number(shoesLvl), petLevelsStr, Number(stage), Number(progress), Date.now(),
             serializedInventory, serializedEquipped, existingPassword, Number(masteryPoints) || 0,
-            extraStr
+            extraStr,
+            readableMastered || "",
+            readableWrong || ""
           ]
         ];
 
         sheet.getRange(targetRow, 18).setNumberFormat("@");
-        sheet.getRange(targetRow, 5, 1, 16).setValues(rowValues);
+        sheet.getRange(targetRow, 5, 1, 18).setValues(rowValues);
         
         return true;
       }

@@ -3821,6 +3821,45 @@
             return "🧚";
         }
 
+        function interactUpgradePet(petKey) {
+            const info = PET_PARAMS[petKey];
+            if (!info) return;
+
+            if (!gameState.petLevels) {
+                gameState.petLevels = { slime: 0, dragon: 0, fairy: 0 };
+            }
+            const currentLvl = gameState.petLevels[petKey] || 0;
+
+            if (currentLvl >= MAX_PET_LEVEL) {
+                showToast(`⭐ 이미 최대 레벨(Lv.${MAX_PET_LEVEL})에 도달한 소환수입니다!`);
+                return;
+            }
+
+            const cost = Math.floor(info.cost * Math.pow(1.12, currentLvl));
+
+            if (gameState.gold < cost) {
+                showToast(`🪙 골드가 부족합니다! ${info.name} 소환/진화에는 ${cost.toLocaleString()} Gold가 필요합니다.`);
+                return;
+            }
+
+            gameState.gold -= cost;
+            gameState.petLevels[petKey] = currentLvl + 1;
+            playSoundEffect('levelup');
+
+            const nextLvl = gameState.petLevels[petKey];
+            const evolvedName = getPetEvolutionName(petKey, nextLvl);
+
+            if (currentLvl === 0) {
+                showToast(`✨ 축하합니다! 새로운 소환수 [${evolvedName}]를 성공적으로 연구 및 소환했습니다!`);
+            } else {
+                showToast(`🐉 [${evolvedName}] 친밀도가 Lv.${nextLvl}로 상승하였습니다!`);
+            }
+
+            buildCompanionPetLab();
+            refreshStateVisuals();
+            saveLocalCache();
+        }
+
         // ==========================================
         // ⚡ GEAR POTENTIAL SYSTEM (5종 무구별 3~6줄 잠재력 리롤 & 잠금)
         // ==========================================

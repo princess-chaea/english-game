@@ -2377,6 +2377,42 @@
             localStorage.setItem(cacheKey, JSON.stringify(gameState));
         }
 
+        function compactGearPotentials(potentialsObj) {
+            if (!potentialsObj || typeof potentialsObj !== "object") return {};
+            const keys = ["helmet", "armor", "weapon", "shield", "shoes"];
+            const compactObj = {};
+            keys.forEach(k => {
+                if (Array.isArray(potentialsObj[k])) {
+                    compactObj[k] = potentialsObj[k].map(opt => {
+                        if (!opt) return null;
+                        return {
+                            grade: opt.grade || "normal",
+                            type: opt.type,
+                            value: opt.value || 0
+                        };
+                    });
+                }
+            });
+            return compactObj;
+        }
+
+        function buildExtraDataString() {
+            return JSON.stringify({
+                necklaceLvl: gameState.necklaceLvl || 0,
+                braceletLvl: gameState.braceletLvl || 0,
+                ringLvl: gameState.ringLvl || 0,
+                acquiredRelics: gameState.acquiredRelics || [],
+                gearPotentials: compactGearPotentials(gameState.gearPotentials),
+                isPotentialUnlocked: gameState.isPotentialUnlocked || false,
+                equippedTitle: gameState.equippedTitle || "",
+                wbTitle: gameState.wbTitle || "",
+                unlockedTitles: gameState.unlockedTitles || [],
+                bossTokens: gameState.bossTokens || 0,
+                totalQuizTries: gameState.totalQuizTries || 0,
+                totalQuizCorrect: gameState.totalQuizCorrect || 0
+            });
+        }
+
         function saveSessionToCloud() {
             saveLocalCache();
             const savedUrl = getGasUrl();
@@ -2387,22 +2423,7 @@
 
             showToast("⏳ 구글 시트 클라우드 동기화 저장 중...");
             const petStr = JSON.stringify(gameState.petLevels || {});
-            
-            const extraDataStr = JSON.stringify({
-                necklaceLvl: gameState.necklaceLvl || 0,
-                braceletLvl: gameState.braceletLvl || 0,
-                ringLvl: gameState.ringLvl || 0,
-                acquiredRelics: gameState.acquiredRelics || [],
-                gearPotentials: gameState.gearPotentials || [],
-                isPotentialUnlocked: gameState.isPotentialUnlocked || false,
-                masteredWords: gameState.masteredWords || [],
-                equippedTitle: gameState.equippedTitle || "",
-                wbTitle: gameState.wbTitle || "",
-                unlockedTitles: gameState.unlockedTitles || [],
-                bossTokens: gameState.bossTokens || 0,
-                totalQuizTries: gameState.totalQuizTries || 0,
-                totalQuizCorrect: gameState.totalQuizCorrect || 0
-            });
+            const extraDataStr = buildExtraDataString();
             
             runGas(
                 "saveStudentProgress",
@@ -3318,6 +3339,34 @@
         // ==========================================
         // ⚡ GEAR POTENTIAL SYSTEM (5종 무구별 3~6줄 잠재력 리롤 & 잠금)
         // ==========================================
+        const POTENTIAL_TYPE_INFO = {
+            atk: { name: "공격력", icon: "⚔️", unit: "%" },
+            skillDmg: { name: "마법 피해", icon: "🪄", unit: "%" },
+            bossDmg: { name: "보스 피해", icon: "🐉", unit: "%" },
+            clickDmg: { name: "클릭 타격", icon: "💥", unit: "" },
+            goldBonus: { name: "골드 수당", icon: "🪙", unit: "%" },
+            critRate: { name: "크리티컬", icon: "🎯", unit: "%" }
+        };
+        const POTENTIAL_GRADE_NAMES = {
+            normal: "일반", rare: "희귀", hero: "영웅", legendary: "전설", mythic: "신화"
+        };
+
+        function hydratePotentialOption(opt) {
+            if (!opt) return opt;
+            const gName = POTENTIAL_GRADE_NAMES[opt.grade] || "일반";
+            const typeInfo = POTENTIAL_TYPE_INFO[opt.type] || { name: opt.type || "능력치", icon: "✨", unit: "" };
+            const val = opt.value || 0;
+            return {
+                grade: opt.grade || "normal",
+                gradeName: opt.gradeName || gName,
+                type: opt.type,
+                name: opt.name || typeInfo.name,
+                icon: opt.icon || typeInfo.icon,
+                value: val,
+                formatValue: opt.formatValue || (typeInfo.unit === "%" ? `+${val}%` : `+${val}`)
+            };
+        }
+
         function ensureGearPotentialsStructure() {
             const keys = ["helmet", "armor", "weapon", "shield", "shoes"];
             if (!gameState.gearPotentials || typeof gameState.gearPotentials !== "object") {
@@ -3328,10 +3377,12 @@
                 gameState.gearPotentials = {};
                 keys.forEach((k, idx) => {
                     gameState.gearPotentials[k] = [];
-                    if (oldArr[idx]) gameState.gearPotentials[k][0] = oldArr[idx];
+                    if (oldArr[idx]) gameState.gearPotentials[k][0] = hydratePotentialOption(oldArr[idx]);
                     for (let i = 0; i < 6; i++) {
                         if (!gameState.gearPotentials[k][i]) {
                             gameState.gearPotentials[k][i] = generateRandomPotentialOption();
+                        } else {
+                            gameState.gearPotentials[k][i] = hydratePotentialOption(gameState.gearPotentials[k][i]);
                         }
                     }
                 });
@@ -3343,6 +3394,8 @@
                     for (let i = 0; i < 6; i++) {
                         if (!gameState.gearPotentials[k][i]) {
                             gameState.gearPotentials[k][i] = generateRandomPotentialOption();
+                        } else {
+                            gameState.gearPotentials[k][i] = hydratePotentialOption(gameState.gearPotentials[k][i]);
                         }
                     }
                 });
@@ -5075,21 +5128,7 @@
             const savedUrl = getGasUrl();
             if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
                 const petStr = JSON.stringify(gameState.petLevels || {});
-                const extraDataStr = JSON.stringify({
-                    necklaceLvl: gameState.necklaceLvl || 0,
-                    braceletLvl: gameState.braceletLvl || 0,
-                    ringLvl: gameState.ringLvl || 0,
-                    acquiredRelics: gameState.acquiredRelics || [],
-                    gearPotentials: gameState.gearPotentials || [],
-                    isPotentialUnlocked: gameState.isPotentialUnlocked || false,
-                    masteredWords: gameState.masteredWords || [],
-                    equippedTitle: gameState.equippedTitle || "",
-                    wbTitle: gameState.wbTitle || "",
-                    unlockedTitles: gameState.unlockedTitles || [],
-                    bossTokens: gameState.bossTokens || 0,
-                    totalQuizTries: gameState.totalQuizTries || 0,
-                    totalQuizCorrect: gameState.totalQuizCorrect || 0
-                });
+                const extraDataStr = buildExtraDataString();
                 runGas(
                     "saveStudentProgress",
                     [

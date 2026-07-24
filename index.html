@@ -1882,10 +1882,10 @@
                 </div>
 
                 <div class="space-y-3 my-2 text-xs">
-                    <!-- 전체 음소거 토글 -->
+                    <!-- 전체 효과음 사운드 토글 (ON: 사운드 켬 / OFF: 전체 음소거) -->
                     <div class="bg-[#121216] p-3 border border-yellow-900/40 flex justify-between items-center">
                         <div>
-                            <span class="font-black text-yellow-300 block text-xs">🔇 전체 음소거</span>
+                            <span class="font-black text-yellow-300 block text-xs">🔊 전체 효과음 사운드</span>
                             <span class="text-[9px] text-gray-400 block mt-0.5">모든 게임 사운드 및 효과음을 한 번에 켜거나 끕니다.</span>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
@@ -2472,10 +2472,11 @@
         function playSoundEffect(type) {
             try {
                 if (!gameState.soundSettings) {
-                    gameState.soundSettings = { masterMute: false, sfxAttack: true, sfxQuiz: true, sfxLevelup: true };
+                    gameState.soundSettings = { masterSoundOn: true, sfxAttack: true, sfxQuiz: true, sfxLevelup: true };
                 }
                 const ss = gameState.soundSettings;
-                if (ss.masterMute) return;
+                if (typeof ss.masterSoundOn !== 'undefined' && !ss.masterSoundOn) return;
+                if (typeof ss.masterSoundOn === 'undefined' && ss.masterMute) return;
 
                 if ((type === 'click' || type === 'hit' || type === 'crit') && !ss.sfxAttack) return;
                 if ((type === 'correct' || type === 'incorrect') && !ss.sfxQuiz) return;
@@ -6292,9 +6293,12 @@
         // ⚙️ 환경 설정 모달 & 사운드 컨트롤러
         function updateSoundSettingsUI() {
             if (!gameState.soundSettings) {
-                gameState.soundSettings = { masterMute: false, sfxAttack: true, sfxQuiz: true, sfxLevelup: true };
+                gameState.soundSettings = { masterSoundOn: true, sfxAttack: true, sfxQuiz: true, sfxLevelup: true };
             }
             const ss = gameState.soundSettings;
+            if (typeof ss.masterSoundOn === 'undefined') {
+                ss.masterSoundOn = typeof ss.masterMute !== 'undefined' ? !ss.masterMute : true;
+            }
 
             const masterMuteEl = document.getElementById("settingMasterMute");
             const sfxAttackEl = document.getElementById("settingSfxAttack");
@@ -6302,22 +6306,24 @@
             const sfxLevelupEl = document.getElementById("settingSfxLevelup");
             const detailContainer = document.getElementById("detailSoundSettingsContainer");
 
-            if (masterMuteEl) masterMuteEl.checked = !!ss.masterMute;
+            const isMasterOn = !!ss.masterSoundOn;
+
+            if (masterMuteEl) masterMuteEl.checked = isMasterOn;
             if (sfxAttackEl) {
-                sfxAttackEl.checked = ss.masterMute ? false : !!ss.sfxAttack;
-                sfxAttackEl.disabled = !!ss.masterMute;
+                sfxAttackEl.checked = isMasterOn ? !!ss.sfxAttack : false;
+                sfxAttackEl.disabled = !isMasterOn;
             }
             if (sfxQuizEl) {
-                sfxQuizEl.checked = ss.masterMute ? false : !!ss.sfxQuiz;
-                sfxQuizEl.disabled = !!ss.masterMute;
+                sfxQuizEl.checked = isMasterOn ? !!ss.sfxQuiz : false;
+                sfxQuizEl.disabled = !isMasterOn;
             }
             if (sfxLevelupEl) {
-                sfxLevelupEl.checked = ss.masterMute ? false : !!ss.sfxLevelup;
-                sfxLevelupEl.disabled = !!ss.masterMute;
+                sfxLevelupEl.checked = isMasterOn ? !!ss.sfxLevelup : false;
+                sfxLevelupEl.disabled = !isMasterOn;
             }
 
             if (detailContainer) {
-                if (ss.masterMute) {
+                if (!isMasterOn) {
                     detailContainer.classList.add("opacity-40", "pointer-events-none");
                 } else {
                     detailContainer.classList.remove("opacity-40", "pointer-events-none");
@@ -6330,11 +6336,12 @@
             openModal("settingsModal");
         }
 
-        function toggleMasterMute(isMuted) {
+        function toggleMasterMute(isSoundOn) {
             if (!gameState.soundSettings) gameState.soundSettings = {};
-            gameState.soundSettings.masterMute = isMuted;
+            gameState.soundSettings.masterSoundOn = isSoundOn;
+            gameState.soundSettings.masterMute = !isSoundOn;
             updateSoundSettingsUI();
-            showToast(isMuted ? "🔇 전체 사운드가 음소거되었습니다." : "🔊 전체 사운드 음소거가 해제되었습니다.");
+            showToast(isSoundOn ? "🔊 전체 효과음 사운드가 활성화되었습니다." : "🔇 전체 사운드가 음소거되었습니다.");
             saveSessionToCloud(true);
         }
 

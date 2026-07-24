@@ -1037,10 +1037,10 @@
                             <div class="bg-[#0d0d0d] p-4 border border-[#3c3c3c] rounded-none-forced flex flex-col gap-3">
                                 <div class="flex items-center justify-between text-xs bg-black p-3 border border-[#262626]">
                                     <span class="text-gray-300 font-bold">내 대장간 장비 생존 HP:</span>
-                                    <span id="playerMaxHpDisplay" class="font-bold text-green-400 font-mono text-sm">💖 100 HP (방어막 5회 오답 버티기)</span>
+                                    <span id="playerMaxHpDisplay" class="font-bold text-green-400 font-mono text-sm">💖 100 HP</span>
                                 </div>
 
-                                <!-- Current Loadout Preview (Pet & Equipped Skills) -->
+                                <!-- Current Loadout Preview (Pet, Skills, Relics & Accessories) -->
                                 <div class="bg-black p-3 border border-[#262626] rounded-none-forced flex flex-col gap-2.5">
                                     <div class="flex justify-between items-center text-xs text-gray-300 font-bold">
                                         <span>⚔️ 참전용사 최종 출전 장비/소환수 점검</span>
@@ -1060,6 +1060,14 @@
                                         <span class="text-[10px] text-gray-400 block font-bold mb-1.5">🔮 장착 스킬 (등급 & 별)</span>
                                         <div id="wbSkillsPreviewContainer" class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                                             <!-- Dynamic Equipped Skills with Grade & Stars -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Equipped Relic & Accessories Loadout Display -->
+                                    <div class="bg-[#0d0d0d] p-2 border border-[#3c3c3c]">
+                                        <span class="text-[10px] text-gray-400 block font-bold mb-1.5">🏺 장착 유물 & 💍 장신구 연마 현황</span>
+                                        <div id="wbRelicAccPreviewContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                            <!-- Dynamic Relic & Accessories Info -->
                                         </div>
                                     </div>
                                 </div>
@@ -2123,7 +2131,7 @@
             { id: "relic_feather", name: "불사조의 깃털 부적", img: "media/relics/relic_7.png", effectDescTemplate: "보스 타격 피해<br>+{val}%", baseBonus: 0.2 },
             { id: "relic_scroll", name: "심해의 비밀 주문서", img: "media/relics/relic_8.png", effectDescTemplate: "스킬 추가 피해<br>+{val}%", baseBonus: 0.1 },
             { id: "relic_crown", name: "태양의 왕관 훈장", img: "media/relics/relic_9.png", effectDescTemplate: "퀴즈 FP 적립<br>+{val}%", baseBonus: 0.5 },
-            { id: "relic_shield", name: "대지의 수호 방패", img: "media/relics/relic_10.png", effectDescTemplate: "치명타 방어<br>+{val}%", baseBonus: 0.1 }
+            { id: "relic_shield", name: "대지의 수호 방패", img: "media/relics/relic_10.png", effectDescTemplate: "오답 방어·강화 보호<br>+{val}%", baseBonus: 0.1 }
         ];
 
         // Skill Grade Configs (색상 코드 및 배율 계수)
@@ -3671,7 +3679,10 @@
                 } else {
                     playSoundEffect('hit');
                     const dropRoll = Math.random() * 100;
-                    if (chanceInfo.dropChance > 0 && dropRoll <= chanceInfo.dropChance) {
+                    const shieldRate = getEquippedRelicBonus("relic_shield");
+                    const isProtected = shieldRate > 0 && (Math.random() * 100 < shieldRate);
+
+                    if (chanceInfo.dropChance > 0 && dropRoll <= chanceInfo.dropChance && !isProtected) {
                         const dropAmt = Math.floor(Math.random() * 3) + 1;
                         const newLvl = Math.max(1, currentLvl - dropAmt);
                         const loss = currentLvl - newLvl;
@@ -3680,6 +3691,11 @@
                             '💥 강화 실패!',
                             `장비 기운이 흔들려 <strong class="text-[#e22718]">Lv.${newLvl}</strong>로 <strong class="text-[#e22718]">-${loss}강</strong> 하락했습니다.`,
                             '#e22718');
+                    } else if (isProtected && chanceInfo.dropChance > 0 && dropRoll <= chanceInfo.dropChance) {
+                        showForgeResult(false,
+                            '🛡️ 대지의 수호 방패 발동!',
+                            `강화가 실패했지만 <strong class="text-emerald-400">대지의 수호 방패 (${shieldRate}%)</strong> 효과로 단계 하락을 방지했습니다!`,
+                            '#10b981');
                     } else {
                         showForgeResult(false,
                             '⚠️ 강화 실패',
@@ -5486,6 +5502,14 @@
             const targetGear = gearKeys[rIdx];
             const targetName = gearNames[rIdx];
 
+            const shieldRate = getEquippedRelicBonus("relic_shield");
+            if (shieldRate > 0 && Math.random() * 100 < shieldRate) {
+                showBattleToast(`🛡️ 대지의 수호 방패 발동! 오답 하락 피해 방어 성공! (${shieldRate}%)`);
+                const errorEl = document.getElementById("criticalDefenseError");
+                if (errorEl) errorEl.innerText = "🛡️ 대지의 수호 방패가 장비 등급 하락을 완전 방어했습니다!";
+                return;
+            }
+
             if (gameState[targetGear] > 1) {
                 gameState[targetGear] -= 1;
                 const msg = `❌ 방어 실패! ${targetName}의 강화 수치가 -1 되었습니다.`;
@@ -6328,7 +6352,9 @@
             document.getElementById("wbBossDesc").innerText = `"${bossInfo.desc}"`;
             document.getElementById("wbWeekBadge").innerText = `${seasonIdx + 1}주차 시즌 보스`;
             document.getElementById("wbGradeTitle").innerText = `${gameState.grade}학년 전용 공유 체력`;
-            document.getElementById("playerMaxHpDisplay").innerText = `💖 ${wbPlayerMaxHp} HP (방어막 ${Math.floor(wbPlayerMaxHp / 20)}회 오답 버티기 가능)`;
+            document.getElementById("playerMaxHpDisplay").innerText = `💖 ${wbPlayerMaxHp} HP`;
+            const dpsDisplay = document.getElementById("wbDpsPreviewText");
+            if (dpsDisplay) dpsDisplay.innerText = calculateDPSPower().toLocaleString();
 
             // 1. 펫 3종 동시 렌더링 (레벨별 진화 1~10단계 이미지 적용)
             const petContainer = document.getElementById("wbPetPreviewContainer");
@@ -6381,6 +6407,24 @@
                     }
                 }
                 skillContainer.innerHTML = skillHtml;
+            }
+
+            // 3. 장착 고대 유물 & 💍 장신구 연마 현황 동시 렌더링
+            const relicAccContainer = document.getElementById("wbRelicAccPreviewContainer");
+            if (relicAccContainer) {
+                let eqR = gameState.equippedRelicId ? RELIC_DEFINITIONS.find(item => item.id === gameState.equippedRelicId) : null;
+                let acR = gameState.equippedRelicId ? (gameState.acquiredRelics || []).find(item => item.id === gameState.equippedRelicId) : null;
+                let relicText = eqR ? `🏺 ${eqR.name} (${getRelicEffectString(eqR, acR)})` : "🏺 [장착 유물 없음]";
+                let accText = `💍 목 ${gameState.necklaceLvl || 0}강 / 팔 ${gameState.braceletLvl || 0}강 / 반 ${gameState.ringLvl || 0}강`;
+                
+                relicAccContainer.innerHTML = `
+                    <div class="bg-[#0d0d0d] p-2 border border-yellow-900/50 flex items-center justify-between text-[9px] text-yellow-300 font-bold truncate">
+                        <span class="truncate">${relicText}</span>
+                    </div>
+                    <div class="bg-[#0d0d0d] p-2 border border-purple-900/50 flex items-center justify-between text-[9px] text-purple-300 font-bold truncate">
+                        <span class="truncate">${accText}</span>
+                    </div>
+                `;
             }
 
             // 로컬 클라이언트 1일 1회 완료 여부 즉시 사전 검사
@@ -7206,12 +7250,18 @@
                 wbComboCount = 0; // 오답 시 콤보 리셋
                 wbWrongCount++;
 
-                // 오답 중첩 시 보스의 피격 데미지 기하급수적 증가 (기본 15 + 오답 횟수 * 15)
-                const bossDmg = 15 + (wbWrongCount * 15);
-                wbPlayerHp -= bossDmg;
-                document.getElementById("wbPlayerHpText").innerText = `${Math.max(0, wbPlayerHp)} / ${wbPlayerMaxHp} HP`;
+                const shieldRate = getEquippedRelicBonus("relic_shield");
+                const isShieldBlocked = shieldRate > 0 && (Math.random() * 100 < shieldRate);
 
-                triggerWorldBossAttackAnim(`💔 오답 ${wbWrongCount}회! 보스 반격 -${bossDmg} HP (콤보 리셋)`);
+                if (isShieldBlocked) {
+                    triggerWorldBossAttackAnim(`🛡️ 대지의 수호 방패 발동! 오답 반격 완전 방어! (${shieldRate}%)`);
+                } else {
+                    // 오답 중첩 시 보스의 피격 데미지 기하급수적 증가 (기본 15 + 오답 횟수 * 15)
+                    const bossDmg = 15 + (wbWrongCount * 15);
+                    wbPlayerHp -= bossDmg;
+                    document.getElementById("wbPlayerHpText").innerText = `${Math.max(0, wbPlayerHp)} / ${wbPlayerMaxHp} HP`;
+                    triggerWorldBossAttackAnim(`💔 오답 ${wbWrongCount}회! 보스 반격 -${bossDmg} HP (콤보 리셋)`);
+                }
 
                 if (wbPlayerHp <= 0) {
                     endWorldBossRaid("💀 연이은 오답으로 보스의 강력한 일격에 사망하셨습니다!");

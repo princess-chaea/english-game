@@ -787,6 +787,56 @@
                         <div id="relicsInventoryGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-2 p-2 bg-[#0d0d0d] border border-[#262626] rounded-none-forced">
                             <!-- Dynamic Relic Cards (Rendered with high quality images & single equip button) -->
                         </div>
+
+                        <!-- 📊 유물 소환 등급 확률 가이드 -->
+                        <div class="mt-3 bg-[#080808] border border-purple-900/40 p-3 rounded-none-forced">
+                            <h5 class="text-[10px] font-extrabold text-purple-300 mb-2 flex items-center gap-1.5">
+                                🎰 고대 유물 소환 등급 확률 & 스탯 배율
+                            </h5>
+                            <table class="w-full text-[9px] text-center border-collapse">
+                                <thead>
+                                    <tr class="bg-black text-gray-500 border-b border-gray-800 font-bold">
+                                        <th class="p-1 text-left">등급</th>
+                                        <th class="p-1">출현 확률</th>
+                                        <th class="p-1">스탯 배율</th>
+                                        <th class="p-1 text-left">효과 예시</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-900 font-mono">
+                                    <tr class="bg-amber-950/20">
+                                        <td class="p-1 text-left font-extrabold text-amber-400">🟡 신화</td>
+                                        <td class="text-amber-300 font-black">0.05%</td>
+                                        <td class="text-amber-300">× 2.5배</td>
+                                        <td class="p-1 text-left text-amber-200/80">스킬 피해 +125%, 골드 +125%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-1 text-left font-bold text-red-400">🔴 전설</td>
+                                        <td class="text-red-300">1.95%</td>
+                                        <td class="text-red-300">× 1.75배</td>
+                                        <td class="p-1 text-left text-red-200/80">스킬 피해 +87%, 골드 +87%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-1 text-left font-bold text-purple-400">🟣 영웅</td>
+                                        <td class="text-purple-300">5.00%</td>
+                                        <td class="text-purple-300">× 1.4배</td>
+                                        <td class="p-1 text-left text-purple-200/80">스킬 피해 +70%, 골드 +70%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-1 text-left font-bold text-sky-400">🔹 희귀</td>
+                                        <td class="text-sky-300">18.00%</td>
+                                        <td class="text-sky-300">× 1.0배</td>
+                                        <td class="p-1 text-left text-sky-200/80">스킬 피해 +50%, 골드 +50%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-1 text-left font-bold text-gray-400">⚪ 일반</td>
+                                        <td class="text-gray-400">75.00%</td>
+                                        <td class="text-gray-400">× 0.7배</td>
+                                        <td class="p-1 text-left text-gray-400">스킬 피해 +35%, 골드 +35%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p class="text-[8px] text-gray-500 mt-1.5">※ ⭐ 한계돌파: 동일 유물 중복 획득 시 성급↑ & 스탯 최대 +20% 추가 상승 | 1회 소환 = 보스 증표 50개</p>
+                        </div>
                     </div>
                 </div>
                 <div
@@ -1268,7 +1318,7 @@
                             </div>
                             <div>
                                 <span id="profileEquippedRelicName" class="text-xs font-black text-white block">[장착된 유물 없음]</span>
-                                <span id="profileEquippedRelicEffect" class="text-[9px] text-yellow-300 font-mono block mt-0.5 truncate">능력치 적용 미발동</span>
+                                <span id="profileEquippedRelicEffect" class="text-[9px] text-yellow-300 font-mono block mt-0.5">능력치 적용 미발동</span>
                             </div>
                             <div class="mt-1 pt-1 border-t border-gray-800 text-[9px] text-purple-300 font-mono">
                                 <span id="profileAccessoriesSummary">장신구: 목:0강 / 팔:0강 / 반:0강</span>
@@ -1287,7 +1337,28 @@
                         </div>
                     </div>
 
-                    <!-- 3. Mastered Vocabulary Catalog Title -->
+                    <!-- 3. 획득 재화 현황판 -->
+                    <div class="bg-[#080c08] border border-emerald-900/50 p-2.5 mb-3 rounded-none-forced">
+                        <h4 class="text-[9px] font-black text-emerald-400 uppercase flex items-center gap-1 mb-2">
+                            <i data-lucide="coins" class="w-3 h-3"></i> 💰 획득 재화 현황
+                        </h4>
+                        <div class="grid grid-cols-3 gap-2 text-[9px] text-center">
+                            <div class="bg-black/50 border border-yellow-900/40 p-1.5 rounded">
+                                <div class="text-yellow-400 font-black text-lg" id="profileGoldTotal">0</div>
+                                <div class="text-gray-400">🪙 보유 골드</div>
+                            </div>
+                            <div class="bg-black/50 border border-purple-900/40 p-1.5 rounded">
+                                <div class="text-purple-300 font-black text-lg" id="profileFpTotal">0</div>
+                                <div class="text-gray-400">✨ 보유 FP</div>
+                            </div>
+                            <div class="bg-black/50 border border-amber-900/40 p-1.5 rounded">
+                                <div class="text-amber-300 font-black text-lg" id="profileTokenTotal">0</div>
+                                <div class="text-gray-400">🏛️ 보스 증표</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Mastered Vocabulary Catalog Title -->
                     <div class="flex justify-between items-center mb-1">
                         <h4 class="text-xs font-bold text-cyan-300 flex items-center gap-1.5 uppercase tracking-wider">
                             <i data-lucide="book-marked" class="w-3.5 h-3.5 text-cyan-400"></i>
@@ -1297,13 +1368,64 @@
                     </div>
 
                     <!-- Dynamic Vocab Mastered Grid list (Clean spacious layout) -->
-                    <div class="bg-[#080a0f] border border-cyan-950 p-2.5 max-h-44 overflow-y-auto mb-2 rounded-none-forced"
+                    <div class="bg-[#080a0f] border border-cyan-950 p-2.5 max-h-36 overflow-y-auto mb-2 rounded-none-forced"
                         id="masteredVocabularyCatalog">
                         <p class="text-xs text-gray-500 text-center py-6 uppercase tracking-wider">아직 학습을 정복한 영단어 목록이 비어 있습니다.</p>
                     </div>
+
+                    <!-- 5. 📖 게임 매뉴얼 인포그래픽 -->
+                    <div class="bg-[#06060e] border border-indigo-900/50 p-3 rounded-none-forced mb-2">
+                        <h4 class="text-[10px] font-black text-indigo-300 flex items-center gap-1.5 mb-2 uppercase">
+                            <i data-lucide="book-open" class="w-3.5 h-3.5 text-indigo-400"></i>
+                            📖 용사 여정 핵심 매뉴얼
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[9px]">
+                            <!-- 퀴즈 전투 -->
+                            <div class="bg-black/40 border border-indigo-800/30 p-2 rounded">
+                                <div class="text-indigo-300 font-black mb-1">⚔️ 퀴즈 전투</div>
+                                <ul class="text-gray-300 space-y-0.5">
+                                    <li>✅ 정답 → 몬스터 공격 피해 +보너스 골드 🪙</li>
+                                    <li>❌ 오답 → 공격 실패 (틀린 단어 오답 노트 자동 기록)</li>
+                                    <li>🗡️ 몬스터 격파 시 <b>자동 스테이지 진행</b></li>
+                                    <li>⭐ 단어 정복 시 <b>FP(정복 포인트) 적립</b></li>
+                                </ul>
+                            </div>
+                            <!-- 스테이지 보스 -->
+                            <div class="bg-black/40 border border-orange-800/30 p-2 rounded">
+                                <div class="text-orange-300 font-black mb-1">🐉 스테이지 보스</div>
+                                <ul class="text-gray-300 space-y-0.5">
+                                    <li>🏆 보스 처치 시 <b>대량 골드 🪙 + 보스 증표 🏛️ 5개</b> 획득</li>
+                                    <li>📈 스테이지 클리어로 다음 스테이지 자동 해금</li>
+                                    <li>🔓 고급 장비 강화·잠재력 연구소 해금</li>
+                                </ul>
+                            </div>
+                            <!-- 월드보스 -->
+                            <div class="bg-black/40 border border-red-800/30 p-2 rounded">
+                                <div class="text-red-300 font-black mb-1">🌍 월드보스</div>
+                                <ul class="text-gray-300 space-y-0.5">
+                                    <li>📅 <b>1일 1회</b> 도전 가능 (자정 초기화)</li>
+                                    <li>💎 피해량에 따라 <b>보스 증표 🏛️ 대량 획득</b></li>
+                                    <li>🏅 명예의 전당 랭킹 반영 (학년·반 비교)</li>
+                                    <li>⏱️ 제한 시간 내 최대 피해 기록으로 순위 경쟁</li>
+                                </ul>
+                            </div>
+                            <!-- 재화 사용처 -->
+                            <div class="bg-black/40 border border-yellow-800/30 p-2 rounded">
+                                <div class="text-yellow-300 font-black mb-1">💰 재화 사용처</div>
+                                <ul class="text-gray-300 space-y-0.5">
+                                    <li>🪙 <b>골드</b> → 장비 강화·소환수 육성·잠재력 재설정</li>
+                                    <li>✨ <b>FP</b> → 마법 스킬 캡슐 뽑기 (1회=50 FP)</li>
+                                    <li>🏛️ <b>보스 증표</b> → 고대 유물 소환 (1회=50 증표)</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-[8px] text-gray-500 border-t border-gray-800 pt-1.5">
+                            💡 팁: 단어를 많이 정복할수록 스탯·재화가 함께 성장! 오답 단어를 반복 학습하면 정답률과 전투력이 올라갑니다.
+                        </div>
+                    </div>
                 </div>
 
-                <!-- 4. Save & Reset Action Buttons (Cleanly contained INSIDE statsTab only) -->
+                <!-- 6. Save & Reset Action Buttons (Cleanly contained INSIDE statsTab only) -->
                 <div class="flex gap-2 mt-2 pt-2 border-t border-cyan-900/50">
                     <button onclick="saveSessionToCloud()"
                         class="flex-1 py-2 bg-cyan-950 hover:bg-cyan-900 border border-cyan-600 text-cyan-200 font-bold text-xs uppercase tracking-widest transition rounded-none-forced flex items-center justify-center gap-1.5 shadow-md">
@@ -1523,7 +1645,7 @@
             </div>
 
             <div class="overflow-y-auto space-y-4 text-xs pr-1 leading-relaxed">
-                <!-- 1. 등급 출현 확률표 -->
+                <!-- 1. 등급 출현 확률표 — 신화 맨 위 → 일반 맨 아래 순서 -->
                 <div class="bg-[#121212] p-3 border border-yellow-900/40 rounded-none-forced">
                     <h4 class="font-extrabold text-yellow-300 mb-2 flex items-center gap-1.5">
                         🎲 1회 재설정 시 등급 출현 확률
@@ -1537,99 +1659,100 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-800">
-                            <tr class="text-gray-300">
-                                <td class="p-1.5 text-left font-bold text-gray-400">⚪ 일반 (Normal)</td>
-                                <td class="p-1.5 font-mono">55.0%</td>
-                                <td class="p-1.5 font-mono text-gray-400">× 1.0 (기본)</td>
-                            </tr>
-                            <tr class="text-sky-300">
-                                <td class="p-1.5 text-left font-bold text-sky-400">🔹 희귀 (Rare)</td>
-                                <td class="p-1.5 font-mono">27.0%</td>
-                                <td class="p-1.5 font-mono text-sky-300">× 1.5배</td>
-                            </tr>
-                            <tr class="text-purple-300">
-                                <td class="p-1.5 text-left font-bold text-purple-400">🟣 영웅 (Hero)</td>
-                                <td class="p-1.5 font-mono">12.0%</td>
-                                <td class="p-1.5 font-mono text-purple-300">× 2.2배</td>
+                            <tr class="text-yellow-300 bg-amber-950/30">
+                                <td class="p-1.5 text-left font-extrabold text-amber-400">🟡 신화 (Mythic)</td>
+                                <td class="p-1.5 font-mono text-yellow-300 font-bold">1.0%</td>
+                                <td class="p-1.5 font-mono text-amber-300 font-bold">× 5.0배 (최상위)</td>
                             </tr>
                             <tr class="text-red-300">
                                 <td class="p-1.5 text-left font-bold text-red-400">🔴 전설 (Legendary)</td>
                                 <td class="p-1.5 font-mono">5.0%</td>
                                 <td class="p-1.5 font-mono text-red-400">× 3.5배</td>
                             </tr>
-                            <tr class="text-yellow-300 bg-amber-950/30">
-                                <td class="p-1.5 text-left font-extrabold text-amber-400">🟡 신화 (Mythic)</td>
-                                <td class="p-1.5 font-mono text-yellow-300 font-bold">1.0%</td>
-                                <td class="p-1.5 font-mono text-amber-300 font-bold">× 5.0배 (최상위)</td>
+                            <tr class="text-purple-300">
+                                <td class="p-1.5 text-left font-bold text-purple-400">🟣 영웅 (Hero)</td>
+                                <td class="p-1.5 font-mono">12.0%</td>
+                                <td class="p-1.5 font-mono text-purple-300">× 2.2배</td>
+                            </tr>
+                            <tr class="text-sky-300">
+                                <td class="p-1.5 text-left font-bold text-sky-400">🔹 희귀 (Rare)</td>
+                                <td class="p-1.5 font-mono">27.0%</td>
+                                <td class="p-1.5 font-mono text-sky-300">× 1.5배</td>
+                            </tr>
+                            <tr class="text-gray-300">
+                                <td class="p-1.5 text-left font-bold text-gray-400">⚪ 일반 (Normal)</td>
+                                <td class="p-1.5 font-mono">55.0%</td>
+                                <td class="p-1.5 font-mono text-gray-400">× 1.0 (기본)</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <!-- 2. 옵션 종류별 등급 수치 급간표 -->
+                <!-- 2. 옵션 유형별 등급 수치 급간표 (최소~최대 범위) -->
                 <div class="bg-[#121212] p-3 border border-yellow-900/40 rounded-none-forced">
-                    <h4 class="font-extrabold text-yellow-300 mb-2 flex items-center gap-1.5">
+                    <h4 class="font-extrabold text-yellow-300 mb-1 flex items-center gap-1.5">
                         ⚔️ 옵션 유형별 등급 수치 급간표
                     </h4>
+                    <p class="text-[8px] text-gray-500 mb-2">※ 동일 등급 내에서도 랜덤 티어로 최솟값~최댓값 범위 내 수치가 결정됩니다.</p>
                     <table class="w-full text-[9px] text-center border-collapse">
                         <thead>
                             <tr class="bg-black text-gray-400 border-b border-gray-800 font-bold">
                                 <th class="p-1 text-left">옵션 이름</th>
-                                <th class="p-1 text-gray-400">일반</th>
-                                <th class="p-1 text-sky-400">희귀</th>
-                                <th class="p-1 text-purple-400">영웅</th>
-                                <th class="p-1 text-red-400">전설</th>
                                 <th class="p-1 text-amber-400 font-bold">신화</th>
+                                <th class="p-1 text-red-400">전설</th>
+                                <th class="p-1 text-purple-400">영웅</th>
+                                <th class="p-1 text-sky-400">희귀</th>
+                                <th class="p-1 text-gray-400">일반</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-800 font-mono">
                             <tr>
-                                <td class="p-1 text-left text-gray-200 font-sans font-bold">⚔️ 무구 공격력 (개별)</td>
-                                <td>+2%</td>
-                                <td class="text-sky-300">+3%</td>
-                                <td class="text-purple-300">+4%</td>
-                                <td class="text-red-400">+7%</td>
-                                <td class="text-yellow-300 font-bold">+10%</td>
+                                <td class="p-1 text-left text-gray-200 font-sans font-bold">⚔️ 무구 공격력</td>
+                                <td class="text-yellow-300 font-bold">+9~+12%</td>
+                                <td class="text-red-400">+6~+8%</td>
+                                <td class="text-purple-300">+4~+5%</td>
+                                <td class="text-sky-300">+3~+3.5%</td>
+                                <td>+2~+2.5%</td>
                             </tr>
                             <tr>
-                                <td class="p-1 text-left text-gray-200 font-sans font-bold">🪄 무구 마법 피해</td>
-                                <td>+3%</td>
-                                <td class="text-sky-300">+4.5%</td>
-                                <td class="text-purple-300">+6.6%</td>
-                                <td class="text-red-400">+10.4%</td>
-                                <td class="text-yellow-300 font-bold">+15%</td>
+                                <td class="p-1 text-left text-gray-200 font-sans font-bold">✨ 스킬 피해<br><span class="text-[8px] text-gray-500 font-normal">（스테이지 보스·월드보스 공통）</span></td>
+                                <td class="text-yellow-300 font-bold">+13~+18%</td>
+                                <td class="text-red-400">+9~+12%</td>
+                                <td class="text-purple-300">+6~+8%</td>
+                                <td class="text-sky-300">+4~+5.5%</td>
+                                <td>+3~+3.5%</td>
                             </tr>
                             <tr>
-                                <td class="p-1 text-left text-gray-200 font-sans font-bold">🐉 무구 보스 피해</td>
-                                <td>+4%</td>
-                                <td class="text-sky-300">+6%</td>
-                                <td class="text-purple-300">+8.8%</td>
-                                <td class="text-red-400">+14%</td>
-                                <td class="text-yellow-300 font-bold">+20%</td>
+                                <td class="p-1 text-left text-gray-200 font-sans font-bold">🐉 보스 피해<br><span class="text-[8px] text-gray-500 font-normal">（스테이지 보스·월드보스 공통）</span></td>
+                                <td class="text-yellow-300 font-bold">+18~+24%</td>
+                                <td class="text-red-400">+12~+16%</td>
+                                <td class="text-purple-300">+8~+10%</td>
+                                <td class="text-sky-300">+5~+7%</td>
+                                <td>+4~+4.5%</td>
                             </tr>
                             <tr>
-                                <td class="p-1 text-left text-gray-200 font-sans font-bold">💥 무구 클릭 타격</td>
-                                <td>+20</td>
-                                <td class="text-sky-300">+30</td>
-                                <td class="text-purple-300">+44</td>
-                                <td class="text-red-400">+70</td>
-                                <td class="text-yellow-300 font-bold">+100</td>
+                                <td class="p-1 text-left text-gray-200 font-sans font-bold">💥 클릭 타격력</td>
+                                <td class="text-yellow-300 font-bold">+90~+120</td>
+                                <td class="text-red-400">+60~+80</td>
+                                <td class="text-purple-300">+40~+50</td>
+                                <td class="text-sky-300">+28~+35</td>
+                                <td>+18~+22</td>
                             </tr>
                             <tr>
-                                <td class="p-1 text-left text-gray-200 font-sans font-bold">🪙 무구 골드 수당</td>
-                                <td>+3%</td>
-                                <td class="text-sky-300">+4.5%</td>
-                                <td class="text-purple-300">+6.6%</td>
-                                <td class="text-red-400">+10.4%</td>
-                                <td class="text-yellow-300 font-bold">+15%</td>
+                                <td class="p-1 text-left text-gray-200 font-sans font-bold">🪙 골드 수당</td>
+                                <td class="text-yellow-300 font-bold">+13~+18%</td>
+                                <td class="text-red-400">+9~+12%</td>
+                                <td class="text-purple-300">+6~+8%</td>
+                                <td class="text-sky-300">+4~+5.5%</td>
+                                <td>+3~+3.5%</td>
                             </tr>
                             <tr>
-                                <td class="p-1 text-left text-gray-200 font-sans font-bold">🎯 무구 크리티컬</td>
-                                <td>+1%</td>
-                                <td class="text-sky-300">+1.4%</td>
-                                <td class="text-purple-300">+2.2%</td>
-                                <td class="text-red-400">+3.4%</td>
-                                <td class="text-yellow-300 font-bold">+5%</td>
+                                <td class="p-1 text-left text-gray-200 font-sans font-bold">🎯 크리티컬 확률</td>
+                                <td class="text-yellow-300 font-bold">+4.5~+6%</td>
+                                <td class="text-red-400">+3~+4%</td>
+                                <td class="text-purple-300">+2~+2.5%</td>
+                                <td class="text-sky-300">+1.3~+1.6%</td>
+                                <td>+1~+1.1%</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1642,7 +1765,7 @@
 
             <div class="border-t border-yellow-900/40 pt-3 flex justify-end">
                 <button onclick="closeModal('potentialProbModal')" class="bg-yellow-600 hover:bg-yellow-500 text-black font-extrabold px-5 py-2 text-xs rounded-none-forced shadow-md">
-                    확인 및 닫기
+                    확인
                 </button>
             </div>
         </div>
@@ -4035,8 +4158,8 @@
                                 <img src="${r.img}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23eab308\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'10\'/><path d=\'M12 6v12M6 12h12\'/></svg>'" class="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]">
                             </div>
 
-                            <h5 class="text-[10px] font-black text-white truncate leading-tight">${r.name}</h5>
-                            <p class="text-[8px] text-yellow-300/90 leading-tight mt-1 truncate" title="${r.effectDesc}">${r.effectDesc}</p>
+                            <h5 class="text-[10px] font-black text-white leading-tight">${r.name}</h5>
+                            <p class="text-[8px] text-yellow-300/90 leading-tight mt-1 break-words whitespace-normal">${r.effectDesc}</p>
                         </div>
 
                         <div class="mt-2">
@@ -5294,6 +5417,14 @@
 
             // 장신구 연마 상태 요약
             if (profileAccSummary) profileAccSummary.innerText = `장신구: 목:${gameState.necklaceLvl || 0}강 / 팔:${gameState.braceletLvl || 0}강 / 반:${gameState.ringLvl || 0}강`;
+
+            // 💰 획득 재화 현황 업데이트
+            const goldEl = document.getElementById("profileGoldTotal");
+            const fpEl = document.getElementById("profileFpTotal");
+            const tokenEl = document.getElementById("profileTokenTotal");
+            if (goldEl) goldEl.innerText = Math.floor(gameState.gold || 0).toLocaleString();
+            if (fpEl) fpEl.innerText = Math.floor(gameState.masteryPoints || 0).toLocaleString();
+            if (tokenEl) tokenEl.innerText = Math.floor(gameState.bossTokens || 0).toLocaleString();
 
             // ⚠️ 약점 오답 노트 TOP 5 렌더링
             const weakContainer = document.getElementById("weakWordsContainer");

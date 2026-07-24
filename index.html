@@ -8031,45 +8031,52 @@
         // ==========================================
         // 🎨 Custom Modal System (replaces alert/confirm)
         // ==========================================
+        // ==========================================
+        // 🎨 Custom Modal System (replaces alert/confirm)
+        // ==========================================
         function _openCustomModal(icon, title, message, buttons) {
             const overlay = document.getElementById("customModalOverlay");
             const box = document.getElementById("customModalBox");
-            if (!overlay || !box) return;
+            if (!overlay || !box) throw new Error("Modal elements not found in DOM");
 
-            document.getElementById("customModalIcon").innerText = icon;
-            document.getElementById("customModalTitle").innerText = title;
-            document.getElementById("customModalMessage").innerText = message;
+            const iconEl = document.getElementById("customModalIcon");
+            const titleEl = document.getElementById("customModalTitle");
+            const msgEl = document.getElementById("customModalMessage");
             const btnsEl = document.getElementById("customModalBtns");
-            btnsEl.innerHTML = "";
-            buttons.forEach(btn => {
-                const el = document.createElement("button");
-                el.innerText = btn.label;
-                el.className = btn.primary
-                    ? "flex-1 py-2.5 px-5 rounded-xl font-extrabold text-sm text-white shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
-                    : "flex-1 py-2.5 px-5 rounded-xl font-bold text-sm transition-all duration-200 hover:scale-105 active:scale-95 border cursor-pointer";
-                if (btn.primary) {
-                    el.style.background = btn.danger
-                        ? "linear-gradient(135deg,#dc2626,#b91c1c)"
-                        : "linear-gradient(135deg,#7c3aed,#4f46e5)";
-                } else {
-                    el.style.background = "rgba(255,255,255,0.05)";
-                    el.style.borderColor = "rgba(255,255,255,0.1)";
-                    el.style.color = "#9ca3af";
-                }
-                el.onclick = (e) => {
-                    e.stopPropagation();
-                    overlay.classList.add("hidden");
-                    overlay.style.display = "none";
-                    if (btn.onClick) btn.onClick();
-                };
-                btnsEl.appendChild(el);
-            });
-            // entry animation
+
+            if (iconEl) iconEl.innerText = icon;
+            if (titleEl) titleEl.innerText = title;
+            if (msgEl) msgEl.innerText = message;
+
+            if (btnsEl) {
+                btnsEl.innerHTML = "";
+                buttons.forEach(btn => {
+                    const el = document.createElement("button");
+                    el.innerText = btn.label;
+                    el.className = btn.primary
+                        ? "flex-1 py-2.5 px-5 rounded-xl font-extrabold text-sm text-white shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+                        : "flex-1 py-2.5 px-5 rounded-xl font-bold text-sm transition-all duration-200 hover:scale-105 active:scale-95 border cursor-pointer";
+                    if (btn.primary) {
+                        el.style.background = btn.danger
+                            ? "linear-gradient(135deg,#dc2626,#b91c1c)"
+                            : "linear-gradient(135deg,#7c3aed,#4f46e5)";
+                    } else {
+                        el.style.background = "rgba(255,255,255,0.05)";
+                        el.style.borderColor = "rgba(255,255,255,0.1)";
+                        el.style.color = "#9ca3af";
+                    }
+                    el.onclick = (e) => {
+                        if (e) e.stopPropagation();
+                        overlay.style.display = "none";
+                        if (btn.onClick) btn.onClick();
+                    };
+                    btnsEl.appendChild(el);
+                });
+            }
+
             box.style.transform = "scale(1) translateY(0)";
             box.style.opacity = "1";
-            box.style.transition = "transform 0.2s cubic-bezier(.22,1,.36,1), opacity 0.15s";
-            overlay.classList.remove("hidden");
-            overlay.style.zIndex = "9999999";
+            overlay.style.zIndex = "99999999";
             overlay.style.display = "flex";
             overlay.style.alignItems = "center";
             overlay.style.justifyContent = "center";
@@ -8079,12 +8086,16 @@
         function showAlert(message, icon, title) {
             icon = icon || "ℹ️";
             title = title || "알림";
-            _openCustomModal(icon, title, message, [
-                { label: "확인", primary: true, onClick: null }
-            ]);
+            try {
+                _openCustomModal(icon, title, message, [
+                    { label: "확인", primary: true, onClick: null }
+                ]);
+            } catch (err) {
+                window.alert(`${icon} ${title}\n\n${message}`);
+            }
         }
 
-        /** confirm() 대체 – onYes/onNo 콜백 */
+        /** confirm() 대체 – onYes/onNo 콜백 (폴백 완비) */
         function showConfirm(message, onYes, onNo, opts) {
             opts = opts || {};
             const icon = opts.icon || "❓";
@@ -8092,10 +8103,28 @@
             const yesLabel = opts.yesLabel || "확인";
             const noLabel = opts.noLabel || "취소";
             const danger = !!opts.danger;
-            _openCustomModal(icon, title, message, [
-                { label: noLabel,  primary: false, onClick: onNo  || null },
-                { label: yesLabel, primary: true, danger: danger, onClick: onYes || null }
-            ]);
+
+            try {
+                const overlay = document.getElementById("customModalOverlay");
+                const box = document.getElementById("customModalBox");
+                if (overlay && box) {
+                    _openCustomModal(icon, title, message, [
+                        { label: noLabel,  primary: false, onClick: onNo  || null },
+                        { label: yesLabel, primary: true, danger: danger, onClick: onYes || null }
+                    ]);
+                    return;
+                }
+            } catch (err) {
+                console.warn("Custom modal failed, using native fallback confirm:", err);
+            }
+
+            // 폴백: 브라우저 기본 confirm 팝업
+            const confirmed = window.confirm(`${icon} ${title}\n\n${message}`);
+            if (confirmed) {
+                if (onYes) onYes();
+            } else {
+                if (onNo) onNo();
+            }
         }
 
     </script>

@@ -5481,14 +5481,14 @@
 
                 const arena = document.getElementById("battleArena");
                 
-                // 단어 정답 시 약점 타격 (보스전에서는 정답 1회당 보스 체력 3.5%~5% 상한 캡 적용하여 초반 원샷 방지)
+                // 단어 정답 시 약점 타격 (스탯 기반 데미지가 최소 안전선 3.5%를 넘어서면 강화/펫/유물 효과로 상한선 자유롭게 돌파!)
                 const chaliceMult = 1.0 + (getEquippedRelicBonus("relic_chalice") / 100);
                 const bossBonus = isBossBattleActive 
                     ? (1.0 + (getEquippedRelicBonus("relic_feather") + getPotentialStatBonus('bossDmg')) / 100)
                     : 1.0;
-                const statDmg = (calculateClickAttackPower() * 10) + (calculateDPSPower() * 2);
+                const statDmg = (calculateClickAttackPower() * 15) + (calculateDPSPower() * 3);
                 const rawQuizDmg = isBossBattleActive 
-                    ? Math.min(Math.floor(monsterMaxHp * 0.05), Math.max(statDmg, Math.floor(monsterMaxHp * 0.035))) 
+                    ? Math.max(statDmg, Math.floor(monsterMaxHp * 0.035)) 
                     : statDmg;
                 const quizDmg = Math.max(10, Math.floor(rawQuizDmg * chaliceMult * bossBonus));
                 processCombatDamage(quizDmg);

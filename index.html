@@ -689,23 +689,23 @@
 
             <!-- TAB 2: RPG Equipment Blacksmith Upgrade Shop -->
             <div id="gearTab"
-                class="bg-black border border-[#3c3c3c] p-5 flex-grow hidden flex-col justify-between min-h-[420px] rounded-none-forced">
+                class="bg-black border border-[#3c3c3c] p-4 flex-grow hidden flex-col justify-between min-h-[420px] rounded-none-forced">
                 <div>
-                    <h3 class="bmw-label-uppercase text-white flex items-center gap-2 mb-3">
+                    <h3 class="bmw-label-uppercase text-white flex items-center gap-2 mb-2">
                         <i data-lucide="anvil" class="text-[#0066b1]"></i>
                         <span>대장간 무구 연마 & 캐릭터 외형 변환</span>
                     </h3>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5" id="gearShopContainer">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2" id="gearShopContainer">
                         <!-- Upgrades generated dynamically to handle visual levels changes -->
                     </div>
 
-                    <!-- ⚡ [40스테이지 해금] 무구 잠재력(Potential) 연구소 -->
-                    <div id="potentialLabContainer" class="mt-6 border-t border-[#262626] pt-4">
+                    <!-- ⚡ 무구 잠재력 -->
+                    <div id="potentialLabContainer" class="mt-4 border-t border-[#262626] pt-3">
                         <div class="flex justify-between items-center mb-2">
                             <h4 class="text-xs font-bold text-yellow-400 flex items-center gap-1.5 uppercase tracking-wider">
                                 <i data-lucide="zap" class="w-4 h-4 text-yellow-400"></i>
-                                <span>⚡ 무구 잠재력(Potential) 연구소 (40스테이지 해금)</span>
+                                <span>⚡ 무구 잠재력</span>
                             </h4>
                             <div class="flex items-center gap-2">
                                 <button onclick="openPotentialProbModal()" class="text-[10px] text-yellow-300 bg-yellow-950/80 border border-yellow-600 px-2 py-0.5 font-bold hover:bg-yellow-900 transition flex items-center gap-1">
@@ -1070,6 +1070,19 @@
                                     <i data-lucide="swords" class="w-6 h-6"></i>
                                     <span>월드보스 토벌전 참전하기 (1일 1회)</span>
                                 </button>
+
+                                <!-- World Boss Reward Info -->
+                                <div class="mt-1 bg-[#0d0d0d] p-3 border border-[#3c3c3c] flex flex-col gap-2 relative overflow-hidden rounded-none-forced">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <i data-lucide="gift" class="w-4 h-4 text-pink-400"></i>
+                                        <span class="font-bold text-pink-400 text-sm tracking-wider">월드보스 토벌 보상 안내</span>
+                                    </div>
+                                    <ul class="text-xs text-gray-400 flex flex-col gap-1.5 list-disc list-inside">
+                                        <li><strong class="text-gray-200">참여 보상:</strong> 누적 피해량 비례 즉시 <span class="text-pink-300 font-bold">FP</span> 획득</li>
+                                        <li><strong class="text-gray-200">토벌 성공 (HP 0):</strong> 격파 시 학년 전체에 <span class="text-yellow-400 font-bold">100,000 FP</span> 기여도 비례 분배</li>
+                                        <li><strong class="text-gray-200">최후의 일격:</strong> 막타를 친 용사에게 <span class="text-purple-400 font-bold">[수호신] 칭호</span> 부여</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -3533,7 +3546,7 @@
         }
 
         function getGearIcon(key) {
-            if (key === 'helmet') return 'shield-alert';
+            if (key === 'helmet') return 'hard-hat';
             if (key === 'armor') return 'shirt';
             if (key === 'weapon') return 'sword';
             if (key === 'shield') return 'shield';

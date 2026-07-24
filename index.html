@@ -903,7 +903,7 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="bg-black border border-[#3c3c3c] p-2 max-h-[300px] min-h-[180px] overflow-y-auto grid grid-cols-4 gap-1.5 rounded-none-forced"
+                        <div class="bg-black border border-[#3c3c3c] p-2 max-h-[480px] min-h-[220px] overflow-y-auto grid grid-cols-4 gap-1.5 rounded-none-forced"
                             id="skillsInventoryGrid">
                             <!-- Filled dynamically -->
                         </div>
@@ -1422,30 +1422,51 @@
                         <p class="text-xs text-gray-500 text-center py-4 uppercase tracking-wider">아직 학습을 정복한 영단어 목록이 비어 있습니다.</p>
                     </div>
 
-                    <!-- 5. 📖 게임 매뉴얼 인포그래픽 -->
+                    <!-- 5. 📖 게임 매뉴얼 인포그래픽 (상세 원복) -->
                     <div class="bg-[#06060e] border border-indigo-900/50 p-2.5 rounded-none-forced">
                         <h4 class="text-[10px] font-black text-indigo-300 flex items-center gap-1.5 mb-1.5 uppercase">
                             <i data-lucide="book-open" class="w-3.5 h-3.5 text-indigo-400"></i>
                             📖 용사 여정 핵심 매뉴얼
                         </h4>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-[9px] text-gray-300">
-                            <div class="bg-black/60 p-2 border border-indigo-950 rounded">
-                                <span class="font-bold text-cyan-300 block mb-0.5">⚔️ 퀴즈 전투 & 오답 복습</span>
-                                <p class="text-gray-400 leading-tight">정답 시 즉시 보스 타격 및 보너스 골드 획득, 오답 시 공격 실패(오답 노드 저장)</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[9px]">
+                            <!-- 퀴즈 전투 -->
+                            <div class="bg-black/40 border border-indigo-800/30 p-1.5 rounded">
+                                <div class="text-indigo-300 font-black mb-0.5">⚔️ 퀴즈 전투</div>
+                                <ul class="text-gray-300 space-y-0.5 leading-tight">
+                                    <li>✅ 정답 → 몬스터 공격 피해 +보너스 골드 🪙</li>
+                                    <li>❌ 오답 → 공격 실패 (틀린 단어 오답 노트 자동 기록)</li>
+                                    <li>🗡️ 몬스터 격파 시 <b>자동 스테이지 진행</b> | ⭐ FP 적립</li>
+                                </ul>
                             </div>
-                            <div class="bg-black/60 p-2 border border-indigo-950 rounded">
-                                <span class="font-bold text-yellow-300 block mb-0.5">🏆 스테이지 보스 & 증표</span>
-                                <p class="text-gray-400 leading-tight">보스 격퇴 시 보스 증표 5개 획득, 다음 단계 해금 및 유물/연구소 오픈</p>
+                            <!-- 스테이지 보스 -->
+                            <div class="bg-black/40 border border-orange-800/30 p-1.5 rounded">
+                                <div class="text-orange-300 font-black mb-0.5">🐉 스테이지 보스</div>
+                                <ul class="text-gray-300 space-y-0.5 leading-tight">
+                                    <li>🏆 보스 처치 시 <b>대량 골드 🪙 + 보스 증표 🏛️ 5개</b> 획득</li>
+                                    <li>📈 다음 단계 자동 해금 | 🔓 무구 잠재력 연구소 해금</li>
+                                </ul>
                             </div>
-                            <div class="bg-black/60 p-2 border border-indigo-950 rounded">
-                                <span class="font-bold text-pink-300 block mb-0.5">🏛️ 월드보스 & 스킬 연성</span>
-                                <p class="text-gray-400 leading-tight">FP 포인트로 스킬 캡슐 소환, 월드보스 참여 시 대량 FP 및 증표 보상</p>
+                            <!-- 월드보스 -->
+                            <div class="bg-black/40 border border-red-800/30 p-1.5 rounded">
+                                <div class="text-red-300 font-black mb-0.5">🌍 월드보스</div>
+                                <ul class="text-gray-300 space-y-0.5 leading-tight">
+                                    <li>📅 <b>1일 1회</b> 도전 가능 (자정 초기화)</li>
+                                    <li>💎 피해량 비례 <b>보스 증표 🏛️ 대량 획득</b> & 랭킹 반영</li>
+                                </ul>
+                            </div>
+                            <!-- 재화 사용처 -->
+                            <div class="bg-black/40 border border-yellow-800/30 p-1.5 rounded">
+                                <div class="text-yellow-300 font-black mb-0.5">💰 재화 사용처</div>
+                                <ul class="text-gray-300 space-y-0.5 leading-tight">
+                                    <li>🪙 <b>골드</b> → 장비 강화 / 펫 육성 / 잠재력 재설정</li>
+                                    <li>✨ <b>FP</b> → 마법 스킬 캡슐 | 🏛️ <b>증표</b> → 고대 유물 소환</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mt-1.5 text-[8px] text-gray-500 border-t border-gray-800 pt-1">
+                            💡 팁: 단어를 많이 정복할수록 스탯·재화가 함께 성장! 오답 단어를 반복 학습하면 정답률과 전투력이 올라갑니다.
                         </div>
                     </div>
-                    <div class="mt-2 text-[8px] text-gray-500 border-t border-gray-800 pt-1.5">
-                        💡 팁: 단어를 많이 정복할수록 스탯·재화가 함께 성장! 오답 단어를 반복 학습하면 정답률과 전투력이 올라갑니다.
-                    </div>
-                </div>
                 </div>
 
                 <!-- 6. Save & Reset Action Buttons (Only visible in statsTab) -->

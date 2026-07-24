@@ -3488,7 +3488,7 @@
             const baseHp = 100;
             if (isBossBattleActive) {
                 const regularHp = Math.floor(baseHp * Math.pow(growthFactor, gameState.stage - 1));
-                monsterMaxHp = Math.floor(regularHp * 110); // 110배 보스 체력 (신화 4개 3사이클 사용 시 30% 차감)
+                monsterMaxHp = Math.floor(regularHp * 20); // 20배 보스 체력 (장비 강화도에 맞춰 긴장감 제공)
             } else {
                 monsterMaxHp = Math.floor(baseHp * Math.pow(growthFactor, gameState.stage - 1));
             }
@@ -5479,17 +5479,13 @@
 
                 const arena = document.getElementById("battleArena");
                 
-                // 단어 정답 시 치명타 타격 (보스/일반 Max HP 비례 보정 + 성배/보스유물 버프)
+                // 단어 정답 시 약점 타격 (플레이어의 순수 장비/펫/유물 스탯 공격력에 100% 비례!)
                 const chaliceMult = 1.0 + (getEquippedRelicBonus("relic_chalice") / 100);
                 const bossBonus = isBossBattleActive 
                     ? (1.0 + (getEquippedRelicBonus("relic_feather") + getPotentialStatBonus('bossDmg')) / 100)
                     : 1.0;
-                const hpRatioDmg = isBossBattleActive 
-                    ? Math.floor(monsterMaxHp * 0.037) 
-                    : Math.floor(monsterMaxHp * 0.45);
-                const statQuizDmg = (calculateClickAttackPower() * 60) + (calculateDPSPower() * 10);
-                const rawQuizDmg = Math.max(statQuizDmg, hpRatioDmg);
-                const quizDmg = Math.floor(rawQuizDmg * chaliceMult * bossBonus);
+                const rawQuizDmg = (calculateClickAttackPower() * 30) + (calculateDPSPower() * 6);
+                const quizDmg = Math.max(10, Math.floor(rawQuizDmg * chaliceMult * bossBonus));
                 processCombatDamage(quizDmg);
                 spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `⚡ 퀴즈 크리티컬! -${quizDmg.toLocaleString()}`);
 
@@ -5644,16 +5640,16 @@
                 modal.classList.add("hidden");
                 showBattleToast("🛡️ 방어 성공! 보스에게 반격 피해!");
                 
-                // 성공 시 반격 폭딜 (보스전 크리티컬 방어 1회 성공 시 보스 최대 체력의 10% 데미지 고정 -> 2회 20%)
+                // 성공 시 반격 폭딜 (장비 스탯 클릭 타격력 & DPS 기반 반격)
                 let counterDmg = 0;
                 if (isBossBattleActive) {
-                    counterDmg = Math.floor(monsterMaxHp * 0.10);
+                    counterDmg = Math.floor(((calculateClickAttackPower() * 50) + (calculateDPSPower() * 10)) * 2);
                 } else {
-                    counterDmg = ((calculateClickAttackPower() * 50) + (calculateDPSPower() * 10)) * 3;
+                    counterDmg = Math.floor(((calculateClickAttackPower() * 30) + (calculateDPSPower() * 6)) * 2);
                 }
                 processCombatDamage(counterDmg);
                 const arena = document.getElementById("battleArena");
-                spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `✨ 패링 어택! -${counterDmg}`);
+                spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `✨ 패링 어택! -${counterDmg.toLocaleString()}`);
             } else {
                 punishCriticalFailure("스펠링 오답");
             }

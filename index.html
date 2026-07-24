@@ -5587,11 +5587,12 @@
                 }
             }
 
+            const currentMastered = Math.max(masteredList.length, gameState.totalQuizCorrect || 0);
             const totalEl = document.getElementById("masteredTotalText");
-            if (totalEl) totalEl.innerText = `${masteredList.length}`;
+            if (totalEl) totalEl.innerText = `${currentMastered}`;
 
             const profileTotalEl = document.getElementById("profileMasteredTotalText");
-            if (profileTotalEl) profileTotalEl.innerText = `${masteredList.length}개`;
+            if (profileTotalEl) profileTotalEl.innerText = `${currentMastered}개`;
 
             if (masteredList.length === 0) {
                 listDiv.innerHTML = `<p class="text-xs text-gray-500 text-center py-6 uppercase tracking-wider">아직 학습을 정복한 영단어 목록이 비어 있습니다.</p>`;

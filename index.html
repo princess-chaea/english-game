@@ -2113,16 +2113,16 @@
 
         // 🏺 10종 고대 유물 세부 정의 (1개 전용 장착 시스템)
         const RELIC_DEFINITIONS = [
-            { id: "relic_chalice", name: "고대 지혜의 성배", img: "media/relics/relic_1.png", effectDescTemplate: "단어 퀴즈 정답 피해 +{val}% 급상승", baseBonus: 0.5 },
-            { id: "relic_orb", name: "지옥룡의 붉은 여의주", img: "media/relics/relic_2.png", effectDescTemplate: "전체 초당 자동 DPS +{val}% 증대", baseBonus: 0.3 },
-            { id: "relic_sword", name: "전설 용사의 성검 조각", img: "media/relics/relic_3.png", effectDescTemplate: "마우스 클릭 타격력 +{val}% 극대화", baseBonus: 0.4 },
-            { id: "relic_clock", name: "천공의 수호 시계", img: "media/relics/relic_4.png", effectDescTemplate: "마법 비기 스킬 쿨타임 -{val}% 감소", baseBonus: 0.2 },
-            { id: "relic_compass", name: "황금 풍요의 번개 나침반", img: "media/relics/relic_5.png", effectDescTemplate: "퀴즈 및 몬스터 획득 골드 +{val}% 증대", baseBonus: 0.5 },
-            { id: "relic_dice", name: "파괴의 거인 마법 주사위", img: "media/relics/relic_6.png", effectDescTemplate: "크리티컬 타격 확률 +{val}% 증대", baseBonus: 0.3 },
-            { id: "relic_feather", name: "불사조의 깃털 부적", img: "media/relics/relic_7.png", effectDescTemplate: "보스전 타격 피해 +{val}% 극대화", baseBonus: 0.6 },
-            { id: "relic_scroll", name: "심해의 비밀 주문서", img: "media/relics/relic_8.png", effectDescTemplate: "스킬 시전 시 추가 폭발 피해 +{val}%", baseBonus: 0.4 },
-            { id: "relic_crown", name: "태양의 왕관 훈장", img: "media/relics/relic_9.png", effectDescTemplate: "퀴즈 정답 FP 적립량 +{val}% 증가", baseBonus: 0.3 },
-            { id: "relic_shield", name: "대지의 수호 방패", img: "media/relics/relic_10.png", effectDescTemplate: "몬스터 치명타 공격 방어 성공률 +{val}%", baseBonus: 0.5 }
+            { id: "relic_chalice", name: "고대 지혜의 성배", img: "media/relics/relic_1.png", effectDescTemplate: "단어 정답 피해<br>+{val}%", baseBonus: 0.8 },
+            { id: "relic_orb", name: "지옥룡의 붉은 여의주", img: "media/relics/relic_2.png", effectDescTemplate: "전체 자동 DPS<br>+{val}%", baseBonus: 1.0 },
+            { id: "relic_sword", name: "전설 용사의 성검 조각", img: "media/relics/relic_3.png", effectDescTemplate: "클릭 타격력<br>+{val}%", baseBonus: 1.0 },
+            { id: "relic_clock", name: "천공의 수호 시계", img: "media/relics/relic_4.png", effectDescTemplate: "스킬 쿨타임<br>-{val}%", baseBonus: 0.05 },
+            { id: "relic_compass", name: "황금 풍요의 번개 나침반", img: "media/relics/relic_5.png", effectDescTemplate: "획득 골드량<br>+{val}%", baseBonus: 1.0 },
+            { id: "relic_dice", name: "파괴의 거인 마법 주사위", img: "media/relics/relic_6.png", effectDescTemplate: "크리티컬 확률<br>+{val}%", baseBonus: 0.05 },
+            { id: "relic_feather", name: "불사조의 깃털 부적", img: "media/relics/relic_7.png", effectDescTemplate: "보스 타격 피해<br>+{val}%", baseBonus: 0.2 },
+            { id: "relic_scroll", name: "심해의 비밀 주문서", img: "media/relics/relic_8.png", effectDescTemplate: "스킬 추가 피해<br>+{val}%", baseBonus: 0.1 },
+            { id: "relic_crown", name: "태양의 왕관 훈장", img: "media/relics/relic_9.png", effectDescTemplate: "퀴즈 FP 적립<br>+{val}%", baseBonus: 0.5 },
+            { id: "relic_shield", name: "대지의 수호 방패", img: "media/relics/relic_10.png", effectDescTemplate: "치명타 방어<br>+{val}%", baseBonus: 0.1 }
         ];
 
         // Skill Grade Configs (색상 코드 및 배율 계수)
@@ -3456,12 +3456,12 @@
             // 🎯 크리티컬 확률 & 배율 시스템 (기본 5% + 잠재력 + 팔찌 + 유물)
             const potentialCrit = getPotentialStatBonus('critRate');
             const braceletCrit = Math.min(25, (gameState.braceletLvl || 0) * 0.5);
-            const relicCrit = (gameState.acquiredRelics && gameState.acquiredRelics.includes("relic_dice")) ? 10 : 0;
+            const relicCrit = getEquippedRelicBonus("relic_dice");
             const totalCritChance = 5 + potentialCrit + braceletCrit + relicCrit;
 
             const roll = Math.random() * 100;
             const isCrit = roll < totalCritChance;
-            const critMult = 2.0 + ((gameState.acquiredRelics && gameState.acquiredRelics.includes("relic_dice")) ? 0.5 : 0);
+            const critMult = 2.0;
             const finalDmg = isCrit ? Math.floor(baseClickDmg * critMult) : baseClickDmg;
 
             // 🐉 보스 타격 시 보스 피해 보정 (영웅의 반지 + 보스 잠재력 + 유물)
@@ -3469,7 +3469,7 @@
             if (isBossBattleActive) {
                 const ringBossPct = (gameState.ringLvl || 0) * 2;
                 const potentialBossPct = getPotentialStatBonus('bossDmg');
-                const relicBossPct = (gameState.acquiredRelics && gameState.acquiredRelics.includes("relic_feather")) ? 60 : 0;
+                const relicBossPct = getEquippedRelicBonus("relic_feather");
                 bossMult += (ringBossPct + potentialBossPct + relicBossPct) / 100;
             }
             const dealtDmg = Math.floor(finalDmg * bossMult);
@@ -4293,7 +4293,7 @@
                             </div>
 
                             <h5 class="text-[9px] font-black text-white leading-tight whitespace-nowrap overflow-hidden text-ellipsis px-1 tracking-tighter">${r.name}</h5>
-                            <p class="text-[7.5px] text-yellow-300/90 leading-tight mt-1 whitespace-nowrap overflow-hidden text-ellipsis tracking-tighter">${getRelicEffectString(r, acquired)}</p>
+                            <p class="text-[8px] font-bold text-yellow-300/90 leading-[1.2] mt-1 tracking-tighter">${getRelicEffectString(r, acquired)}</p>
                         </div>
 
                         <div class="mt-2">
@@ -4416,7 +4416,7 @@
                             <img src="${res.def.img}" class="w-full h-full object-contain filter drop-shadow-[0_0_8px_#fbbf24]">
                         </div>
                         <h5 class="text-[9px] font-black text-white whitespace-nowrap overflow-hidden text-ellipsis px-1 tracking-tighter">${res.def.name}</h5>
-                        <p class="text-[7px] text-yellow-300 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis tracking-tighter">${getRelicEffectString(res.def, {grade: res.grade, stars: res.stars})}</p>
+                        <p class="text-[8px] font-bold text-yellow-300 mt-0.5 leading-[1.2] tracking-tighter">${getRelicEffectString(res.def, {grade: res.grade, stars: res.stars})}</p>
                     </div>
                 `;
             });
@@ -5244,8 +5244,8 @@
                 window.speechSynthesis.speak(utterance);
             }
 
-            // 💍 지혜의 목걸이 (necklaceLvl) 스킬 마법 피해 +15%/lv & 잠재력 & 유물
-            const necklaceSkillBonus = (gameState.necklaceLvl || 0) * 15;
+            // 💍 지혜의 목걸이 (necklaceLvl) 스킬 마법 피해 +3%/lv & 잠재력 & 유물
+            const necklaceSkillBonus = (gameState.necklaceLvl || 0) * 3;
             const potentialSkillBonus = getPotentialStatBonus('skillDmg');
             const relicSkillBonus = getEquippedRelicBonus("relic_scroll");
             const totalSkillMult = 1 + (necklaceSkillBonus + potentialSkillBonus + relicSkillBonus) / 100;
@@ -5571,7 +5571,7 @@
                 const acR = (gameState.acquiredRelics || []).find(item => item.id === gameState.equippedRelicId);
                 if (eqR) {
                     if (profileRelicName) profileRelicName.innerText = `🏺 ${eqR.name}`;
-                    if (profileRelicEffect) profileRelicEffect.innerText = getRelicEffectString(eqR, acR);
+                    if (profileRelicEffect) profileRelicEffect.innerHTML = getRelicEffectString(eqR, acR);
                 }
             } else {
                 if (profileRelicName) profileRelicName.innerText = "[장착된 유물 없음]";
@@ -6809,9 +6809,9 @@
             const skill = gameState.skillsInventory.find(s => s.id === skillId);
             if (!skill) return;
 
-            // 💍 지혜의 목걸이 (necklaceLvl) 쿨타임 감소 적용 (-0.6%/lv, 최대 -30%) + 유물 (-20%)
+            // 💍 지혜의 목걸이 (necklaceLvl) 쿨타임 감소 적용 (-0.6%/lv, 최대 -30%) + 유물
             const necklaceCdRed = Math.min(30, (gameState.necklaceLvl || 0) * 0.6);
-            const relicCdRed = (gameState.acquiredRelics && gameState.acquiredRelics.includes("relic_clock")) ? 20 : 0;
+            const relicCdRed = getEquippedRelicBonus("relic_clock");
             const totalCdRed = Math.min(60, necklaceCdRed + relicCdRed);
             wbSkillCooldowns[skillId] = 30.0 * (1 - totalCdRed / 100);
 
@@ -6827,10 +6827,10 @@
             const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
             const mult = getSkillMultiplier(skill);
 
-            // 💍 지혜의 목걸이 (necklaceLvl) 스킬 마법 피해 +15%/lv & 잠재력 & 유물
-            const necklaceSkillBonus = (gameState.necklaceLvl || 0) * 15;
+            // 💍 지혜의 목걸이 (necklaceLvl) 스킬 마법 피해 +3%/lv & 잠재력 & 유물
+            const necklaceSkillBonus = (gameState.necklaceLvl || 0) * 3;
             const potentialSkillBonus = getPotentialStatBonus('skillDmg');
-            const relicSkillBonus = (gameState.acquiredRelics && gameState.acquiredRelics.includes("relic_scroll")) ? 40 : 0;
+            const relicSkillBonus = getEquippedRelicBonus("relic_scroll");
             const totalSkillMult = 1 + (necklaceSkillBonus + potentialSkillBonus + relicSkillBonus) / 100;
 
             const baseDmg = (calculateClickAttackPower() * mult * 3);

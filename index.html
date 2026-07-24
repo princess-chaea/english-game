@@ -353,7 +353,7 @@
 <body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
 
     <!-- ⏳ FULLSCREEN INITIAL LOADING OVERLAY -->
-    <div id="gameLoadingOverlay" class="fixed inset-0 bg-black z-[10000] flex flex-col items-center justify-center p-6 transition-opacity duration-500">
+    <div id="gameLoadingOverlay" class="fixed inset-0 bg-black z-[10000] hidden items-center justify-center p-6 transition-opacity duration-500" style="display: none;">
         <div class="max-w-md w-full text-center flex flex-col items-center">
             <div class="w-24 h-24 mb-6 relative flex items-center justify-center">
                 <div class="absolute inset-0 border-4 border-yellow-500/20 border-t-yellow-400 rounded-full animate-spin"></div>
@@ -6434,6 +6434,11 @@
         window.onload = function () {
             lucide.createIcons();
             checkConnectionState();
+
+            // 💡 1.5초 후 무조건 로딩 오버레이 닫는 안전 장치 (통신 지연 시 멈춤 방지)
+            setTimeout(() => {
+                hideGameLoadingOverlay();
+            }, 1500);
 
             // Auto fill last logged in student info from localStorage cache
             const lastStudentRaw = localStorage.getItem("vocahero_last_student");

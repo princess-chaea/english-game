@@ -4068,6 +4068,35 @@
             saveLocalCache();
         }
 
+        function getSafeLockedArr(gearKey) {
+            if (!gameState.lockedPotentialSlots || typeof gameState.lockedPotentialSlots !== 'object') {
+                gameState.lockedPotentialSlots = {};
+            }
+            if (typeof gameState.lockedPotentialSlots === 'string') {
+                try { gameState.lockedPotentialSlots = JSON.parse(gameState.lockedPotentialSlots); } catch(e) { gameState.lockedPotentialSlots = {}; }
+            }
+            let val = gameState.lockedPotentialSlots[gearKey];
+            if (!val) {
+                gameState.lockedPotentialSlots[gearKey] = [];
+                return [];
+            }
+            if (typeof val === 'string') {
+                try { val = JSON.parse(val); } catch(e) { val = []; }
+            }
+            if (Array.isArray(val)) {
+                const cleanArr = val.map(v => Number(v));
+                gameState.lockedPotentialSlots[gearKey] = cleanArr;
+                return cleanArr;
+            }
+            if (typeof val === 'object') {
+                const arr = Object.values(val).map(v => Number(v));
+                gameState.lockedPotentialSlots[gearKey] = arr;
+                return arr;
+            }
+            gameState.lockedPotentialSlots[gearKey] = [];
+            return [];
+        }
+
         function renderGearPotentialLabUI() {
             ensureGearPotentialsStructure();
 

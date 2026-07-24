@@ -913,7 +913,7 @@
                     <div class="flex justify-between items-center border-b border-[#262626] pb-2">
                         <span class="text-xs font-bold text-[#0066b1] flex items-center gap-1.5 uppercase tracking-wider">
                             <i data-lucide="info" class="w-4 h-4"></i>
-                            <span>스킬 수집 & 강화 인포그래픽 가이드</span>
+                            <span>스킬 수집 & 강화</span>
                         </span>
                         <span class="text-[10px] text-gray-400 font-mono">기존 스킬 재획득 시 자동 중복 경험치(EXP) 누적</span>
                     </div>
@@ -922,23 +922,23 @@
                     <div class="grid grid-cols-5 gap-1.5 text-center text-[10px]">
                         <div class="bg-black/90 p-2 border border-[#3c3c3c]">
                             <span class="text-[#bbbbbb] font-extrabold block">일반 (75%)</span>
-                            <span class="text-white font-mono font-bold">기본 ×15배</span>
+                            <span class="text-white font-mono font-bold">기본 ×5배</span>
                         </div>
                         <div class="bg-black/90 p-2 border border-[#0066b1]">
                             <span class="text-[#0066b1] font-extrabold block">희귀 (18%)</span>
-                            <span class="text-white font-mono font-bold">기본 ×25배</span>
+                            <span class="text-white font-mono font-bold">기본 ×10배</span>
                         </div>
                         <div class="bg-black/90 p-2 border border-[#1c69d4]">
                             <span class="text-[#1c69d4] font-extrabold block">영웅 (5%)</span>
-                            <span class="text-white font-mono font-bold">기본 ×40배</span>
+                            <span class="text-white font-mono font-bold">기본 ×20배</span>
                         </div>
                         <div class="bg-black/90 p-2 border border-[#e22718]">
                             <span class="text-[#e22718] font-extrabold block">전설 (1.95%)</span>
-                            <span class="text-white font-mono font-bold">기본 ×70배</span>
+                            <span class="text-white font-mono font-bold">기본 ×40배</span>
                         </div>
                         <div class="bg-black/90 p-2 border border-pink-500 animate-pulse">
                             <span class="text-pink-400 font-extrabold block">신화 (0.05%)</span>
-                            <span class="text-white font-mono font-bold">기본 ×150배</span>
+                            <span class="text-white font-mono font-bold">기본 ×70배</span>
                         </div>
                     </div>
 
@@ -2128,11 +2128,11 @@
 
         // Skill Grade Configs (색상 코드 및 배율 계수)
         const SKILL_GRADES = {
-            normal: { name: "일반", multiplier: 15, prob: 0.75, colorClass: "border-[#4b5563] bg-gradient-to-b from-[#1f2937] to-[#111827] text-gray-200 rounded-none-forced", rank: 1 },
-            rare: { name: "희귀", multiplier: 25, prob: 0.18, colorClass: "border-[#0284c7] bg-gradient-to-b from-[#0369a1] to-[#0c4a6e] text-[#7dd3fc] rounded-none-forced shadow-[0_0_10px_rgba(2,132,199,0.5)]", rank: 2 },
-            hero: { name: "영웅", multiplier: 40, prob: 0.05, colorClass: "border-[#9333ea] bg-gradient-to-b from-[#7e22ce] to-[#581c87] text-[#e9d5ff] rounded-none-forced shadow-[0_0_14px_rgba(147,51,234,0.7)]", rank: 3 },
-            legendary: { name: "전설", multiplier: 70, prob: 0.0195, colorClass: "border-[#dc2626] bg-gradient-to-b from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] rounded-none-forced shadow-[0_0_18px_rgba(220,38,38,0.9)]", rank: 4 },
-            mythic: { name: "신화", multiplier: 150, prob: 0.0005, colorClass: "mythic-aurora-card rounded-none-forced border-[#f59e0b] shadow-[0_0_25px_rgba(245,158,11,1)] animate-pulse", rank: 5 }
+            normal:    { name: "일반",   multiplier: 5,  prob: 0.75,   colorClass: "border-[#4b5563] bg-gradient-to-b from-[#1f2937] to-[#111827] text-gray-200 rounded-none-forced", rank: 1 },
+            rare:      { name: "희귀",   multiplier: 10, prob: 0.18,   colorClass: "border-[#0284c7] bg-gradient-to-b from-[#0369a1] to-[#0c4a6e] text-[#7dd3fc] rounded-none-forced shadow-[0_0_10px_rgba(2,132,199,0.5)]", rank: 2 },
+            hero:      { name: "영웅",   multiplier: 20, prob: 0.05,   colorClass: "border-[#9333ea] bg-gradient-to-b from-[#7e22ce] to-[#581c87] text-[#e9d5ff] rounded-none-forced shadow-[0_0_14px_rgba(147,51,234,0.7)]", rank: 3 },
+            legendary: { name: "전설",   multiplier: 40, prob: 0.0195, colorClass: "border-[#dc2626] bg-gradient-to-b from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] rounded-none-forced shadow-[0_0_18px_rgba(220,38,38,0.9)]", rank: 4 },
+            mythic:    { name: "신화",   multiplier: 70, prob: 0.0005, colorClass: "mythic-aurora-card rounded-none-forced border-[#f59e0b] shadow-[0_0_25px_rgba(245,158,11,1)] animate-pulse", rank: 5 }
         };
 
         // Companion pet details
@@ -3224,12 +3224,11 @@
                     processCombatDamage(dps * delta);
                 }
 
-                // 💡 초당 자동 골드 수당 실시간 통장 가산 (슬라임 펫 + 나침반 유물 + 잠재력 적용)
+                // 💡 초당 자동 골드 수당 실시간 통장 가산
                 const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
                 const slimeBonus = 1 + (slimeLvl * 0.05);
-                const compassBonus = 1 + (getEquippedRelicBonus("relic_compass") / 100);
-                const goldPotentialBonus = 1 + (getPotentialStatBonus('goldBonus') / 100);
-                const autoGoldPerSec = Math.floor(gameState.stage * 15 * slimeBonus * compassBonus * goldPotentialBonus);
+                const relicGoldBonus = 1.0 + getEquippedRelicBonus("relic_compass") / 100;
+                const autoGoldPerSec = Math.floor(gameState.stage * 15 * slimeBonus * relicGoldBonus);
                 goldAccumulator += autoGoldPerSec * delta;
                 if (goldAccumulator >= 1) {
                     const addG = Math.floor(goldAccumulator);
@@ -7641,8 +7640,6 @@
                 }
                 el.onclick = () => {
                     overlay.style.display = "none";
-                    overlay.classList.add("hidden");
-                    overlay.classList.remove("flex");
                     if (btn.onClick) btn.onClick();
                 };
                 btnsEl.appendChild(el);
@@ -7651,8 +7648,7 @@
             box.style.transform = "scale(0.85) translateY(20px)";
             box.style.opacity = "0";
             box.style.transition = "transform 0.25s cubic-bezier(.22,1,.36,1), opacity 0.2s";
-            overlay.classList.remove("hidden");
-            overlay.style.display = "flex"; // force flex (Tailwind hidden uses !important)
+            overlay.style.display = "flex";
             overlay.style.alignItems = "center";
             overlay.style.justifyContent = "center";
             requestAnimationFrame(() => {
@@ -7701,7 +7697,7 @@
     </div>
 
     <!-- ✅ Custom Alert / Confirm Modal (replaces all system alert/confirm) -->
-    <div id="customModalOverlay" class="fixed inset-0 z-[99999] hidden items-center justify-center" style="background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);">
+    <div id="customModalOverlay" class="fixed inset-0 z-[99999] items-center justify-center" style="background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:none;">
         <div id="customModalBox" class="relative w-[90%] max-w-sm rounded-2xl border border-white/10 shadow-[0_0_60px_rgba(168,85,247,0.25)] overflow-hidden"
              style="background:linear-gradient(135deg,#1a1030 0%,#0e0820 100%);">
             <!-- 헤더 장식선 -->

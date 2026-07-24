@@ -1266,8 +1266,8 @@
                             class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced">
                     </div>
                     <div>
-                        <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">이름 (한글)</label>
-                        <input type="text" id="inputName" placeholder="이름" lang="ko" inputmode="text" oninput="if(/[^가-힣ㄱ-ㅎㅏ-ㅣ\s]/.test(this.value)){ this.value = this.value.replace(/[^가-힣ㄱ-ㅎㅏ-ㅣ\s]/g, ''); }"
+                        <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">이름</label>
+                        <input type="text" id="inputName" placeholder="이름" lang="ko" inputmode="text" oninput="if(/[^가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9\s]/.test(this.value)){ this.value = this.value.replace(/[^가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9\s]/g, ''); }"
                             class="w-full bg-[#1a1a1a] border border-[#3c3c3c] p-3 font-bold text-center text-white text-xs outline-none rounded-none-forced">
                     </div>
                 </div>
@@ -2212,7 +2212,7 @@
                             }
                             syncStateFromServer(response);
                             closeModal("pinVerifyModal");
-                            localStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
+                            sessionStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
                             showToast("🏰 원정대 클라우드 계정 로드 성공!");
                         } else {
                             handleLocalVerify(grade, classNum, studentNum, name, password);
@@ -2233,7 +2233,7 @@
                 closeModal("loginModal");
                 closeModal("pinVerifyModal");
                 closeModal("newUserRegisterModal");
-                localStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
+                sessionStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
                 showToast("🏰 로컬 원정대 계정 로드 성공!");
             }
         }
@@ -2257,7 +2257,7 @@
                         if (response) {
                             syncStateFromServer(response);
                             closeModal("newUserRegisterModal");
-                            localStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
+                            sessionStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
                             showToast("✨ 새로운 전설의 모험이 시작되었습니다! 환영합니다!");
                         } else {
                             handleLocalRegister(grade, classNum, studentNum, name, password);
@@ -2275,7 +2275,7 @@
         function handleLocalRegister(grade, classNum, studentNum, name, password) {
             if (loadLocalSimulation(grade, classNum, studentNum, name, password)) {
                 closeModal("newUserRegisterModal");
-                localStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
+                sessionStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
                 showToast("✨ 로컬 원정대에 새로운 대원이 등록되었습니다!");
             }
         }
@@ -6368,6 +6368,7 @@
 
         function logoutUser() {
             if (confirm("로그아웃하고 로그인 첫 화면으로 돌아가시겠습니까?")) {
+                sessionStorage.removeItem("vocahero_active_session");
                 localStorage.removeItem("vocahero_active_session");
                 location.reload();
             }
@@ -6389,8 +6390,9 @@
                 } catch(e) {}
             }
 
-            // 🔄 새로고침 시 자동 로그인 세션 복원 장치
-            const activeSessionRaw = localStorage.getItem("vocahero_active_session");
+            // 🔄 새로고침 시 자동 로그인 세션 복원 장치 (브라우저 종료 시 삭제됨)
+            localStorage.removeItem("vocahero_active_session"); // 기존 localStorage 잔여 세션 삭제
+            const activeSessionRaw = sessionStorage.getItem("vocahero_active_session");
             if (activeSessionRaw) {
                 try {
                     const session = JSON.parse(activeSessionRaw);

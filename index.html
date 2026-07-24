@@ -2786,6 +2786,7 @@
                 if (typeof gameState.totalQuizCorrect === 'undefined') gameState.totalQuizCorrect = 0;
                 if (!gameState.masteredWords) gameState.masteredWords = [];
                 if (!gameState.wrongWordCounts) gameState.wrongWordCounts = {};
+                if (!gameState.lockedPotentialSlots) gameState.lockedPotentialSlots = {};
             } else {
                 gameState.grade = grade;
                 gameState.classNum = classNum;
@@ -2808,6 +2809,7 @@
                 gameState.skillsInventory = [];
                 gameState.equippedSkills = [];
                 gameState.wrongWordCounts = {};
+                gameState.lockedPotentialSlots = {};
             }
 
             gameState.wordsPool = MOCK_WORDS[String(gameState.grade)] || MOCK_WORDS["3"];

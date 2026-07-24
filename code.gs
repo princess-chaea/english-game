@@ -504,12 +504,12 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
         }
 
         var extraParsed = {};
-        try {
-          var extraRaw = data[i][19] || "";
-          if (typeof extraRaw === 'string' && extraRaw.startsWith('{')) {
-             extraParsed = JSON.parse(extraRaw);
-          }
-        } catch(e) { extraParsed = {}; }
+        var extraRaw = data[i][19] || "";
+        if (extraRaw) {
+          try {
+            extraParsed = (typeof extraRaw === 'string') ? JSON.parse(extraRaw.trim()) : extraRaw;
+          } catch(e) { extraParsed = {}; }
+        }
 
         return {
           grade: Number(data[i][0]),

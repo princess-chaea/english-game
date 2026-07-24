@@ -753,7 +753,7 @@
                     <div class="flex justify-between items-center mb-3 border-b border-[#262626] pb-2">
                         <h3 class="bmw-label-uppercase text-white flex items-center gap-2 text-sm font-extrabold tracking-wider">
                             <i data-lucide="paw-print" class="w-4 h-4 text-[#0066b1]"></i>
-                            <span>🐾 소환수 연구실</span>
+                            <span>소환수 연구실</span>
                         </h3>
                     </div>
 
@@ -764,9 +764,9 @@
                     <!-- Bottom Title: Ancient Relic Altar + Boss Token Display & Summon Buttons -->
                     <div class="border-t border-purple-900/50 pt-3 mt-2">
                         <div class="flex justify-between items-center mb-2.5">
-                            <h4 class="text-xs font-bold text-yellow-400 flex items-center gap-1.5 uppercase tracking-wider">
+                            <h4 class="text-sm font-extrabold text-yellow-400 flex items-center gap-2 uppercase tracking-wider">
                                 <i data-lucide="sparkles" class="w-4 h-4 text-yellow-400"></i>
-                                <span>🏺 고대 유물 소환 제단</span>
+                                <span>고대 유물 소환 제단</span>
                             </h4>
                             
                             <div class="flex items-center gap-2.5">
@@ -4259,7 +4259,7 @@
                             </div>
 
                             <h5 class="text-[9px] font-black text-white leading-tight whitespace-nowrap overflow-hidden text-ellipsis px-1 tracking-tighter">${r.name}</h5>
-                            <p class="text-[8px] text-yellow-300/90 leading-tight mt-1 break-words whitespace-normal">${getRelicEffectString(r, acquired)}</p>
+                            <p class="text-[7.5px] text-yellow-300/90 leading-tight mt-1 whitespace-nowrap overflow-hidden text-ellipsis tracking-tighter">${getRelicEffectString(r, acquired)}</p>
                         </div>
 
                         <div class="mt-2">
@@ -4382,7 +4382,7 @@
                             <img src="${res.def.img}" class="w-full h-full object-contain filter drop-shadow-[0_0_8px_#fbbf24]">
                         </div>
                         <h5 class="text-[9px] font-black text-white whitespace-nowrap overflow-hidden text-ellipsis px-1 tracking-tighter">${res.def.name}</h5>
-                        <p class="text-[7px] text-yellow-300 break-words mt-0.5 whitespace-normal">${getRelicEffectString(res.def, {grade: res.grade, stars: res.stars})}</p>
+                        <p class="text-[7px] text-yellow-300 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis tracking-tighter">${getRelicEffectString(res.def, {grade: res.grade, stars: res.stars})}</p>
                     </div>
                 `;
             });
@@ -5692,6 +5692,9 @@
 
             const mpEl = document.getElementById("masteryPointsCount");
             if (mpEl) mpEl.innerText = Math.floor(gameState.masteryPoints).toLocaleString();
+
+            const bossTokenText = document.getElementById("bossTokenCountText");
+            if (bossTokenText) bossTokenText.innerText = Math.floor(gameState.bossTokens || 0).toLocaleString();
 
             const dpsEl = document.getElementById("dpsCount");
             if (dpsEl) dpsEl.innerText = calculateDPSPower();

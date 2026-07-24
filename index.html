@@ -2023,6 +2023,16 @@
         </div>
     </div>
 
+    <!-- 🎨 Global Custom Confirmation Modal -->
+    <div id="customModalOverlay" class="fixed inset-0 bg-black/90 hidden items-center justify-center p-4 z-[9999999]" style="backdrop-filter: blur(8px);">
+        <div id="customModalBox" class="bg-[#0f0b18] border-2 border-purple-500 max-w-sm w-full p-6 rounded-2xl shadow-[0_0_50px_rgba(168,85,247,0.4)] flex flex-col text-center transition-all duration-200">
+            <div id="customModalIcon" class="text-5xl mb-3">❓</div>
+            <h3 id="customModalTitle" class="text-lg font-black text-white mb-2">확인</h3>
+            <p id="customModalMessage" class="text-xs text-gray-300 leading-relaxed mb-6 whitespace-pre-line"></p>
+            <div id="customModalBtns" class="flex gap-3 w-full"></div>
+        </div>
+    </div>
+
     <style>
         @keyframes wbSparkFloat {
             0%   { transform: translateY(0) scale(1); opacity: 1; }
@@ -4112,7 +4122,7 @@
                 html += `
                     <div class="border ${style} p-2 text-center flex flex-col justify-between min-h-[80px] relative rounded-none-forced">
                         <button onclick="toggleLockPotentialSlot('${selectedGearKey}', ${i})" class="absolute -top-2 -right-2 px-1.5 py-0.5 text-[9px] font-black rounded-none-forced transition border shadow-md cursor-pointer ${isLocked ? 'bg-yellow-400 text-black border-yellow-600' : 'bg-gray-800 text-gray-300 border-gray-600 hover:text-white'}">
-                            ${isLocked ? '잠금' : '해제'}
+                            ${isLocked ? '🔒 잠금' : '🔓 해제'}
                         </button>
                         <div>
                             <span class="text-[8px] font-bold text-gray-400 block">${i + 1}번 옵션 [${opt.gradeName}]</span>

@@ -3488,7 +3488,7 @@
             const baseHp = 100;
             if (isBossBattleActive) {
                 const regularHp = Math.floor(baseHp * Math.pow(growthFactor, gameState.stage - 1));
-                monsterMaxHp = Math.floor(regularHp * 20); // 20배 보스 체력 (장비 강화도에 맞춰 긴장감 제공)
+                monsterMaxHp = Math.floor(regularHp * 50); // 50배 보스 체력 (초반 보스 원샷 방지 및 180초 긴장감 유지)
             } else {
                 monsterMaxHp = Math.floor(baseHp * Math.pow(growthFactor, gameState.stage - 1));
             }
@@ -5481,12 +5481,15 @@
 
                 const arena = document.getElementById("battleArena");
                 
-                // 단어 정답 시 약점 타격 (플레이어의 순수 장비/펫/유물 스탯 공격력에 100% 비례!)
+                // 단어 정답 시 약점 타격 (보스전에서는 정답 1회당 보스 체력 3.5%~5% 상한 캡 적용하여 초반 원샷 방지)
                 const chaliceMult = 1.0 + (getEquippedRelicBonus("relic_chalice") / 100);
                 const bossBonus = isBossBattleActive 
                     ? (1.0 + (getEquippedRelicBonus("relic_feather") + getPotentialStatBonus('bossDmg')) / 100)
                     : 1.0;
-                const rawQuizDmg = (calculateClickAttackPower() * 30) + (calculateDPSPower() * 6);
+                const statDmg = (calculateClickAttackPower() * 10) + (calculateDPSPower() * 2);
+                const rawQuizDmg = isBossBattleActive 
+                    ? Math.min(Math.floor(monsterMaxHp * 0.05), Math.max(statDmg, Math.floor(monsterMaxHp * 0.035))) 
+                    : statDmg;
                 const quizDmg = Math.max(10, Math.floor(rawQuizDmg * chaliceMult * bossBonus));
                 processCombatDamage(quizDmg);
                 spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `⚡ 퀴즈 크리티컬! -${quizDmg.toLocaleString()}`);
@@ -5642,12 +5645,12 @@
                 modal.classList.add("hidden");
                 showBattleToast("🛡️ 방어 성공! 보스에게 반격 피해!");
                 
-                // 성공 시 반격 폭딜 (장비 스탯 클릭 타격력 & DPS 기반 반격)
+                // 성공 시 반격 폭딜 (보스전에서는 보스 최대 체력의 10% 반격 고정)
                 let counterDmg = 0;
                 if (isBossBattleActive) {
-                    counterDmg = Math.floor(((calculateClickAttackPower() * 50) + (calculateDPSPower() * 10)) * 2);
+                    counterDmg = Math.floor(monsterMaxHp * 0.10);
                 } else {
-                    counterDmg = Math.floor(((calculateClickAttackPower() * 30) + (calculateDPSPower() * 6)) * 2);
+                    counterDmg = Math.floor(((calculateClickAttackPower() * 20) + (calculateDPSPower() * 4)) * 2);
                 }
                 processCombatDamage(counterDmg);
                 const arena = document.getElementById("battleArena");

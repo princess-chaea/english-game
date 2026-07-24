@@ -3170,8 +3170,7 @@
                 }
 
                 html += `
-                    <div onclick="selectGearForPotential('${gearKey}')" class="cursor-pointer flex items-stretch gap-0 bg-[#0d0d0d] border ${isSelectedForPotential ? 'border-yellow-400 shadow-[0_0_10px_rgba(234,179,8,0.5)]' : 'border-[#262626]'} hover:border-yellow-500/70 transition rounded-none-forced overflow-hidden relative group">
-                        ${isSelectedForPotential ? '<span class="absolute top-0 right-0 bg-yellow-500 text-black text-[8px] font-black px-1.5 py-0.2 rounded-none-forced z-10">⚡ 잠재력 선택됨</span>' : ''}
+                    <div onclick="selectGearForPotential('${gearKey}')" class="cursor-pointer flex items-stretch gap-0 bg-[#0d0d0d] border ${isSelectedForPotential ? 'border-2 border-yellow-400 shadow-[0_0_12px_rgba(234,179,8,0.6)]' : 'border-[#262626]'} hover:border-yellow-500/70 transition rounded-none-forced overflow-hidden relative group">
                         <div class="flex items-center justify-center w-11 bg-[#111] border-r border-[#262626] flex-shrink-0">
                             <i data-lucide="${getGearIcon(gearKey)}" class="w-5 h-5 ${isSelectedForPotential ? 'text-yellow-400' : 'text-[#0066b1]'}"></i>
                         </div>
@@ -3704,6 +3703,23 @@
                     nextBonusText = `자동DPS +${nextDps} | 보스피해 +${nextBoss}%`;
                 }
 
+                const currentMastered = Math.max(gameState.masteredWords ? gameState.masteredWords.length : 0, gameState.totalQuizCorrect || 0);
+                const reqWords = (currentLvl + 1) * 3;
+                const hasWords = currentMastered >= reqWords;
+                const hasGold = gameState.gold >= cost;
+
+                const btnColorClass = !isUnlocked || isMax
+                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                    : (hasGold && hasWords
+                        ? 'bg-purple-700 hover:bg-purple-600 text-white shadow-md cursor-pointer'
+                        : 'bg-purple-950/80 text-purple-300 border border-purple-800 hover:bg-purple-900 cursor-pointer');
+
+                const btnText = !isUnlocked
+                    ? `🔒 ${info.unlockStage}스테이지 필요`
+                    : isMax
+                        ? 'MAX (50강 연마 달성)'
+                        : `🪙 ${cost.toLocaleString()}G + 📖 정복 단어 ${reqWords}개 (${currentMastered}/${reqWords})`;
+
                 html += `
                     <div class="bg-[#0d0d0d] border ${isUnlocked ? 'border-purple-900/80 shadow-[0_0_10px_rgba(147,51,234,0.15)]' : 'border-gray-900 opacity-50'} p-3 rounded-none-forced flex flex-col justify-between min-h-[135px]">
                         <div>
@@ -3723,8 +3739,8 @@
                             ` : ''}
                         </div>
                         <div>
-                            <button onclick="${isUnlocked && !isMax ? `upgradeAccessory('${accKey}')` : ''}" ${!isUnlocked || isMax ? 'disabled' : ''} class="w-full py-1.5 text-[9px] font-extrabold rounded-none-forced transition ${isUnlocked && !isMax ? 'bg-purple-700 hover:bg-purple-600 text-white shadow-md cursor-pointer' : 'bg-gray-800 text-gray-500 cursor-not-allowed'}">
-                                ${!isUnlocked ? `🔒 ${info.unlockStage}스테이지 필요` : isMax ? 'MAX (50강 연마 달성)' : `🪙 ${cost.toLocaleString()}G 연마 (+1강)`}
+                            <button onclick="${isUnlocked && !isMax ? `upgradeAccessory('${accKey}')` : ''}" ${!isUnlocked || isMax ? 'disabled' : ''} class="w-full py-1.5 text-[9px] font-extrabold rounded-none-forced transition ${btnColorClass}">
+                                ${btnText}
                             </button>
                         </div>
                     </div>
@@ -3737,16 +3753,23 @@
             const info = ACCESSORY_PARAMS[accKey];
             const currentLvl = (gameState[info.key]) || 0;
             const cost = Math.floor(info.baseCost * Math.pow(1.15, currentLvl));
+            const currentMastered = Math.max(gameState.masteredWords ? gameState.masteredWords.length : 0, gameState.totalQuizCorrect || 0);
+            const reqWords = (currentLvl + 1) * 3;
 
             if (gameState.gold < cost) {
-                showToast("🪙 골드가 부족합니다! 장신구를 연마하려면 자금이 더 필요합니다.");
+                showToast(`🪙 골드가 부족합니다! 연마하려면 ${cost.toLocaleString()} Gold가 필요합니다.`);
+                return;
+            }
+
+            if (currentMastered < reqWords) {
+                showToast(`📖 정복한 단어가 부족합니다! (현재: ${currentMastered}개 / 필요: ${reqWords}개) 영단어 퀴즈를 풀어 단어를 정복해보세요!`);
                 return;
             }
 
             gameState.gold -= cost;
             gameState[info.key] = currentLvl + 1;
             playSoundEffect('levelup');
-            showToast(`💍 [${info.name}] 연마 성공! Lv.${currentLvl + 1}강 도달!`);
+            showToast(`💍 [${info.name}] 연마 성공! Lv.${currentLvl + 1}강 도달! (정복 단어 ${reqWords}개 조건 달성)`);
 
             renderAccessoriesUI();
             refreshStateVisuals();

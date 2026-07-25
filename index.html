@@ -734,7 +734,7 @@
                     <!-- ⚡ 무구 잠재력 -->
                     <div id="potentialLabContainer" class="mt-2 border-t border-[#262626] pt-2">
                         <div class="flex justify-between items-center mb-2">
-                            <h4 class="text-sm font-extrabold text-yellow-400 uppercase tracking-wider">무구 잠재력</h4>
+                            <h4 class="text-sm font-extrabold text-yellow-400 uppercase tracking-wider">⚡ 무구 잠재력</h4>
                             <div class="flex items-center gap-2">
                                 <button onclick="openPotentialProbModal()" class="text-[10px] text-yellow-300 bg-yellow-950/80 border border-yellow-600 px-2 py-0.5 font-bold hover:bg-yellow-900 transition flex items-center gap-1">
                                     📊 확률표 보기
@@ -757,7 +757,7 @@
                     <!-- 💍 [50스테이지 해금] 전설 장신구 3종 -->
                     <div id="accessoriesLabContainer" class="mt-2 border-t border-[#262626] pt-2">
                         <div class="flex justify-between items-center mb-2">
-                            <h4 class="text-sm font-extrabold text-purple-400 uppercase tracking-wider">고대 장신구</h4>
+                            <h4 class="text-sm font-extrabold text-purple-400 uppercase tracking-wider">💍 고대 장신구</h4>
                         </div>
                         <div class="bg-[#0d0d0d] border border-purple-900/40 p-3 rounded-none-forced">
                             <!-- 장신구 3종 그리드 -->
@@ -1002,8 +1002,8 @@
                             <p class="leading-tight text-[10px]">카드 3개(일괄 포함) 합성 시 <b>기본 20% (+⭐/EXP 추가) 확률 상위 승급</b></p>
                         </div>
                         <div class="bg-black p-2.5 border border-[#262626] flex items-center gap-2">
-                            <span class="bg-yellow-950 text-yellow-300 border border-yellow-600 px-2 py-1 font-black shrink-0 text-[10px]">⭐ 별 & T티어 성장</span>
-                            <p class="leading-tight text-[10px]">EXP 충전 시 T티어/성급 상승 (티어+10%, 별+50% 추가 피해)</p>
+                            <span class="bg-yellow-950 text-yellow-300 border border-yellow-600 px-2 py-1 font-black shrink-0 text-[10px]">⭐ 별 & 티어 성장</span>
+                            <p class="leading-tight text-[10px]">EXP 충전 시 티어/성급 상승 (티어+10%, 별+50% 추가 피해)</p>
                         </div>
                     </div>
                 </div>
@@ -1011,7 +1011,7 @@
 
             <!-- TAB 5: Grade World Boss Raid Arena -->
             <div id="worldBossTab"
-                class="bg-black border border-[#3c3c3c] p-2 flex-grow hidden flex-col justify-between rounded-none-forced overflow-hidden">
+                class="bg-black border border-[#3c3c3c] p-2 flex-grow hidden flex-col justify-between rounded-none-forced overflow-y-auto custom-scrollbar">
                 <div>
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="bmw-label-uppercase text-white flex items-center gap-2">
@@ -1507,6 +1507,11 @@
                                     <li class="flex items-start gap-1">
                                         <span class="shrink-0">🛡️ <b>방어 실패:</b></span>
                                         <span>오답을 입력하거나 보스의 강력한 공격을 제한 시간 내에 막지 못하면 <b>랜덤으로 무구(무기/방패 등) 강화 수치가 -1 하락</b>합니다!</span>
+                                    </li>
+                                    <li class="flex items-start gap-1">
+                                        <li class="flex items-start gap-1">
+                                        <span class="shrink-0">⚠️ <b>전투력 패널티:</b></span>
+                                        <span>내 전투력이 권장 전투력보다 낮을 경우, 부족한 비율에 비례하여 <b>데미지가 감쇄</b>됩니다. (최소 15% 하한)</span>
                                     </li>
                                     <li class="flex items-start gap-1">
                                         <span class="shrink-0">❌ <b>오답 노트:</b></span>
@@ -3871,7 +3876,7 @@
             const mContainer = document.getElementById("monsterContainer");
             if (mContainer) {
                 mContainer.classList.add("animate-shake");
-                setTimeout(() => { mContainer.classList.remove("animate-shake"); }, 150);
+                setTimeout(() => { mContainer.classList.remove("animate-shake"); }, 600);
             }
 
             const baseClickDmg = calculateClickAttackPower();
@@ -4749,16 +4754,16 @@
                            </div>`;
 
                 html += `
-                    <div class="bg-[#0d0d0d] border ${isUnlocked ? 'border-purple-900/80 shadow-[0_0_10px_rgba(147,51,234,0.15)]' : 'border-gray-900 opacity-50'} p-3 rounded-none-forced flex flex-col justify-between min-h-[135px]">
+                    <div class="bg-[#0d0d0d] border ${isUnlocked ? 'border-purple-900/80 shadow-[0_0_10px_rgba(147,51,234,0.15)]' : 'border-gray-900 opacity-50'} p-3 rounded-none-forced flex flex-col justify-between min-h-[135px] min-w-0">
                         <div>
                             <div class="flex justify-between items-center mb-1">
-                                <h4 class="font-extrabold text-xs text-purple-300 flex items-center gap-1">
+                                <h4 class="font-extrabold text-xs text-purple-300 flex items-center gap-1 truncate">
                                     <img src="${info.img}" class="w-4 h-4 object-contain inline">
                                     <span>${info.name}</span>
                                 </h4>
                                 ${currentLvl > 0 ? `<span class="text-[9px] font-bold text-yellow-300 bg-purple-950/80 border border-purple-700 px-1.5 py-0.5 font-mono">Lv.${currentLvl}</span>` : ''}
                             </div>
-                            <p class="text-[9px] text-gray-400 mb-1.5">${isUnlocked ? info.desc : `🔒 ${info.unlockStage}스테이지 달성 시 해금`}</p>
+                            <p class="text-[9px] text-gray-400 mb-1.5 break-all">${isUnlocked ? info.desc : `🔒 ${info.unlockStage}스테이지 달성 시 해금`}</p>
                             ${isUnlocked ? `
                                 <div class="text-[8px] bg-black p-1.5 border border-purple-900/50 rounded-none-forced font-mono mb-2">
                                     <div class="text-purple-300 font-bold">현재: ${currentLvl > 0 ? currentBonusText : '연마 전 (0강)'}</div>
@@ -5349,7 +5354,7 @@
                     buildSkillTabUI();
                     renderSkillsUI();
                     saveLocalCache();
-                    }, 150);
+                    }, 600);
                 }
             }, 60);
         }
@@ -6312,7 +6317,7 @@
             
             const box = document.getElementById("criticalDefenseBox");
             box.classList.add("animate-shake");
-            setTimeout(() => { box.classList.remove("animate-shake"); }, 150);
+            setTimeout(() => { box.classList.remove("animate-shake"); }, 600);
 
             setTimeout(() => {
                 const modal = document.getElementById("criticalDefenseModal");

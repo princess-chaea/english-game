@@ -1350,6 +1350,10 @@
                             <span class="text-[8px] text-gray-400 font-bold uppercase block">📊 퀴즈 정답률</span>
                             <span id="statSuccessRatio" class="text-sm font-black text-emerald-400 font-mono">0%</span>
                         </div>
+                        <div class="bg-[#080c14] p-2 border border-cyan-900/50 rounded-none-forced text-center">
+                            <span class="text-[8px] text-gray-400 font-bold uppercase block">⚔️ 종합 전투력 (CP)</span>
+                            <span id="profileCombatPower" class="text-sm font-black text-amber-300 font-mono">0 CP</span>
+                        </div>
                     </div>
 
                     <!-- 2. Detailed Buff Status & Weak Words Analysis Card -->
@@ -6012,16 +6016,34 @@
             const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus + (getPotentialStatBonus('goldBonus') / 100);
             if (profileGold) profileGold.innerText = `×${goldMultiplier.toFixed(2)}배`;
 
-            // 📖 퀴즈 단어 정답 타격 피해 증폭률 (고대 지혜의 성배 유물 + 퀴즈 콤보 보정)
+            // 📖 퀴즈 단어 정답 타격 피해 수치 & 증폭률
+            const baseQuizStatDmg = (calculateClickAttackPower() * 15) + (calculateDPSPower() * 3);
             const relicChaliceDmg = getEquippedRelicBonus("relic_chalice");
             const quizCombo = gameState.combo || 0;
             const comboDmgPct = Math.min(150, quizCombo * 5); // 콤보당 +5% (최대 +150%)
             const totalQuizDmgBonus = relicChaliceDmg + comboDmgPct;
-            if (profileQuizCorrect) profileQuizCorrect.innerText = `+${totalQuizDmgBonus.toFixed(0)}%`;
+            const finalQuizStatDmg = Math.floor(baseQuizStatDmg * (1 + totalQuizDmgBonus / 100));
+            if (profileQuizCorrect) {
+                profileQuizCorrect.innerText = `${finalQuizStatDmg.toLocaleString()} Dmg (+${totalQuizDmgBonus.toFixed(0)}%)`;
+            }
 
-            // ⚡ 크리티컬 피해 배율 (기본 200% = ×2.0배, 추후 장비/유물 스탯 업데이트 연동 준비)
+            // ⚡ 크리티컬 피해 배율 (기본 200% = ×2.0배)
             const profileCritDmg = document.getElementById("profileCritDmgMult");
             if (profileCritDmg) profileCritDmg.innerText = "200% (×2.0배)";
+
+            // ⚔️ 용사 종합 전투력 Index (Combat Power)
+            const clickAtkVal = calculateClickAttackPower();
+            const dpsAtkVal = calculateDPSPower();
+            const combatPower = Math.floor(
+                (clickAtkVal * 10) + 
+                (dpsAtkVal * 5) + 
+                (totalSkillBonusPct * 50) + 
+                (critRate * 100) + 
+                (bossDmgBonus * 80) + 
+                (goldMultiplier * 200)
+            );
+            const profileCp = document.getElementById("profileCombatPower");
+            if (profileCp) profileCp.innerText = `${combatPower.toLocaleString()} CP`;
 
             // 유물 장착 상태 요약 (실제 유물 이미지 표시, 이름 앞 🏺 아이콘 제거)
             if (gameState.equippedRelicId) {

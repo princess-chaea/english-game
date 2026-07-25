@@ -419,8 +419,12 @@
                         <i data-lucide="shield" class="w-4 h-4 shrink-0"></i>
                         <span id="displayStageNum" class="whitespace-nowrap">스테이지 1-1</span>
                     </span>
-                    <span class="text-[9px] text-[#7e7e7e] font-mono border-l border-[#3c3c3c] pl-2.5 whitespace-nowrap shrink-0">
-                        권장 DPS: <span id="recommendedDpsDisplay" class="text-orange-500 font-bold">0</span>
+                    <span class="text-[9px] font-mono border-l border-[#3c3c3c] pl-2.5 whitespace-nowrap shrink-0 flex items-center gap-1.5">
+                        <span class="text-gray-400 font-bold">권장 CP:</span>
+                        <span id="recommendedCpDisplay" class="text-orange-400 font-bold">0</span>
+                        <span class="text-gray-500">|</span>
+                        <span class="text-gray-400 font-bold">내 CP:</span>
+                        <span id="playerCpDisplay" class="text-amber-300 font-bold">0</span>
                     </span>
                 </div>
                 <!-- Active Offline reward flag -->
@@ -3640,8 +3644,59 @@
             saveLocalCache();
         }
 
+        function calculatePlayerCP() {
+            const clickAtk = calculateClickAttackPower();
+            const dpsAtk = calculateDPSPower();
+            const necklaceSkillBonus = (gameState.necklaceLvl || 0) * 1.5;
+            const potentialSkillBonus = getPotentialStatBonus('skillDmg');
+            const relicSkillBonus = getEquippedRelicBonus("relic_scroll");
+            const totalSkillBonusPct = necklaceSkillBonus + potentialSkillBonus + relicSkillBonus;
+
+            const critBonus = getEquippedRelicBonus("relic_dice");
+            const braceletCrit = Math.min(25, (gameState.braceletLvl || 0) * 0.25);
+            const critRate = 5.0 + critBonus + getPotentialStatBonus('critRate') + braceletCrit;
+
+            const ringBossPct = (gameState.ringLvl || 0) * 1.0;
+            const bossDmgBonus = ringBossPct + getEquippedRelicBonus("relic_feather") + getPotentialStatBonus('bossDmg');
+
+            const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
+            const slimeBonus = slimeLvl * PET_PARAMS['slime'].goldBonus;
+            const relicGoldBonus = getEquippedRelicBonus("relic_compass") / 100;
+            const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus + (getPotentialStatBonus('goldBonus') / 100);
+
+            return Math.floor(
+                (clickAtk * 10) + 
+                (dpsAtk * 5) + 
+                (totalSkillBonusPct * 50) + 
+                (critRate * 100) + 
+                (bossDmgBonus * 80) + 
+                (goldMultiplier * 200)
+            );
+        }
+
+        function calculateRequiredCP(stage, isBoss) {
+            const hp = calculateSteppedHp(stage, isBoss);
+            const baseRecDps = hp / (isBoss ? 25 : 7);
+            const reqCp = Math.ceil(baseRecDps * 6);
+            return Math.max(100, reqCp);
+        }
+
+        function getCPDamageMultiplier() {
+            const stage = gameState.stage || 1;
+            const reqCp = calculateRequiredCP(stage, isBossBattleActive);
+            const myCp = calculatePlayerCP();
+            if (reqCp <= 0) return 1.0;
+            const ratio = myCp / reqCp;
+            if (ratio >= 1.0) return 1.0; // 전투력 충족 시 100% 온전한 피해
+            
+            // 미달 시 감쇄 패널티 적용 (미달 비례, 최소 15% 하한)
+            return Math.max(0.15, Math.pow(ratio, 1.25));
+        }
+
         function processCombatDamage(dmg) {
-            monsterCurrentHp -= dmg;
+            const cpPenaltyMult = getCPDamageMultiplier();
+            const finalDmg = Math.floor(dmg * cpPenaltyMult);
+            monsterCurrentHp -= finalDmg;
             if (monsterCurrentHp <= 0) {
                 defeatActiveMonster();
             } else {
@@ -6032,16 +6087,7 @@
             if (profileCritDmg) profileCritDmg.innerText = "200% (×2.0배)";
 
             // ⚔️ 용사 종합 전투력 Index (Combat Power)
-            const clickAtkVal = calculateClickAttackPower();
-            const dpsAtkVal = calculateDPSPower();
-            const combatPower = Math.floor(
-                (clickAtkVal * 10) + 
-                (dpsAtkVal * 5) + 
-                (totalSkillBonusPct * 50) + 
-                (critRate * 100) + 
-                (bossDmgBonus * 80) + 
-                (goldMultiplier * 200)
-            );
+            const combatPower = calculatePlayerCP();
             const profileCp = document.getElementById("profileCombatPower");
             if (profileCp) profileCp.innerText = `${combatPower.toLocaleString()} CP`;
 
@@ -6268,10 +6314,25 @@
                     : `스테이지 ${gameState.stage}-${gameState.progress + 1}`;
             }
 
-            // 권장 DPS 계산 (일반 몬스터는 8초 이내, 보스는 30초 이내 처치 목표)
-            const recommendedDps = Math.ceil(monsterMaxHp / (isBossBattleActive ? 30 : 8));
-            const recDpsEl = document.getElementById("recommendedDpsDisplay");
-            if (recDpsEl) recDpsEl.innerText = recommendedDps.toLocaleString();
+            // ⚔️ 권장 전투력(Required CP) 및 내 전투력(My CP) 동기화 & 미달 피드백
+            const stageNum = gameState.stage || 1;
+            const reqCp = calculateRequiredCP(stageNum, isBossBattleActive);
+            const myCp = calculatePlayerCP();
+
+            const recCpEl = document.getElementById("recommendedCpDisplay");
+            const playerCpEl = document.getElementById("playerCpDisplay");
+
+            if (recCpEl) recCpEl.innerText = reqCp.toLocaleString();
+            if (playerCpEl) {
+                playerCpEl.innerText = myCp.toLocaleString();
+                if (myCp >= reqCp) {
+                    playerCpEl.className = "font-bold text-emerald-400";
+                } else {
+                    const deficitPct = Math.round((1 - (myCp / reqCp)) * 100);
+                    playerCpEl.className = "font-bold text-rose-400 animate-pulse";
+                    playerCpEl.title = `⚠️ 권장 전투력 대비 ${deficitPct}% 미달 (데미지 감쇄 패널티 적용중)`;
+                }
+            }
 
             const curProg = gameState.progress;
             const progressRatio = Math.min(100, (curProg / BOSS_UNLOCK_LIMIT) * 100);

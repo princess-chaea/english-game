@@ -5541,12 +5541,27 @@
                     const trio = available.splice(0, 3);
                     gameState.skillsInventory = gameState.skillsInventory.filter(s => !trio.some(t => t.id === s.id));
 
+                    const totalStars = trio.reduce((sum, s) => sum + (s.stars || 0), 0);
+                    const totalExp = trio.reduce((sum, s) => sum + (s.exp || 0), 0);
+                    
+                    const baseSuccessRate = 0.20;
+                    const starBonus = totalStars * 0.10;
+                    const expBonus = totalExp * 0.02;
+                    const finalUpgradeProb = Math.min(0.95, baseSuccessRate + starBonus + expBonus);
+
                     const nextGrade = nextGradeMap[g] || "rare";
+                    const roll = Math.random();
+                    const resultGrade = (roll < finalUpgradeProb) ? nextGrade : g;
                     const picked = trio[0];
-                    const resultSkill = addOrLevelUpSkill(picked.word, picked.meaning, nextGrade, true);
+
+                    addOrLevelUpSkill(picked.word, picked.meaning, resultGrade, true);
                     
                     upgradedCount += 3;
-                    gradeResults[nextGrade] = (gradeResults[nextGrade] || 0) + 1;
+                    if (resultGrade !== g) {
+                        gradeResults[resultGrade] = (gradeResults[resultGrade] || 0) + 1;
+                    } else {
+                        gradeResults[g] = (gradeResults[g] || 0) + 1;
+                    }
                 }
             });
 
@@ -6001,9 +6016,16 @@
                 ? Math.max(statDmg, Math.floor(monsterMaxHp * 0.035)) 
                 : statDmg;
             const baseQuizDmg = Math.max(10, Math.floor(rawQuizDmg * chaliceMult * bossBonus));
-            const quizDmgFloor = Math.floor(baseQuizDmg * (mult / 15));
+            // 스킬 등급 배율(mult: 5~120)에 따른 스킬 딜 보정 계수 (일반 ~0.6x -> 신화 6성 ~2.5x of quiz base)
+            const skillGradeFactor = 0.6 + Math.min(1.9, (mult - 5) / 60);
+            const quizDmgFloor = Math.floor(baseQuizDmg * skillGradeFactor);
 
-            const skillDmg = Math.max(statSkillDmg, quizDmgFloor);
+            let skillDmg = Math.max(statSkillDmg, quizDmgFloor);
+
+            // 보스전의 경우 4개 스킬 몰아치기로 퀴즈 무시 컷 방지: 단일 스킬 최대 보스 체력의 10% 상한선 적용 (유저 피드백 반영)
+            if (isBossBattleActive) {
+                skillDmg = Math.min(skillDmg, Math.floor(monsterMaxHp * 0.10));
+            }
 
             processCombatDamage(skillDmg);
             playSoundEffect('levelup');
@@ -6107,13 +6129,18 @@
                 const rawQuizDmg = isBossBattleActive 
                     ? Math.max(statDmg, Math.floor(monsterMaxHp * 0.035)) 
                     : statDmg;
-                const quizDmg = Math.max(10, Math.floor(rawQuizDmg * chaliceMult * bossBonus));
+                // 연속 정답 콤보 상승 로직 적용 (처음 기본 데미지부터 시작하여 연속 정답 시 최대 2.0배 상승)
+                if (typeof gameState.quizCombo === 'undefined') gameState.quizCombo = 0;
+                gameState.quizCombo++;
+                const comboBonus = 1.0 + Math.min(1.0, (gameState.quizCombo - 1) * 0.05);
+
+                const quizDmg = Math.max(10, Math.floor(rawQuizDmg * chaliceMult * bossBonus * comboBonus));
                 processCombatDamage(quizDmg);
-                spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `⚡ 퀴즈 크리티컬! -${quizDmg.toLocaleString()}`);
+                spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `⚡ 콤보 크리티컬! -${quizDmg.toLocaleString()}`);
 
                 gameState.currentQuizIndex = (gameState.currentQuizIndex + 1) % gameState.wordsPool.length;
 
-                showBattleToast(`🔥 약점 정답 타격! -${quizDmg.toLocaleString()} 피해 / +${reward.toLocaleString()}G / +10 FP`);
+                showBattleToast(`🔥 [콤보 x${gameState.quizCombo}] 정답 타격! -${quizDmg.toLocaleString()} 피해 / +${reward.toLocaleString()}G / +10 FP`);
 
                 setTimeout(() => {
                     generateQuizCard();
@@ -6126,6 +6153,7 @@
                 }, 1000);
 
             } else {
+                gameState.quizCombo = 0; // 오답 시 콤보 초기화
                 playSoundEffect('incorrect');
                 buttons[index].className = "choice-btn p-3.5 bg-red-950/80 border-2 border-red-500 text-white font-bold rounded-none-forced text-center transition flex items-center justify-center";
                 
@@ -6522,6 +6550,13 @@
                         showBattleToast("⚠️ 보스의 치명적인 강력한 공격이 날아옵니다!");
                         triggerCriticalAttack(rWord.word, rWord.meaning, true);
                     }
+                }
+
+                // 💚 보스 자동 체력 회복 (초당 0.5% 회복, 60초간 총 30% 회복으로 텐션 유지)
+                if (monsterCurrentHp > 0 && monsterCurrentHp < monsterMaxHp) {
+                    const regenAmount = Math.max(1, Math.floor(monsterMaxHp * 0.005 * 0.1)); // 0.1초당 0.05%
+                    monsterCurrentHp = Math.min(monsterMaxHp, monsterCurrentHp + regenAmount);
+                    updateArenaHpBars();
                 }
 
                 if (bossTimeRemaining <= 0) {

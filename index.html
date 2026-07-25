@@ -350,19 +350,18 @@
 
         /* 얇고 자연스러운 커스텀 스크롤바 */
         .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 4px;
+            height: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 4px;
+            background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
             border-radius: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
         }
     </style>
 </head>
@@ -1011,7 +1010,7 @@
 
             <!-- TAB 5: Grade World Boss Raid Arena -->
             <div id="worldBossTab"
-                class="bg-black border border-[#3c3c3c] p-2 flex-grow hidden flex-col justify-between rounded-none-forced overflow-hidden">
+                class="bg-black border border-[#3c3c3c] p-2 flex-grow hidden flex-col justify-between rounded-none-forced overflow-y-auto custom-scrollbar">
                 <div>
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="bmw-label-uppercase text-white flex items-center gap-2">
@@ -2043,7 +2042,7 @@
                 <span id="gachaOrbIcon" class="text-6xl animate-spin" style="animation-duration: 3s;">🔮</span>
             </div>
             
-            <h2 id="gachaStatusTitle" class="text-2xl font-extrabold text-pink-400 tracking-wider mb-2 animate-pulse">마법 캡슐을 연성하는 중...</h2>
+            <h2 id="gachaStatusTitle" class="text-xl sm:text-2xl font-extrabold text-pink-400 tracking-wider mb-2 animate-pulse whitespace-nowrap">마법 캡슐을 연성하는 중...</h2>
             <p id="gachaStatusSub" class="text-xs text-[#bbbbbb] mb-6">정복한 영단어의 마법 기운이 캡슐에 응축됩니다!</p>
 
             <div class="w-full bg-[#111] h-3 border border-[#3c3c3c] rounded-none-forced overflow-hidden">
@@ -4748,7 +4747,7 @@
                            </div>`;
 
                 html += `
-                    <div class="bg-[#0d0d0d] border ${isUnlocked ? 'border-purple-900/80 shadow-[0_0_10px_rgba(147,51,234,0.15)]' : 'border-gray-900 opacity-50'} p-3 rounded-none-forced flex flex-col justify-between min-h-[135px]">
+                    <div class="bg-[#0d0d0d] border ${isUnlocked ? 'border-purple-900/80 shadow-[0_0_10px_rgba(147,51,234,0.15)]' : 'border-gray-900 opacity-50'} p-3 rounded-none-forced flex flex-col justify-between min-h-[135px] overflow-hidden overflow-hidden">
                         <div>
                             <div class="flex justify-between items-center mb-1">
                                 <h4 class="font-extrabold text-xs text-purple-300 flex items-center gap-1">
@@ -5106,7 +5105,7 @@
             const stars = skill.stars || 0;
 
             // 세부 급간(Tier 1~3) 보정: Tier 1 (+0%), Tier 2 (+10%), Tier 3 (+20%)
-            const tierFactor = 1 + (tier - 1) * 0.10;
+            const tierFactor = 1 + (3 - tier) * 0.10;
 
             // 한계돌파 별(⭐ 1~6개) 완성당 +15% 수치 상승
             const starFactor = 1 + stars * 0.15;
@@ -5126,9 +5125,9 @@
             // 🎲 티어(Tier 1~3) 랜덤 롤링 (Tier 1: 70%, Tier 2: 25%, Tier 3: 5%)
             if (!rolledTier) {
                 const tierRoll = Math.random();
-                if (tierRoll < 0.05) rolledTier = 3;
+                if (tierRoll < 0.05) rolledTier = 1;
                 else if (tierRoll < 0.30) rolledTier = 2;
-                else rolledTier = 1;
+                else rolledTier = 3;
             }
 
             const existingSkill = gameState.skillsInventory.find(s => s.word === word);
@@ -5154,13 +5153,13 @@
 
                     existingSkill.stars = newStars;
                     existingSkill.exp = newExp;
-                    if (rolledTier > oldTier) existingSkill.tier = rolledTier;
+                    if (rolledTier < oldTier) existingSkill.tier = rolledTier;
 
                     if (!suppressModal) showToast(`🔥 [${capitalizeFirstLetter(word)}] 대각성! [${gradeInfo.name}] (Tier ${existingSkill.tier}) 등급으로 상위 승급!`);
                 } else {
                     // 👑 1. 동일/이하 등급 카드라도 새로 뽑은 티어가 더 높으면 상위 티어로 덮어씌움 (Tier Overwrite)!
                     let tierUpMsg = "";
-                    if (rolledGradeRank === existingGradeRank && rolledTier > oldTier) {
+                    if (rolledGradeRank === existingGradeRank && rolledTier < oldTier) {
                         existingSkill.tier = rolledTier;
                         tierUpMsg = ` 👑 (Tier ${oldTier} ➔ Tier ${rolledTier} 상위 티어 덮어씌우기!)`;
                     }
@@ -7536,12 +7535,12 @@
                             const gradeInfo = SKILL_GRADES[s.grade] || SKILL_GRADES.normal;
                             const starsHtml = "⭐".repeat(s.stars || 0);
                             skillHtml += `
-                                <div class="p-1.5 border-2 ${gradeInfo.colorClass} flex flex-col justify-between h-12 min-w-0">
+                                <div class="p-1.5 border-2 ${gradeInfo.colorClass} flex flex-col justify-between min-h-[52px] min-w-0">
                                     <div class="flex justify-between items-center text-[8px]">
                                         <span class="font-bold uppercase tracking-wider">${gradeInfo.name} T${s.tier || 1}</span>
                                         <span class="text-yellow-300 font-bold">${starsHtml}</span>
                                     </div>
-                                    <span class="text-[10px] font-bold font-mono text-white truncate">${capitalizeFirstLetter(s.word)}</span>
+                                    <span class="text-[10px] font-bold font-mono text-white truncate">${capitalizeFirstLetter(s.word)}</span><span class="text-[8px] font-bold text-gray-400 shrink-0 ml-1">x${getSkillMultiplier(s)}%</span>
                                 </div>
                             `;
                         } else {

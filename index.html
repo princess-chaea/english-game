@@ -350,7 +350,7 @@
     </style>
 </head>
 
-<body class="min-h-screen flex flex-col bg-black overflow-x-hidden">
+<body class="h-screen flex flex-col bg-black overflow-hidden">
     <script>
         // 새로고침 시 세션이 없으면 게임 UI가 깜빡이는 것을 방지
         if (!sessionStorage.getItem("vocahero_active_session")) {
@@ -376,7 +376,7 @@
 
     <!-- Top Navigation / Status Header -->
     <header class="bg-black text-white p-4 sticky top-0 z-50 border-b border-[#3c3c3c]">
-        <div class="max-w-6xl mx-auto flex flex-wrap justify-between items-center gap-2">
+        <div class="max-w-[1400px] w-full mx-auto flex flex-wrap justify-between items-center gap-2 px-4">
             <div class="flex items-center space-x-2 cursor-pointer select-none" onclick="handleTeacherSecretClick()">
                 <i data-lucide="sword" class="w-6 h-6 text-white animate-pulse"></i>
                 <h1 class="text-xl font-bold uppercase tracking-wider" style="letter-spacing: -0.5px;">Voca Hero!</h1>
@@ -406,11 +406,11 @@
     <div class="m-stripe-divider"></div>
 
     <!-- Main RPG Arena & Upgrade Panel Container -->
-    <main class="max-w-7xl w-full mx-auto px-4 py-3 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+    <main class="max-w-[1400px] w-full mx-auto px-4 py-2 md:py-3 flex-grow overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-stretch">
 
         <!-- LEFT PANEL: Dynamic RPG Battle Arena (5 Cols) -->
         <section id="leftRpgPanel"
-            class="lg:col-span-5 bg-black border border-[#3c3c3c] p-3 flex flex-col justify-between relative overflow-hidden rounded-none-forced lg:sticky lg:top-4" style="height: calc(100vh - 90px); max-height: 900px;">
+            class="lg:col-span-5 bg-black border border-[#3c3c3c] p-3 flex flex-col justify-between relative overflow-hidden h-full rounded-none-forced">
             
             <!-- Stage Header & Progress -->
             <div class="z-10 flex justify-between items-center bg-[#0d0d0d] border border-[#3c3c3c] px-3 py-2 rounded-none-forced gap-2 overflow-hidden">
@@ -473,7 +473,7 @@
 
             <!-- Interactive Combat Arena Viewport (Vertical Racetrack) -->
             <div id="battleArena"
-                class="relative z-10 w-full flex-1 border border-[#3c3c3c] bg-[#000000] flex flex-col items-center justify-between py-2 cursor-pointer select-none overflow-hidden my-1 rounded-none-forced" style="min-height: 280px;"
+                class="relative z-10 w-full flex-1 min-h-0 border border-[#3c3c3c] bg-[#000000] flex flex-col items-center justify-between py-2 cursor-pointer select-none overflow-hidden my-1 rounded-none-forced"
                 onclick="handleArenaClick(event)">
 
                 <!-- Racetrack vertical center stripes in the background -->
@@ -575,7 +575,7 @@
         </section>
 
         <!-- RIGHT PANEL: Action Quiz, Equipment Upgrades, Pets (7 Cols) -->
-        <section id="rightMainPanel" class="lg:col-span-7 flex flex-col gap-2 transition-all duration-300">
+        <section id="rightMainPanel" class="lg:col-span-7 flex flex-col gap-2 transition-all duration-300 overflow-y-auto h-full pr-1.5">
 
             <!-- Header Navigation & Title -->
             <nav class="grid grid-cols-3 sm:grid-cols-7 gap-1 bg-[#0d0d0d] p-1 border border-[#3c3c3c] rounded-none-forced">

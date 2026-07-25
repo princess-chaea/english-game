@@ -720,7 +720,7 @@
 
             <!-- TAB 2: RPG Equipment Blacksmith Upgrade Shop -->
             <div id="gearTab"
-                class="bg-black border border-[#3c3c3c] p-3 flex-grow hidden flex-col justify-between min-h-0 rounded-none-forced">
+                class="bg-black border border-[#3c3c3c] p-3 flex-grow hidden flex-col justify-between min-h-0 rounded-none-forced overflow-y-auto custom-scrollbar">
                 <div>
                     <h3 class="bmw-label-uppercase text-white flex items-center gap-2 mb-2">
                         <i data-lucide="anvil" class="text-[#0066b1]"></i>
@@ -774,7 +774,7 @@
 
             <!-- TAB 3: Companion Pet Lab & Relic Altar (소환수 & 유물 소환) -->
             <div id="petTab"
-                class="bg-black border border-[#3c3c3c] p-3 flex-grow hidden flex-col justify-between min-h-0 rounded-none-forced">
+                class="bg-black border border-[#3c3c3c] p-3 flex-grow hidden flex-col justify-between min-h-0 rounded-none-forced overflow-y-auto custom-scrollbar">
                 <div>
                     <!-- Top Title: Pet Lab Only -->
                     <div class="flex justify-between items-center mb-3 border-b border-[#262626] pb-2">
@@ -1003,7 +1003,7 @@
                         </div>
                         <div class="bg-black p-2.5 border border-[#262626] flex items-center gap-2">
                             <span class="bg-yellow-950 text-yellow-300 border border-yellow-600 px-2 py-1 font-black shrink-0 text-[10px]">⭐ 별 & 티어 성장</span>
-                            <p class="leading-tight text-[10px]">EXP 충전 시 티어/성급 상승 (티어+10%, 별+50% 추가 피해)</p>
+                            <p class="leading-tight text-[10px]">중복 획득 시 EXP 충전(성급 상승) 및 확률적으로 <b>상위 티어 덮어씌움</b> (티어+10%, 별+50% 피해)</p>
                         </div>
                     </div>
                 </div>
@@ -1249,7 +1249,7 @@
 
             <!-- TAB 6: Dedicated Hall of Fame (독립 명예의 전당 전용 메인 탭) -->
             <div id="hallOfFameTab"
-                class="bg-black border border-yellow-600/80 p-6 flex-grow hidden flex-col justify-between min-h-[500px] rounded-none-forced shadow-[0_0_20px_rgba(234,179,8,0.15)]">
+                class="bg-black border border-yellow-600/80 p-6 flex-grow hidden flex-col justify-between min-h-[500px] rounded-none-forced shadow-[0_0_20px_rgba(234,179,8,0.15)] overflow-y-auto custom-scrollbar">
                 <div>
                     <div class="flex justify-between items-center mb-4 border-b border-yellow-900/60 pb-3">
                         <div>
@@ -1335,7 +1335,7 @@
 
             <!-- TAB 7: Dedicated My Hero Info Profile & Vocabulary Catalog (독립 내 영웅 정보 메인 탭) -->
             <div id="statsTab"
-                class="bg-black border border-cyan-900/60 p-4 flex-grow hidden flex-col justify-between rounded-none-forced shadow-[0_0_20px_rgba(6,182,212,0.1)]">
+                class="bg-black border border-cyan-900/60 p-4 flex-grow hidden flex-col justify-between rounded-none-forced shadow-[0_0_20px_rgba(6,182,212,0.1)] overflow-y-auto custom-scrollbar">
                 <div>
                     <!-- Header Title -->
                     <div class="flex justify-between items-center mb-3 border-b border-cyan-900/60 pb-2">
@@ -5260,7 +5260,7 @@
 
             modal.classList.remove("hidden");
             modal.classList.add("flex");
-            progressBar.style.transition = "width 60ms linear";
+            progressBar.style.transition = "width 250ms linear";
             progressBar.style.width = "0%";
             statusTitle.innerText = drawCount === 100 ? "⚡ 마법 캡슐 100연속 소환 대량 연성 중..." : (drawCount === 10 ? "✨ 마법 캡슐 10연속 소환 연성 중..." : "마법 캡슐을 연성하는 중...");
             statusSub.innerText = "정복한 영단어의 마법 기운이 캡슐에 응축됩니다!";
@@ -5356,7 +5356,7 @@
                     saveLocalCache();
                     }, 600);
                 }
-            }, 60);
+            }, 250);
         }
 
         function showSkillDraw100ResultModal(acquiredList) {

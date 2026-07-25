@@ -3679,12 +3679,7 @@
 
                 if (goldGained > 0) {
                     gameState.gold += goldGained;
-                    const badge = document.getElementById("offlineEarningsBadge");
-                    badge.classList.remove("hidden");
-                    badge.innerText = `💤 오프라인 +${goldGained.toLocaleString()}G`;
-                    showToast(`💤 수면 자동 훈련기 작동 완료! 용사단이 부재중에 ${goldGained}G를 축적했습니다.`);
-
-                    setTimeout(() => { badge.classList.add("hidden"); }, 8000);
+                    showToast(`💤 오프라인 보상 획득! 용사단이 부재중에 ${goldGained.toLocaleString()}G를 축적했습니다.`);
                 }
             }
             saveLocalCache();

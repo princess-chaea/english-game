@@ -370,7 +370,7 @@
 <body class="h-screen flex flex-col bg-black overflow-hidden">
     <script>
         // 새로고침 시 세션이 없으면 게임 UI가 깜빡이는 것을 방지
-        if (!sessionStorage.getItem("vocahero_active_session")) {
+        if (!sessionStorage.getItem("vocahero_active_session") && !localStorage.getItem("vocahero_active_session")) {
             document.write('<style id="antiFlashStyle">header, main, nav { display: none !important; }</style>');
         }
     </script>
@@ -761,7 +761,7 @@
                         </div>
                         <div class="bg-[#0d0d0d] border border-purple-900/40 p-3 rounded-none-forced">
                             <!-- 장신구 3종 그리드 -->
-                            <div id="accessoriesShopGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <div id="accessoriesShopGrid" class="grid grid-cols-1 md:grid-cols-3 gap-2 overflow-hidden">
                                 <!-- Dynamic Accessories Cards -->
                             </div>
                         </div>
@@ -2007,7 +2007,11 @@
                 </div>
             </div>
 
-            <div class="border-t border-gray-800 pt-3 flex justify-end gap-2 mt-2">
+            <div class="border-t border-gray-800 pt-3 flex justify-between gap-2 mt-2">
+                <button onclick="logoutSession()" class="bg-red-900/50 hover:bg-red-800 border border-red-700 text-red-300 font-bold px-4 py-1.5 text-xs rounded-none-forced flex items-center gap-1 transition shadow-lg">
+                    <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                    <span>로그아웃</span>
+                </button>
                 <button onclick="closeModal('settingsModal')" class="bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold px-4 py-1.5 text-xs rounded-none-forced">
                     닫기
                 </button>
@@ -2900,6 +2904,7 @@
                             closeModal("loginModal");
                             closeModal("pinVerifyModal");
                             sessionStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
+                            localStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
                             showToast("🏰 원정대 클라우드 계정 로드 성공!");
                         } else {
                             handleLocalVerify(grade, classNum, studentNum, name, password);
@@ -2921,6 +2926,7 @@
                 closeModal("pinVerifyModal");
                 closeModal("newUserRegisterModal");
                 sessionStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
+                            localStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
                 showToast("🏰 로컬 원정대 계정 로드 성공!");
                 // initGameEngine() 내에서 hideGameLoadingOverlay()가 이미 호출되지만, 안전망으로도 보장
                 hideGameLoadingOverlay();
@@ -2953,6 +2959,7 @@
                             closeModal("loginModal");
                             closeModal("newUserRegisterModal");
                             sessionStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
+                            localStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
                             showToast("✨ 새로운 전설의 모험이 시작되었습니다! 환영합니다!");
                         } else {
                             handleLocalRegister(grade, classNum, studentNum, name, password);
@@ -2971,6 +2978,7 @@
             if (loadLocalSimulation(grade, classNum, studentNum, name, password)) {
                 closeModal("newUserRegisterModal");
                 sessionStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
+                            localStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
                 showToast("✨ 로컬 원정대에 새로운 대원이 등록되었습니다!");
             }
         }
@@ -4449,6 +4457,28 @@
                 if (!opt) {
                     opt = generateRandomPotentialOption();
                     currentGearOpts[i] = opt;
+                } else if (!opt.tier) {
+                    // 구버전(티어 정보 없음) 호환용 로직
+                    const poolOpt = [{ type: "atk", ranges: { mythic: [9, 12], legendary: [6, 8], hero: [4, 5], rare: [3, 3.5], normal: [2, 2.5] } },
+                                     { type: "skillDmg", ranges: { mythic: [13, 18], legendary: [9, 12], hero: [6, 8], rare: [4, 5.5], normal: [3, 3.5] } },
+                                     { type: "bossDmg", ranges: { mythic: [18, 24], legendary: [12, 16], hero: [8, 10], rare: [5, 7], normal: [4, 4.5] } },
+                                     { type: "clickDmg", ranges: { mythic: [90, 120], legendary: [60, 80], hero: [40, 50], rare: [28, 35], normal: [18, 22] } },
+                                     { type: "goldBonus", ranges: { mythic: [13, 18], legendary: [9, 12], hero: [6, 8], rare: [4, 5.5], normal: [3, 3.5] } },
+                                     { type: "critRate", ranges: { mythic: [4.5, 6], legendary: [3, 4], hero: [2, 2.5], rare: [1.3, 1.6], normal: [1, 1.1] } }
+                    ].find(p => p.type === opt.type);
+                    
+                    if (poolOpt && poolOpt.ranges[opt.grade]) {
+                        const range = poolOpt.ranges[opt.grade];
+                        const val = opt.value;
+                        const tierStep = (range[1] - range[0]) / 3;
+                        let tierNum = 4;
+                        if (val >= range[0] + tierStep * 2.5) tierNum = 1;
+                        else if (val >= range[0] + tierStep * 1.5) tierNum = 2;
+                        else if (val >= range[0] + tierStep * 0.5) tierNum = 3;
+                        opt.tier = `T${tierNum}`;
+                    } else {
+                        opt.tier = 'T1';
+                    }
                 }
 
                 const isLocked = lockedArr.includes(i);
@@ -6959,6 +6989,45 @@
             }
         }
 
+        function logoutSession() {
+            saveLocalCache();
+            const savedUrl = getGasUrl();
+            const doLogout = () => {
+                localStorage.removeItem("vocahero_active_session");
+                sessionStorage.removeItem("vocahero_active_session");
+            localStorage.removeItem("vocahero_active_session");
+                showToast("로그아웃 되었습니다. 잠시 후 초기 화면으로 이동합니다.");
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            };
+
+            if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
+                const petStr = JSON.stringify(gameState.petLevels || {});
+                const extraDataStr = buildExtraDataString();
+                const meta = getReadableSaveMetadata();
+                runGas(
+                    "saveStudentProgress",
+                    [
+                        gameState.grade, gameState.classNum, gameState.studentNum, gameState.name,
+                        gameState.gold, gameState.avatarType, gameState.helmetLvl, gameState.armorLvl,
+                        gameState.weaponLvl, gameState.shieldLvl, gameState.shoesLvl, petStr,
+                        gameState.stage, gameState.progress, gameState.skillsInventory, gameState.equippedSkills,
+                        Number(gameState.masteryPoints) || 0,
+                        extraDataStr, meta.mastered, meta.wrong
+                    ],
+                    function () {
+                        doLogout();
+                    },
+                    function () {
+                        doLogout();
+                    }
+                );
+            } else {
+                doLogout();
+            }
+        }
+
         function saveAndExit() {
             saveLocalCache();
             showToast("💾 데이터 저장 중... 잠시 후 창을 안전하게 닫습니다.");
@@ -7047,6 +7116,7 @@
             const cacheKey = `vocahero_${g}_${c}_${s}_${n}`;
             localStorage.removeItem(cacheKey);
             sessionStorage.removeItem("vocahero_active_session");
+            localStorage.removeItem("vocahero_active_session");
             localStorage.removeItem("vocahero_active_session");
 
             // 구글 시트 데이터베이스(Students 시트)의 해당 학생 기록 완벽 제거
@@ -8270,7 +8340,7 @@
 
             // 🔄 새로고침 시 자동 로그인 세션 복원 장치
             localStorage.removeItem("vocahero_active_session"); // 기존 localStorage 잔여 세션 삭제
-            const activeSessionRaw = sessionStorage.getItem("vocahero_active_session");
+            const activeSessionRaw = sessionStorage.getItem("vocahero_active_session") || localStorage.getItem("vocahero_active_session");
             if (activeSessionRaw) {
                 try {
                     const session = JSON.parse(activeSessionRaw);
@@ -8720,6 +8790,7 @@
                 "로그아웃하고 로그인 첫 화면으로 돌아가시겠습니까?",
                 function() {
                     sessionStorage.removeItem("vocahero_active_session");
+            localStorage.removeItem("vocahero_active_session");
                     localStorage.removeItem("vocahero_active_session");
                     location.reload();
                 },
@@ -8746,7 +8817,7 @@
 
             // 🔄 새로고침 시 자동 로그인 세션 복원 장치 (브라우저 종료 시 삭제됨)
             localStorage.removeItem("vocahero_active_session"); // 기존 localStorage 잔여 세션 삭제
-            const activeSessionRaw = sessionStorage.getItem("vocahero_active_session");
+            const activeSessionRaw = sessionStorage.getItem("vocahero_active_session") || localStorage.getItem("vocahero_active_session");
             if (activeSessionRaw) {
                 try {
                     const session = JSON.parse(activeSessionRaw);

@@ -779,24 +779,24 @@
                                 <span>고대 유물 소환 제단</span>
                             </h4>
                             
-                            <div class="flex items-center gap-2 flex-wrap justify-end">
+                            <div class="flex items-center gap-1 justify-end whitespace-nowrap overflow-x-auto pb-1 md:pb-0">
                                 <!-- 🏛️ Boss Tokens & Essence Display -->
-                                <span class="text-xs text-yellow-300 font-bold bg-yellow-950/80 border border-yellow-600 px-2.5 py-1 font-mono shadow-md">
-                                    🏛️ 증표: <b id="bossTokenCountText" class="text-yellow-400 font-black text-sm">0</b>개
+                                <span class="text-[10px] md:text-xs text-yellow-300 font-bold bg-yellow-950/80 border border-yellow-600 px-1.5 md:px-2.5 py-1 font-mono shadow-md">
+                                    🏛️ 증표: <b id="bossTokenCountText" class="text-yellow-400 font-black text-xs md:text-sm">0</b>개
                                 </span>
-                                <span class="text-xs text-purple-300 font-bold bg-purple-950/80 border border-purple-600 px-2.5 py-1 font-mono shadow-md">
-                                    🏺 정수: <b id="relicEssenceCountText" class="text-pink-400 font-black text-sm">0</b>개
+                                <span class="text-[10px] md:text-xs text-purple-300 font-bold bg-purple-950/80 border border-purple-600 px-1.5 md:px-2.5 py-1 font-mono shadow-md">
+                                    🏺 정수: <b id="relicEssenceCountText" class="text-pink-400 font-black text-xs md:text-sm">0</b>개
                                 </span>
                                 
-                                <div class="flex gap-1.5">
-                                    <button onclick="drawRelicCapsule(1)" class="px-2.5 py-1 bg-purple-900 hover:bg-purple-800 text-purple-200 font-bold text-[10px] border border-purple-500 rounded-none-forced transition">
-                                        🏺 1회 (50)
+                                <div class="flex gap-1 ml-1">
+                                    <button onclick="drawRelicCapsule(1)" class="px-1.5 md:px-2.5 py-1 bg-purple-900 hover:bg-purple-800 text-purple-200 font-bold text-[9px] md:text-[10px] border border-purple-500 rounded-none-forced transition">
+                                        🏺 1회(50)
                                     </button>
-                                    <button onclick="drawRelicCapsule(10)" class="px-2.5 py-1 bg-gradient-to-r from-yellow-600 to-amber-500 hover:from-yellow-500 hover:to-amber-400 text-black font-extrabold text-[10px] shadow-md rounded-none-forced transition">
-                                        🔥 10연속 (450)
+                                    <button onclick="drawRelicCapsule(10)" class="px-1.5 md:px-2.5 py-1 bg-gradient-to-r from-yellow-600 to-amber-500 hover:from-yellow-500 hover:to-amber-400 text-black font-extrabold text-[9px] md:text-[10px] shadow-md rounded-none-forced transition">
+                                        🔥 10연속(450)
                                     </button>
-                                    <button onclick="craftMythicRelicFromEssence()" class="px-2.5 py-1 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-extrabold text-[10px] border border-pink-400 shadow-lg rounded-none-forced transition flex items-center gap-1 animate-pulse">
-                                        ✨ 신화 확정연성 (100 정수)
+                                    <button onclick="craftMythicRelicFromEssence()" class="px-1.5 md:px-2.5 py-1 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-extrabold text-[9px] md:text-[10px] border border-pink-400 shadow-lg rounded-none-forced transition flex items-center gap-1 animate-pulse">
+                                        ✨ 신화 확정 소환 (🏺 100)
                                     </button>
                                 </div>
                             </div>
@@ -982,7 +982,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-[10px] text-gray-300">
                         <div class="bg-black p-2.5 border border-[#262626] flex items-center gap-2">
                             <span class="bg-purple-950 text-purple-300 border border-purple-600 px-2 py-1 font-black shrink-0 text-[10px]">✨ 3개 카드 합성</span>
-                            <p class="leading-tight text-[10px]">동일 티어 3개 조합 시 <b>20% 확률 상위 승급</b> / 80% 동일 유지</p>
+                            <p class="leading-tight text-[10px]">카드 3개(일괄 포함) 합성 시 <b>기본 20% (+⭐/EXP 추가) 확률 상위 승급</b></p>
                         </div>
                         <div class="bg-black p-2.5 border border-[#262626] flex items-center gap-2">
                             <span class="bg-yellow-950 text-yellow-300 border border-yellow-600 px-2 py-1 font-black shrink-0 text-[10px]">⭐ 별 & T티어 성장</span>
@@ -1484,8 +1484,8 @@
                                 <div class="text-indigo-300 font-black mb-1 text-[11px]">⚔️ 퀴즈 전투 & 방어 시스템</div>
                                 <ul class="text-gray-300 space-y-1 leading-tight">
                                     <li class="flex items-start gap-1">
-                                        <span class="shrink-0">✅ <b>정답:</b></span>
-                                        <span>몬스터에게 피해를 입히며 골드 🪙 획득 및 등반</span>
+                                        <span class="shrink-0">✅ <b>정답 & 콤보:</b></span>
+                                        <span>피해 및 골드 획득! <b>연속 정답(콤보) 시 최대 2.0배 데미지가 증폭</b>됩니다. (오답 시 콤보 초기화)</span>
                                     </li>
                                     <li class="flex items-start gap-1">
                                         <span class="shrink-0">🛡️ <b>방어 실패:</b></span>
@@ -1502,8 +1502,8 @@
                                 <div class="text-orange-300 font-black mb-1 text-[11px]">🐉 스테이지 보스 & 해금 콘텐츠</div>
                                 <ul class="text-gray-300 space-y-1 leading-tight">
                                     <li class="flex items-start gap-1">
-                                        <span class="shrink-0">🏆 <b>보스:</b></span>
-                                        <span>10단위 스테이지마다 강력한 스테이지 보스 출현</span>
+                                        <span class="shrink-0">🏆 <b>보스전 기믹:</b></span>
+                                        <span>보스는 <b>초당 체력을 지속 회복</b>합니다! 단일 스킬 딜(최대 10% 상한)과 함께 <b>강력한 공격 패링 및 정답 콤보 유지</b>가 필수입니다.</span>
                                     </li>
                                     <li class="flex items-start gap-1">
                                         <span class="shrink-0">⚔️ <b>보스 증표:</b></span>

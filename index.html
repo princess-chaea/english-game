@@ -4761,11 +4761,11 @@
                                     <img src="${info.img}" class="w-4 h-4 object-contain inline">
                                     <span>${info.name}</span>
                                 </h4>
-                                ${currentLvl > 0 ? `<span class="text-[9px] font-bold text-yellow-300 bg-purple-950/80 border border-purple-700 px-1.5 py-0.5 font-mono">Lv.${currentLvl}</span>` : ''}
+                                ${currentLvl > 0 ? `<span class="text-[10px] font-bold text-yellow-300 bg-purple-950/80 border border-purple-700 px-1.5 py-0.5 font-mono">Lv.${currentLvl}</span>` : ''}
                             </div>
-                            <p class="text-[9px] text-gray-400 mb-1.5 break-all">${isUnlocked ? info.desc : `🔒 ${info.unlockStage}스테이지 달성 시 해금`}</p>
+                            <p class="text-[11px] text-gray-400 mb-1.5">${isUnlocked ? info.desc : `🔒 ${info.unlockStage}스테이지 달성 시 해금`}</p>
                             ${isUnlocked ? `
-                                <div class="text-[8px] bg-black p-1.5 border border-purple-900/50 rounded-none-forced font-mono mb-2">
+                                <div class="text-[10px] bg-black p-1.5 border border-purple-900/50 rounded-none-forced font-mono mb-2">
                                     <div class="text-purple-300 font-bold">현재: ${currentLvl > 0 ? currentBonusText : '연마 전 (0강)'}</div>
                                     ${!isMax ? `<div class="text-yellow-400 mt-0.5">다음: ${nextBonusText}</div>` : ''}
                                 </div>
@@ -7519,16 +7519,37 @@
                     const lvl = (gameState.petLevels && gameState.petLevels[type]) || 0;
                     const stage = lvl > 0 ? Math.min(10, Math.ceil(lvl / 10)) : 1;
                     const imgUrl = `media/pet_${type}/pet_${type}_${stage}.png`;
+                    // 펫별 효과 텍스트 계산
+                    let petEffectText = '';
+                    if (type === 'slime' && lvl > 0) {
+                        petEffectText = `🪙 골드 +${(PET_PARAMS.slime.goldBonus * lvl * 100).toFixed(0)}%`;
+                    } else if (type === 'dragon' && lvl > 0) {
+                        petEffectText = `⚔️ DPS +${(PET_PARAMS.dragon.dps * lvl).toLocaleString()}`;
+                    } else if (type === 'fairy' && lvl > 0) {
+                        petEffectText = `🔨 강화율 +${(PET_PARAMS.fairy.forgeBonus * lvl).toFixed(1)}%`;
+                    } else {
+                        petEffectText = '미소환';
+                    }
                     petHtml += `
                         <div class="bg-[#0d0d0d] p-1.5 border border-[#3c3c3c] flex items-center gap-2 min-w-0 rounded-none-forced">
                             <img src="${imgUrl}" alt="${info.name}" class="w-8 h-8 object-contain flex-shrink-0">
                             <div class="min-w-0 flex-1">
                                 <span class="text-[9px] text-gray-300 font-bold block truncate">${info.name}</span>
                                 <span class="text-[10px] font-bold ${lvl > 0 ? 'text-yellow-400' : 'text-gray-600'} font-mono block">Lv.${lvl}</span>
+                                <span class="text-[8px] text-cyan-400 font-bold block truncate">${petEffectText}</span>
                             </div>
                         </div>
                     `;
                 });
+                // 펫 레벨 합계 → 힌트 횟수 계산
+                const totalPetLvlForHint = Object.values(gameState.petLevels || {}).reduce((a, b) => a + b, 0);
+                const maxHints = 2 + Math.floor(totalPetLvlForHint / 15);
+                petHtml += `
+                    <div class="col-span-3 mt-1 bg-yellow-950/40 border border-yellow-700/40 px-2 py-1 text-[9px] text-yellow-300 font-bold flex items-center gap-1">
+                        🧚 소환수 힌트 찬스: 이번 레이드 <b class="text-yellow-200">${maxHints}회</b> 사용 가능
+                        <span class="text-gray-500 font-normal ml-1">(펫 레벨합 ${totalPetLvlForHint} → 기본 2 + ${Math.floor(totalPetLvlForHint / 15)})</span>
+                    </div>
+                `;
                 petContainer.innerHTML = petHtml;
             }
 
@@ -7543,13 +7564,15 @@
                         if (s) {
                             const gradeInfo = SKILL_GRADES[s.grade] || SKILL_GRADES.normal;
                             const starsHtml = "⭐".repeat(s.stars || 0);
+                            const previewMult = getSkillMultiplier(s);
                             skillHtml += `
-                                <div class="p-1.5 border-2 ${gradeInfo.colorClass} flex flex-col justify-between h-12 min-w-0">
+                                <div class="p-1.5 border-2 ${gradeInfo.colorClass} flex flex-col justify-between min-h-[56px] min-w-0">
                                     <div class="flex justify-between items-center text-[8px]">
-                                        <span class="font-bold uppercase tracking-wider">${gradeInfo.name} T${s.tier || 1}</span>
-                                        <span class="text-yellow-300 font-bold">${starsHtml}</span>
+                                        <span class="font-bold uppercase tracking-wider">${gradeInfo.name} 티어${s.tier || 1}</span>
+                                        <span class="text-yellow-300 font-bold text-[8px]">${starsHtml}</span>
                                     </div>
-                                    <span class="text-[10px] font-bold font-mono text-white truncate">${capitalizeFirstLetter(s.word)}</span>
+                                    <span class="text-[10px] font-bold font-mono text-white truncate block">${capitalizeFirstLetter(s.word)}</span>
+                                    <span class="text-[9px] font-bold text-pink-300">⚡ ×${previewMult * 3}배</span>
                                 </div>
                             `;
                         } else {

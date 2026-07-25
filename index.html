@@ -3559,7 +3559,11 @@
         function calculateAutoGoldPerSec() {
             const relicGoldBonus = 1.0 + getEquippedRelicBonus("relic_compass") / 100;
             const potentialGold = 1.0 + (getPotentialStatBonus('goldBonus') / 100);
-            return Math.floor((gameState.stage || 1) * 15 * relicGoldBonus * potentialGold);
+            const stage = gameState.stage || 1;
+            // 73스테이지 전설 나침반(+320%) 기준 초당 약 1.6만G (1분당 약 96만G)의 적정 밸런스
+            const stageBase = stage * 18;
+            const scalingFactor = Math.pow(1.015, Math.max(0, stage - 1));
+            return Math.floor(stageBase * scalingFactor * relicGoldBonus * potentialGold);
         }
 
         function calculateDPSPower() {
@@ -5652,7 +5656,21 @@
             const totalSkillMult = 1 + (necklaceSkillBonus + potentialSkillBonus + relicSkillBonus) / 100;
 
             const baseSkillDmg = (calculateClickAttackPower() * mult * 3) + (calculateDPSPower() * 2);
-            const skillDmg = Math.floor(baseSkillDmg * totalSkillMult);
+            const statSkillDmg = Math.floor(baseSkillDmg * totalSkillMult);
+
+            // 🎯 후반 스테이지/보스 HP 폭발 시 퀴즈 정답 딜과의 역전 방지 & mult(등급/티어/별) 보장 보정
+            const chaliceMult = 1.0 + (getEquippedRelicBonus("relic_chalice") / 100);
+            const bossBonus = isBossBattleActive 
+                ? (1.0 + (getEquippedRelicBonus("relic_feather") + getPotentialStatBonus('bossDmg')) / 100)
+                : 1.0;
+            const statDmg = (calculateClickAttackPower() * 15) + (calculateDPSPower() * 3);
+            const rawQuizDmg = isBossBattleActive 
+                ? Math.max(statDmg, Math.floor(monsterMaxHp * 0.035)) 
+                : statDmg;
+            const baseQuizDmg = Math.max(10, Math.floor(rawQuizDmg * chaliceMult * bossBonus));
+            const quizDmgFloor = Math.floor(baseQuizDmg * (mult / 15));
+
+            const skillDmg = Math.max(statSkillDmg, quizDmgFloor);
 
             processCombatDamage(skillDmg);
             playSoundEffect('levelup');
@@ -7665,7 +7683,12 @@
             const totalSkillMult = 1 + (necklaceSkillBonus + potentialSkillBonus + relicSkillBonus) / 100;
 
             const baseDmg = (calculateClickAttackPower() * mult * 3);
-            const skillDmg = Math.floor(baseDmg * totalSkillMult);
+            const statSkillDmg = Math.floor(baseDmg * totalSkillMult);
+
+            // 🎯 월드 보스 레이드 스킬 보정 (mult/15 적용)
+            const baseHeroDmg = (calculateClickAttackPower() * 300) + (calculateDPSPower() * 50);
+            const wbQuizDmgFloor = Math.floor(baseHeroDmg * (mult / 15));
+            const skillDmg = Math.max(statSkillDmg, wbQuizDmgFloor);
 
             wbTotalDamageDealt += skillDmg;
             updateWorldBossBattleHpBar();

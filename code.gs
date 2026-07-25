@@ -194,7 +194,7 @@ function getWorldBossStatus(grade, studentKey) {
         gradeLogList.push({ key: bKey, dmg: bDmg });
         if (bKey === String(studentKey)) {
           myDamage = bDmg;
-          lastAttackDate = String(logData[k][3]);
+          lastAttackDate = formatKstDateStr(logData[k][3]);
         }
       }
     }
@@ -232,6 +232,24 @@ function getWorldBossStatus(grade, studentKey) {
   }
 }
 
+// 날짜 셀 값을 안전하게 KST (Asia/Seoul) YYYY-MM-DD 형식 문자열로 변환하는 헬퍼
+function formatKstDateStr(val) {
+  if (!val) return "";
+  if (val instanceof Date) {
+    return Utilities.formatDate(val, "Asia/Seoul", "yyyy-MM-dd");
+  }
+  var str = String(val).trim();
+  if (str.length > 10) {
+    try {
+      var d = new Date(str);
+      if (!isNaN(d.getTime())) {
+        return Utilities.formatDate(d, "Asia/Seoul", "yyyy-MM-dd");
+      }
+    } catch(e) {}
+  }
+  return str.substring(0, 10);
+}
+
 // 월드보스 공격 가하기 (1일 1회 제약 & LockService 기반 충돌 방지)
 function attackWorldBoss(grade, studentKey, damageDealt) {
   initDatabaseSheets();
@@ -248,7 +266,8 @@ function attackWorldBoss(grade, studentKey, damageDealt) {
     
     for (var k = 1; k < logData.length; k++) {
       if (String(logData[k][0]) === String(grade) && String(logData[k][1]) === String(studentKey)) {
-        if (String(logData[k][3]) === todayStr) {
+        var rawDateStr = formatKstDateStr(logData[k][3]);
+        if (rawDateStr === todayStr) {
           return { success: false, message: "오늘 이미 월드보스 레이드에 참전하셨습니다! 내일 다시 도전하세요." };
         }
         targetRow = k + 1;

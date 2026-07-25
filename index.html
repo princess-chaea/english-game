@@ -350,7 +350,7 @@
     </style>
 </head>
 
-<body class="min-h-screen flex flex-col justify-between overflow-x-hidden bg-black">
+<body class="h-screen flex flex-col justify-between overflow-hidden bg-black">
     <script>
         // 새로고침 시 세션이 없으면 게임 UI가 깜빡이는 것을 방지
         if (!sessionStorage.getItem("vocahero_active_session")) {
@@ -406,11 +406,11 @@
     <div class="m-stripe-divider"></div>
 
     <!-- Main RPG Arena & Upgrade Panel Container -->
-    <main class="max-w-6xl w-full mx-auto p-4 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+    <main class="max-w-6xl w-full mx-auto p-2 md:p-4 flex-grow overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-stretch">
 
         <!-- LEFT PANEL: Dynamic RPG Battle Arena (5 Cols) -->
         <section id="leftRpgPanel"
-            class="lg:col-span-5 bg-black border border-[#3c3c3c] p-3 flex flex-col justify-between relative overflow-hidden min-h-[580px] rounded-none-forced">
+            class="lg:col-span-5 bg-black border border-[#3c3c3c] p-3 flex flex-col justify-between relative overflow-hidden h-full rounded-none-forced">
             
             <!-- Stage Header & Progress -->
             <div class="z-10 flex justify-between items-center bg-[#0d0d0d] border border-[#3c3c3c] px-3 py-2 rounded-none-forced gap-2 overflow-hidden">
@@ -473,7 +473,7 @@
 
             <!-- Interactive Combat Arena Viewport (Vertical Racetrack) -->
             <div id="battleArena"
-                class="relative z-10 w-full flex-1 min-h-[520px] border border-[#3c3c3c] bg-[#000000] flex flex-col items-center justify-between py-4 cursor-pointer select-none overflow-hidden my-1 rounded-none-forced"
+                class="relative z-10 w-full flex-1 min-h-0 border border-[#3c3c3c] bg-[#000000] flex flex-col items-center justify-between py-2 cursor-pointer select-none overflow-hidden my-1 rounded-none-forced"
                 onclick="handleArenaClick(event)">
 
                 <!-- Racetrack vertical center stripes in the background -->
@@ -575,7 +575,7 @@
         </section>
 
         <!-- RIGHT PANEL: Action Quiz, Equipment Upgrades, Pets (7 Cols) -->
-        <section id="rightMainPanel" class="lg:col-span-7 flex flex-col gap-2 transition-all duration-300">
+        <section id="rightMainPanel" class="lg:col-span-7 flex flex-col gap-2 transition-all duration-300 overflow-y-auto h-full pr-1">
 
             <!-- Header Navigation & Title -->
             <nav class="grid grid-cols-3 sm:grid-cols-7 gap-1 bg-[#0d0d0d] p-1 border border-[#3c3c3c] rounded-none-forced">

@@ -5199,6 +5199,7 @@
 
             modal.classList.remove("hidden");
             modal.classList.add("flex");
+            progressBar.style.transition = "width 60ms linear";
             progressBar.style.width = "0%";
             statusTitle.innerText = drawCount === 100 ? "⚡ 마법 캡슐 100연속 소환 대량 연성 중..." : (drawCount === 10 ? "✨ 마법 캡슐 10연속 소환 연성 중..." : "마법 캡슐을 연성하는 중...");
             statusSub.innerText = "정복한 영단어의 마법 기운이 캡슐에 응축됩니다!";
@@ -5206,27 +5207,29 @@
 
             let progress = 0;
             const interval = setInterval(() => {
-                progress += (drawCount === 100 ? 50 : 25);
+                progress += 10;
+                if (progress > 100) progress = 100;
                 progressBar.style.width = `${progress}%`;
                 playSoundEffect('hit');
 
                 if (progress >= 100) {
                     clearInterval(interval);
 
-                    let fullPool = [];
-                    if (gameState.wordsPool && gameState.wordsPool.length > 0) {
-                        fullPool = [...gameState.wordsPool];
-                    }
-                    for (let gKey in MOCK_WORDS) {
-                        MOCK_WORDS[gKey].forEach(w => {
-                            if (!fullPool.some(item => item.word.toLowerCase() === w.word.toLowerCase())) {
-                                fullPool.push(w);
-                            }
-                        });
-                    }
+                    setTimeout(() => {
+                        let fullPool = [];
+                        if (gameState.wordsPool && gameState.wordsPool.length > 0) {
+                            fullPool = [...gameState.wordsPool];
+                        }
+                        for (let gKey in MOCK_WORDS) {
+                            MOCK_WORDS[gKey].forEach(w => {
+                                if (!fullPool.some(item => item.word.toLowerCase() === w.word.toLowerCase())) {
+                                    fullPool.push(w);
+                                }
+                            });
+                        }
 
-                    modal.classList.remove("flex");
-                    modal.classList.add("hidden");
+                        modal.classList.remove("flex");
+                        modal.classList.add("hidden");
 
                     if (drawCount === 100 || drawCount === 10) {
                         let acquiredList = [];
@@ -5289,8 +5292,9 @@
                     buildSkillTabUI();
                     renderSkillsUI();
                     saveLocalCache();
+                    }, 150);
                 }
-            }, 100);
+            }, 60);
         }
 
         function showSkillDraw100ResultModal(acquiredList) {

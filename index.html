@@ -5078,39 +5078,52 @@
             return expMap[grade] || 1;
         }
 
-        function addOrLevelUpSkill(word, meaning, rolledGrade, suppressModal = false) {
+        function addOrLevelUpSkill(word, meaning, rolledGrade, suppressModal = false, rolledTier = null) {
             if (!gameState.skillsInventory) gameState.skillsInventory = [];
+
+            // 🎲 티어(Tier 1~3) 랜덤 롤링 (Tier 1: 70%, Tier 2: 25%, Tier 3: 5%)
+            if (!rolledTier) {
+                const tierRoll = Math.random();
+                if (tierRoll < 0.05) rolledTier = 3;
+                else if (tierRoll < 0.30) rolledTier = 2;
+                else rolledTier = 1;
+            }
 
             const existingSkill = gameState.skillsInventory.find(s => s.word === word);
             const gradeInfo = SKILL_GRADES[rolledGrade];
 
             if (existingSkill) {
-                // 기존 등급 순위와 뽑힌 등급 순위 비교
                 const existingGradeRank = (SKILL_GRADES[existingSkill.grade] || SKILL_GRADES.normal).rank;
                 const rolledGradeRank = (SKILL_GRADES[rolledGrade] || SKILL_GRADES.normal).rank;
+                const oldTier = existingSkill.tier || 1;
 
                 if (rolledGradeRank > existingGradeRank) {
                     // 🎉 상위 등급 카드가 뽑힌 경우: 
-                    // 기존 하위 등급에서 투입된 총 누적 획득 카드 경험치를 계산하여 상위 등급의 별(⭐)로 50% 보정 보환!
                     const oldGradeReqExp = getRequiredExpForStar(existingSkill.grade);
                     const totalOldCardExp = ((existingSkill.stars || 0) * oldGradeReqExp) + (existingSkill.exp || 0);
 
-                    // 새로운 상위 등급 정보 설정
                     existingSkill.grade = rolledGrade;
                     const newGradeReqExp = getRequiredExpForStar(rolledGrade);
                     existingSkill.maxExp = newGradeReqExp;
 
-                    // 이전 투입 노력의 50%를 신규 등급 누적 경험치로 전환 보정
                     const convertedExp = Math.floor(totalOldCardExp * 0.5);
                     const newStars = Math.min(6, Math.floor(convertedExp / newGradeReqExp));
                     const newExp = convertedExp % newGradeReqExp;
 
                     existingSkill.stars = newStars;
                     existingSkill.exp = newExp;
+                    if (rolledTier > oldTier) existingSkill.tier = rolledTier;
 
-                    if (!suppressModal) showToast(`🔥 [${capitalizeFirstLetter(word)}] 대각성! [${gradeInfo.name}] 등급으로 상위 승급 (⭐${newStars}성 보정 환산)!`);
+                    if (!suppressModal) showToast(`🔥 [${capitalizeFirstLetter(word)}] 대각성! [${gradeInfo.name}] (Tier ${existingSkill.tier}) 등급으로 상위 승급!`);
                 } else {
-                    // 동일 이하 등급 카드: 중복 카드 경험치(EXP) 흡수로 한계돌파!
+                    // 👑 1. 동일/이하 등급 카드라도 새로 뽑은 티어가 더 높으면 상위 티어로 덮어씌움 (Tier Overwrite)!
+                    let tierUpMsg = "";
+                    if (rolledGradeRank === existingGradeRank && rolledTier > oldTier) {
+                        existingSkill.tier = rolledTier;
+                        tierUpMsg = ` 👑 (Tier ${oldTier} ➔ Tier ${rolledTier} 상위 티어 덮어씌우기!)`;
+                    }
+
+                    // 2. 중복 카드 경험치(EXP) & 별(⭐) 한계돌파
                     if (typeof existingSkill.stars === 'undefined') existingSkill.stars = 0;
                     if (typeof existingSkill.exp === 'undefined') existingSkill.exp = 0;
 
@@ -5122,20 +5135,12 @@
                         if (existingSkill.exp >= reqExp) {
                             existingSkill.exp = 0;
                             existingSkill.stars += 1;
-                            if (!suppressModal) showToast(`⭐ [${capitalizeFirstLetter(word)}] 카드 경험치 충전 완료! 별 ⭐${existingSkill.stars}개 한계돌파!`);
+                            if (!suppressModal) showToast(`⭐ [${capitalizeFirstLetter(word)}] 경험치 충전 완료! 별 ⭐${existingSkill.stars}개 한계돌파!${tierUpMsg}`);
                         } else {
-                            if (!suppressModal) showToast(`✨ [${capitalizeFirstLetter(word)}] 중복 흡수! 경험치 (${existingSkill.exp}/${reqExp})`);
+                            if (!suppressModal) showToast(`✨ [${capitalizeFirstLetter(word)}] 중복 카드가 흡수되었습니다! (${existingSkill.exp}/${reqExp})${tierUpMsg}`);
                         }
                     } else {
-                        // 👑 6성 Max 달성 후 중복 카드 획득/합성 시: Tier 1 -> Tier 2 -> Tier 3 상위 티어 전격 승급!
-                        if ((existingSkill.tier || 1) < 3) {
-                            existingSkill.tier = (existingSkill.tier || 1) + 1;
-                            existingSkill.stars = 0; // 티어 승급 후 0성부터 다시 차근차근 6성 도전!
-                            existingSkill.exp = 0;
-                            if (!suppressModal) showToast(`👑 [${capitalizeFirstLetter(word)}] 6성 달성! Tier ${existingSkill.tier} 로 상위 티어 전격 승급! (데미지 배율 상승)`);
-                        } else {
-                            if (!suppressModal) showToast(`🌟 [${capitalizeFirstLetter(word)}] 최고 등급 Tier 3 (6성 Max)에 도달한 카드입니다!`);
-                        }
+                        if (!suppressModal) showToast(`⭐ [${capitalizeFirstLetter(word)}] 최고 6성 한계돌파 카드 (Tier ${existingSkill.tier})${tierUpMsg}`);
                     }
                 }
 
@@ -5145,13 +5150,13 @@
                 saveLocalCache();
                 return existingSkill;
             } else {
-                // 신규 스킬 카드 획득 (기본 Tier 1 시작 -> 6성 달성 후 중복 흡수 시 Tier 2 -> Tier 3 승급)
+                // 신규 스킬 카드 획득 (추출된 랜덤 Tier 1~3 부여)
                 const newSkill = {
                     id: 'skill_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
                     word: word,
                     meaning: meaning,
                     grade: rolledGrade,
-                    tier: 1,
+                    tier: rolledTier,
                     stars: 0,
                     exp: 0,
                     maxExp: getRequiredExpForStar(rolledGrade),

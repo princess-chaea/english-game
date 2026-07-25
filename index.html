@@ -420,10 +420,10 @@
                         <span id="displayStageNum" class="whitespace-nowrap">스테이지 1-1</span>
                     </span>
                     <span class="text-[9px] font-mono border-l border-[#3c3c3c] pl-2.5 whitespace-nowrap shrink-0 flex items-center gap-1.5">
-                        <span class="text-gray-400 font-bold">권장 CP:</span>
+                        <span class="text-gray-400 font-bold">권장 전투력:</span>
                         <span id="recommendedCpDisplay" class="text-orange-400 font-bold">0</span>
                         <span class="text-gray-500">|</span>
-                        <span class="text-gray-400 font-bold">내 CP:</span>
+                        <span class="text-gray-400 font-bold">내 전투력:</span>
                         <span id="playerCpDisplay" class="text-amber-300 font-bold">0</span>
                     </span>
                 </div>
@@ -1375,8 +1375,8 @@
                             <span id="statSuccessRatio" class="text-sm font-black text-emerald-400 font-mono">0%</span>
                         </div>
                         <div class="bg-[#080c14] p-2 border border-cyan-900/50 rounded-none-forced text-center">
-                            <span class="text-[8px] text-gray-400 font-bold uppercase block">⚔️ 종합 전투력 (CP)</span>
-                            <span id="profileCombatPower" class="text-sm font-black text-amber-300 font-mono">0 CP</span>
+                            <span class="text-[8px] text-gray-400 font-bold uppercase block">⚔️ 내 종합 전투력</span>
+                            <span id="profileCombatPower" class="text-sm font-black text-amber-300 font-mono">0</span>
                         </div>
                     </div>
 
@@ -3715,9 +3715,11 @@
         }
 
         function calculateRequiredCP(stage, isBoss) {
-            const hp = calculateSteppedHp(stage, isBoss);
-            const baseRecDps = hp / (isBoss ? 25 : 7);
-            const reqCp = Math.ceil(baseRecDps * 6);
+            const st = Math.max(1, stage || 1);
+            const reqClickAtk = Math.floor(st * 450 + Math.pow(1.045, st - 1) * 500);
+            const reqDpsAtk = Math.floor(st * 1000 + Math.pow(1.04, st - 1) * 1000);
+            const bossFactor = isBoss ? 1.30 : 1.0;
+            const reqCp = Math.floor(((reqClickAtk * 10) + (reqDpsAtk * 5) + (st * 600)) * bossFactor);
             return Math.max(100, reqCp);
         }
 
@@ -6319,10 +6321,10 @@
             const profileCritDmg = document.getElementById("profileCritDmgMult");
             if (profileCritDmg) profileCritDmg.innerText = "200% (×2.0배)";
 
-            // ⚔️ 용사 종합 전투력 Index (Combat Power)
+            // ⚔️ 용사 종합 전투력 Index
             const combatPower = calculatePlayerCP();
             const profileCp = document.getElementById("profileCombatPower");
-            if (profileCp) profileCp.innerText = `${combatPower.toLocaleString()} CP`;
+            if (profileCp) profileCp.innerText = combatPower.toLocaleString();
 
             // 유물 장착 상태 요약 (실제 유물 이미지 표시, 이름 앞 🏺 아이콘 제거)
             if (gameState.equippedRelicId) {

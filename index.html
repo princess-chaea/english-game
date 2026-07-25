@@ -347,6 +347,23 @@
             border-width: 2px !important;
             color: #f472b6 !important;
         }
+
+        /* 얇고 자연스러운 커스텀 스크롤바 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
     </style>
 </head>
 
@@ -473,7 +490,7 @@
 
             <!-- Interactive Combat Arena Viewport (Vertical Racetrack) -->
             <div id="battleArena"
-                class="relative z-10 w-full flex-1 min-h-0 border border-[#3c3c3c] bg-[#000000] flex flex-col items-center justify-between py-2 cursor-pointer select-none overflow-hidden my-1 rounded-none-forced"
+                class="relative z-10 w-full flex-1 min-h-[360px] border border-[#3c3c3c] bg-[#000000] flex flex-col items-center justify-between py-4 cursor-pointer select-none overflow-hidden my-1 rounded-none-forced"
                 onclick="handleArenaClick(event)">
 
                 <!-- Racetrack vertical center stripes in the background -->
@@ -497,7 +514,7 @@
                             style="width: 100%"></div>
                     </div>
                     <div id="monsterContainer"
-                        class="w-52 h-52 flex items-center justify-center transition-transform duration-100">
+                        class="w-40 h-40 md:w-52 md:h-52 shrink-0 flex items-center justify-center transition-transform duration-100">
                         <svg viewBox="0 0 100 120" class="w-full h-full" id="monsterSvg"></svg>
                     </div>
                     <!-- 전투 알림 (몬스터 아래 화면 중앙에 표시) -->
@@ -505,7 +522,7 @@
                 </div>
 
                 <!-- Central VS Battle Badge -->
-                <div class="flex flex-col items-center justify-center z-10 opacity-30 pointer-events-none my-1">
+                <div class="flex flex-col items-center justify-center z-10 opacity-30 pointer-events-none my-1 shrink-0">
                     <span class="text-xs font-bold tracking-widest text-[#bbbbbb] italic">--- VS ---</span>
                 </div>
 
@@ -523,7 +540,7 @@
                     </div>
 
                     <!-- Character Body Avatar -->
-                    <div id="heroCharacter" class="w-32 h-36 relative flex items-end justify-center">
+                    <div id="heroCharacter" class="w-32 h-36 shrink-0 relative flex items-end justify-center">
                         <svg viewBox="0 0 100 120" class="w-full h-full transition-transform duration-100"
                             id="heroSvg"></svg>
                     </div>
@@ -688,7 +705,7 @@
                     <div class="flex justify-between items-center text-[9px] text-gray-400 font-bold uppercase mb-1.5">
                         <span class="flex items-center gap-1"><i data-lucide="zap" class="w-3 h-3 text-pink-400"></i> 장착된 영단어 비기 스킬 (전투 슬롯)</span>
                     </div>
-                    <div id="quizEquippedSkillsContainer" class="grid grid-cols-4 gap-2">
+                    <div id="quizEquippedSkillsContainer" class="grid grid-cols-2 lg:grid-cols-4 gap-2">
                         <!-- Dynamic Skills Bar -->
                     </div>
                 </div>
@@ -1008,7 +1025,7 @@
                     <div id="worldBossReadyBox" class="grid grid-cols-1 md:grid-cols-12 gap-4">
                         
                         <!-- Left 5 Cols: Large World Boss Illustration & Weekly Rotation Info -->
-                        <div class="md:col-span-5 bg-[#0d0d0d] border-2 border-red-800 p-3 flex flex-col items-center justify-between text-center relative overflow-hidden rounded-none-forced group">
+                        <div class="md:col-span-5 sticky top-0 z-20 self-start bg-[#0d0d0d] border-2 border-red-800 p-3 flex flex-col items-center justify-between text-center relative overflow-hidden rounded-none-forced group">
                             <div class="z-10 w-full flex justify-between items-center mb-1">
                                 <span id="wbWeekBadge" class="text-xs bg-red-900/80 text-yellow-300 font-bold px-2.5 py-1 border border-red-500">1주차 월드보스</span>
                                 <span class="text-xs text-gray-400 font-mono">시즌 종료: <span id="worldBossDaysLeft" class="text-white font-bold">6일 남음</span></span>
@@ -5878,7 +5895,7 @@
                     const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
                     const mult = getSkillMultiplier(skill);
                     const starsCount = skill.stars || 0;
-                    const starsHtml = starsCount > 0 ? "⭐".repeat(starsCount) : "";
+                    const starsHtml = starsCount > 0 ? `<span class="text-[9px]">⭐${starsCount}</span>` : "";
                     const isOnCooldown = skill.cooldownRemaining > 0;
                     const pct = isOnCooldown ? Math.round((skill.cooldownRemaining / skill.maxCooldown) * 100) : 0;
 

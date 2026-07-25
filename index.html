@@ -4758,7 +4758,7 @@
                             </div>
                             <p class="text-[9px] text-gray-400 mb-1.5">${isUnlocked ? info.desc : `🔒 ${info.unlockStage}스테이지 달성 시 해금`}</p>
                             ${isUnlocked ? `
-                                <div class="text-[8px] bg-black p-1.5 border border-purple-900/50 rounded-none-forced font-mono mb-2">
+                                <div class="text-[8px] bg-black p-1.5 border border-purple-900/50 rounded-none-forced font-mono mb-2 break-all">
                                     <div class="text-purple-300 font-bold">현재: ${currentLvl > 0 ? currentBonusText : '연마 전 (0강)'}</div>
                                     ${!isMax ? `<div class="text-yellow-400 mt-0.5">다음: ${nextBonusText}</div>` : ''}
                                 </div>
@@ -4935,9 +4935,11 @@
                 if (existing) {
                     if ((existing.stars || 0) >= 6) {
                         // 6성 Max 유물 중복 소환 시 버려지지 않고 고대 신화 정수 +15개 분해 환급!
-                        gameState.relicEssence = (gameState.relicEssence || 0) + 15;
-                        refundCount++;
-                        drawnResults.push({ def: pickedRelicDef, grade: rolledGrade, stars: 6, isEssenceRefund: true });
+                        const rewardMap = { "normal": 1, "rare": 2, "hero": 3, "legendary": 4, "mythic": 5 };
+                        const reward = rewardMap[rolledGrade] || 1;
+                        gameState.relicEssence = (gameState.relicEssence || 0) + reward;
+                        refundCount += reward;
+                        drawnResults.push({ def: pickedRelicDef, grade: rolledGrade, stars: 6, isEssenceRefund: true, refundAmount: reward });
                     } else {
                         existing.stars = Math.min(6, (existing.stars || 0) + 1);
                         const oldRank = (SKILL_GRADES[existing.grade] || SKILL_GRADES.normal).rank;
@@ -4958,7 +4960,7 @@
 
             playSoundEffect('levelup');
             if (refundCount > 0) {
-                showToast(`🏺 6성 Max 유물 중복 획득으로 [고대 신화 정수] +${refundCount * 15}개가 환급 적립되었습니다!`);
+                showToast(`🏺 6성 Max 유물 중복 획득으로 [고대 신화 정수] +${refundCount}개가 환급 적립되었습니다!`);
             }
             
             showRelicDrawResultModal(drawnResults);
@@ -4968,7 +4970,7 @@
 
         function craftMythicRelicFromEssence() {
             if (typeof gameState.relicEssence === 'undefined') gameState.relicEssence = 0;
-            const cost = 100;
+            const cost = 500;
             if (gameState.relicEssence < cost) {
                 showToast(`⚠️ 신화 유물 연성을 위해 [고대 신화 정수] ${cost}개가 필요합니다! (현재: ${gameState.relicEssence}개) 6성 Max 유물 중복 소환 시 정수가 환급됩니다.`);
                 return;
@@ -5302,7 +5304,8 @@
                             }
 
                             const resultSkill = addOrLevelUpSkill(picked.word, picked.meaning, rolledGrade, true);
-                            acquiredList.push(resultSkill);
+                            const displaySkill = { ...resultSkill, grade: rolledGrade };
+                            acquiredList.push(displaySkill);
 
                             if (drawCount === 10) {
                                 const gradeInfo = SKILL_GRADES[resultSkill.grade] || SKILL_GRADES.normal;
@@ -5436,7 +5439,8 @@
                 }
 
                 const resultSkill = addOrLevelUpSkill(picked.word, picked.meaning, rolledGrade, true);
-                acquiredList.push(resultSkill);
+                            const displaySkill = { ...resultSkill, grade: rolledGrade };
+                            acquiredList.push(displaySkill);
 
                 const gradeInfo = SKILL_GRADES[resultSkill.grade] || SKILL_GRADES.normal;
                 const mult = getSkillMultiplier(resultSkill);
@@ -7540,7 +7544,10 @@
                                         <span class="font-bold uppercase tracking-wider">${gradeInfo.name} T${s.tier || 1}</span>
                                         <span class="text-yellow-300 font-bold">${starsHtml}</span>
                                     </div>
-                                    <span class="text-[10px] font-bold font-mono text-white truncate">${capitalizeFirstLetter(s.word)}</span><span class="text-[8px] font-bold text-gray-400 shrink-0 ml-1">x${getSkillMultiplier(s)}%</span>
+                                    <div class="flex justify-between items-end mt-1">
+                                        <span class="text-[10px] font-bold font-mono text-white truncate">${capitalizeFirstLetter(s.word)}</span>
+                                        <span class="text-[8px] font-bold text-[#bbbbbb] shrink-0">배율 ${getSkillMultiplier(s)}%</span>
+                                    </div>
                                 </div>
                             `;
                         } else {

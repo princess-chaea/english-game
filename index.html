@@ -3011,12 +3011,7 @@
                                     li.className = "px-3 py-2 cursor-pointer hover:bg-[#3c3c3c] text-xs font-bold text-white border-b border-[#3c3c3c] last:border-0";
                                     li.innerHTML = `${school.SCHUL_NM} <span class="text-[10px] text-gray-400 ml-1">(${school.LCTN_SC_NM})</span>`;
                                     li.onclick = () => {
-                                                                                let shortName = school.SCHUL_NM;
-                                        if (shortName.endsWith('초등학교')) shortName = shortName.replace('초등학교', '초');
-                                        else if (shortName.endsWith('중학교')) shortName = shortName.replace('중학교', '중');
-                                        else if (shortName.endsWith('고등학교')) shortName = shortName.replace('고등학교', '고');
-                                        else shortName = shortName.replace(/학교$/, '');
-                                        inputSchool.value = shortName;
+                                        inputSchool.value = school.SCHUL_NM;
                                         selectedSchoolName = school.SCHUL_NM;
                                         resultsUl.classList.add('hidden');
                                     };

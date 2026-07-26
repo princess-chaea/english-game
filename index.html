@@ -430,17 +430,17 @@
             class="lg:col-span-4 bg-black border border-[#3c3c3c] p-3 flex flex-col justify-between relative overflow-hidden h-full rounded-none-forced">
             
             <!-- Stage Header & Progress -->
-            <div class="z-10 flex justify-between items-center bg-[#0d0d0d] border border-[#3c3c3c] px-3 py-2 rounded-none-forced gap-2 overflow-hidden">
-                <div class="flex items-center gap-2.5 shrink-0 whitespace-nowrap">
-                    <span class="font-bold text-xs uppercase tracking-widest text-[#0066b1] flex items-center gap-1.5 whitespace-nowrap shrink-0">
-                        <i data-lucide="shield" class="w-4 h-4 shrink-0"></i>
+            <div class="z-10 flex flex-wrap justify-between items-center bg-[#0d0d0d] border border-[#3c3c3c] px-2 py-1.5 rounded-none-forced gap-1 overflow-hidden">
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 w-full sm:w-auto">
+                    <span class="font-bold text-[10px] uppercase tracking-widest text-[#0066b1] flex items-center gap-1 shrink-0">
+                        <i data-lucide="shield" class="w-3.5 h-3.5 shrink-0"></i>
                         <span id="displayStageNum" class="whitespace-nowrap">스테이지 1-1</span>
                     </span>
-                    <span class="text-[9px] font-mono border-l border-[#3c3c3c] pl-2.5 whitespace-nowrap shrink-0 flex items-center gap-1.5">
-                        <span class="text-gray-400 font-bold">권장 전투력:</span>
+                    <span class="text-[9px] font-mono sm:border-l border-[#3c3c3c] sm:pl-2 flex items-center gap-1 shrink-0">
+                        <span class="text-gray-400 font-bold">권장:</span>
                         <span id="recommendedCpDisplay" class="text-orange-400 font-bold">0</span>
                         <span class="text-gray-500">|</span>
-                        <span class="text-gray-400 font-bold">내 전투력:</span>
+                        <span class="text-gray-400 font-bold">내 전투:</span>
                         <span id="playerCpDisplay" class="text-amber-300 font-bold">0</span>
                     </span>
                 </div>
@@ -452,45 +452,44 @@
             </div>
 
             <!-- Total Currencies Widget -->
-            <div class="z-10 text-center my-3">
-                <div class="grid grid-cols-2 gap-2 bg-[#0d0d0d] p-2.5 border border-[#3c3c3c] rounded-none-forced">
+            <div class="z-10 text-center my-1.5">
+                <div class="grid grid-cols-2 gap-1.5 bg-[#0d0d0d] p-1.5 border border-[#3c3c3c] rounded-none-forced">
                     <div>
                         <p class="text-[9px] text-[#7e7e7e] font-bold tracking-widest uppercase">보유 골드</p>
-                        <div class="flex items-center justify-center gap-1 my-0.5">
-                            <span class="text-base">🪙</span>
-                            <span id="goldCount" class="text-xl font-bold tracking-tight text-white">0</span>
+                        <div class="flex items-center justify-center gap-1 mt-0.5">
+                            <span class="text-sm">🪙</span>
+                            <span id="goldCount" class="text-lg font-bold tracking-tight text-white">0</span>
                         </div>
                     </div>
                     <div>
-                        <p class="text-[9px] text-pink-400 font-bold tracking-widest uppercase">단어 정복 포인트 (FP)</p>
-                        <div class="flex items-center justify-center gap-1 my-0.5">
-                            <span class="text-base">🎁</span>
-                            <span id="masteryPointsCount" class="text-xl font-bold tracking-tight text-pink-400">0</span>
-                            <span class="text-xs text-pink-300 font-bold">FP</span>
+                        <p class="text-[9px] text-pink-400 font-bold tracking-widest uppercase">단어 정복(FP)</p>
+                        <div class="flex items-center justify-center gap-1 mt-0.5">
+                            <span class="text-sm">🎁</span>
+                            <span id="masteryPointsCount" class="text-lg font-bold tracking-tight text-pink-400">0</span>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Telemetry Stats -->
-                <div class="grid grid-cols-3 gap-1.5 mt-3">
-                    <div class="telemetry-cell text-center rounded-none-forced p-1.5">
-                        <p class="text-[8px] text-[#7e7e7e] font-bold uppercase tracking-widest">초당 자동 골드</p>
-                        <p class="text-xs font-bold text-amber-300">+<span id="autoGoldCount">0</span> G/초</p>
+                <div class="grid grid-cols-3 gap-1 mt-1.5">
+                    <div class="telemetry-cell text-center rounded-none-forced p-1">
+                        <p class="text-[8px] text-[#7e7e7e] font-bold uppercase tracking-widest">자동 골드</p>
+                        <p class="text-[10px] font-bold text-amber-300">+<span id="autoGoldCount">0</span>/초</p>
                     </div>
-                    <div class="telemetry-cell text-center rounded-none-forced p-1.5">
-                        <p class="text-[8px] text-[#7e7e7e] font-bold uppercase tracking-widest">초당 자동 DPS</p>
-                        <p class="text-xs font-bold text-[#0066b1]">+<span id="dpsCount">0</span> DPS</p>
+                    <div class="telemetry-cell text-center rounded-none-forced p-1">
+                        <p class="text-[8px] text-[#7e7e7e] font-bold uppercase tracking-widest">자동 DPS</p>
+                        <p class="text-[10px] font-bold text-[#0066b1]">+<span id="dpsCount">0</span></p>
                     </div>
-                    <div class="telemetry-cell text-center rounded-none-forced p-1.5">
-                        <p class="text-[8px] text-[#7e7e7e] font-bold uppercase tracking-widest">클릭 타격력</p>
-                        <p class="text-xs font-bold text-[#e22718]"><span id="clickPowerCount">1</span> Dmg</p>
+                    <div class="telemetry-cell text-center rounded-none-forced p-1">
+                        <p class="text-[8px] text-[#7e7e7e] font-bold uppercase tracking-widest">클릭 딜</p>
+                        <p class="text-[10px] font-bold text-[#e22718]"><span id="clickPowerCount">1</span></p>
                     </div>
                 </div>
             </div>
 
             <!-- Interactive Combat Arena Viewport (Vertical Racetrack) -->
             <div id="battleArena"
-                class="relative z-10 w-full flex-1 min-h-[200px] border border-[#3c3c3c] bg-[#000000] flex flex-col items-center justify-between py-4 cursor-pointer select-none overflow-hidden my-1 rounded-none-forced"
+                class="relative z-10 w-full flex-1 min-h-[140px] border border-[#3c3c3c] bg-[#000000] flex flex-col items-center justify-between py-2 cursor-pointer select-none overflow-hidden my-1 rounded-none-forced"
                 onclick="handleArenaClick(event)">
 
                 <!-- Racetrack vertical center stripes in the background -->
@@ -514,11 +513,11 @@
                             style="width: 100%"></div>
                     </div>
                     <div id="monsterContainer"
-                        class="w-28 h-28 md:w-36 md:h-36 shrink-0 flex items-center justify-center transition-transform duration-100">
+                        class="w-20 h-20 md:w-28 md:h-28 shrink-0 flex items-center justify-center transition-transform duration-100">
                         <svg viewBox="0 0 100 120" class="w-full h-full" id="monsterSvg"></svg>
                     </div>
                     <!-- 전투 알림 (몬스터 아래 화면 중앙에 표시) -->
-                    <div id="battleToast" class="mt-1 px-3 py-1 text-[10px] font-bold text-center text-[#ffdd88] opacity-0 transition-opacity duration-300 pointer-events-none leading-relaxed"></div>
+                    <div id="battleToast" class="px-2 py-0.5 text-[9px] font-bold text-center text-[#ffdd88] opacity-0 transition-opacity duration-300 pointer-events-none leading-relaxed"></div>
                 </div>
 
                 <!-- Central VS Battle Badge -->
@@ -540,7 +539,7 @@
                     </div>
 
                     <!-- Character Body Avatar -->
-                    <div id="heroCharacter" class="w-24 h-28 md:w-28 md:h-32 shrink-0 relative flex items-end justify-center">
+                    <div id="heroCharacter" class="w-16 h-20 md:w-24 md:h-28 shrink-0 relative flex items-end justify-center">
                         <svg viewBox="0 0 100 120" class="w-full h-full transition-transform duration-100"
                             id="heroSvg"></svg>
                     </div>
@@ -572,21 +571,21 @@
             </div>
 
             <!-- Boss Battle Entry Activator -->
-            <div class="z-10 w-full mt-2">
-                <div class="flex justify-between items-center mb-1 text-[10px] font-bold text-[#7e7e7e] uppercase tracking-wider">
+            <div class="z-10 w-full mt-1.5">
+                <div class="flex justify-between items-center mb-1 text-[9px] font-bold text-[#7e7e7e] uppercase tracking-wider">
                     <span>보스 도전 진행도</span>
                     <span id="bossUnlockRatio">0 / 10</span>
                 </div>
-                <div class="w-full bg-[#1a1a1a] border border-[#3c3c3c] h-3.5 relative overflow-hidden rounded-none-forced">
+                <div class="w-full bg-[#1a1a1a] border border-[#3c3c3c] h-2.5 relative overflow-hidden rounded-none-forced">
                     <div id="bossProgressBar"
                         class="bg-[#0066b1] h-full transition-all duration-300"
                         style="width: 0%"></div>
                 </div>
 
                 <button id="bossTriggerBtn" onclick="startBossBattle()"
-                    class="w-full mt-3 py-3 bg-transparent hover:bg-[#e22718] border border-[#e22718] text-[#e22718] hover:text-white font-bold text-xs uppercase tracking-widest transition duration-200 shadow-lg hidden items-center justify-center gap-2 rounded-none-forced">
-                    <i data-lucide="skull" class="w-4 h-4"></i>
-                    <span>🚨 보스 몬스터 소환하기 🚨</span>
+                    class="w-full mt-2 py-2 bg-transparent hover:bg-[#e22718] border border-[#e22718] text-[#e22718] hover:text-white font-bold text-[10px] uppercase tracking-widest transition duration-200 shadow-lg hidden items-center justify-center gap-1.5 rounded-none-forced">
+                    <i data-lucide="skull" class="w-3.5 h-3.5"></i>
+                    <span>🚨 보스 몬스터 소환 🚨</span>
                 </button>
             </div>
         </section>

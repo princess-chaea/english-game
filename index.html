@@ -7041,13 +7041,20 @@
             
             const savedUrl = getGasUrl();
             const doExit = () => {
-                // PWA 스탠드얼론 모드에서 history.back()이 홈 화면으로 내보내는 정식 방법입니다.
-                // 브라우저 일반 모드에서는 window.close()가 동작합니다.
-                showToast("✅ 저장 완료!");
-                setTimeout(() => {
-                    try { window.close(); } catch(e) {}
-                    try { history.back(); } catch(e) {}
-                }, 800);
+                // PWA/크롬 보안 정책: JS로 앱 강제 종료 불가. history.back()이 갈 곳 없으면 검은 화면 발생.
+                // 저장 완료 후 예쁜 화면을 보여주고 사용자가 직접 홈/뒤로가기로 나가게 합니다.
+                document.documentElement.style.background = '#050505';
+                document.body.innerHTML = `
+                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#050505;color:#fff;text-align:center;padding:24px;box-sizing:border-box;font-family:sans-serif;">
+                        <div style="font-size:4rem;margin-bottom:16px;">✅</div>
+                        <h2 style="font-size:1.6rem;font-weight:900;color:#4ade80;margin:0 0 12px;">저장 완료!</h2>
+                        <p style="color:#9ca3af;margin:0 0 8px;line-height:1.6;">모든 데이터가 안전하게 저장되었습니다.</p>
+                        <p style="color:#6b7280;font-size:0.85rem;margin:0 0 36px;">📱 홈 버튼 또는 뒤로가기를 눌러 나가주세요.</p>
+                        <button onclick="location.reload()" style="padding:14px 28px;background:linear-gradient(135deg,#1f2937,#374151);border:1px solid #4b5563;color:#e5e7eb;border-radius:8px;font-weight:700;font-size:1rem;cursor:pointer;">
+                            🔄 다시 플레이
+                        </button>
+                    </div>
+                `;
             };
 
             if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {

@@ -3122,7 +3122,11 @@
                         } else {
                             openModal("newUserRegisterModal");
                             document.getElementById("newPinInput").value = "";
-                            showToast("🔑 첫 접속입니다. 사용할 PIN 4자리를 설정하세요!");
+                            if (typeof data.gold !== 'undefined' || typeof data.stage !== 'undefined') {
+                                showToast("🔓 기존 계정이 확인되었습니다. 계정을 보호할 PIN 4자리를 새로 설정하세요!");
+                            } else {
+                                showToast("🔑 첫 접속입니다. 사용할 PIN 4자리를 설정하세요!");
+                            }
                         }
                     } else {
                         openModal("newUserRegisterModal");
@@ -3224,26 +3228,48 @@
             if (window._fbReady) {
                 const uid = getUid(schoolName, grade, classNum, studentNum, name);
                 
-                // 로컬 시뮬레이션으로 초기 gameState 셋업
-                loadLocalSimulation(schoolName, grade, classNum, studentNum, name, password);
-                
-                // Firestore에 즉시 저장
-                window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), gameState).then(() => {
-                    closeModal("loginModal");
-                    const sessData = { schoolName, grade, classNum, studentNum, name, password };
-                    sessionStorage.setItem("vocahero_active_session", JSON.stringify(sessData));
-                    localStorage.setItem("vocahero_active_session", JSON.stringify(sessData));
-                    showToast("✨ 새로운 전설의 모험이 시작되었습니다! 환영합니다!");
+                window._fbGetDoc(window._fbDoc(window._fbDb, "users", uid)).then(docSnap => {
+                    if (docSnap.exists() && (typeof docSnap.data().gold !== 'undefined' || typeof docSnap.data().stage !== 'undefined')) {
+                        // 기존 유저인데 PIN이 없는 경우 (또는 유실된 경우) -> 기존 데이터 복원 후 PIN만 업데이트
+                        const data = docSnap.data();
+                        syncStateFromServer(data);
+                        gameState.password = password;
+                        gameState.schoolName = schoolName;
+                        window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), gameState).then(() => {
+                            closeModal("loginModal");
+                            const sessData = { schoolName, grade, classNum, studentNum, name, password };
+                            sessionStorage.setItem("vocahero_active_session", JSON.stringify(sessData));
+                            localStorage.setItem("vocahero_active_session", JSON.stringify(sessData));
+                            hideGameLoadingOverlay();
+                            showToast("✨ 기존 데이터에 새로운 PIN이 성공적으로 등록되었습니다!");
+                            initGameEngine();
+                        }).catch(err => {
+                            console.error(err);
+                            handleLocalRegister(schoolName, grade, classNum, studentNum, name, password);
+                        });
+                    } else {
+                        // 완전 신규 유저
+                        loadLocalSimulation(schoolName, grade, classNum, studentNum, name, password);
+                        window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), gameState).then(() => {
+                            closeModal("loginModal");
+                            const sessData = { schoolName, grade, classNum, studentNum, name, password };
+                            sessionStorage.setItem("vocahero_active_session", JSON.stringify(sessData));
+                            localStorage.setItem("vocahero_active_session", JSON.stringify(sessData));
+                            hideGameLoadingOverlay();
+                            showToast("✨ 새로운 원정대 대원이 등록되었습니다! 환영합니다!");
+                        }).catch(err => {
+                            console.error(err);
+                            handleLocalRegister(schoolName, grade, classNum, studentNum, name, password);
+                        });
+                    }
                 }).catch(err => {
-                    console.error("Firebase setDoc error:", err);
+                    console.error("Firebase getDoc error:", err);
                     handleLocalRegister(schoolName, grade, classNum, studentNum, name, password);
                 });
             } else {
                 handleLocalRegister(schoolName, grade, classNum, studentNum, name, password);
             }
-        }
-
-        function handleLocalRegister(schoolName, grade, classNum, studentNum, name, password) {
+        }\n\n        function handleLocalRegister(schoolName, grade, classNum, studentNum, name, password) {
             if (loadLocalSimulation(schoolName, grade, classNum, studentNum, name, password)) {
                 closeModal("newUserRegisterModal");
                 sessionStorage.setItem("vocahero_active_session", JSON.stringify({ schoolName, grade, classNum, studentNum, name, password }));

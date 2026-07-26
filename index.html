@@ -7070,19 +7070,22 @@
             
             const savedUrl = getGasUrl();
             const doExit = () => {
-                // 기존의 전체화면 안내 페이지로 복구
-                document.documentElement.style.background = '#050505';
+                // 기존의 오리지널 종료 안내 화면 복구
+                document.documentElement.style.background = '#000';
                 document.body.innerHTML = `
-                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#050505;color:#fff;text-align:center;padding:24px;box-sizing:border-box;font-family:sans-serif;">
-                        <div style="font-size:4rem;margin-bottom:16px;">✅</div>
-                        <h2 style="font-size:1.6rem;font-weight:900;color:#4ade80;margin:0 0 12px;">저장 완료!</h2>
-                        <p style="color:#9ca3af;margin:0 0 8px;line-height:1.6;">모든 데이터가 안전하게 저장되었습니다.</p>
-                        <p style="color:#6b7280;font-size:0.85rem;margin:0 0 36px;">📱 화면을 닫거나 뒤로가기를 눌러 나가주세요.</p>
-                        <button onclick="location.reload()" style="padding:14px 28px;background:linear-gradient(135deg,#1f2937,#374151);border:1px solid #4b5563;color:#e5e7eb;border-radius:8px;font-weight:700;font-size:1rem;cursor:pointer;">
-                            🔄 다시 플레이
-                        </button>
+                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background-color:#000; color:#fff; text-align:center; padding: 20px;">
+                        <span style="font-size: 4rem; margin-bottom: 20px;">👋</span>
+                        <h2 style="font-size: 1.5rem; font-weight: bold; color: #f59e0b; margin-bottom: 10px;">안전하게 저장되었습니다!</h2>
+                        <p style="color: #aaa; margin-bottom: 30px;">만약 앱이 자동으로 종료되지 않으면<br>기기의 홈 버튼이나 뒤로 가기를 눌러 닫아주세요.</p>
+                        <button onclick="location.reload()" style="padding: 10px 20px; background-color: #1a1a1a; border: 1px solid #3c3c3c; color: white; border-radius: 4px; font-weight: bold;">다시 시작하기</button>
                     </div>
                 `;
+
+                // 웹 환경을 위해 자동 창 닫기 시도
+                setTimeout(() => {
+                    try { window.close(); } catch(e) {}
+                    try { window.history.back(); } catch(e) {}
+                }, 100);
             };
 
             if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {

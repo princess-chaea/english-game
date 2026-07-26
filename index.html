@@ -7000,12 +7000,12 @@
         }
 
         function logoutSession() {
+            showGameLoadingOverlay("다른 영웅의 영혼에 들어가는 중... (로그아웃 처리 및 저장 중)");
             saveLocalCache();
             const savedUrl = getGasUrl();
             const doLogout = () => {
                 localStorage.removeItem("vocahero_active_session");
                 sessionStorage.removeItem("vocahero_active_session");
-            localStorage.removeItem("vocahero_active_session");
                 showToast("로그아웃 되었습니다. 잠시 후 초기 화면으로 이동합니다.");
                 setTimeout(() => {
                     location.reload();

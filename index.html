@@ -3268,7 +3268,9 @@
             } else {
                 handleLocalRegister(schoolName, grade, classNum, studentNum, name, password);
             }
-        }\n\n        function handleLocalRegister(schoolName, grade, classNum, studentNum, name, password) {
+        }
+
+        function handleLocalRegister(schoolName, grade, classNum, studentNum, name, password) {
             if (loadLocalSimulation(schoolName, grade, classNum, studentNum, name, password)) {
                 closeModal("newUserRegisterModal");
                 sessionStorage.setItem("vocahero_active_session", JSON.stringify({ schoolName, grade, classNum, studentNum, name, password }));

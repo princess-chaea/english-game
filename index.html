@@ -7311,14 +7311,25 @@
             localStorage.removeItem("vocahero_active_session");
 
             // 구글 시트 데이터베이스(Students 시트)의 해당 학생 기록 완벽 제거
-            // runGas("deleteStudentData", [g, c, s, n], function(res) {
-                showToast("🗑️ 구글 시트 기록 및 가입 정보가 완전히 삭제되었습니다!");
-                setTimeout(() => {
-                    location.reload();
-                }, 1000);
-            }, function(err) {
-                location.reload();
-            });
+                        // Firebase Firestore에서 학생 데이터 삭제 (deleteDoc 사용)
+            if (window._fbDb && window._fbDoc && window._fbDeleteDoc && gameState.name !== "방문자") {
+                const uid = `${gameState.schoolName || 'Unknown'}_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+                window._fbDeleteDoc(window._fbDoc(window._fbDb, "users", uid))
+                    .then(() => {
+                        showToast("🗑️ 서버 기록 및 가입 정보가 완전히 삭제되었습니다!");
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    })
+                    .catch((err) => {
+                        console.error(err);
+                        location.reload();
+                    });
+            } else {
+                showToast("🗑️ 가입 정보가 완전히 삭제되었습니다!");
+                setTimeout(() => { location.reload(); }, 1000);
+            }
+        }
         }
 
         function resetFullSession() {

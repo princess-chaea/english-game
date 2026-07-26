@@ -7041,20 +7041,32 @@
             
             const savedUrl = getGasUrl();
             const doExit = () => {
-                // PWA/크롬 보안 정책: JS로 앱 강제 종료 불가. history.back()이 갈 곳 없으면 검은 화면 발생.
-                // 저장 완료 후 예쁜 화면을 보여주고 사용자가 직접 홈/뒤로가기로 나가게 합니다.
-                document.documentElement.style.background = '#050505';
-                document.body.innerHTML = `
-                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#050505;color:#fff;text-align:center;padding:24px;box-sizing:border-box;font-family:sans-serif;">
-                        <div style="font-size:4rem;margin-bottom:16px;">✅</div>
-                        <h2 style="font-size:1.6rem;font-weight:900;color:#4ade80;margin:0 0 12px;">저장 완료!</h2>
-                        <p style="color:#9ca3af;margin:0 0 8px;line-height:1.6;">모든 데이터가 안전하게 저장되었습니다.</p>
-                        <p style="color:#6b7280;font-size:0.85rem;margin:0 0 36px;">📱 홈 버튼 또는 뒤로가기를 눌러 나가주세요.</p>
-                        <button onclick="location.reload()" style="padding:14px 28px;background:linear-gradient(135deg,#1f2937,#374151);border:1px solid #4b5563;color:#e5e7eb;border-radius:8px;font-weight:700;font-size:1rem;cursor:pointer;">
-                            🔄 다시 플레이
+                // 저장 완료 모달 팝업 표시
+                const modal = document.createElement('div');
+                modal.id = 'saveExitModal';
+                modal.style.cssText = `
+                    position:fixed;inset:0;z-index:99999;
+                    display:flex;align-items:center;justify-content:center;
+                    background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);
+                    font-family:sans-serif;
+                `;
+                modal.innerHTML = `
+                    <div style="background:#0d0d0d;border:1px solid #4ade80;border-radius:12px;padding:32px 28px;text-align:center;max-width:320px;width:90%;box-shadow:0 0 40px rgba(74,222,128,0.2);">
+                        <div style="font-size:3.5rem;margin-bottom:12px;">💾</div>
+                        <h2 style="color:#4ade80;font-size:1.4rem;font-weight:900;margin:0 0 10px;">저장 완료!</h2>
+                        <p style="color:#9ca3af;font-size:0.9rem;margin:0 0 28px;line-height:1.6;">모든 데이터가 안전하게<br>저장되었습니다.</p>
+                        <button id="exitConfirmBtn" style="width:100%;padding:14px;background:linear-gradient(135deg,#16a34a,#15803d);border:none;color:white;border-radius:8px;font-weight:900;font-size:1.1rem;cursor:pointer;letter-spacing:0.05em;">
+                            🚪 나가기
                         </button>
                     </div>
                 `;
+                document.body.appendChild(modal);
+
+                document.getElementById('exitConfirmBtn').addEventListener('click', function() {
+                    // 사용자가 직접 버튼을 누른 시점 → User Gesture 유효 → history.back() 정상 동작
+                    try { window.close(); } catch(e) {}
+                    try { history.back(); } catch(e) {}
+                });
             };
 
             if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {

@@ -7330,7 +7330,6 @@
                 setTimeout(() => { location.reload(); }, 1000);
             }
         }
-        }
 
         function resetFullSession() {
             openRetireModal();
@@ -7516,11 +7515,8 @@
                         goldHtml = `<p class="text-gray-500 text-center py-4">기록 없음</p>`;
                     }
                     document.getElementById("hofGoldList").innerHTML = goldHtml;
+                    }
                 }
-            }, function(err) {
-                // 통신 오류 시 생략
-            });
-        }
 
         // ==========================================
         // TITLE EQUIPMENT SYSTEM (칭호 등급 체계: 신화/전설/영웅/희귀/일반)
@@ -8665,12 +8661,9 @@
                                 console.error("Firebase getDoc error:", err);
                                 handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
                             });
-                        } else {
-                            // 로컬 모드 자동 복원
-                            handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
                         }
                         return; // 로그인 모달 팝업 방지
-                    }
+                                        }
                 } catch(e) {}
             }
 
@@ -9139,37 +9132,36 @@
                                 }
                             }, 6000);
 
-                            // runGas(
-                                "loadOrCreateStudent",
-                                [session.grade, session.classNum, session.studentNum, session.name, "male", session.password],
-                                function (response) {
-                                    if (cloudLoginDone) return; // 타임아웃이 먼저 실행된 경우 무시
-                                    cloudLoginDone = true;
-                                    clearTimeout(cloudLoginTimeout);
-                                    if (response && response.error !== "password_mismatch") {
-                                        // 클라우드 자동 복원 성공
-                                        closeModal("loginModal");
-                                        closeModal("pinVerifyModal");
-                                        closeModal("newUserRegisterModal");
-                                        syncStateFromServer(response);
-                                        showToast(`👋 어서오세요, ${session.name} 용사님! 자동 로그인되었습니다.`);
-                                    } else {
-                                        // 비밀번호 불일치 시 로컬 시도
+                                                        const uid = `${session.schoolName || 'Unknown'}_${session.grade}_${session.classNum}_${session.studentNum}_${session.name}`;
+                            if (window._fbDb && window._fbGetDoc) {
+                                window._fbGetDoc(window._fbDoc(window._fbDb, "users", uid))
+                                    .then(docSnap => {
+                                        if (cloudLoginDone) return;
+                                        cloudLoginDone = true;
+                                        clearTimeout(cloudLoginTimeout);
+                                        if (docSnap.exists()) {
+                                            const data = docSnap.data();
+                                            if (data.password === session.password) {
+                                                closeModal("loginModal");
+                                                closeModal("pinVerifyModal");
+                                                closeModal("newUserRegisterModal");
+                                                syncStateFromServer(data);
+                                                showToast(`👋 어서오세요, ${session.name} 용사님! 자동 로그인되었습니다.`);
+                                            } else {
+                                                handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
+                                            }
+                                        } else {
+                                            handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
+                                        }
+                                    }).catch(err => {
+                                        if (cloudLoginDone) return;
+                                        cloudLoginDone = true;
+                                        clearTimeout(cloudLoginTimeout);
                                         handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
-                                    }
-                                },
-                                function () {
-                                    if (cloudLoginDone) return;
-                                    cloudLoginDone = true;
-                                    clearTimeout(cloudLoginTimeout);
-                                    // 클라우드 연결 실패 → 로컬 자동 복원
-                                    handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
-                                }
-                            );
-                        } else {
-                            // 로컬 모드 자동 복원
-                            handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
-                        }
+                                    });
+                            } else {
+                                handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
+                            }
                         return; // 로그인 모달 팝업 방지
                     }
                 } catch(e) {

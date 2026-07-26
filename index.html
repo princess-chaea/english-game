@@ -25,6 +25,36 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Firebase SDK v10 (CDN) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, runTransaction, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDzoSioPR8cmkMVzKl5_mD-mX3hhhCKZ0Y",
+            authDomain: "vocahero-1876a.firebaseapp.com",
+            projectId: "vocahero-1876a",
+            storageBucket: "vocahero-1876a.firebasestorage.app",
+            messagingSenderId: "188638481172",
+            appId: "1:188638481172:web:db153c6fbcf5a31180d001",
+            measurementId: "G-Z94ZVC8QH2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // ── 전역 노출 (일반 script 블록에서도 접근 가능) ──
+        window._fbDb = db;
+        window._fbDoc = doc;
+        window._fbGetDoc = getDoc;
+        window._fbSetDoc = setDoc;
+        window._fbUpdateDoc = updateDoc;
+        window._fbRunTransaction = runTransaction;
+        window._fbOnSnapshot = onSnapshot;
+        window._fbServerTimestamp = serverTimestamp;
+        window._fbReady = true;
+        console.log("[VocaHero] Firebase Firestore 초기화 완료 ✅");
+    </script>
     <style>
         @font-face {
             font-family: 'Hakgyoansim_PosterB';
@@ -375,7 +405,7 @@
         }
     </script>
     <!-- ⏳ FULLSCREEN INITIAL LOADING OVERLAY -->
-    <div id="gameLoadingOverlay" class="fixed inset-0 bg-black z-[10000] hidden opacity-0 pointer-events-none flex-col items-center justify-center p-6 transition-opacity duration-500" style="display: none;">
+    <div id="gameLoadingOverlay" class="fixed inset-0 bg-black z-[99999] hidden opacity-0 pointer-events-none flex-col items-center justify-center p-6 transition-opacity duration-500" style="display: none;">
         <div class="max-w-md w-full text-center flex flex-col items-center">
             <div class="w-24 h-24 mb-6 relative flex items-center justify-center">
                 <div class="absolute inset-0 border-4 border-yellow-500/20 border-t-yellow-400 rounded-full animate-spin"></div>
@@ -1594,6 +1624,11 @@
                         <i data-lucide="save" class="w-4 h-4 text-cyan-400"></i>
                         <span>진행 상황 저장하기</span>
                     </button>
+                    <button onclick="startFirebaseMigration()"
+                        class="flex-1 py-2 bg-yellow-900 hover:bg-yellow-800 border border-yellow-600 text-yellow-200 font-bold text-xs uppercase tracking-widest transition rounded-none-forced flex items-center justify-center gap-1.5 shadow-md">
+                        <i data-lucide="database" class="w-4 h-4 text-yellow-400"></i>
+                        <span>데이터 마이그레이션</span>
+                    </button>
                     <button onclick="openRetireModal()"
                         class="py-2 px-4 bg-red-950/80 hover:bg-red-900 border border-red-700 text-red-400 font-bold text-xs uppercase tracking-widest transition rounded-none-forced">
                         영웅 은퇴 (초기화)
@@ -1619,6 +1654,17 @@
 
             <!-- Profile Info Setup forms -->
             <div class="space-y-4">
+                <!-- School Search -->
+                <div class="relative">
+                    <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">학교 검색</label>
+                    <input type="text" id="inputSchool" placeholder="예: 하주초" autocomplete="off"
+                        class="w-full bg-[#1a1a1a] border border-[#3c3c3c] focus:border-[#0066b1] p-3 font-bold text-white text-xs outline-none rounded-none-forced transition-colors">
+                    <!-- Dropdown for search results -->
+                    <ul id="schoolSearchResults" class="absolute z-50 w-full bg-[#1a1a1a] border border-[#3c3c3c] border-t-0 max-h-40 overflow-y-auto hidden rounded-b shadow-2xl">
+                        <!-- Results will be injected here -->
+                    </ul>
+                </div>
+
                 <!-- Class Selection -->
                 <div>
                     <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">학년 설정</label>
@@ -2032,7 +2078,7 @@
     </div>
 
     <!-- Toast Message Container (global UI alerts) -->
-    <div id="toastMessage" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-black border border-[#3c3c3c] text-white px-5 py-3 rounded-none-forced text-xs font-bold shadow-2xl flex items-center gap-2 transition-all duration-300 opacity-0 pointer-events-none z-50">
+    <div id="toastMessage" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-black border border-[#3c3c3c] text-white px-5 py-3 rounded-none-forced text-xs font-bold shadow-2xl flex items-center gap-2 transition-all duration-300 opacity-0 pointer-events-none z-[99999]">
         <i data-lucide="info" class="w-4 h-4 text-[#0066b1]"></i>
         <span id="toastText">안내 메시지</span>
     </div>
@@ -2698,30 +2744,16 @@
         }
 
         // ==========================================
-        // HYBRID API CONNECTION DETERMINATOR
+        // FIREBASE API CONNECTION DETERMINATOR
         // ==========================================
-        function getGasUrl() {
-            // 하드코딩된 변수(GOOGLE_SCRIPT_URL)가 채워져 있으면 그것을 최우선으로 사용하고, 
-            // 그렇지 않은 경우 기존 로컬 스토리지에 저장된 주소를 예비 수단으로 사용합니다.
-            if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL.trim() !== "") {
-                return GOOGLE_SCRIPT_URL.trim();
-            }
-            return localStorage.getItem("vocahero_gas_url") || "";
-        }
-
         function checkConnectionState() {
-            const savedUrl = getGasUrl();
             const statusDot = document.getElementById("statusDot");
             const statusText = document.getElementById("statusText");
 
-            if (typeof google !== 'undefined' && google.script && google.script.run) {
-                isGoogleScriptActive = true;
-                if (statusDot) statusDot.className = "w-2 h-2 rounded-full bg-green-400 inline-block animate-pulse";
-                if (statusText) statusText.innerText = "구글 시트 다이렉트 모드";
-            } else if (savedUrl && savedUrl.trim() !== "") {
+            if (window._fbReady) {
                 isGoogleScriptActive = false;
-                if (statusDot) statusDot.className = "w-2 h-2 rounded-full bg-sky-400 inline-block animate-pulse";
-                if (statusText) statusText.innerText = "Vercel 연동 모드";
+                if (statusDot) statusDot.className = "w-2 h-2 rounded-full bg-orange-500 inline-block animate-pulse";
+                if (statusText) statusText.innerText = "Firebase 클라우드 연동";
             } else {
                 isGoogleScriptActive = false;
                 if (statusDot) statusDot.className = "w-2 h-2 rounded-full bg-yellow-500 inline-block animate-bounce";
@@ -2729,37 +2761,8 @@
             }
         }
 
-        // Vercel 브릿지를 지원하는 하이브리드 비동기 API 핸들러
-        async function runGas(action, args, successHandler, errorHandler) {
-            if (isGoogleScriptActive) {
-                // 구글 시트 내부 실행 상태
-                google.script.run
-                    .withSuccessHandler(successHandler)
-                    .withFailureHandler(errorHandler)[action](...args);
-            } else {
-                // Vercel 등 외부 배포처 실행 상태
-                const savedUrl = getGasUrl();
-                if (!savedUrl || savedUrl.trim() === "") {
-                    if (errorHandler) errorHandler("API URL 미등록");
-                    return;
-                }
-
-                try {
-                    const response = await fetch(savedUrl, {
-                        method: "POST",
-                        mode: "cors",
-                        headers: {
-                            "Content-Type": "text/plain" // Redirect 이슈 방지용 plain
-                        },
-                        body: JSON.stringify({ action: action, args: args })
-                    });
-                    const data = await response.json();
-                    if (successHandler) successHandler(data);
-                } catch (err) {
-                    console.error("Vercel REST API Bridge Error:", err);
-                    if (errorHandler) errorHandler(err);
-                }
-            }
+        function getUid(school, grade, classNum, studentNum, name) {
+            return `${school}_${grade}_${classNum}_${studentNum}_${name}`;
         }
 
         function saveApiEndpoint() {
@@ -2819,7 +2822,75 @@
             }
         }
 
+        // --- NEIS School Search Logic ---
+        let selectedSchoolName = "";
+        let neisDebounceTimer = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputSchool = document.getElementById('inputSchool');
+            const resultsUl = document.getElementById('schoolSearchResults');
+            if (inputSchool) {
+                inputSchool.addEventListener('input', function(e) {
+                    const query = e.target.value.trim();
+                    
+                    // 만약 유저가 직접 입력창을 수정하면 선택된 학교 초기화
+                    selectedSchoolName = "";
+                    
+                    if (query.length < 2) {
+                        resultsUl.classList.add('hidden');
+                        return;
+                    }
+
+                    clearTimeout(neisDebounceTimer);
+                    neisDebounceTimer = setTimeout(() => {
+                        fetch(`https://open.neis.go.kr/hub/schoolInfo?KEY=04f275416e194b508bbd3ad51e42d887&Type=json&pIndex=1&pSize=20&SCHUL_NM=${encodeURIComponent(query)}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            resultsUl.innerHTML = '';
+                            if (data.schoolInfo && data.schoolInfo[1] && data.schoolInfo[1].row) {
+                                const schools = data.schoolInfo[1].row;
+                                schools.forEach(school => {
+                                    const li = document.createElement('li');
+                                    li.className = "px-3 py-2 cursor-pointer hover:bg-[#3c3c3c] text-xs font-bold text-white border-b border-[#3c3c3c] last:border-0";
+                                    li.innerHTML = `${school.SCHUL_NM} <span class="text-[10px] text-gray-400 ml-1">(${school.LCTN_SC_NM})</span>`;
+                                    li.onclick = () => {
+                                        inputSchool.value = school.SCHUL_NM;
+                                        selectedSchoolName = school.SCHUL_NM;
+                                        resultsUl.classList.add('hidden');
+                                    };
+                                    resultsUl.appendChild(li);
+                                });
+                                resultsUl.classList.remove('hidden');
+                            } else {
+                                const li = document.createElement('li');
+                                li.className = "px-3 py-2 text-xs font-bold text-gray-500";
+                                li.innerText = "검색 결과가 없습니다.";
+                                resultsUl.appendChild(li);
+                                resultsUl.classList.remove('hidden');
+                            }
+                        })
+                        .catch(err => {
+                            console.error("NEIS API Error:", err);
+                        });
+                    }, 300); // 300ms debounce
+                });
+
+                // 사용자가 검색결과 바깥을 클릭하면 닫기
+                document.addEventListener('click', function(e) {
+                    if (e.target !== inputSchool && e.target !== resultsUl) {
+                        resultsUl.classList.add('hidden');
+                    }
+                });
+            }
+        });
+        // -------------------------------
+
         function checkStudentAccount() {
+            if (!selectedSchoolName) {
+                showToast("⚠️ 학교를 검색하여 올바른 학교를 선택해 주세요!");
+                return;
+            }
+
             const grade = parseInt(document.getElementById("inputGrade").value);
             const classNum = parseInt(document.getElementById("inputClass").value);
             const studentNum = parseInt(document.getElementById("inputNumber").value);
@@ -2834,41 +2905,34 @@
             }
 
             // Save recently entered student info to localStorage cache
-            localStorage.setItem("vocahero_last_student", JSON.stringify({ grade, classNum, studentNum, name }));
+            localStorage.setItem("vocahero_last_student", JSON.stringify({ schoolName: selectedSchoolName, grade, classNum, studentNum, name }));
 
-            tempCredentials = { grade, classNum, studentNum, name };
+            tempCredentials = { schoolName: selectedSchoolName, grade, classNum, studentNum, name };
             showToast("⏳ 계정 정보 확인 중...");
 
-            const savedUrl = getGasUrl();
-
-            if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
-                runGas(
-                    "checkStudentExists",
-                    [grade, classNum, studentNum, name],
-                    function (response) {
-                        closeModal("loginModal");
-                        if (response && response.exists) {
-                            if (response.hasPassword) {
-                                // 기존 계정 + PIN 있음 → PIN 확인 모달
-                                openModal("pinVerifyModal");
-                                document.getElementById("verifyPinInput").value = "";
-                                document.getElementById("verifyPinInput").focus();
-                            } else {
-                                // 기존 계정이지만 PIN 미등록 → 신규 PIN 설정 모달
-                                openModal("newUserRegisterModal");
-                                document.getElementById("newPinInput").value = "";
-                                showToast("🔑 첫 접속입니다. 사용할 PIN 4자리를 설정하세요!");
-                            }
+            if (window._fbReady) {
+                const uid = getUid(selectedSchoolName, grade, classNum, studentNum, name);
+                window._fbGetDoc(window._fbDoc(window._fbDb, "users", uid)).then(docSnap => {
+                    closeModal("loginModal");
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        if (data.password) {
+                            openModal("pinVerifyModal");
+                            document.getElementById("verifyPinInput").value = "";
+                            document.getElementById("verifyPinInput").focus();
                         } else {
-                            // 신규 계정 → 아바타·PIN 설정 모달
                             openModal("newUserRegisterModal");
                             document.getElementById("newPinInput").value = "";
+                            showToast("🔑 첫 접속입니다. 사용할 PIN 4자리를 설정하세요!");
                         }
-                    },
-                    function () {
-                        proceedWithLocalCheck(grade, classNum, studentNum, name);
+                    } else {
+                        openModal("newUserRegisterModal");
+                        document.getElementById("newPinInput").value = "";
                     }
-                );
+                }).catch(err => {
+                    console.error("Firebase fetch error:", err);
+                    proceedWithLocalCheck(grade, classNum, studentNum, name);
+                });
             } else {
                 proceedWithLocalCheck(grade, classNum, studentNum, name);
             }
@@ -2895,37 +2959,35 @@
                 return;
             }
 
-            const { grade, classNum, studentNum, name } = tempCredentials;
+            const { schoolName, grade, classNum, studentNum, name } = tempCredentials;
             showGameLoadingOverlay();
             closeModal("pinVerifyModal");
-            const savedUrl = getGasUrl();
 
-            if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
-                runGas(
-                    "loadOrCreateStudent",
-                    [grade, classNum, studentNum, name, gameState.avatarType, password],
-                    function (response) {
-                        if (response) {
-                            if (response.error === "password_mismatch") {
-                                hideGameLoadingOverlay();
-                                openModal("pinVerifyModal");
-                                showToast("❌ 비밀번호가 틀렸습니다! 암호를 다시 확인해 주세요.");
-                                return;
-                            }
-                            syncStateFromServer(response);
-                            closeModal("loginModal");
-                            closeModal("pinVerifyModal");
-                            sessionStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
-                            localStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
-                            showToast("🏰 원정대 클라우드 계정 로드 성공!");
-                        } else {
-                            handleLocalVerify(grade, classNum, studentNum, name, password);
+            if (window._fbReady) {
+                const uid = getUid(schoolName, grade, classNum, studentNum, name);
+                window._fbGetDoc(window._fbDoc(window._fbDb, "users", uid)).then(docSnap => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        if (String(data.password) !== String(password)) {
+                            hideGameLoadingOverlay();
+                            openModal("pinVerifyModal");
+                            showToast("❌ 비밀번호가 틀렸습니다! 암호를 다시 확인해 주세요.");
+                            return;
                         }
-                    },
-                    function () {
+                        syncStateFromServer(data);
+                        closeModal("loginModal");
+                        closeModal("pinVerifyModal");
+                        const sessData = { schoolName, grade, classNum, studentNum, name, password };
+                        sessionStorage.setItem("vocahero_active_session", JSON.stringify(sessData));
+                        localStorage.setItem("vocahero_active_session", JSON.stringify(sessData));
+                        showToast("🏰 원정대 클라우드 계정 로드 성공!");
+                    } else {
                         handleLocalVerify(grade, classNum, studentNum, name, password);
                     }
-                );
+                }).catch(err => {
+                    console.error("Firebase getDoc error:", err);
+                    handleLocalVerify(grade, classNum, studentNum, name, password);
+                });
             } else {
                 handleLocalVerify(grade, classNum, studentNum, name, password);
             }
@@ -2956,31 +3018,27 @@
                 return;
             }
 
-            const { grade, classNum, studentNum, name } = tempCredentials;
+            const { schoolName, grade, classNum, studentNum, name } = tempCredentials;
             showGameLoadingOverlay();
             closeModal("newUserRegisterModal");
-            const savedUrl = getGasUrl();
 
-            if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
-                runGas(
-                    "loadOrCreateStudent",
-                    [grade, classNum, studentNum, name, gameState.avatarType, password],
-                    function (response) {
-                        if (response) {
-                            syncStateFromServer(response);
-                            closeModal("loginModal");
-                            closeModal("newUserRegisterModal");
-                            sessionStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
-                            localStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
-                            showToast("✨ 새로운 전설의 모험이 시작되었습니다! 환영합니다!");
-                        } else {
-                            handleLocalRegister(grade, classNum, studentNum, name, password);
-                        }
-                    },
-                    function () {
-                        handleLocalRegister(grade, classNum, studentNum, name, password);
-                    }
-                );
+            if (window._fbReady) {
+                const uid = getUid(schoolName, grade, classNum, studentNum, name);
+                
+                // 로컬 시뮬레이션으로 초기 gameState 셋업
+                loadLocalSimulation(grade, classNum, studentNum, name, password);
+                
+                // Firestore에 즉시 저장
+                window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), gameState).then(() => {
+                    closeModal("loginModal");
+                    const sessData = { schoolName, grade, classNum, studentNum, name, password };
+                    sessionStorage.setItem("vocahero_active_session", JSON.stringify(sessData));
+                    localStorage.setItem("vocahero_active_session", JSON.stringify(sessData));
+                    showToast("✨ 새로운 전설의 모험이 시작되었습니다! 환영합니다!");
+                }).catch(err => {
+                    console.error("Firebase setDoc error:", err);
+                    handleLocalRegister(grade, classNum, studentNum, name, password);
+                });
             } else {
                 handleLocalRegister(grade, classNum, studentNum, name, password);
             }
@@ -3168,39 +3226,27 @@
 
         function saveSessionToCloud() {
             saveLocalCache();
-            const savedUrl = getGasUrl();
-            if (!isGoogleScriptActive && (!savedUrl || savedUrl.trim() === "")) {
+            if (!window._fbReady) {
                 showToast("💾 로컬 저장소에 게임 진행 상황이 보존되었습니다.");
                 return;
             }
 
-            showToast("⏳ 구글 시트 클라우드 동기화 저장 중...");
-            const petStr = JSON.stringify(gameState.petLevels || {});
-            const extraDataStr = buildExtraDataString();
-            const meta = getReadableSaveMetadata();
+            showToast("⏳ Firebase 클라우드 동기화 저장 중...");
             
-            runGas(
-                "saveStudentProgress",
-                [
-                    gameState.grade, gameState.classNum, gameState.studentNum, gameState.name,
-                    gameState.gold, gameState.avatarType, gameState.helmetLvl, gameState.armorLvl,
-                    gameState.weaponLvl, gameState.shieldLvl, gameState.shoesLvl, petStr,
-                    gameState.stage, gameState.progress, gameState.skillsInventory, gameState.equippedSkills,
-                    Number(gameState.masteryPoints) || 0,
-                    extraDataStr, meta.mastered, meta.wrong,
-                    gameState.rowIndex || 0
-                ],
-                function (success) {
-                    if (success) {
-                        showToast("🏰 구글 시트 클라우드에 진행 상황이 안전하게 동기화되었습니다!");
-                    } else {
-                        showToast("⚠️ 클라우드 저장 실패! 로컬 저장은 유지됩니다.");
-                    }
-                },
-                function () {
-                    showToast("⚠️ 통신 오류로 클라우드 동기화 실패! 로컬 저장은 완료되었습니다.");
-                }
-            );
+            // schoolName이 없으면 임시 징검다리
+            if (!gameState.schoolName) {
+                gameState.schoolName = selectedSchoolName || "Unknown";
+            }
+            
+            const uid = getUid(gameState.schoolName, gameState.grade, gameState.classNum, gameState.studentNum, gameState.name);
+            gameState.lastSaved = Date.now();
+
+            window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), gameState).then(() => {
+                showToast("🏰 Firebase 클라우드에 진행 상황이 안전하게 동기화되었습니다!");
+            }).catch(err => {
+                console.error("Firebase saveSession error:", err);
+                showToast("⚠️ 클라우드 저장 실패! 로컬 저장은 유지됩니다.");
+            });
         }
 
         function fetchWordsFromSpreadsheet() {
@@ -3503,7 +3549,8 @@
             if (antiFlash) antiFlash.remove();
 
             document.getElementById("userInfoDisplay").classList.remove("hidden");
-            document.getElementById("displayStudentName").innerText = `${gameState.grade}학년 ${gameState.classNum}반 ${gameState.studentNum}번 - [${gameState.name}]`;
+            const schoolPrefix = gameState.schoolName ? `${gameState.schoolName} ` : "";
+            document.getElementById("displayStudentName").innerText = `${schoolPrefix}${gameState.grade}학년 ${gameState.classNum}반 ${gameState.studentNum}번 - [${gameState.name}]`;
             document.getElementById("gradeLevelBadge").innerText = `교과 영단어 ${gameState.grade}학년`;
 
             if (typeof gameState.skillsInventory === 'string') {
@@ -3757,11 +3804,10 @@
 
         function calculateRequiredCP(stage, isBoss) {
             const st = Math.max(1, stage || 1);
-            const reqClickAtk = Math.floor(st * 450 + Math.pow(1.045, st - 1) * 500);
-            const reqDpsAtk = Math.floor(st * 1000 + Math.pow(1.04, st - 1) * 1000);
+            // 권장 전투력: 1스테이지 약 300에서 시작해 100스테이지 약 130,000으로 곡선 스케일링
+            const baseCp = 300 + 129700 * Math.pow((st - 1) / 99, 1.8);
             const bossFactor = isBoss ? 1.30 : 1.0;
-            const reqCp = Math.floor(((reqClickAtk * 10) + (reqDpsAtk * 5) + (st * 600)) * bossFactor);
-            return Math.max(100, reqCp);
+            return Math.max(100, Math.floor(baseCp * bossFactor));
         }
 
         function getCPDamageMultiplier() {
@@ -6752,7 +6798,11 @@
 
             const applyTitleStyle = (el, isHeader = false) => {
                 if (!el) return;
-                const prefix = isHeader ? `${gameState.grade}학년 ${gameState.classNum}반 ${gameState.studentNum}번 - ` : "";
+                let prefix = "";
+                if (isHeader) {
+                    const schoolPrefix = gameState.schoolName ? `${gameState.schoolName} ` : "";
+                    prefix = `${schoolPrefix}${gameState.grade}학년 ${gameState.classNum}반 ${gameState.studentNum}번 - `;
+                }
                 el.innerText = `${prefix}${titleStr}${gameState.name}`;
 
                 if (titleDef) {
@@ -7828,26 +7878,44 @@
             }
 
             // 서버에서 최신 데이터 가져오기 (백그라운드 업데이트)
-            runGas("getWorldBossStatus", [gameState.grade, studentKey], function(res) {
-                if (res && res.success) {
-                    wbCurBossHp = res.curHp;
-                    wbMaxBossHp = res.maxHp;
+            if (window._fbReady) {
+                const bossDocRef = window._fbDoc(window._fbDb, "world_bosses", `grade_${gameState.grade}`);
+                window._fbGetDoc(bossDocRef).then(docSnap => {
+                    let curHp = wbMaxBossHp;
+                    let maxHp = wbMaxBossHp;
+                    let damages = {};
+                    let canAttack = true;
+                    
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        maxHp = data.maxHp || wbMaxBossHp;
+                        curHp = typeof data.curHp !== 'undefined' ? data.curHp : maxHp;
+                        damages = data.damages || {};
+                    }
+
+                    wbCurBossHp = curHp;
+                    wbMaxBossHp = maxHp;
+                    
+                    const myDamage = damages[studentKey] || 0;
+                    const totalDamage = Object.values(damages).reduce((a, b) => a + b, 0);
+                    const sharePct = totalDamage > 0 ? ((myDamage / totalDamage) * 100).toFixed(2) : "0.00";
+                    const cappedShare = Math.min(100.0, Math.max(0, parseFloat(sharePct) || 0)).toFixed(2);
+
                     const pct = Math.max(0, Math.min(100, (wbCurBossHp / wbMaxBossHp) * 100));
-                    const cappedShare = Math.min(100.0, Math.max(0, parseFloat(res.sharePct) || 0)).toFixed(2);
 
                     document.getElementById("worldBossHpBar").style.width = `${pct}%`;
                     document.getElementById("worldBossHpText").innerText = `${wbCurBossHp.toLocaleString()} / ${wbMaxBossHp.toLocaleString()} HP (${pct.toFixed(1)}%)`;
-                    document.getElementById("myWorldBossDmgDisplay").innerText = res.myDamage.toLocaleString();
+                    document.getElementById("myWorldBossDmgDisplay").innerText = myDamage.toLocaleString();
                     document.getElementById("myWorldBossShareDisplay").innerText = `${cappedShare}%`;
-                    document.getElementById("myWorldBossRewardDisplay").innerText = `+${Math.floor(res.myDamage / 1000)} FP / [수호신] 칭호`;
+                    document.getElementById("myWorldBossRewardDisplay").innerText = `+${Math.floor(myDamage / 1000)} FP / [수호신] 칭호`;
 
                     // ✅ 서버 응답 데이터를 로컬 캐시에 저장 (다음 탭 전환 시 즉시 표시용)
                     localStorage.setItem(wbCacheKey, JSON.stringify({
-                        curHp: res.curHp,
-                        maxHp: res.maxHp,
-                        myDamage: res.myDamage,
+                        curHp: wbCurBossHp,
+                        maxHp: wbMaxBossHp,
+                        myDamage: myDamage,
                         sharePct: cappedShare,
-                        canAttack: res.canAttack,
+                        canAttack: canAttack,
                         cachedAt: Date.now()
                     }));
 
@@ -7868,19 +7936,19 @@
                         const victoryNoticeKey = `vocahero_wb_victory_modal_seen_${gameState.grade}_${gameState.name}_${gameState.studentNum}`;
                         if (!localStorage.getItem(victoryNoticeKey)) {
                             localStorage.setItem(victoryNoticeKey, "true");
-                            document.getElementById("wbModalMyDamage").innerText = `${res.myDamage.toLocaleString()} HP`;
+                            document.getElementById("wbModalMyDamage").innerText = `${myDamage.toLocaleString()} HP`;
                             document.getElementById("wbModalMyShare").innerText = `${cappedShare}%`;
-                            document.getElementById("wbModalRewardSummary").innerText = `+${Math.floor(res.myDamage / 1000)} FP / [수호신] 칭호`;
+                            document.getElementById("wbModalRewardSummary").innerText = `+${Math.floor(myDamage / 1000)} FP / [수호신] 칭호`;
                             openModal("wbVictoryNoticeModal");
                             playSoundEffect('levelup');
                         }
                     }
 
-                    if (!res.canAttack) {
+                    if (!canAttack) {
                         localStorage.setItem(wbRaidKey, todayStr);
                     }
 
-                    if (!res.canAttack || isTodayDone || wbCurBossHp <= 0) {
+                    if (!canAttack || isTodayDone || wbCurBossHp <= 0) {
                         if (btn) {
                             btn.disabled = true;
                             btn.className = "w-full py-3.5 bg-[#262626] text-[#7e7e7e] font-bold text-sm tracking-wider uppercase rounded-none-forced cursor-not-allowed border border-red-950";
@@ -7891,10 +7959,10 @@
                             badge.className = "text-[9px] bg-yellow-950 text-yellow-400 border border-yellow-600 px-3 py-1 rounded-none-forced font-bold uppercase tracking-wider";
                         }
                     }
-                }
-            }, function(err) {
-                // 통신 오류 시 생략
-            });
+                }).catch(err => {
+                    console.error("Firebase getDoc error for World Boss:", err);
+                });
+            }
         }
 
         let wbCurBossHp = 10000000;
@@ -8490,6 +8558,10 @@
             if (lastStudentRaw) {
                 try {
                     const last = JSON.parse(lastStudentRaw);
+                    if (last.schoolName) {
+                        document.getElementById("inputSchool").value = last.schoolName;
+                        selectedSchoolName = last.schoolName;
+                    }
                     if (last.grade) document.getElementById("inputGrade").value = last.grade;
                     if (last.classNum) document.getElementById("inputClass").value = last.classNum;
                     if (last.studentNum) document.getElementById("inputNumber").value = last.studentNum;
@@ -8502,34 +8574,32 @@
             if (activeSessionRaw) {
                 try {
                     const session = JSON.parse(activeSessionRaw);
-                    if (session && session.grade && session.name && session.password) {
+                    if (session && session.schoolName && session.grade && session.name && session.password) {
                         // ✨ 새로고침 자동 복원 시에도 로딩바 오버레이 출력
                         showGameLoadingOverlay();
-                        tempCredentials = { grade: session.grade, classNum: session.classNum, studentNum: session.studentNum, name: session.name };
-                        const savedUrl = getGasUrl();
+                        tempCredentials = { schoolName: session.schoolName, grade: session.grade, classNum: session.classNum, studentNum: session.studentNum, name: session.name };
 
-                        if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
-                            runGas(
-                                "loadOrCreateStudent",
-                                [session.grade, session.classNum, session.studentNum, session.name, "male", session.password],
-                                function (response) {
-                                    if (response && response.error !== "password_mismatch") {
-                                        // 클라우드 자동 복원 성공
+                        if (window._fbReady) {
+                            const uid = getUid(session.schoolName, session.grade, session.classNum, session.studentNum, session.name);
+                            window._fbGetDoc(window._fbDoc(window._fbDb, "users", uid)).then(docSnap => {
+                                if (docSnap.exists()) {
+                                    const data = docSnap.data();
+                                    if (String(data.password) === String(session.password)) {
                                         closeModal("loginModal");
                                         closeModal("pinVerifyModal");
                                         closeModal("newUserRegisterModal");
-                                        syncStateFromServer(response);
+                                        syncStateFromServer(data);
                                         showToast(`👋 어서오세요, ${session.name} 용사님! 자동 로그인되었습니다.`);
                                     } else {
-                                        // 비밀번호 불일치 시 로컬 시도
                                         handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
                                     }
-                                },
-                                function () {
-                                    // 클라우드 연결 실패 → 로컬 자동 복원
+                                } else {
                                     handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
                                 }
-                            );
+                            }).catch(err => {
+                                console.error("Firebase getDoc error:", err);
+                                handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
+                            });
                         } else {
                             // 로컬 모드 자동 복원
                             handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
@@ -8718,18 +8788,36 @@
 
             // ✅ 서버에 피해량 전송 → 완료 후 즉시 클리어 보상 체크 (격파자 포함 통합 처리)
             const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
-            runGas("attackWorldBoss", [gameState.grade, studentKey, wbTotalDamageDealt], function(res) {
-                if (res && res.success) {
+            
+            if (window._fbReady) {
+                const bossDocRef = window._fbDoc(window._fbDb, "world_bosses", `grade_${gameState.grade}`);
+                window._fbRunTransaction(window._fbDb, async (transaction) => {
+                    const docSnap = await transaction.get(bossDocRef);
+                    if (!docSnap.exists()) {
+                        transaction.set(bossDocRef, {
+                            maxHp: wbMaxBossHp,
+                            curHp: Math.max(0, wbMaxBossHp - wbTotalDamageDealt),
+                            damages: { [studentKey]: wbTotalDamageDealt }
+                        });
+                    } else {
+                        const data = docSnap.data();
+                        const curHp = typeof data.curHp !== 'undefined' ? data.curHp : data.maxHp;
+                        const newHp = Math.max(0, curHp - wbTotalDamageDealt);
+                        const damages = data.damages || {};
+                        const oldDamage = damages[studentKey] || 0;
+                        damages[studentKey] = oldDamage + wbTotalDamageDealt;
+                        transaction.update(bossDocRef, { curHp: newHp, damages });
+                    }
+                }).then(() => {
                     showToast("✨ 서버에 월드보스 누적 피해 기록이 반영되었습니다!");
                     updateWorldBossUI();
-                    // ✅ 서버 HP 업데이트 완료 후 클리어 여부 확인 & 보상/모달 처리
-                    // (격파자도 이 경로로 FP 보상 수령 + 팝업 확인)
                     setTimeout(() => { checkWorldBossVictoryOnStartup(); }, 1000);
-                } else if (res && res.message) {
-                    showToast(`⚠️ ${res.message}`);
+                }).catch(err => {
+                    console.error("Firebase WB Transaction failed:", err);
+                    showToast("⚠️ 월드보스 데미지 전송 실패!");
                     updateWorldBossUI();
-                }
-            });
+                });
+            }
         }
 
         function openPotentialProbModal() {
@@ -9246,13 +9334,5 @@
                             class="flex-1 py-2.5 px-4 bg-red-950 text-gray-600 font-extrabold text-xs rounded transition opacity-50 cursor-not-allowed border border-red-900">
                         🔥 은퇴 및 데이터 삭제
                     </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
 </body>
-
 </html>
-
-

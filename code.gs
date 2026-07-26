@@ -42,6 +42,8 @@ function doPost(e) {
       result = getHallOfFame.apply(null, args);
     } else if (action === "deleteStudentData") {
       result = deleteStudentData.apply(null, args);
+    } else if (action === "getAllDataForMigration") {
+      result = getAllDataForMigration();
     } else {
       throw new Error("Unknown action: " + action);
     }
@@ -740,7 +742,31 @@ function uploadWordsBatch(wordsArray) {
   }
 }
 
-// 7. 예외 보호용 복원 백업 단어 매핑 테이블
+// 7. 데이터 이전용 통합 추출 함수
+function getAllDataForMigration() {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var result = { students: [], worldBoss: [], worldBossLog: [], words: [] };
+    
+    var studentsSheet = ss.getSheetByName("Students");
+    if (studentsSheet) result.students = studentsSheet.getDataRange().getValues();
+    
+    var bossSheet = ss.getSheetByName("WorldBoss");
+    if (bossSheet) result.worldBoss = bossSheet.getDataRange().getValues();
+    
+    var logSheet = ss.getSheetByName("WorldBossLog");
+    if (logSheet) result.worldBossLog = logSheet.getDataRange().getValues();
+    
+    var wordsSheet = ss.getSheetByName("Words");
+    if (wordsSheet) result.words = wordsSheet.getDataRange().getValues();
+    
+    return { success: true, data: result };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+// 8. 예외 보호용 복원 백업 단어 매핑 테이블
 function getMockWordsFallback(grade) {
   var wordMap = {
     "3": [

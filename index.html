@@ -3181,25 +3181,25 @@
                         localStorage.setItem("vocahero_active_session", JSON.stringify(sessData));
                         showToast("🏰 원정대 클라우드 계정 로드 성공!");
                     } else {
-                        handleLocalVerify(grade, classNum, studentNum, name, password);
+                        handleLocalVerify(schoolName, grade, classNum, studentNum, name, password);
                     }
                 }).catch(err => {
                     console.error("Firebase getDoc error:", err);
-                    handleLocalVerify(grade, classNum, studentNum, name, password);
+                    handleLocalVerify(schoolName, grade, classNum, studentNum, name, password);
                 });
             } else {
-                handleLocalVerify(grade, classNum, studentNum, name, password);
+                handleLocalVerify(schoolName, grade, classNum, studentNum, name, password);
             }
         }
 
-        function handleLocalVerify(grade, classNum, studentNum, name, password) {
+        function handleLocalVerify(schoolName, grade, classNum, studentNum, name, password) {
             showGameLoadingOverlay();
-            if (loadLocalSimulation(grade, classNum, studentNum, name, password)) {
+            if (loadLocalSimulation(schoolName, grade, classNum, studentNum, name, password)) {
                 closeModal("loginModal");
                 closeModal("pinVerifyModal");
                 closeModal("newUserRegisterModal");
-                sessionStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
-                            localStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
+                sessionStorage.setItem("vocahero_active_session", JSON.stringify({ schoolName, grade, classNum, studentNum, name, password }));
+                            localStorage.setItem("vocahero_active_session", JSON.stringify({ schoolName, grade, classNum, studentNum, name, password }));
                 showToast("🏰 로컬 원정대 계정 로드 성공!");
                 // initGameEngine() 내에서 hideGameLoadingOverlay()가 이미 호출되지만, 안전망으로도 보장
                 hideGameLoadingOverlay();
@@ -3225,7 +3225,7 @@
                 const uid = getUid(schoolName, grade, classNum, studentNum, name);
                 
                 // 로컬 시뮬레이션으로 초기 gameState 셋업
-                loadLocalSimulation(grade, classNum, studentNum, name, password);
+                loadLocalSimulation(schoolName, grade, classNum, studentNum, name, password);
                 
                 // Firestore에 즉시 저장
                 window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), gameState).then(() => {
@@ -3236,23 +3236,23 @@
                     showToast("✨ 새로운 전설의 모험이 시작되었습니다! 환영합니다!");
                 }).catch(err => {
                     console.error("Firebase setDoc error:", err);
-                    handleLocalRegister(grade, classNum, studentNum, name, password);
+                    handleLocalRegister(schoolName, grade, classNum, studentNum, name, password);
                 });
             } else {
-                handleLocalRegister(grade, classNum, studentNum, name, password);
+                handleLocalRegister(schoolName, grade, classNum, studentNum, name, password);
             }
         }
 
-        function handleLocalRegister(grade, classNum, studentNum, name, password) {
-            if (loadLocalSimulation(grade, classNum, studentNum, name, password)) {
+        function handleLocalRegister(schoolName, grade, classNum, studentNum, name, password) {
+            if (loadLocalSimulation(schoolName, grade, classNum, studentNum, name, password)) {
                 closeModal("newUserRegisterModal");
-                sessionStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
-                            localStorage.setItem("vocahero_active_session", JSON.stringify({ grade, classNum, studentNum, name, password }));
+                sessionStorage.setItem("vocahero_active_session", JSON.stringify({ schoolName, grade, classNum, studentNum, name, password }));
+                            localStorage.setItem("vocahero_active_session", JSON.stringify({ schoolName, grade, classNum, studentNum, name, password }));
                 showToast("✨ 로컬 원정대에 새로운 대원이 등록되었습니다!");
             }
         }
 
-        function loadLocalSimulation(grade, classNum, studentNum, name, password) {
+        function loadLocalSimulation(schoolName, grade, classNum, studentNum, name, password) {
             const cacheKey = `vocahero_${grade}_${classNum}_${studentNum}_${name}`;
             const cached = localStorage.getItem(cacheKey);
 
@@ -3263,6 +3263,8 @@
                     return false;
                 }
                 gameState = parsed;
+                gameState.schoolName = schoolName;
+                gameState.password = password;
                 if (!gameState.skillsInventory) gameState.skillsInventory = [];
                 if (!gameState.equippedSkills) gameState.equippedSkills = [];
                 if (typeof gameState.totalQuizTries === 'undefined') gameState.totalQuizTries = 0;
@@ -3271,6 +3273,7 @@
                 if (!gameState.wrongWordCounts) gameState.wrongWordCounts = {};
                 if (!gameState.lockedPotentialSlots) gameState.lockedPotentialSlots = {};
             } else {
+                gameState.schoolName = schoolName;
                 gameState.grade = grade;
                 gameState.classNum = classNum;
                 gameState.studentNum = studentNum;
@@ -3311,6 +3314,8 @@
                 }
             }
 
+            gameState.password = data.password || gameState.password;
+            gameState.schoolName = data.schoolName || gameState.schoolName;
             gameState.grade = data.grade || gameState.grade;
             gameState.rowIndex = data.rowIndex || 0; // 캐싱된 행 번호 저장
             gameState.classNum = data.classNum || gameState.classNum;
@@ -8728,14 +8733,14 @@
                                         syncStateFromServer(data);
                                         showToast(`👋 어서오세요, ${session.name} 용사님! 자동 로그인되었습니다.`);
                                     } else {
-                                        handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
+                                        handleLocalVerify(session.schoolName, session.grade, session.classNum, session.studentNum, session.name, session.password);
                                     }
                                 } else {
-                                    handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
+                                    handleLocalVerify(session.schoolName, session.grade, session.classNum, session.studentNum, session.name, session.password);
                                 }
                             }).catch(err => {
                                 console.error("Firebase getDoc error:", err);
-                                handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
+                                handleLocalVerify(session.schoolName, session.grade, session.classNum, session.studentNum, session.name, session.password);
                             });
                         }
                         return; // 로그인 모달 팝업 방지
@@ -9204,7 +9209,7 @@
                                 if (!cloudLoginDone) {
                                     cloudLoginDone = true;
                                     console.warn("[VocaHero] 클라우드 자동 로그인 타임아웃 → 로컬 복원 시도");
-                                    handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
+                                    handleLocalVerify(session.schoolName, session.grade, session.classNum, session.studentNum, session.name, session.password);
                                 }
                             }, 6000);
 
@@ -9224,19 +9229,19 @@
                                                 syncStateFromServer(data);
                                                 showToast(`👋 어서오세요, ${session.name} 용사님! 자동 로그인되었습니다.`);
                                             } else {
-                                                handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
+                                                handleLocalVerify(session.schoolName, session.grade, session.classNum, session.studentNum, session.name, session.password);
                                             }
                                         } else {
-                                            handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
+                                            handleLocalVerify(session.schoolName, session.grade, session.classNum, session.studentNum, session.name, session.password);
                                         }
                                     }).catch(err => {
                                         if (cloudLoginDone) return;
                                         cloudLoginDone = true;
                                         clearTimeout(cloudLoginTimeout);
-                                        handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
+                                        handleLocalVerify(session.schoolName, session.grade, session.classNum, session.studentNum, session.name, session.password);
                                     });
                             } else {
-                                handleLocalVerify(session.grade, session.classNum, session.studentNum, session.name, session.password);
+                                handleLocalVerify(session.schoolName, session.grade, session.classNum, session.studentNum, session.name, session.password);
                             }
                         return; // 로그인 모달 팝업 방지
                     }

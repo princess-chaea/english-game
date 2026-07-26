@@ -240,7 +240,7 @@
     <!-- Firebase SDK v10 (CDN) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, runTransaction, onSnapshot, serverTimestamp, query, collection, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, runTransaction, onSnapshot, serverTimestamp, query, collection, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDzoSioPR8cmkMVzKl5_mD-mX3hhhCKZ0Y",
@@ -258,6 +258,7 @@
         // ── 전역 노출 (일반 script 블록에서도 접근 가능) ──
         window._fbDb = db;
         window._fbDoc = doc;
+        window._fbDeleteDoc = deleteDoc;
         window._fbGetDoc = getDoc;
         window._fbSetDoc = setDoc;
         window._fbUpdateDoc = updateDoc;
@@ -1033,6 +1034,11 @@
                         <!-- Dynamic Companion Pet inventory listing -->
                     </div>
 
+                    <div class="bg-[#0d0d0d] p-3.5 border border-[#3c3c3c] mt-4 mb-2 text-[10px] text-[#bbbbbb] flex items-start gap-2 rounded-none-forced">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-[#e22718]"></i>
+                        <p><strong>소환 및 유물 버프 가이드:</strong> 소유 중인 펫의 추가 피해와 유물 공명 수치(⭐ 한계돌파)는 캐릭터 전투력에 누적 반영됩니다.</p>
+                    </div>
+
                     <!-- Bottom Title: Ancient Relic Altar + Boss Token Display & Summon Buttons -->
                     <div id="relicAltarUnlockedSection" class="border-t border-purple-900/50 pt-3 mt-2">
                         <div class="flex flex-wrap justify-between items-center gap-2 mb-2.5">
@@ -1128,11 +1134,7 @@
                         </div>
                     </div>
                 </div>
-                <div
-                    class="bg-[#0d0d0d] p-3.5 border border-[#3c3c3c] mt-4 text-[10px] text-[#bbbbbb] flex items-start gap-2 rounded-none-forced">
-                    <i data-lucide="sparkles" class="w-4 h-4 text-[#e22718]"></i>
-                    <p><strong>소환 및 유물 버프 가이드:</strong> 소유 중인 펫의 추가 피해와 유물 공명 수치(⭐ 한계돌파)는 캐릭터 전투력에 누적 반영됩니다.</p>
-                </div>
+                
             </div>
 
             <!-- TAB 4: Skill Custom Equip Lab (신규 추가된 스킬 연구소 탭) -->
@@ -1852,7 +1854,7 @@
     <!-- MODAL 1: Character Creation & Class Number Setup -->
     <!-- MODAL 1: Character Login Info Setup -->
     <div id="loginModal"
-        class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-50 transition-opacity duration-300">
+        class="fixed inset-0 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4 z-50 transition-opacity duration-300">
         <div
             class="bg-black text-white max-w-md w-full p-8 shadow-2xl border border-[#3c3c3c] flex flex-col gap-5 rounded-none-forced">
             <div class="text-center">
@@ -1923,7 +1925,7 @@
 
     <!-- MODAL 1B: Returning User PIN Verification -->
     <div id="pinVerifyModal"
-        class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-50 transition-opacity duration-300">
+        class="fixed inset-0 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4 z-50 transition-opacity duration-300">
         <div
             class="bg-black text-white max-w-sm w-full p-8 shadow-2xl border border-[#3c3c3c] flex flex-col gap-5 rounded-none-forced">
             <div class="text-center">
@@ -1953,7 +1955,7 @@
 
     <!-- MODAL 1C: New User Character Creation -->
     <div id="newUserRegisterModal"
-        class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-50 transition-opacity duration-300">
+        class="fixed inset-0 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4 z-50 transition-opacity duration-300">
         <div
             class="bg-black text-white max-w-md w-full p-8 shadow-2xl border border-[#3c3c3c] flex flex-col gap-5 rounded-none-forced">
             <div class="text-center">
@@ -2003,7 +2005,7 @@
     <!-- MODAL 2: Advanced Spreadsheet Setup Guide (With API input slot added) -->
     <!-- MODAL 2: Advanced Spreadsheet Setup Guide (With API input slot added) -->
     <div id="teacherModal"
-        class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+        class="fixed inset-0 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4 z-50">
         <div
             class="bg-black rounded-none-forced max-w-3xl w-full p-8 shadow-2xl border border-[#3c3c3c] flex flex-col gap-4 max-h-[85vh] overflow-hidden">
             <div class="flex justify-between items-center border-b border-[#3c3c3c] pb-3">
@@ -2051,7 +2053,7 @@
     </div>
 
     <!-- 📊 무구 잠재력 확률표 & 등급별 급간 정보 멀티모달 팝업 -->
-    <div id="potentialProbModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+    <div id="potentialProbModal" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4 z-50">
         <div class="bg-[#0a0a0a] rounded-none-forced max-w-xl w-full p-6 shadow-2xl border border-yellow-600/70 flex flex-col gap-4 max-h-[85vh] overflow-hidden text-gray-200">
             <div class="flex justify-between items-center border-b border-yellow-700/50 pb-3">
                 <div class="flex items-center gap-2 text-yellow-400 font-extrabold text-sm uppercase tracking-wider">
@@ -9459,8 +9461,8 @@
             if (tutorialStep === 1) {
                 switchTab('quizTab');
                 msg.innerHTML = "환영합니다 용사여!<br>먼저 몬스터를 공격하려면 <b>올바른 뜻을 가진 단어</b>를 선택해야 합니다. <span class='text-yellow-300'>정답을 클릭해보세요!</span>";
-                const choices = document.querySelector('.grid.grid-cols-2.gap-2.mb-4');
-                if(choices) choices.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
+                const choices = document.querySelectorAll('.choice-btn');
+                choices.forEach(c => c.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse'));
             } else if (tutorialStep === 2) {
                 msg.innerHTML = "훌륭합니다!<br>몬스터를 처치해 얻은 골드로 <b>[대장간]</b> 탭으로 이동하여 장비를 강화해보세요.";
                 const gearTabBtn = document.getElementById("gearTabBtn");
@@ -9572,7 +9574,7 @@
                     </button>
 
     <!-- TUTORIAL OVERLAY -->
-    <div id="tutorialOverlay" class="fixed inset-0 z-[9999] bg-black/85 hidden flex-col items-center justify-center p-4 transition-opacity duration-300">
+    <div id="tutorialOverlay" class="fixed inset-0 z-[9999] bg-black/90 hidden flex-col items-center justify-center p-4 transition-opacity duration-300">
         <div class="max-w-sm w-full bg-[#0d0d0d] border border-yellow-500 p-5 rounded-none-forced shadow-[0_0_20px_rgba(234,179,8,0.3)] relative animate-bounce flex flex-col gap-3">
             <h3 class="text-yellow-400 font-bold text-base flex items-center gap-2">
                 <i data-lucide="sparkles" class="w-4 h-4"></i> 🎓 여신의 안내

@@ -7047,23 +7047,36 @@
         window.addEventListener('popstate', (e) => {
             if (isExiting) return; // 이미 종료 중이면 동작 무시
             
-            if (confirm("진행 상황을 저장하고 게임을 종료하시겠습니까?")) {
-                isExiting = true;
-                
-                // 폰 뒤로가기의 경우, confirm 확인 직후(User Gesture 유지됨) 즉시 홈 화면으로 튕겨냅니다.
-                // 일반 앱이 꺼지는 것과 완벽히 동일한 느낌을 줍니다.
-                if (/android/i.test(navigator.userAgent)) {
-                    try { window.location.href = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end"; } catch(e) {}
+            Swal.fire({
+                title: '여정을 멈추시겠습니까?',
+                html: "현재까지의 업적을 <b>영웅의 영혼</b>에 각인하고 떠납니다.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#f59e0b',
+                cancelButtonColor: '#4b5563',
+                confirmButtonText: '💾 저장하기',
+                cancelButtonText: '⚔️ 돌아가기',
+                background: '#1a1a1a',
+                color: '#fff',
+                allowOutsideClick: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    isExiting = true;
+                    
+                    // 모달의 '저장하기' 버튼 클릭 시 User Gesture가 유효하므로 즉시 앱 최소화(홈으로 이동) 가능
+                    if (/android/i.test(navigator.userAgent)) {
+                        try { window.location.href = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end"; } catch(e) {}
+                    }
+                    
+                    // 화면이 내려간 상태(백그라운드)에서 조용히 저장을 마저 수행합니다.
+                    saveAndExit(true);
+                } else {
+                    // 취소 시 다시 뒤로가기를 감지하기 위해 더미 상태 푸시
+                    try {
+                        history.pushState({ state: 'playing' }, null, location.pathname + location.search + "#playing");
+                    } catch(e) {}
                 }
-                
-                // 화면이 내려간 상태(백그라운드)에서 조용히 저장을 마저 수행합니다.
-                saveAndExit(true);
-            } else {
-                // 취소 시 다시 뒤로가기를 감지하기 위해 더미 상태 푸시
-                try {
-                    history.pushState({ state: 'playing' }, null, location.pathname + location.search + "#playing");
-                } catch(e) {}
-            }
+            });
         });
 
         function saveAndExit(fromBackButton = false) {
@@ -7094,7 +7107,7 @@
                     // 2차: 창 닫기 등
                     setTimeout(() => {
                         try { window.close(); if (window.history.length > 1) { window.history.back(); } } catch (e) {}
-                        showToast("안전하게 저장되었습니다! 기기의 뒤로가기 버튼으로 닫아주세요.");
+                        showToast("영웅의 영혼에 기록이 각인되었습니다! 기기의 뒤로가기 버튼으로 닫아주세요.");
                     }, 300);
                 }, 1000);
             };
@@ -7114,17 +7127,17 @@
                         extraDataStr, meta.mastered, meta.wrong
                     ],
                     function () {
-                        showAlert("데이터가 완벽하게 클라우드에 저장되었습니다! 이제 창이 닫힙니다.", "💾", "저장 완료");
+                        showAlert("영웅의 영혼에 기록이 각인되었습니다! 이제 창이 닫힙니다.", "💾", "기록 각인 완료");
                         doExit();
                     },
                     function () {
-                        showAlert("로컬 저장이 완료되었습니다! 이제 창이 닫힙니다.", "💾", "저장 완료");
+                        showAlert("로컬 영혼석에 기록이 각인되었습니다! 이제 창이 닫힙니다.", "💾", "기록 각인 완료");
                         doExit();
                     }
                 );
             } else {
                 setTimeout(() => {
-                    showAlert("로컬 저장이 완료되었습니다! 이제 창이 닫힙니다.", "💾", "저장 완료");
+                    showAlert("로컬 영혼석에 기록이 각인되었습니다! 이제 창이 닫힙니다.", "💾", "기록 각인 완료");
                     doExit();
                 }, 800);
             }

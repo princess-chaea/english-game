@@ -635,8 +635,8 @@
                         <i data-lucide="shield" class="w-3.5 h-3.5 shrink-0"></i>
                         <span id="displayStageNum" class="whitespace-nowrap">스테이지 1-1</span>
                     </span>
-                    <span class="text-[9px] font-mono sm:border-l border-[#3c3c3c] sm:pl-2 flex items-center gap-1 shrink-0">
-                        <span class="text-gray-400 font-bold">권장:</span>
+                    <span class="text-[9px] font-mono sm:border-l border-[#3c3c3c] sm:pl-2 flex flex-wrap items-center gap-x-1 shrink-0">
+                        <span class="text-gray-400 font-bold">권장 전투력:</span>
                         <span id="recommendedCpDisplay" class="text-orange-400 font-bold">0</span>
                         <span class="text-gray-500">|</span>
                         <span class="text-gray-400 font-bold">내 전투:</span>
@@ -3928,9 +3928,13 @@
             const relicGoldBonus = getEquippedRelicBonus("relic_compass") / 100;
             const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus + (getPotentialStatBonus('goldBonus') / 100);
 
+            // 장신구 CP 보정 (팔찌 클릭 타격 + 반지 DPS → CP 반영)
+            const braceletClickBonus = (gameState.braceletLvl || 0) * 800;
+            const ringDpsBonus = (gameState.ringLvl || 0) * 1500;
+
             return Math.floor(
-                (clickAtk * 10) + 
-                (dpsAtk * 5) + 
+                ((clickAtk + braceletClickBonus) * 10) + 
+                ((dpsAtk + ringDpsBonus) * 5) + 
                 (totalSkillBonusPct * 50) + 
                 (critRate * 100) + 
                 (bossDmgBonus * 80) + 
@@ -3940,10 +3944,11 @@
 
         function calculateRequiredCP(stage, isBoss) {
             const st = Math.max(1, stage || 1);
-            // 권장 전투력: 1스테이지 약 300에서 시작해 100스테이지 약 130,000으로 곡선 스케일링
-            const baseCp = 300 + 129700 * Math.pow((st - 1) / 99, 1.8);
+            // 권장 전투력: 1스테이지 약 1,000에서 시작해 100스테이지 약 130,000으로 자연스러운 곡선 스케일링
+            // 초반(1~30): 장비 강화만으로 달성 가능 / 중반(30~60): 고강화 필수 / 후반(60~100): 장신구+잠재력 필수
+            const baseCp = 1000 + 129000 * Math.pow((st - 1) / 99, 1.7);
             const bossFactor = isBoss ? 1.30 : 1.0;
-            return Math.max(100, Math.floor(baseCp * bossFactor));
+            return Math.max(800, Math.floor(baseCp * bossFactor));
         }
 
         function getCPDamageMultiplier() {
@@ -8439,12 +8444,13 @@
             const relicSkillBonus = getEquippedRelicBonus("relic_scroll");
             const totalSkillMult = 1 + (necklaceSkillBonus + potentialSkillBonus + relicSkillBonus) / 100;
 
-            const baseDmg = (calculateClickAttackPower() * mult * 3);
-            const statSkillDmg = Math.floor(baseDmg * totalSkillMult);
+            // 월드보스는 "내 전투력" 수치를 기반으로 데미지가 결정됨
+            // 기본 타격 = 전투력 * 2
+            const baseDmg = calculatePlayerCP() * 2;
+            const statSkillDmg = Math.floor(baseDmg * mult * totalSkillMult);
 
-            // 🎯 월드 보스 레이드 스킬 보정 (mult/15 적용)
-            const baseHeroDmg = (calculateClickAttackPower() * 300) + (calculateDPSPower() * 50);
-            const wbQuizDmgFloor = Math.floor(baseHeroDmg * (mult / 15));
+            // 최소 보장 데미지 로직 (기본 타격력 반영)
+            const wbQuizDmgFloor = Math.floor(calculatePlayerCP() * (mult / 2));
             const skillDmg = Math.max(statSkillDmg, wbQuizDmgFloor);
 
             wbTotalDamageDealt += skillDmg;

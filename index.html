@@ -3874,6 +3874,10 @@
 
             buildUpgradeblacksmith();
             buildCompanionPetLab();
+            if (isTutorialPet) {
+                tutorialStep = 6;
+                setTimeout(showTutorialOverlay, 300);
+            }
             buildSkillTabUI();
             generateQuizCard();
             renderSkillsUI();
@@ -4473,7 +4477,7 @@
 
             const cost = Math.floor(info.cost * Math.pow(1.12, currentLvl));
 
-            if (gameState.gold < cost) {
+            if (!isTutorialPet && gameState.gold < cost) {
                 showToast(`🪙 골드가 부족합니다! ${info.name} 소환/진화에는 ${cost.toLocaleString()} Gold가 필요합니다.`);
                 return;
             }
@@ -5203,7 +5207,11 @@
                 let rolledGrade = "normal";
                 if (roll < 0.0005) rolledGrade = "mythic";        // 0.05%
                 else if (roll < 0.02) rolledGrade = "legendary";   // 1.95% (0.05%~2.00%)
-                else if (roll < 0.07) rolledGrade = "hero";        // 5.00% (2.00%~7.00%)
+                else if (roll < 0.07) rolledGrade = "hero";
+                            
+                            if (isTutorialSkill) {
+                                rolledGrade = "hero"; // Guaranteed Hero
+                            }        // 5.00% (2.00%~7.00%)
                 else if (roll < 0.25) rolledGrade = "rare";        // 18.00% (7.00%~25.00%)
 
                 let existing = gameState.acquiredRelics.find(item => item.id === pickedRelicDef.id);
@@ -5510,9 +5518,13 @@
 
         function drawSkillCapsule(drawCount = 1) {
             if (typeof gameState.masteryPoints === 'undefined') gameState.masteryPoints = 0;
-            const cost = drawCount === 100 ? 4500 : (drawCount === 10 ? 450 : 50 * drawCount);
+            let isTutorialSkill = false;
+            if (!gameState.tutorialCompleted && tutorialStep === 7 && drawCount === 1) {
+                isTutorialSkill = true;
+            }
+            const cost = isTutorialSkill ? 0 : (drawCount === 100 ? 4500 : (drawCount === 10 ? 450 : 50 * drawCount));
 
-            if (gameState.masteryPoints < cost) {
+            if (!isTutorialSkill && gameState.masteryPoints < cost) {
                 showToast(`⚠️ 단어 캡슐 연성을 위해 정복 포인트 ${cost} FP가 필요합니다! 퀴즈를 풀어 포인트를 모으세요.`);
                 return;
             }
@@ -6076,6 +6088,10 @@
             renderSkillsUI();
             buildSkillTabUI();
             saveLocalCache();
+            if (isTutorialSkill) {
+                tutorialStep = 8;
+                setTimeout(showTutorialOverlay, 500);
+            }
             showToast("✨ 가장 강력한 마법 비기 4개가 자동 장착되었습니다!");
             playSoundEffect('levelup');
         }
@@ -7379,36 +7395,35 @@
             closeRetireModal();
             showToast("✨ 영웅이 화려한 명성을 남기고 은퇴를 결심했습니다.");
 
-            const g = gameState.grade;
-            const c = gameState.classNum;
-            const s = gameState.studentNum;
-            const n = gameState.name;
-
-            const cacheKey = `vocahero_${g}_${c}_${s}_${n}`;
-            localStorage.removeItem(cacheKey);
-            sessionStorage.removeItem("vocahero_active_session");
-            localStorage.removeItem("vocahero_active_session");
-            localStorage.removeItem("vocahero_active_session");
-
-            // 구글 시트 데이터베이스(Students 시트)의 해당 학생 기록 완벽 제거
-                        // Firebase Firestore에서 학생 데이터 삭제 (deleteDoc 사용)
-            if (window._fbDb && window._fbDoc && window._fbDeleteDoc && gameState.name !== "방문자") {
-                const uid = `${gameState.schoolName || 'Unknown'}_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
-                window._fbDeleteDoc(window._fbDoc(window._fbDb, "users", uid))
-                    .then(() => {
-                        showToast("🕊️ 영웅의 영혼이 안식처로 떠납니다...");
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1000);
-                    })
-                    .catch((err) => {
-                        console.error(err);
-                        location.reload();
-                    });
-            } else {
-                showToast("🗑️ 가입 정보가 완전히 삭제되었습니다!");
-                setTimeout(() => { location.reload(); }, 1000);
+            // 로컬 캐시 전체 삭제 (vocahero 관련 모든 키)
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && k.startsWith('vocahero')) keysToRemove.push(k);
             }
+            keysToRemove.forEach(k => localStorage.removeItem(k));
+            sessionStorage.clear();
+
+            if (!window._fbDb || !window._fbDoc || !window._fbDeleteDoc || gameState.name === "방문자") {
+                showToast("🕊️ 영웅의 영혼이 안식처로 떠납니다...");
+                setTimeout(() => { location.reload(); }, 1500);
+                return;
+            }
+
+            // Firebase Firestore에서 학생 데이터 삭제
+            const uid = `${gameState.schoolName || 'Unknown'}_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+            console.log('[Retire] Deleting Firestore doc:', 'users/' + uid);
+            window._fbDeleteDoc(window._fbDoc(window._fbDb, "users", uid))
+                .then(() => {
+                    console.log('[Retire] Firestore doc deleted successfully.');
+                    showToast("🕊️ 영웅의 영혼이 안식처로 떠납니다...");
+                    setTimeout(() => { location.reload(); }, 1500);
+                })
+                .catch((err) => {
+                    console.error('[Retire] Firestore delete failed:', err.code, err.message);
+                    showToast("🕊️ 영웅의 영혼이 안식처로 떠납니다...");
+                    setTimeout(() => { location.reload(); }, 1500);
+                });
         }
 
         function resetFullSession() {
@@ -7448,20 +7463,20 @@
                 tutorialStep = 5;
                 setTimeout(showTutorialOverlay, 300);
             }
-            if (!gameState.tutorialCompleted && tutorialStep === 5 && tabId === 'skillTab') {
-                tutorialStep = 6;
-                setTimeout(showTutorialOverlay, 300);
-            }
-            if (!gameState.tutorialCompleted && tutorialStep === 6 && tabId === 'worldBossTab') {
+            if (!gameState.tutorialCompleted && tutorialStep === 6 && tabId === 'skillTab') {
                 tutorialStep = 7;
                 setTimeout(showTutorialOverlay, 300);
             }
-            if (!gameState.tutorialCompleted && tutorialStep === 7 && tabId === 'hallOfFameTab') {
-                tutorialStep = 8;
+            if (!gameState.tutorialCompleted && tutorialStep === 8 && tabId === 'worldBossTab') {
+                tutorialStep = 9;
                 setTimeout(showTutorialOverlay, 300);
             }
-            if (!gameState.tutorialCompleted && tutorialStep === 8 && tabId === 'statsTab') {
-                tutorialStep = 9;
+            if (!gameState.tutorialCompleted && tutorialStep === 9 && tabId === 'hallOfFameTab') {
+                tutorialStep = 10;
+                setTimeout(showTutorialOverlay, 300);
+            }
+            if (!gameState.tutorialCompleted && tutorialStep === 10 && tabId === 'statsTab') {
+                tutorialStep = 11;
                 setTimeout(showTutorialOverlay, 300);
             }
             const leftPanel = document.getElementById("leftRpgPanel");
@@ -9472,8 +9487,6 @@
             if (gameState.tutorialCompleted) return;
             const overlay = document.getElementById("tutorialOverlay");
             if (!overlay) return;
-            overlay.classList.remove("hidden");
-            overlay.classList.add("flex");
             const msg = document.getElementById("tutorialMessage");
             const nextBtn = document.getElementById("tutorialNextBtn");
             
@@ -9482,8 +9495,18 @@
             });
             nextBtn.classList.add("hidden");
 
+            // Reset overlay classes
+            overlay.className = "fixed inset-0 z-[9999] hidden flex-col items-center justify-center p-4 transition-opacity duration-300";
+            overlay.classList.add("flex");
+            
+            const popup = overlay.querySelector('.max-w-sm');
+            if (popup) popup.classList.add('pointer-events-auto');
+
+            const skipBtn = overlay.querySelector('button[onclick="skipTutorial()"]');
+            if(skipBtn) skipBtn.style.display = "block";
+
             if (tutorialStep === 1) {
-                overlay.classList.add('justify-start', 'pt-24');
+                overlay.classList.add('bg-black/90', 'items-end', 'justify-start', 'pt-24', 'pr-10');
                 switchTab('quizTab');
                 msg.innerHTML = "환영합니다 용사여!<br>먼저 몬스터를 공격하려면 <b>올바른 뜻을 가진 단어</b>를 선택해야 합니다. <span class='text-yellow-300'>정답을 클릭해보세요!</span>";
                 const choices = document.querySelectorAll('.choice-btn');
@@ -9491,45 +9514,63 @@
                 const qContainer = document.getElementById('quizContainer');
                 if (qContainer) qContainer.classList.add('tutorial-highlight', 'relative', 'z-[10000]');
             } else if (tutorialStep === 2) {
+                overlay.classList.add('bg-black/90', 'justify-start', 'pt-32');
                 msg.innerHTML = "훌륭합니다!<br>몬스터를 처치해 얻은 골드로 <b>[대장간]</b> 탭으로 이동하여 장비를 강화해보세요.";
                 const gearTabBtn = document.getElementById("gearTabBtn");
                 if(gearTabBtn) gearTabBtn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
             } else if (tutorialStep === 3) {
-                // 무기를 자동 선택하여 노란 테두리 활성화
+                overlay.classList.add('bg-black/90', 'justify-start', 'pt-32');
                 selectedGearKey = 'weapon';
                 buildUpgradeblacksmith();
                 msg.innerHTML = "이제 <b>무기 강화</b> 버튼을 눌러 전투력을 올리세요! (무기는 클릭 데미지와 초당 피해량을 대폭 올려줍니다)";
                 const weaponBtnContainer = document.getElementById("gearInfo_weapon");
                 if(weaponBtnContainer) weaponBtnContainer.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
             } else if (tutorialStep === 4) {
+                overlay.classList.add('bg-black/90', 'justify-start', 'pt-32');
                 msg.innerHTML = "장비 강화 성공!<br>다음으로 <b>[펫/유물 소환]</b> 탭을 클릭하여 든든한 동료와 강력한 유물을 확인해보세요.";
                 const btn = document.getElementById("petTabBtn");
                 if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
             } else if (tutorialStep === 5) {
-                msg.innerHTML = "펫과 유물은 전투에 큰 도움이 됩니다.<br>이번엔 <b>[스킬]</b> 탭을 클릭하여 마법 스킬을 확인하세요.";
-                const btn = document.getElementById("skillTabBtn");
+                overlay.classList.add('bg-transparent', 'pointer-events-none');
+                msg.innerHTML = "펫 탭에 오신 것을 환영합니다!<br>이제 <b>드래곤 소환</b> 버튼을 눌러 드래곤을 Lv.1로 만들어보세요. (튜토리얼 지원으로 무료 소환됩니다!)";
+                const btn = document.querySelector(`button[onclick="interactUpgradePet('dragon')"]`);
                 if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
             } else if (tutorialStep === 6) {
-                msg.innerHTML = "마법 스킬을 활용하면 보스전에서 매우 유리해집니다.<br>이제 <b>[월드보스]</b> 탭을 클릭해보세요.";
-                const btn = document.getElementById("worldBossTabBtn");
+                overlay.classList.add('bg-black/90', 'justify-start', 'pt-32');
+                msg.innerHTML = "드래곤을 소환했습니다!<br>펫은 전투에 큰 도움이 됩니다.<br>이번엔 <b>[스킬]</b> 탭을 클릭하여 마법 스킬을 확인하세요.";
+                const btn = document.getElementById("skillTabBtn");
                 if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
             } else if (tutorialStep === 7) {
+                overlay.classList.add('bg-transparent', 'pointer-events-none');
+                msg.innerHTML = "스킬은 강력한 효과를 지닙니다.<br>무료로 <b>1회 소환</b> 버튼을 눌러 마법 스킬을 하나 뽑아보세요! (영웅 등급 스킬이 확정 지급됩니다)";
+                const btn = document.querySelector(`button[onclick="drawSkillCapsule(1)"]`);
+                if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
+            } else if (tutorialStep === 8) {
+                overlay.classList.add('bg-transparent', 'pointer-events-none');
+                msg.innerHTML = "새로운 스킬 획득!<br>마법 스킬을 활용하면 보스전에서 매우 유리해집니다.<br>이제 <b>[월드보스]</b> 탭을 클릭해보세요.";
+                const btn = document.getElementById("worldBossTabBtn");
+                if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
+            } else if (tutorialStep === 9) {
+                overlay.classList.add('bg-transparent', 'pointer-events-none');
                 msg.innerHTML = "월드보스를 물리치면 푸짐한 보상을 얻을 수 있습니다.<br>다음으로 <b>[명예의 전당]</b> 탭을 클릭하세요.";
                 const btn = document.getElementById("hallOfFameTabBtn");
                 if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
-            } else if (tutorialStep === 8) {
+            } else if (tutorialStep === 10) {
+                overlay.classList.add('bg-transparent', 'pointer-events-none');
                 msg.innerHTML = "명예의 전당에서는 최고 랭커들을 확인할 수 있습니다.<br>마지막으로 <b>[내 영웅 정보]</b> 탭을 클릭해보세요.";
                 const btn = document.getElementById("statsTabBtn");
                 if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
-            } else if (tutorialStep === 9) {
-                msg.innerHTML = "훌륭합니다!<br>이곳에서 영웅의 모든 상태와 정답 노트를 확인할 수 있습니다.<br><br><span class='text-yellow-300'>튜토리얼 완료 보상으로 정착 지원금 100,000 골드와 단어 정력(FP) 450을 드립니다!</span> 건투를 빕니다!";
+            } else if (tutorialStep === 11) {
+                overlay.classList.add('bg-black/90');
+                msg.innerHTML = "훌륭합니다!<br>이곳에서 영웅의 모든 상태와 정답 노트를 확인할 수 있습니다.<br><br><span class='text-yellow-300'>튜토리얼 완료 보상으로 정착 지원금 100,000 골드와 단어 정복 포인트(FP) 450을 드립니다!</span> 건투를 빕니다!";
                 nextBtn.classList.remove("hidden");
                 nextBtn.innerHTML = '튜토리얼 완료 (보상 받기) <i data-lucide="gift" class="w-3 h-3"></i>';
+                if(skipBtn) skipBtn.style.display = "none";
             }
         }
 
         function nextTutorialStep() {
-            if(tutorialStep === 9) completeTutorial();
+            if(tutorialStep === 11) completeTutorial();
             else { tutorialStep++; showTutorialOverlay(); }
         }
 

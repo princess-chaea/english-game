@@ -2334,7 +2334,7 @@
             <div id="skillAcquireExpInfo" class="text-[10px] text-pink-400 font-bold mb-4 text-center"></div>
 
             <div id="skillAcquireDesc" class="text-xs text-center text-[#bbbbbb] mb-6"></div>
-            <button onclick="document.getElementById('skillAcquireModal').classList.remove('flex');document.getElementById('skillAcquireModal').classList.add('hidden')" class="px-10 py-3 bg-white text-black font-bold text-sm tracking-wider transition hover:bg-gray-200">확인</button>
+            <button onclick="closeSkillAcquireModal()" class="px-10 py-3 bg-white text-black font-bold text-sm tracking-wider transition hover:bg-gray-200">확인</button>
         </div>
     </div>
 
@@ -5315,7 +5315,16 @@
             if (modal) {
                 modal.classList.remove("hidden");
                 modal.classList.add("flex");
+        }
+
+        function closeSkillAcquireModal() {
+            document.getElementById('skillAcquireModal').classList.remove('flex');
+            document.getElementById('skillAcquireModal').classList.add('hidden');
+            if (typeof tutorialStep !== 'undefined' && !gameState.tutorialCompleted && tutorialStep === 7) {
+                tutorialStep = 8;
+                setTimeout(showTutorialOverlay, 500);
             }
+        }
         }
 
         // ==========================================
@@ -5626,7 +5635,7 @@
                     } else {
                         const picked = fullPool[Math.floor(Math.random() * fullPool.length)];
                         if (typeof isTutorialSkill !== 'undefined' && isTutorialSkill) {
-                            addOrLevelUpSkill(picked.word, picked.meaning, "hero", true);
+                            addOrLevelUpSkill(picked.word, picked.meaning, "hero", false);
                         } else {
                             rollAndAcquireSkill(picked.word, picked.meaning);
                         }
@@ -5637,10 +5646,7 @@
                     renderSkillsUI();
                     saveLocalCache();
 
-                    if (typeof isTutorialSkill !== 'undefined' && isTutorialSkill) {
-                        tutorialStep = 8;
-                        setTimeout(showTutorialOverlay, 500);
-                    }
+                    // Tutorial advancement moved to modal close button
                     }, 600);
                 }
             }, 250);
@@ -9552,7 +9558,7 @@
                 overlay.style.paddingTop = "52px";
                 msg.innerHTML = "장비 강화 성공!<br>다음으로 <b>[펫/유물 소환]</b> 탭을 클릭하여 든든한 동료와 강력한 유물을 확인해보세요.";
                 const btn = document.getElementById("petTabBtn");
-                if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
+                if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse'); btn.style.pointerEvents = 'auto';
             } else if (tutorialStep === 5) {
                 overlay.classList.add('bg-black/70');
                 overlay.style.alignItems = "flex-start";
@@ -9569,7 +9575,7 @@
                 overlay.style.paddingTop = "52px";
                 msg.innerHTML = "드래곤을 소환했습니다!<br>펫은 전투에 큰 도움이 됩니다.<br>이번엔 <b>[스킬]</b> 탭을 클릭하여 마법 스킬을 확인하세요.";
                 const btn = document.getElementById("skillTabBtn");
-                if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
+                if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse'); btn.style.pointerEvents = 'auto';
             } else if (tutorialStep === 7) {
                 overlay.classList.add('bg-black/70');
                 overlay.style.alignItems = "flex-start";
@@ -9587,7 +9593,7 @@
                 overlay.style.pointerEvents = 'none';
                 msg.innerHTML = "새로운 스킬 획득!<br>마법 스킬을 활용하면 보스전에서 매우 유리해집니다.<br>이제 <b>[월드보스]</b> 탭을 클릭해보세요.";
                 const btn = document.getElementById("worldBossTabBtn");
-                if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
+                if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse'); btn.style.pointerEvents = 'auto';
             } else if (tutorialStep === 9) {
                 overlay.classList.add('bg-black/70');
                 overlay.style.alignItems = "flex-start";
@@ -9596,7 +9602,7 @@
                 overlay.style.pointerEvents = 'none';
                 msg.innerHTML = "월드보스를 물리치면 푸짐한 보상을 얻을 수 있습니다.<br>다음으로 <b>[명예의 전당]</b> 탭을 클릭하세요.";
                 const btn = document.getElementById("hallOfFameTabBtn");
-                if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
+                if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse'); btn.style.pointerEvents = 'auto';
             } else if (tutorialStep === 10) {
                 overlay.classList.add('bg-black/70');
                 overlay.style.alignItems = "flex-start";
@@ -9605,7 +9611,7 @@
                 overlay.style.pointerEvents = 'none';
                 msg.innerHTML = "명예의 전당에서는 최고 랭커들을 확인할 수 있습니다.<br>마지막으로 <b>[내 영웅 정보]</b> 탭을 클릭해보세요.";
                 const btn = document.getElementById("statsTabBtn");
-                if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
+                if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse'); btn.style.pointerEvents = 'auto';
             } else if (tutorialStep === 11) {
                 overlay.classList.add('bg-black/90');
                 overlay.style.alignItems = "center";

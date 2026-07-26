@@ -24,7 +24,7 @@
             if (window._fbDb && window._fbDoc && window._fbSetDoc && gameState.name !== "방문자") {
                 try {
                     const uid = getUid(gameState.schoolName, gameState.grade, gameState.classNum, gameState.studentNum, gameState.name);
-                    if (!gameState.schoolName || gameState.schoolName === "Unknown") break;
+                    if (!gameState.schoolName || gameState.schoolName === "Unknown") throw new Error("Unknown school");
                     await window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), gameState);
                 } catch(e) { console.error(e); }
             }

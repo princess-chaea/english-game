@@ -7042,7 +7042,15 @@
             const doExit = () => {
                 setTimeout(() => {
                     window.close();
-                    location.href = "about:blank";
+                    // 모바일 PWA 등에서 window.close()가 막혔을 때 검은 화면(about:blank) 대신 친절한 종료 안내 화면 표시
+                    document.body.innerHTML = `
+                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background-color:#000; color:#fff; text-align:center; padding: 20px;">
+                            <span style="font-size: 4rem; margin-bottom: 20px;">👋</span>
+                            <h2 style="font-size: 1.5rem; font-weight: bold; color: #f59e0b; margin-bottom: 10px;">안전하게 저장되었습니다!</h2>
+                            <p style="color: #aaa; margin-bottom: 30px;">기기의 홈 버튼이나 뒤로 가기 버튼을 눌러 앱을 종료해주세요.</p>
+                            <button onclick="location.reload()" style="padding: 10px 20px; background-color: #1a1a1a; border: 1px solid #3c3c3c; color: white; border-radius: 4px; font-weight: bold;">다시 시작하기</button>
+                        </div>
+                    `;
                 }, 1500);
             };
 

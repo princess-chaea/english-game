@@ -3115,8 +3115,20 @@
 
             if (window._fbReady) {
                 const uid = getUid(selectedSchoolName, grade, classNum, studentNum, name);
-                window._fbGetDoc(window._fbDoc(window._fbDb, "users", uid)).then(docSnap => {
+                window._fbGetDoc(window._fbDoc(window._fbDb, "users", uid)).then(async docSnap => {
                     closeModal("loginModal");
+                    
+                    if (!docSnap.exists()) {
+                        // 레거시 계정(학교명 Unknown) 하위 호환성 체크
+                        const legacyUid = getUid("Unknown", grade, classNum, studentNum, name);
+                        try {
+                            const legacyDocSnap = await window._fbGetDoc(window._fbDoc(window._fbDb, "users", legacyUid));
+                            if (legacyDocSnap.exists()) {
+                                docSnap = legacyDocSnap;
+                            }
+                        } catch(e) {}
+                    }
+                    
                     if (docSnap.exists()) {
                         const data = docSnap.data();
                         if (data.password) {
@@ -3172,8 +3184,16 @@
 
             if (window._fbReady) {
                 const uid = getUid(schoolName, grade, classNum, studentNum, name);
-                window._fbGetDoc(window._fbDoc(window._fbDb, "users", uid)).then(docSnap => {
-                    if (docSnap.exists()) {
+                  window._fbGetDoc(window._fbDoc(window._fbDb, "users", uid)).then(async docSnap => {
+                      if (!docSnap.exists()) {
+                          const legacyUid = getUid("Unknown", grade, classNum, studentNum, name);
+                          try {
+                              const legacyDocSnap = await window._fbGetDoc(window._fbDoc(window._fbDb, "users", legacyUid));
+                              if (legacyDocSnap.exists()) docSnap = legacyDocSnap;
+                          } catch(e) {}
+                      }
+                      
+                      if (docSnap.exists()) {
                         const data = docSnap.data();
                         if (String(data.password) !== String(password)) {
                             hideGameLoadingOverlay();
@@ -3231,9 +3251,17 @@
 
             if (window._fbReady) {
                 const uid = getUid(schoolName, grade, classNum, studentNum, name);
-                
-                window._fbGetDoc(window._fbDoc(window._fbDb, "users", uid)).then(docSnap => {
-                    if (docSnap.exists() && (typeof docSnap.data().gold !== 'undefined' || typeof docSnap.data().stage !== 'undefined')) {
+                  
+                  window._fbGetDoc(window._fbDoc(window._fbDb, "users", uid)).then(async docSnap => {
+                      if (!docSnap.exists()) {
+                          const legacyUid = getUid("Unknown", grade, classNum, studentNum, name);
+                          try {
+                              const legacyDocSnap = await window._fbGetDoc(window._fbDoc(window._fbDb, "users", legacyUid));
+                              if (legacyDocSnap.exists()) docSnap = legacyDocSnap;
+                          } catch(e) {}
+                      }
+                      
+                      if (docSnap.exists() && (typeof docSnap.data().gold !== 'undefined' || typeof docSnap.data().stage !== 'undefined')) {
                         // 기존 유저인데 PIN이 없는 경우 (또는 유실된 경우) -> 기존 데이터 복원 후 PIN만 업데이트
                         const data = docSnap.data();
                         syncStateFromServer(data);
@@ -7409,12 +7437,13 @@
             showToast("✨ 영웅이 화려한 명성을 남기고 은퇴를 결심했습니다.");
 
             // 로컬 캐시 전체 삭제 (vocahero 관련 모든 키)
-            const keysToRemove = [];
+            // 모든 vocahero 관련 로컬 캐시 완전 삭제
+            const allKeys = [];
             for (let i = 0; i < localStorage.length; i++) {
                 const k = localStorage.key(i);
-                if (k && k.startsWith('vocahero')) keysToRemove.push(k);
+                if (k) allKeys.push(k);
             }
-            keysToRemove.forEach(k => localStorage.removeItem(k));
+            allKeys.forEach(k => localStorage.removeItem(k));
             sessionStorage.clear();
 
             const doReload = () => {
@@ -8807,7 +8836,17 @@
 
                         if (window._fbReady) {
                             const uid = getUid(session.schoolName, session.grade, session.classNum, session.studentNum, session.name);
-                            window._fbGetDoc(window._fbDoc(window._fbDb, "users", uid)).then(docSnap => {
+                            window._fbGetDoc(window._fbDoc(window._fbDb, "users", uid)).then(async docSnap => {
+                                if (!docSnap.exists()) {
+                                    const legacyUid = getUid("Unknown", session.grade, session.classNum, session.studentNum, session.name);
+                                    try {
+                                        const legacyDocSnap = await window._fbGetDoc(window._fbDoc(window._fbDb, "users", legacyUid));
+                                        if (legacyDocSnap.exists()) {
+                                            docSnap = legacyDocSnap;
+                                        }
+                                    } catch(e) {}
+                                }
+                                
                                 if (docSnap.exists()) {
                                     const data = docSnap.data();
                                     if (String(data.password) === String(session.password)) {

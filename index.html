@@ -7041,27 +7041,36 @@
             const savedUrl = getGasUrl();
             const doExit = () => {
                 setTimeout(() => {
-                    // 1차 시도: 일반 브라우저 창 닫기
-                    window.close();
-                    
-                    // 2차 시도: 안드로이드 기기인 경우 홈 화면으로 튕겨내는 인텐트(Intent) 실행으로 앱 종료 효과
-                    if (/android/i.test(navigator.userAgent)) {
-                        setTimeout(() => {
-                            window.location.href = "intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end";
-                        }, 100);
-                    }
-                    
-                    // 3차 시도: 만약 위 두 가지가 모두 막혔다면 최후의 수단으로 친절한 종료 안내 화면 표시
+                    // 1차: 친절한 종료 안내 화면을 먼저 렌더링 (인텐트 실패 시 빈 화면 방지)
+                    document.body.innerHTML = `
+                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background-color:#000; color:#fff; text-align:center; padding: 20px;">
+                            <span style="font-size: 4rem; margin-bottom: 20px;">👋</span>
+                            <h2 style="font-size: 1.5rem; font-weight: bold; color: #f59e0b; margin-bottom: 10px;">안전하게 저장되었습니다!</h2>
+                            <p style="color: #aaa; margin-bottom: 30px;">만약 앱이 자동으로 종료되지 않으면<br>기기의 홈 버튼이나 뒤로 가기를 눌러 닫아주세요.</p>
+                            <button onclick="location.reload()" style="padding: 10px 20px; background-color: #1a1a1a; border: 1px solid #3c3c3c; color: white; border-radius: 4px; font-weight: bold;">다시 시작하기</button>
+                        </div>
+                    `;
+
                     setTimeout(() => {
-                        document.body.innerHTML = `
-                            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background-color:#000; color:#fff; text-align:center; padding: 20px;">
-                                <span style="font-size: 4rem; margin-bottom: 20px;">👋</span>
-                                <h2 style="font-size: 1.5rem; font-weight: bold; color: #f59e0b; margin-bottom: 10px;">안전하게 저장되었습니다!</h2>
-                                <p style="color: #aaa; margin-bottom: 30px;">기기의 홈 버튼이나 뒤로 가기 버튼을 눌러 앱을 종료해주세요.</p>
-                                <button onclick="location.reload()" style="padding: 10px 20px; background-color: #1a1a1a; border: 1px solid #3c3c3c; color: white; border-radius: 4px; font-weight: bold;">다시 시작하기</button>
-                            </div>
-                        `;
-                    }, 500);
+                        // 2차: 안드로이드 홈 화면으로 내보내기 (iframe을 사용하여 현재 페이지 이탈/검은화면 방지)
+                        if (/android/i.test(navigator.userAgent)) {
+                            try {
+                                const iframe = document.createElement("iframe");
+                                iframe.style.display = "none";
+                                iframe.src = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end";
+                                document.body.appendChild(iframe);
+                            } catch (e) {}
+                        }
+                        
+                        // 3차: 일반적인 웹 닫기 시도 및 히스토리 백 시도
+                        try {
+                            window.open('', '_self').close();
+                            window.close();
+                            if (window.history.length > 1) {
+                                window.history.go(-window.history.length);
+                            }
+                        } catch (e) {}
+                    }, 100);
                 }, 1500);
             };
 

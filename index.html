@@ -31,46 +31,88 @@
             doLogout();
         }
 
-        async function checkWorldBossVictoryOnStartup() {
-            if (!gameState.grade || !gameState.name || gameState.name === "방문자") return;
+                        async function checkWorldBossVictoryOnStartup() {
+            if (!gameState.grade || !gameState.name || gameState.name === "방문자" || !window._fbReady) return;
             const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
-            const victoryModalKey = `vocahero_wb_victory_modal_seen_${gameState.grade}_${gameState.name}_${gameState.studentNum}`;
-            const victoryRewardKey = `vocahero_wb_reward_claimed_${gameState.grade}_${gameState.name}_${gameState.studentNum}`;
-
+            
+            const currentWeek = getCurrentWeekNum();
+            const prevWeek = currentWeek - 1;
+            const victoryRewardKey = `vocahero_wb_reward_claimed_${studentKey}_week_${prevWeek}`;
+            
             if (localStorage.getItem(victoryRewardKey)) return;
 
             if (window._fbDb && window._fbGetDoc && window._fbDoc) {
                 try {
-                    const docSnap = await window._fbGetDoc(window._fbDoc(window._fbDb, "world_bosses", `grade_${gameState.grade}`));
+                    // 이전 주차 문서 조회
+                    let bossDocRef = window._fbDoc(window._fbDb, "world_bosses", `grade_${gameState.grade}_week_${prevWeek}`);
+                    let docSnap = await window._fbGetDoc(bossDocRef);
+                    
+                    // 없으면 레거시 문서 조회 (하위 호환성)
+                    if (!docSnap.exists()) {
+                        bossDocRef = window._fbDoc(window._fbDb, "world_bosses", `grade_${gameState.grade}`);
+                        docSnap = await window._fbGetDoc(bossDocRef);
+                    }
+
                     if (docSnap.exists()) {
                         const data = docSnap.data();
-                        const curHp = data.curHp || 0;
                         const damages = data.damages || {};
-                        let myDamage = damages[studentKey] || 0;
-                        let totalDamage = 0;
-                        for (let k in damages) totalDamage += damages[k];
-                        let sharePct = totalDamage > 0 ? (myDamage / totalDamage) * 100 : 0;
-                        let myRank = 1;
-                        let sortedDmg = Object.values(damages).sort((a,b)=>b-a);
-                        if(sortedDmg.length > 0) myRank = sortedDmg.indexOf(myDamage) + 1;
+                        const myDamage = damages[studentKey] || 0;
                         
-                        if (curHp <= 0 && myDamage > 0 && !localStorage.getItem(victoryModalKey)) {
-                            document.getElementById("wbVictoryNoticeRank").innerText = myRank + "위";
-                            document.getElementById("wbVictoryNoticeDmg").innerText = myDamage + " 피해";
-                            document.getElementById("wbVictoryNoticePct").innerText = sharePct.toFixed(1) + "% 기여";
+                        if (myDamage > 0) {
+                            const curHp = typeof data.curHp !== 'undefined' ? data.curHp : 0;
+                            const isVictory = curHp <= 0;
                             
-                            let rewardObj = calculateWorldBossReward(myRank, sharePct);
-                            let rewardText = `🏅 보스 증표 ${rewardObj.tokens}개`;
-                            if (rewardObj.draws > 0) rewardText += `\n🎫 소환권 ${rewardObj.draws}장`;
-                            if (rewardObj.gold > 0) rewardText += `\n💰 ${rewardObj.gold} 골드`;
+                            let totalDamage = 0;
+                            for (let k in damages) totalDamage += damages[k];
+                            const sharePct = totalDamage > 0 ? (myDamage / totalDamage) : 0;
                             
-                            document.getElementById("wbVictoryNoticeReward").innerText = rewardText;
-                            document.getElementById("wbVictoryNoticeClaimBtn").onclick = () => {
-                                claimWorldBossReward(rewardObj, victoryModalKey, victoryRewardKey);
-                                closeModal("wbVictoryNoticeModal");
-                            };
-                            openModal("wbVictoryNoticeModal");
-                            playSoundEffect('levelup');
+                            let myRank = 1;
+                            let sortedDmg = Object.values(damages).sort((a,b)=>b-a);
+                            if(sortedDmg.length > 0) myRank = sortedDmg.indexOf(myDamage) + 1;
+                            
+                            const baseFp = Math.floor(myDamage / 1000);
+                            const victoryFp = isVictory ? Math.floor(100000 * sharePct) : 0;
+                            const totalFp = baseFp + victoryFp;
+                            const getsTitle = isVictory && myRank === 1;
+
+                            // UI 업데이트
+                            const modal = document.getElementById("wbVictoryNoticeModal");
+                            if (modal) {
+                                document.getElementById("wbVictoryNoticeRank").innerText = myRank + "위";
+                                document.getElementById("wbVictoryNoticeDmg").innerText = myDamage.toLocaleString() + " 피해";
+                                document.getElementById("wbVictoryNoticePct").innerText = (sharePct * 100).toFixed(1) + "% 기여";
+                                
+                                let titleBadge = getsTitle ? "\n🏆 [수호신] 칭호 획득!" : "";
+                                let resultMsg = isVictory ? "🎉 월드보스 토벌 성공!" : "☠️ 월드보스 토벌 실패...";
+                                document.getElementById("wbVictoryNoticeReward").innerText = `${resultMsg}\n\n🎁 보상: ${totalFp.toLocaleString()} FP${titleBadge}`;
+                                
+                                document.getElementById("wbVictoryNoticeClaimBtn").onclick = () => {
+                                    gameState.fp = (gameState.fp || 0) + totalFp;
+                                    if (getsTitle) {
+                                        if (!gameState.unlockedTitles) gameState.unlockedTitles = [];
+                                        if (!gameState.unlockedTitles.includes("수호신")) gameState.unlockedTitles.push("수호신");
+                                    }
+                                    localStorage.setItem(victoryRewardKey, "true");
+                                    saveLocalCache();
+                                    refreshStateVisuals();
+                                    closeModal("wbVictoryNoticeModal");
+                                    showToast("월드보스 주간 보상을 수령했습니다!");
+                                };
+                                openModal("wbVictoryNoticeModal");
+                                playSoundEffect(isVictory ? 'levelup' : 'incorrect');
+                            } else {
+                                // 모달이 없는 경우 자동 수령
+                                gameState.fp = (gameState.fp || 0) + totalFp;
+                                if (getsTitle) {
+                                    if (!gameState.unlockedTitles) gameState.unlockedTitles = [];
+                                    if (!gameState.unlockedTitles.includes("수호신")) gameState.unlockedTitles.push("수호신");
+                                }
+                                localStorage.setItem(victoryRewardKey, "true");
+                                saveLocalCache();
+                            }
+                        } else {
+                            // 참여하지 않은 경우에도 플래그 저장
+                            localStorage.setItem(victoryRewardKey, "true");
                         }
                     }
                 } catch(e) { console.error(e); }
@@ -7509,7 +7551,7 @@
                 const stageRanked = [...users].sort((a,b) => (b.stage||1)-(a.stage||1) || (b.progress||0)-(a.progress||0));
                 const myStageRank = stageRanked.findIndex(u => u.key === studentKey) + 1;
                 document.getElementById("myStageRankText").innerText = myStageRank ? `${myStageRank}위` : "-위";
-                const stageTop5 = stageRanked.slice(0, 5);
+                const stageTop5 = stageRanked.slice(0, 100);
                 document.getElementById("hofStageList").innerHTML = stageTop5.length > 0
                     ? stageTop5.map((item, idx) => {
                         const medal = ["🥇","🥈","🥉"][idx] || `${idx+1}.`;
@@ -7521,7 +7563,7 @@
                 const bossRanked = [...users].sort((a,b) => (b.wbBestDamage||0)-(a.wbBestDamage||0));
                 const myBossRank = bossRanked.findIndex(u => u.key === studentKey) + 1;
                 document.getElementById("myBossRankText").innerText = myBossRank ? `${myBossRank}위` : "-위";
-                const bossTop5 = bossRanked.slice(0, 5).filter(u => (u.wbBestDamage||0) > 0);
+                const bossTop5 = bossRanked.slice(0, 100).filter(u => (u.wbBestDamage||0) > 0);
                 document.getElementById("hofBossList").innerHTML = bossTop5.length > 0
                     ? bossTop5.map((item, idx) => {
                         const medal = ["🥇","🥈","🥉"][idx] || `${idx+1}.`;
@@ -7533,7 +7575,7 @@
                 const goldRanked = [...users].sort((a,b) => (b.gold||0)-(a.gold||0));
                 const myGoldRank = goldRanked.findIndex(u => u.key === studentKey) + 1;
                 document.getElementById("myGoldRankText").innerText = myGoldRank ? `${myGoldRank}위` : "-위";
-                const goldTop5 = goldRanked.slice(0, 5).filter(u => (u.gold||0) > 0);
+                const goldTop5 = goldRanked.slice(0, 100).filter(u => (u.gold||0) > 0);
                 document.getElementById("hofGoldList").innerHTML = goldTop5.length > 0
                     ? goldTop5.map((item, idx) => {
                         const medal = ["🥇","🥈","🥉"][idx] || `${idx+1}.`;
@@ -7731,30 +7773,30 @@
             }
         ];
 
-        function getWeeklyBossIndex() {
-            // ✅ 매주 월요일 00:00 KST 기준으로 주차 교체 (ISO 주차 기준)
-            const nowUtc = new Date();
-            // KST(UTC+9) 변환
-            const kstNow = new Date(nowUtc.getTime() + (9 * 60 * 60 * 1000));
-
-            // ISO 주차 계산: 해당 주의 목요일이 속한 연도의 1월 첫 목요일이 1주차
-            // 간단 구현: 1970-01-05(월요일)부터 현재까지의 주 수
-            const EPOCH_MONDAY = new Date(Date.UTC(1970, 0, 5)); // 1970-01-05 월요일 UTC
-            // KST 기준 오늘 자정(월요일 경계)을 UTC로 환산
-            const kstMidnight = new Date(Date.UTC(
-                kstNow.getUTCFullYear(),
-                kstNow.getUTCMonth(),
-                kstNow.getUTCDate()
-            ));
-            // 요일 조정: kstMidnight을 해당 주 월요일 00:00 KST로 맞추기
-            const dayOfWeek = kstMidnight.getUTCDay(); // 0=일, 1=월, ..., 6=토
-            const daysSinceMonday = (dayOfWeek + 6) % 7; // 월=0, 화=1, ..., 일=6
+                function getCurrentWeekNum() {
+            const EPOCH_MONDAY = new Date("2024-07-01T00:00:00Z");
+            const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
+            const kstMidnight = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), kstNow.getUTCDate()));
+            const dayOfWeek = kstMidnight.getUTCDay();
+            const daysSinceMonday = (dayOfWeek + 6) % 7;
             const thisMonday = new Date(kstMidnight.getTime() - daysSinceMonday * 24 * 60 * 60 * 1000);
-
             const oneWeek = 1000 * 60 * 60 * 24 * 7;
-            const weekNum = Math.floor((thisMonday.getTime() - EPOCH_MONDAY.getTime()) / oneWeek);
+            return Math.floor((thisMonday.getTime() - EPOCH_MONDAY.getTime()) / oneWeek);
+        }
 
-            // 3종의 보스(BornDragon, Golem, Rich)가 월요일마다 돌아가면서 출현
+                function getCurrentWeekNum() {
+            const EPOCH_MONDAY = new Date("2024-07-01T00:00:00Z");
+            const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
+            const kstMidnight = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), kstNow.getUTCDate()));
+            const dayOfWeek = kstMidnight.getUTCDay();
+            const daysSinceMonday = (dayOfWeek + 6) % 7;
+            const thisMonday = new Date(kstMidnight.getTime() - daysSinceMonday * 24 * 60 * 60 * 1000);
+            const oneWeek = 1000 * 60 * 60 * 24 * 7;
+            return Math.floor((thisMonday.getTime() - EPOCH_MONDAY.getTime()) / oneWeek);
+        }
+
+        function getWeeklyBossIndex() {
+            const weekNum = getCurrentWeekNum();
             return ((weekNum % WORLD_BOSS_SEASONS.length) + WORLD_BOSS_SEASONS.length) % WORLD_BOSS_SEASONS.length;
         }
 
@@ -7968,7 +8010,7 @@
 
             // 서버에서 최신 데이터 가져오기 (백그라운드 업데이트)
             if (window._fbReady) {
-                const bossDocRef = window._fbDoc(window._fbDb, "world_bosses", `grade_${gameState.grade}`);
+                const bossDocRef = window._fbDoc(window._fbDb, "world_bosses", `grade_${gameState.grade}_week_${getCurrentWeekNum()}`);
                 window._fbGetDoc(bossDocRef).then(docSnap => {
                     let curHp = wbMaxBossHp;
                     let maxHp = wbMaxBossHp;
@@ -8882,7 +8924,7 @@
             const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
             
             if (window._fbReady) {
-                const bossDocRef = window._fbDoc(window._fbDb, "world_bosses", `grade_${gameState.grade}`);
+                const bossDocRef = window._fbDoc(window._fbDb, "world_bosses", `grade_${gameState.grade}_week_${getCurrentWeekNum()}`);
                 window._fbRunTransaction(window._fbDb, async (transaction) => {
                     const docSnap = await transaction.get(bossDocRef);
                     if (!docSnap.exists()) {

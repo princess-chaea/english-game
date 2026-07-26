@@ -9553,6 +9553,10 @@
             showToast("🎉 튜토리얼 완료! 정착 지원금 100,000 골드와 단어 정력(FP) 450을 받았습니다.");
             refreshStateVisuals();
             saveLocalCache();
+            // 튜토리얼 완료 상태와 보상을 즉시 클라우드에 저장
+            if (gameState.name && gameState.name !== "방문자") {
+                saveSessionToCloud(true);
+            }
             if (window.lucide) {
                 lucide.createIcons();
             }

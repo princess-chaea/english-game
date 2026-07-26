@@ -7377,7 +7377,7 @@
 
         function executeFullRetireDataDeletion() {
             closeRetireModal();
-            showToast("⏳ 구글 시트 데이터베이스 삭제 및 은퇴 처리 중...");
+            showToast("✨ 영웅이 화려한 명성을 남기고 은퇴를 결심했습니다.");
 
             const g = gameState.grade;
             const c = gameState.classNum;
@@ -7396,7 +7396,7 @@
                 const uid = `${gameState.schoolName || 'Unknown'}_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
                 window._fbDeleteDoc(window._fbDoc(window._fbDb, "users", uid))
                     .then(() => {
-                        showToast("🗑️ 서버 기록 및 가입 정보가 완전히 삭제되었습니다!");
+                        showToast("🕊️ 영웅의 영혼이 안식처로 떠납니다...");
                         setTimeout(() => {
                             location.reload();
                         }, 1000);

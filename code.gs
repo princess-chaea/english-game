@@ -56,6 +56,11 @@ function doPost(e) {
 
 // 2. 자동 시트 검사 및 테이블 자가 생성 장치 (핵심 요구사항)
 function initDatabaseSheets() {
+  var props = PropertiesService.getScriptProperties();
+  if (props.getProperty("db_initialized") === "true") {
+    return; // 캐싱된 초기화 완료 상태라면 1초 이상 걸리는 시트 존재 여부 검사를 생략 (로딩/저장 속도 극대화)
+  }
+
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   
   // 2-1. Students (학생 성장 정보 데이터베이스) 검사 및 복구
@@ -153,6 +158,9 @@ function initDatabaseSheets() {
                   .setHorizontalAlignment("center");
     logSheet.setFrozenRows(1);
   }
+
+  // 모든 시트 구조가 검증/생성되었으므로 캐시 기록
+  props.setProperty("db_initialized", "true");
 }
 
 // 월드보스 상태 및 내 기여도 조회
@@ -531,6 +539,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
         }
 
         return {
+          rowIndex: i + 1, // 최적화: 이후 저장(Save) 시 전체 스캔을 방지하기 위한 다이렉트 행 번호
           grade: Number(data[i][0]),
           classNum: Number(data[i][1]),
           studentNum: Number(data[i][2]),
@@ -587,6 +596,7 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
     sheet.getRange(lastRow, 18).setValue(String(password).trim());
     
     return {
+      rowIndex: lastRow, // 최적화: 신규 가입 유저의 다이렉트 행 번호 반환
       grade: newRow[0], classNum: newRow[1], studentNum: newRow[2], name: newRow[3],
       gold: newRow[4], avatarType: newRow[5], helmetLvl: newRow[6], armorLvl: newRow[7],
       weaponLvl: newRow[8], shieldLvl: newRow[9], shoesLvl: newRow[10],
@@ -602,8 +612,8 @@ function loadOrCreateStudent(grade, classNum, studentNum, name, defaultAvatar, p
   }
 }
 
-// 5. 플레이어 진행도 보존 실시간 업로드 동기화 (LockService 적용)
-function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType, helmetLvl, armorLvl, weaponLvl, shieldLvl, shoesLvl, petLevelsStr, stage, progress, skillsInventory, equippedSkills, masteryPoints, extraDataStr, readableMastered, readableWrong) {
+// 5. 플레이어 진행도 보존 실시간 업로드 동기화 (LockService 적용 및 Row Index 캐싱 최적화)
+function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType, helmetLvl, armorLvl, weaponLvl, shieldLvl, shoesLvl, petLevelsStr, stage, progress, skillsInventory, equippedSkills, masteryPoints, extraDataStr, readableMastered, readableWrong, cachedRowIndex) {
   var lock = LockService.getScriptLock();
   try {
     lock.waitLock(5000); // 5초 락 대기
@@ -611,21 +621,44 @@ function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType
     var sheet = ss.getSheetByName("Students");
     if (!sheet) return false;
     
-    var data = sheet.getDataRange().getValues();
+    var targetRow = -1;
+    var existingPassword = "";
+    var cachedRow = Number(cachedRowIndex);
     
-    // 학생 인덱스 탐색 진행
-    for (var i = 1; i < data.length; i++) {
-      if (String(data[i][0]) === String(grade) && 
-          String(data[i][1]) === String(classNum) && 
-          String(data[i][2]) === String(studentNum) && 
-          String(data[i][3]) === String(name)) {
-        
-        var targetRow = i + 1;
-        
+    // [최적화 1] 프론트엔드가 알고 있는 행 번호(cachedRowIndex)가 있다면 해당 줄만 빠르게 뽑아 신원 검증 (전체 스캔 방지)
+    if (cachedRow && cachedRow > 1) {
+      try {
+        var rowData = sheet.getRange(cachedRow, 1, 1, 20).getValues()[0];
+        if (String(rowData[0]) === String(grade) && 
+            String(rowData[1]) === String(classNum) && 
+            String(rowData[2]) === String(studentNum) && 
+            String(rowData[3]) === String(name)) {
+          targetRow = cachedRow;
+          existingPassword = rowData[17] !== undefined && rowData[17] !== null ? String(rowData[17]) : "";
+        }
+      } catch(e) {}
+    }
+    
+    // [최적화 2] 캐시된 행 번호가 틀렸거나 (관리자가 시트를 조작/삭제) 누락된 경우에만 안전장치로 전체 선형 검색 수행
+    if (targetRow === -1) {
+      var data = sheet.getDataRange().getValues();
+      for (var i = 1; i < data.length; i++) {
+        if (String(data[i][0]) === String(grade) && 
+            String(data[i][1]) === String(classNum) && 
+            String(data[i][2]) === String(studentNum) && 
+            String(data[i][3]) === String(name)) {
+          targetRow = i + 1;
+          existingPassword = data[i][17] !== undefined && data[i][17] !== null ? String(data[i][17]) : "";
+          break;
+        }
+      }
+    }
+    
+    if (targetRow !== -1) {
         // 획득한 영단어 등급별 스킬 인벤토리와 장착 슬롯을 문자열 형식으로 직렬화 변환
         var serializedInventory = JSON.stringify(skillsInventory || []);
         var serializedEquipped = JSON.stringify(equippedSkills || []);
-        var existingPassword = data[i][17] !== undefined && data[i][17] !== null ? String(data[i][17]) : "";
+        
         if (existingPassword !== "" && !existingPassword.startsWith("'")) {
           existingPassword = "'" + existingPassword;
         }
@@ -649,7 +682,6 @@ function saveStudentProgress(grade, classNum, studentNum, name, gold, avatarType
         sheet.getRange(targetRow, 5, 1, 18).setValues(rowValues);
         
         return true;
-      }
     }
     return false;
   } catch(e) {

@@ -3047,6 +3047,7 @@
             }
 
             gameState.grade = data.grade || gameState.grade;
+            gameState.rowIndex = data.rowIndex || 0; // 캐싱된 행 번호 저장
             gameState.classNum = data.classNum || gameState.classNum;
             gameState.studentNum = data.studentNum || gameState.studentNum;
             gameState.name = data.name || gameState.name;
@@ -3178,7 +3179,8 @@
                     gameState.weaponLvl, gameState.shieldLvl, gameState.shoesLvl, petStr,
                     gameState.stage, gameState.progress, gameState.skillsInventory, gameState.equippedSkills,
                     Number(gameState.masteryPoints) || 0,
-                    extraDataStr, meta.mastered, meta.wrong
+                    extraDataStr, meta.mastered, meta.wrong,
+                    gameState.rowIndex || 0
                 ],
                 function (success) {
                     if (success) {
@@ -6980,7 +6982,8 @@
                         Number(gameState.masteryPoints) || 0,
                         extraDataStr,
                         meta.mastered,
-                        meta.wrong
+                        meta.wrong,
+                        gameState.rowIndex || 0
                     ],
                     function (response) {
                         if (isSilent) {
@@ -7021,7 +7024,8 @@
                         gameState.weaponLvl, gameState.shieldLvl, gameState.shoesLvl, petStr,
                         gameState.stage, gameState.progress, gameState.skillsInventory, gameState.equippedSkills,
                         Number(gameState.masteryPoints) || 0,
-                        extraDataStr, meta.mastered, meta.wrong
+                        extraDataStr, meta.mastered, meta.wrong,
+                        gameState.rowIndex || 0
                     ],
                     function () {
                         doLogout();
@@ -7124,7 +7128,8 @@
                         gameState.weaponLvl, gameState.shieldLvl, gameState.shoesLvl, petStr,
                         gameState.stage, gameState.progress, gameState.skillsInventory, gameState.equippedSkills,
                         Number(gameState.masteryPoints) || 0,
-                        extraDataStr, meta.mastered, meta.wrong
+                        extraDataStr, meta.mastered, meta.wrong,
+                        gameState.rowIndex || 0
                     ],
                     function () {
                         showAlert("영웅의 영혼에 기록이 각인되었습니다! 이제 창이 닫힙니다.", "💾", "기록 각인 완료");

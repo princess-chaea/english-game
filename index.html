@@ -1657,7 +1657,7 @@
                 <!-- School Search -->
                 <div class="relative">
                     <label class="block text-[9px] font-bold text-[#0066b1] uppercase tracking-widest mb-1.5">학교 검색</label>
-                    <input type="text" id="inputSchool" placeholder="예: 하주초" autocomplete="off"
+                    <input type="text" id="inputSchool" placeholder="학교 이름을 입력해주세요." autocomplete="off"
                         class="w-full bg-[#1a1a1a] border border-[#3c3c3c] focus:border-[#0066b1] p-3 font-bold text-white text-xs outline-none rounded-none-forced transition-colors">
                     <!-- Dropdown for search results -->
                     <ul id="schoolSearchResults" class="absolute z-50 w-full bg-[#1a1a1a] border border-[#3c3c3c] border-t-0 max-h-40 overflow-y-auto hidden rounded-b shadow-2xl">
@@ -2574,6 +2574,7 @@
             }
             if (modalId === "loginModal" || modalId === "pinVerifyModal" || modalId === "newUserRegisterModal") {
                 hideGameLoadingOverlay();
+            checkTutorialStatus();
             }
             if (modalId === 'teacherModal') {
                 const savedUrl = getGasUrl();
@@ -3249,23 +3250,33 @@
             });
         }
 
-        function fetchWordsFromSpreadsheet() {
-            const savedUrl = getGasUrl();
-            if (!isGoogleScriptActive && (!savedUrl || savedUrl.trim() === "")) return;
-
-            runGas(
-                "getWordsFromSheet",
-                [gameState.grade],
-                function (words) {
-                    gameState.wordsPool = words;
-                    gameState.currentQuizIndex = gameState.progress % (words.length || 1);
-                    initGameEngine();
-                },
-                function () {
+        async function fetchWordsFromSpreadsheet() {
+            try {
+                if (!window._fbReady) {
                     gameState.wordsPool = MOCK_WORDS[String(gameState.grade)] || MOCK_WORDS["4"];
+                    gameState.currentQuizIndex = gameState.progress % (gameState.wordsPool.length || 1);
                     initGameEngine();
+                    return;
                 }
-            );
+                const wordsDoc = await window._fbGetDoc(window._fbDoc(window._fbDb, "game_data", "words"));
+                if (wordsDoc.exists()) {
+                    const data = wordsDoc.data();
+                    const gradeStr = String(gameState.grade);
+                    if (data["grade_" + gradeStr] && data["grade_" + gradeStr].length > 0) {
+                        gameState.wordsPool = data["grade_" + gradeStr];
+                    } else {
+                        gameState.wordsPool = MOCK_WORDS[gradeStr] || MOCK_WORDS["4"];
+                    }
+                } else {
+                    gameState.wordsPool = MOCK_WORDS[String(gameState.grade)] || MOCK_WORDS["4"];
+                }
+            } catch (err) {
+                console.error("Firebase words fetch error:", err);
+                gameState.wordsPool = MOCK_WORDS[String(gameState.grade)] || MOCK_WORDS["4"];
+            }
+            
+            gameState.currentQuizIndex = gameState.progress % (gameState.wordsPool.length || 1);
+            initGameEngine();
         }
 
         function drawHeroAvatar() {
@@ -3549,7 +3560,13 @@
             if (antiFlash) antiFlash.remove();
 
             document.getElementById("userInfoDisplay").classList.remove("hidden");
-            const schoolPrefix = gameState.schoolName ? `${gameState.schoolName} ` : "";
+            let shortSchoolName = gameState.schoolName || "";
+                if (shortSchoolName.endsWith("등학교")) {
+                    shortSchoolName = shortSchoolName.replace("등학교", "");
+                } else if (shortSchoolName.endsWith("학교")) {
+                    shortSchoolName = shortSchoolName.replace("학교", "");
+                }
+                const schoolPrefix = shortSchoolName ? `${shortSchoolName} ` : "";
             document.getElementById("displayStudentName").innerText = `${schoolPrefix}${gameState.grade}학년 ${gameState.classNum}반 ${gameState.studentNum}번 - [${gameState.name}]`;
             document.getElementById("gradeLevelBadge").innerText = `교과 영단어 ${gameState.grade}학년`;
 
@@ -4104,6 +4121,10 @@
         }
 
         function upgradeGearItem(gearKey) {
+            if (!gameState.tutorialCompleted && tutorialStep === 3 && gearKey === \'weapon\') {
+                tutorialStep = 4;
+                setTimeout(showTutorialOverlay, 300);
+            }
             const info = GEAR_PARAMS[gearKey];
             const currentLvl = gameState[info.key];
 
@@ -6800,7 +6821,13 @@
                 if (!el) return;
                 let prefix = "";
                 if (isHeader) {
-                    const schoolPrefix = gameState.schoolName ? `${gameState.schoolName} ` : "";
+                    let shortSchoolName = gameState.schoolName || "";
+                if (shortSchoolName.endsWith("등학교")) {
+                    shortSchoolName = shortSchoolName.replace("등학교", "");
+                } else if (shortSchoolName.endsWith("학교")) {
+                    shortSchoolName = shortSchoolName.replace("학교", "");
+                }
+                const schoolPrefix = shortSchoolName ? `${shortSchoolName} ` : "";
                     prefix = `${schoolPrefix}${gameState.grade}학년 ${gameState.classNum}반 ${gameState.studentNum}번 - `;
                 }
                 el.innerText = `${prefix}${titleStr}${gameState.name}`;
@@ -7305,6 +7332,10 @@
         });
 
         function switchTab(tabId) {
+            if (!gameState.tutorialCompleted && tutorialStep === 2 && tabId === \'gearTab\') {
+                tutorialStep = 3;
+                setTimeout(showTutorialOverlay, 300);
+            }
             const leftPanel = document.getElementById("leftRpgPanel");
             const rightPanel = document.getElementById("rightMainPanel");
 
@@ -9334,5 +9365,21 @@
                             class="flex-1 py-2.5 px-4 bg-red-950 text-gray-600 font-extrabold text-xs rounded transition opacity-50 cursor-not-allowed border border-red-900">
                         🔥 은퇴 및 데이터 삭제
                     </button>
+
+    <!-- TUTORIAL OVERLAY -->
+    <div id="tutorialOverlay" class="fixed inset-0 z-[9999] bg-black/85 hidden flex-col items-center justify-center p-4 transition-opacity duration-300">
+        <div class="max-w-sm w-full bg-[#0d0d0d] border border-yellow-500 p-5 rounded-none-forced shadow-[0_0_20px_rgba(234,179,8,0.3)] relative animate-bounce flex flex-col gap-3">
+            <h3 class="text-yellow-400 font-bold text-base flex items-center gap-2">
+                <i data-lucide="sparkles" class="w-4 h-4"></i> 🎓 여신의 안내
+            </h3>
+            <p id="tutorialMessage" class="text-gray-200 text-sm leading-relaxed min-h-[60px]">튜토리얼 메시지</p>
+            <div class="flex justify-between items-center mt-2 border-t border-[#3c3c3c] pt-3">
+                <button onclick="skipTutorial()" class="text-gray-500 text-[10px] hover:text-white underline uppercase tracking-widest font-bold">건너뛰기</button>
+                <button id="tutorialNextBtn" onclick="nextTutorialStep()" class="bg-gradient-to-r from-yellow-600 to-amber-500 hover:from-yellow-500 hover:to-amber-400 text-black font-extrabold px-3 py-1.5 text-[10px] uppercase tracking-widest rounded-none-forced transition hidden shadow-md flex items-center gap-1">
+                    다음 <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

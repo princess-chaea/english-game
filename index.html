@@ -5379,7 +5379,7 @@
                             <span class="text-yellow-300">${gradeInfo.name}</span>
                             <span class="text-yellow-400">${s.stars > 0 ? '⭐'.repeat(s.stars) : ''}</span>
                         </div>
-                        <div class="text-xs font-black text-white font-mono truncate my-0.5">${capitalizeFirstLetter(s.word)}</div>
+                        <div class="text-[10px] sm:text-[11px] font-black text-white font-mono tracking-tighter truncate my-0.5">${capitalizeFirstLetter(s.word)}</div>
                         <div class="text-[9px] text-pink-400 font-bold">×${mult}배</div>
                     </div>
                 `;
@@ -5944,7 +5944,7 @@
                             
                             <div class="flex justify-between items-center w-full z-10">
                                 <div class="flex items-center gap-1 min-w-0 pr-1">
-                                    <span class="text-xs font-extrabold font-mono tracking-wider truncate ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : ''}">${capitalizeFirstLetter(skill.word)}</span>
+                                    <span class="text-[10px] sm:text-[11px] font-extrabold font-mono tracking-tighter truncate ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : ''}">${capitalizeFirstLetter(skill.word)}</span>
                                     <span class="text-[10px] text-yellow-400 font-bold flex-shrink-0">${starsHtml}</span>
                                 </div>
                                 <span class="cooldown-timer text-[9px] ${isOnCooldown ? 'text-[#e22718] font-extrabold' : 'font-extrabold text-pink-400'}">
@@ -7094,13 +7094,24 @@
             // showAlert의 onConfirm 콜백으로 주입 → 사용자가 OK를 누르는 순간 User Gesture 유효 상태에서 즉시 종료
             const exitNow = () => {
                 if (fromBackButton && /android/i.test(navigator.userAgent)) return; // 이미 홈으로 나간 경우
+                
+                let closeAttempted = false;
                 if (/android/i.test(navigator.userAgent)) {
                     // 안드로이드 폰/태블릿: 홈 화면으로 즉시 이동 (일반 앱처럼 꺼짐)
-                    try { window.location.href = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end"; } catch(e) {}
-                } else {
-                    // 웹 (PC/브라우저): 탭/창 닫기
-                    try { window.close(); } catch(e) {}
+                    try { 
+                        window.location.href = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end"; 
+                        closeAttempted = true;
+                    } catch(e) {}
                 }
+                
+                setTimeout(() => {
+                    try { window.close(); closeAttempted = true; } catch(e) {}
+                    
+                    // 최후의 수단: 홈 인텐트나 window.close()가 모두 무시되는 PWA 환경을 위한 풀스크린 안내
+                    setTimeout(() => {
+                        document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#000;color:#fff;font-size:24px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.5;">영웅의 영혼석에 기록이<br>안전하게 각인되었습니다!<br><br>이제 앱을 완전히 종료하셔도 됩니다.<br><br><span style="font-size:14px;color:#888;">(뒤로가기를 두 번 누르거나 홈 버튼을 눌러주세요)</span></div>';
+                    }, 500);
+                }, 400);
             };
 
             const doExit = () => {
@@ -7668,8 +7679,8 @@
                                         <span class="font-bold uppercase tracking-wider">${gradeInfo.name} 티어${s.tier || 1}</span>
                                         <span class="text-yellow-300 font-bold text-[8px]">${starsHtml}</span>
                                     </div>
-                                    <span class="text-[10px] font-bold font-mono text-white truncate block">${capitalizeFirstLetter(s.word)}</span>
-                                    <span class="text-[9px] font-bold text-pink-300">⚡ ×${previewMult * 3}배</span>
+                                    <span class="text-[9px] sm:text-[10px] font-bold font-mono text-white tracking-tighter truncate block">${capitalizeFirstLetter(s.word)}</span>
+                                    <span class="text-[9px] font-bold text-pink-300">⚡ ×${previewMult}배</span>
                                 </div>
                             `;
                         } else {
@@ -8079,9 +8090,9 @@
                                 class="relative overflow-hidden p-1.5 ${gradeInfo.colorClass} border-2 hover:scale-[1.02] text-left rounded-none-forced flex flex-col justify-between h-14 transition duration-150 group cursor-pointer shadow-lg ${isCd ? 'opacity-60 cursor-not-allowed' : ''}">
                             <div class="wb-cd-overlay absolute bottom-0 left-0 h-1 bg-red-600 transition-all pointer-events-none" style="width: ${pct}%; display: ${isCd ? 'block' : 'none'};"></div>
                             <div class="flex justify-between items-center w-full z-10">
-                                <span class="text-[9px] font-extrabold font-mono truncate text-white group-hover:text-yellow-300">${capitalizeFirstLetter(s.word)}</span>
+                                <span class="text-[8px] sm:text-[9px] font-extrabold font-mono truncate tracking-tighter text-white group-hover:text-yellow-300">${capitalizeFirstLetter(s.word)}</span>
                                 <span class="wb-cd-timer text-[8px] ${isCd ? 'text-red-400 font-bold font-mono animate-pulse' : 'text-pink-400 font-bold'} z-10 font-mono">
-                                    ${isCd ? `⏳ ${cdLeft.toFixed(1)}s` : `⚡ ×${mult * 3}배`}
+                                    ${isCd ? `⏳ ${cdLeft.toFixed(1)}s` : `⚡ ×${mult}배`}
                                 </span>
                             </div>
                             <div class="flex justify-between items-center w-full z-10 text-[8px]">
@@ -8131,7 +8142,7 @@
                     }
                     if (cdTimerText) {
                         const mult = getSkillMultiplier(s);
-                        cdTimerText.innerText = `⚡ ×${mult * 3}배`;
+                        cdTimerText.innerText = `⚡ ×${mult}배`;
                         cdTimerText.className = "wb-cd-timer text-[8px] text-pink-400 font-bold z-10";
                     }
                 }

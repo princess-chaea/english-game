@@ -1764,7 +1764,6 @@
                                         <span>오답을 입력하거나 보스의 강력한 공격을 제한 시간 내에 막지 못하면 <b>랜덤으로 무구(무기/방패 등) 강화 수치가 -1 하락</b>합니다!</span>
                                     </li>
                                     <li class="flex items-start gap-1">
-                                        <li class="flex items-start gap-1">
                                         <span class="shrink-0">⚠️ <b>전투력 패널티:</b></span>
                                         <span>내 전투력이 권장 전투력보다 낮을 경우, 부족한 비율에 비례하여 <b>데미지가 감쇄</b>됩니다. (최소 15% 하한)</span>
                                     </li>
@@ -1837,14 +1836,14 @@
 
                 <!-- 6. Save & Reset Action Buttons (Only visible in statsTab) -->
                 <div id="statsActionButtons" class="flex gap-2 mt-2 pt-2 border-t border-cyan-900/50 hidden">
+                    <button onclick="openRetireModal()"
+                        class="py-2 px-4 bg-red-950/80 hover:bg-red-900 border border-red-700 text-red-400 font-bold text-xs uppercase tracking-widest transition rounded-none-forced">
+                        영웅 은퇴 (초기화)
+                    </button>
                     <button onclick="saveSessionToCloud()"
                         class="flex-1 py-2 bg-cyan-950 hover:bg-cyan-900 border border-cyan-600 text-cyan-200 font-bold text-xs uppercase tracking-widest transition rounded-none-forced flex items-center justify-center gap-1.5 shadow-md">
                         <i data-lucide="save" class="w-4 h-4 text-cyan-400"></i>
                         <span>진행 상황 저장하기</span>
-                    </button>
-                    <button onclick="openRetireModal()"
-                        class="py-2 px-4 bg-red-950/80 hover:bg-red-900 border border-red-700 text-red-400 font-bold text-xs uppercase tracking-widest transition rounded-none-forced">
-                        영웅 은퇴 (초기화)
                     </button>
                 </div>
             </div>
@@ -9649,6 +9648,10 @@
                     <p class="text-[11px] text-gray-400">
                         서버에 저장된 **골드, 연마한 장비, 펫, 유물, 장신구, 영단어 서고** 기록이 통째로 완전히 삭제되며 로그인 화면으로 돌아갑니다.
                     </p>
+                </div>
+                <div class="bg-amber-950/40 border border-amber-800/60 rounded p-3 mb-3 text-xs text-amber-200 leading-relaxed italic text-center mt-2">
+                    ✨ 영웅이 화려한 명성을 남기고 은퇴를 결심했습니다.<br>
+                    <span class="text-gray-400 text-[10px] mt-1 inline-block">은퇴 후 영웅의 영혼은 안식처로 떠납니다...</span>
                 </div>
                 <p class="text-xs font-bold text-yellow-300 mb-2">
                     확인을 위해 아래 입력창에 <span class="text-red-400 font-mono font-black underline">[영웅 은퇴]</span> 라고 정확히 입력해 주세요:

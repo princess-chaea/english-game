@@ -241,6 +241,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, runTransaction, onSnapshot, serverTimestamp, query, collection, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+          import { getAuth, deleteUser, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDzoSioPR8cmkMVzKl5_mD-mX3hhhCKZ0Y",
@@ -259,6 +260,9 @@
         window._fbDb = db;
         window._fbDoc = doc;
         window._fbDeleteDoc = deleteDoc;
+          window._fbAuth = auth;
+          window._fbDeleteUser = deleteUser;
+          window._fbSignInAnonymously = signInAnonymously;
         window._fbGetDoc = getDoc;
         window._fbSetDoc = setDoc;
         window._fbUpdateDoc = updateDoc;
@@ -7400,7 +7404,7 @@
             }
         }
 
-        function executeFullRetireDataDeletion() {
+                async function executeFullRetireDataDeletion() {
             closeRetireModal();
             showToast("✨ 영웅이 화려한 명성을 남기고 은퇴를 결심했습니다.");
 
@@ -7413,26 +7417,28 @@
             keysToRemove.forEach(k => localStorage.removeItem(k));
             sessionStorage.clear();
 
-            if (!window._fbDb || !window._fbDoc || !window._fbDeleteDoc || gameState.name === "방문자") {
-                showToast("🕊️ 영웅의 영혼이 안식처로 떠납니다...");
+            const doReload = () => {
+                showToast("✨ 영웅의 영혼이 안식처로 떠납니다...");
                 setTimeout(() => { location.reload(); }, 1500);
+            };
+
+            if (!window._fbDb || !window._fbDoc || !window._fbDeleteDoc || gameState.name === "방문자") {
+                doReload();
                 return;
             }
 
-            // Firebase Firestore에서 학생 데이터 삭제
+            // 1. Firebase Firestore에서 유저 문서 삭제
             const uid = `${gameState.schoolName || 'Unknown'}_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
             console.log('[Retire] Deleting Firestore doc:', 'users/' + uid);
-            window._fbDeleteDoc(window._fbDoc(window._fbDb, "users", uid))
-                .then(() => {
-                    console.log('[Retire] Firestore doc deleted successfully.');
-                    showToast("🕊️ 영웅의 영혼이 안식처로 떠납니다...");
-                    setTimeout(() => { location.reload(); }, 1500);
-                })
-                .catch((err) => {
-                    console.error('[Retire] Firestore delete failed:', err.code, err.message);
-                    showToast("🕊️ 영웅의 영혼이 안식처로 떠납니다...");
-                    setTimeout(() => { location.reload(); }, 1500);
-                });
+            try {
+                await window._fbDeleteDoc(window._fbDoc(window._fbDb, "users", uid));
+                console.log('[Retire] Firestore doc deleted successfully.');
+            } catch (err) {
+                console.error('[Retire] Firestore delete failed:', err.code, err.message);
+                // Even if Firestore fails, we try to continue with reload
+            }
+
+            doReload();
         }
 
         function resetFullSession() {

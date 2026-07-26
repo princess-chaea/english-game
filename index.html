@@ -194,7 +194,7 @@
             if (gameState.name === "방문자") return;
             if (!confirm("정말 영웅 데이터를 삭제하시겠습니까? 복구할 수 없습니다.")) return;
 
-            showGameLoadingOverlay("영웅의 흔적을 지우는 중...");
+            showGameLoadingOverlay("영웅의 영혼이 안식처로 떠납니다...");
             try {
                 if (window._fbDb && window._fbDoc && window._fbDeleteDoc) {
                     const sn = gameState.schoolName || "Unknown";
@@ -6411,6 +6411,10 @@
             const current = gameState.wordsPool[gameState.currentQuizIndex];
 
             if (index === gameState.currentQuizCorrectAnswer) {
+                if (!gameState.tutorialCompleted && tutorialStep === 1) {
+                    tutorialStep = 2;
+                    setTimeout(showTutorialOverlay, 500);
+                }
                 playSoundEffect('correct');
                 buttons[index].className = "choice-btn p-3.5 bg-green-950/80 border-2 border-green-500 text-white font-bold rounded-none-forced text-center transition flex items-center justify-center";
                 gameState.totalQuizCorrect++;
@@ -9463,6 +9467,8 @@
                 msg.innerHTML = "환영합니다 용사여!<br>먼저 몬스터를 공격하려면 <b>올바른 뜻을 가진 단어</b>를 선택해야 합니다. <span class='text-yellow-300'>정답을 클릭해보세요!</span>";
                 const choices = document.querySelectorAll('.choice-btn');
                 choices.forEach(c => c.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse'));
+                const qContainer = document.getElementById('quizContainer');
+                if (qContainer) qContainer.classList.add('tutorial-highlight', 'relative', 'z-[10000]');
             } else if (tutorialStep === 2) {
                 msg.innerHTML = "훌륭합니다!<br>몬스터를 처치해 얻은 골드로 <b>[대장간]</b> 탭으로 이동하여 장비를 강화해보세요.";
                 const gearTabBtn = document.getElementById("gearTabBtn");

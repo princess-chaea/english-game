@@ -5209,9 +5209,7 @@
                 else if (roll < 0.02) rolledGrade = "legendary";   // 1.95% (0.05%~2.00%)
                 else if (roll < 0.07) rolledGrade = "hero";
                             
-                            if (isTutorialSkill) {
-                                rolledGrade = "hero"; // Guaranteed Hero
-                            }        // 5.00% (2.00%~7.00%)
+                                    // 5.00% (2.00%~7.00%)
                 else if (roll < 0.25) rolledGrade = "rare";        // 18.00% (7.00%~25.00%)
 
                 let existing = gameState.acquiredRelics.find(item => item.id === pickedRelicDef.id);
@@ -5627,13 +5625,22 @@
                         playSoundEffect('levelup');
                     } else {
                         const picked = fullPool[Math.floor(Math.random() * fullPool.length)];
-                        rollAndAcquireSkill(picked.word, picked.meaning);
+                        if (typeof isTutorialSkill !== 'undefined' && isTutorialSkill) {
+                            addOrLevelUpSkill(picked.word, picked.meaning, "hero", true);
+                        } else {
+                            rollAndAcquireSkill(picked.word, picked.meaning);
+                        }
                         playSoundEffect('levelup');
                     }
 
                     buildSkillTabUI();
                     renderSkillsUI();
                     saveLocalCache();
+
+                    if (typeof isTutorialSkill !== 'undefined' && isTutorialSkill) {
+                        tutorialStep = 8;
+                        setTimeout(showTutorialOverlay, 500);
+                    }
                     }, 600);
                 }
             }, 250);
@@ -6088,10 +6095,6 @@
             renderSkillsUI();
             buildSkillTabUI();
             saveLocalCache();
-            if (isTutorialSkill) {
-                tutorialStep = 8;
-                setTimeout(showTutorialOverlay, 500);
-            }
             showToast("✨ 가장 강력한 마법 비기 4개가 자동 장착되었습니다!");
             playSoundEffect('levelup');
         }

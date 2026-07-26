@@ -23,7 +23,8 @@
             
             if (window._fbDb && window._fbDoc && window._fbSetDoc && gameState.name !== "방문자") {
                 try {
-                    const uid = `${gameState.schoolName || 'Unknown'}_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+                    const uid = getUid(gameState.schoolName, gameState.grade, gameState.classNum, gameState.studentNum, gameState.name);
+                    if (!gameState.schoolName || gameState.schoolName === "Unknown") break;
                     await window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), gameState);
                 } catch(e) { console.error(e); }
             }
@@ -197,7 +198,7 @@
     <!-- Firebase SDK v10 (CDN) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, runTransaction, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, runTransaction, onSnapshot, serverTimestamp, query, collection, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDzoSioPR8cmkMVzKl5_mD-mX3hhhCKZ0Y",
@@ -221,6 +222,10 @@
         window._fbRunTransaction = runTransaction;
         window._fbOnSnapshot = onSnapshot;
         window._fbServerTimestamp = serverTimestamp;
+        window._fbGetDocs = getDocs;
+        window._fbQuery = query;
+        window._fbCollection = collection;
+        window._fbWhere = where;
         window._fbReady = true;
         console.log("[VocaHero] Firebase Firestore 초기화 완료 ✅");
     </script>
@@ -1303,7 +1308,7 @@
                                 <div class="bg-black p-2 border border-[#262626] rounded-none-forced flex flex-col gap-1.5">
                                     <div class="flex justify-between items-center text-xs text-gray-300 font-bold">
                                         <span>⚔️ 참전용사 최종 출전 장비/소환수 점검</span>
-                                        <span class="text-yellow-400 font-mono">DPS: <b id="wbDpsPreviewText" class="text-white">0</b></span>
+                                        <span class="text-amber-400 font-mono">내 전투력: <b id="wbDpsPreviewText" class="text-white">0</b></span>
                                     </div>
                                     
                                     <!-- 3 Companion Pets Loadout Display -->
@@ -1792,11 +1797,6 @@
                         class="flex-1 py-2 bg-cyan-950 hover:bg-cyan-900 border border-cyan-600 text-cyan-200 font-bold text-xs uppercase tracking-widest transition rounded-none-forced flex items-center justify-center gap-1.5 shadow-md">
                         <i data-lucide="save" class="w-4 h-4 text-cyan-400"></i>
                         <span>진행 상황 저장하기</span>
-                    </button>
-                    <button onclick="startFirebaseMigration()"
-                        class="flex-1 py-2 bg-yellow-900 hover:bg-yellow-800 border border-yellow-600 text-yellow-200 font-bold text-xs uppercase tracking-widest transition rounded-none-forced flex items-center justify-center gap-1.5 shadow-md">
-                        <i data-lucide="database" class="w-4 h-4 text-yellow-400"></i>
-                        <span>데이터 마이그레이션</span>
                     </button>
                     <button onclick="openRetireModal()"
                         class="py-2 px-4 bg-red-950/80 hover:bg-red-900 border border-red-700 text-red-400 font-bold text-xs uppercase tracking-widest transition rounded-none-forced">
@@ -3384,22 +3384,22 @@
         function saveSessionToCloud() {
             saveLocalCache();
             if (!window._fbReady) {
-                showToast("💾 로컬 저장소에 게임 진행 상황이 보존되었습니다.");
+                showToast("💾 진행 상황이 로컬에 보존되었습니다.");
                 return;
             }
 
-            showToast("⏳ Firebase 클라우드 동기화 저장 중...");
-            
-            // schoolName이 없으면 임시 징검다리
-            if (!gameState.schoolName) {
-                gameState.schoolName = selectedSchoolName || "Unknown";
+            // schoolName이 없거나 Unknown이면 저장 방지
+            if (!gameState.schoolName || gameState.schoolName === "Unknown"
+                || !gameState.name || gameState.name === "방문자" || !gameState.grade) {
+                showToast("💾 진행 상황이 로컬에 보존되었습니다.");
+                return;
             }
             
             const uid = getUid(gameState.schoolName, gameState.grade, gameState.classNum, gameState.studentNum, gameState.name);
             gameState.lastSaved = Date.now();
 
             window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), gameState).then(() => {
-                showToast("🏰 Firebase 클라우드에 진행 상황이 안전하게 동기화되었습니다!");
+                showToast("⚔️ 진행 상황이 영웅의 영혼에 각인되었습니다.");
             }).catch(err => {
                 console.error("Firebase saveSession error:", err);
                 showToast("⚠️ 클라우드 저장 실패! 로컬 저장은 유지됩니다.");
@@ -3923,13 +3923,9 @@
             const relicGoldBonus = getEquippedRelicBonus("relic_compass") / 100;
             const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus + (getPotentialStatBonus('goldBonus') / 100);
 
-            // 장신구 CP 보정 (팔찌 클릭 타격 + 반지 DPS → CP 반영)
-            const braceletClickBonus = (gameState.braceletLvl || 0) * 800;
-            const ringDpsBonus = (gameState.ringLvl || 0) * 1500;
-
             return Math.floor(
-                ((clickAtk + braceletClickBonus) * 10) + 
-                ((dpsAtk + ringDpsBonus) * 5) + 
+                clickAtk + 
+                dpsAtk + 
                 (totalSkillBonusPct * 50) + 
                 (critRate * 100) + 
                 (bossDmgBonus * 80) + 
@@ -7251,8 +7247,11 @@
             };
 
 
-                if (window._fbDb && window._fbDoc && window._fbSetDoc && gameState.name !== "방문자") {
-                const uid = `${gameState.schoolName || 'Unknown'}_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+                if (window._fbDb && window._fbDoc && window._fbSetDoc
+                    && gameState.name && gameState.name !== "방문자"
+                    && gameState.schoolName && gameState.schoolName !== 'Unknown') {
+                const uid = getUid(gameState.schoolName, gameState.grade, gameState.classNum, gameState.studentNum, gameState.name);
+                gameState.lastSaved = Date.now();
                 window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), gameState)
                     .then(() => doExit())
                     .catch((e) => { console.error(e); doExit(); });
@@ -7450,73 +7449,107 @@
         // ==========================================
         function fetchHallOfFameUI() {
             const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
-            
-            // runGas("getHallOfFame", [gameState.grade, studentKey], function(res) {
-                if (res && res.success) {
-                    cachedHofData = res;
 
-                    const getTitleBadgeHtml = (item) => {
-                        let titleName = item.equippedTitle;
-                        if ((!titleName || titleName.trim() === "") && item.key === studentKey) {
-                            titleName = gameState.equippedTitle || "";
-                        }
-                        if (!titleName || titleName.trim() === "") return "";
+            // UI 로딩 상태
+            ['hofStageList','hofBossList','hofGoldList'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = '<p class="text-gray-500 text-center py-4 animate-pulse">랭킹 불러오는 중...</p>';
+            });
 
-                        const titleDef = AVAILABLE_TITLES.find(t => t.name === titleName || t.id === titleName);
-                        let badgeClass = "text-amber-300 bg-amber-950/90 border-amber-600";
-                        if (titleDef) {
-                            if (titleDef.tier === "신화") badgeClass = "text-yellow-300 bg-amber-950/90 border-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]";
-                            else if (titleDef.tier === "전설") badgeClass = "text-red-300 bg-red-950/90 border-red-600 shadow-[0_0_6px_rgba(220,38,38,0.5)]";
-                            else if (titleDef.tier === "영웅") badgeClass = "text-purple-300 bg-purple-950/90 border-purple-600";
-                            else if (titleDef.tier === "희귀") badgeClass = "text-sky-300 bg-sky-950/90 border-sky-600";
-                            else badgeClass = "text-gray-300 bg-gray-900 border-gray-700";
-                        }
-                        return `<span class="text-[9px] font-bold px-1 py-0.5 border mr-1 rounded-none-forced ${badgeClass}">[${titleName}]</span>`;
-                    };
+            if (!window._fbReady || !window._fbDb) {
+                ['hofStageList','hofBossList','hofGoldList'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerHTML = '<p class="text-gray-500 text-center py-4">오프라인 상태입니다.</p>';
+                });
+                return;
+            }
 
-                    // 1. 스테이지 랭킹
-                    document.getElementById("myStageRankText").innerText = `${res.myStageRank}위`;
-                    let stageHtml = "";
-                    if (res.stageTop5 && res.stageTop5.length > 0) {
-                        res.stageTop5.forEach((item, idx) => {
-                            const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}.`;
-                            const titleBadge = getTitleBadgeHtml(item);
-                            stageHtml += `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs"><span class="text-white font-medium flex items-center gap-1">${medal} ${titleBadge}${item.name}</span><span class="text-sky-400 font-bold font-mono">Stage ${item.stage}-${item.progress + 1}</span></div>`;
-                        });
-                    } else {
-                        stageHtml = `<p class="text-gray-500 text-center py-4">기록 없음</p>`;
-                    }
-                    document.getElementById("hofStageList").innerHTML = stageHtml;
-
-                    // 2. 월드보스 타격 랭킹
-                    document.getElementById("myBossRankText").innerText = `${res.myBossRank}위`;
-                    let bossHtml = "";
-                    if (res.bossTop5 && res.bossTop5.length > 0) {
-                        res.bossTop5.forEach((item, idx) => {
-                            const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}.`;
-                            const titleBadge = getTitleBadgeHtml(item);
-                            bossHtml += `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs"><span class="text-white font-medium flex items-center gap-1">${medal} ${titleBadge}${item.name}</span><span class="text-red-400 font-bold font-mono">${item.damage.toLocaleString()} DMG</span></div>`;
-                        });
-                    } else {
-                        bossHtml = `<p class="text-gray-500 text-center py-4">기록 없음</p>`;
-                    }
-                    document.getElementById("hofBossList").innerHTML = bossHtml;
-
-                    // 3. 보유 골드 랭킹
-                    document.getElementById("myGoldRankText").innerText = `${res.myGoldRank}위`;
-                    let goldHtml = "";
-                    if (res.goldTop5 && res.goldTop5.length > 0) {
-                        res.goldTop5.forEach((item, idx) => {
-                            const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}.`;
-                            const titleBadge = getTitleBadgeHtml(item);
-                            goldHtml += `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs"><span class="text-white font-medium flex items-center gap-1">${medal} ${titleBadge}${item.name}</span><span class="text-yellow-400 font-bold font-mono">${item.gold.toLocaleString()} G</span></div>`;
-                        });
-                    } else {
-                        goldHtml = `<p class="text-gray-500 text-center py-4">기록 없음</p>`;
-                    }
-                    document.getElementById("hofGoldList").innerHTML = goldHtml;
-                    }
+            const getTitleBadgeHtml = (item) => {
+                let titleName = item.equippedTitle;
+                if ((!titleName || titleName.trim() === "") && item.key === studentKey) {
+                    titleName = gameState.equippedTitle || "";
                 }
+                if (!titleName || titleName.trim() === "") return "";
+                const titleDef = AVAILABLE_TITLES.find(t => t.name === titleName || t.id === titleName);
+                let badgeClass = "text-amber-300 bg-amber-950/90 border-amber-600";
+                if (titleDef) {
+                    if (titleDef.tier === "신화") badgeClass = "text-yellow-300 bg-amber-950/90 border-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]";
+                    else if (titleDef.tier === "전설") badgeClass = "text-red-300 bg-red-950/90 border-red-600 shadow-[0_0_6px_rgba(220,38,38,0.5)]";
+                    else if (titleDef.tier === "영웅") badgeClass = "text-purple-300 bg-purple-950/90 border-purple-600";
+                    else if (titleDef.tier === "희귀") badgeClass = "text-sky-300 bg-sky-950/90 border-sky-600";
+                    else badgeClass = "text-gray-300 bg-gray-900 border-gray-700";
+                }
+                return `<span class="text-[9px] font-bold px-1 py-0.5 border mr-1 rounded-none-forced ${badgeClass}">[${titleName}]</span>`;
+            };
+
+            // Firestore에서 학년 내 전체 유저 데이터 조회 → 랭킹 산출
+            const grade = gameState.grade;
+            Promise.all([
+                window._fbGetDocs ? window._fbGetDocs(window._fbQuery(
+                    window._fbCollection(window._fbDb, "users"),
+                    window._fbWhere("grade", "==", grade)
+                )) : null
+            ]).then(([snapshot]) => {
+                if (!snapshot) {
+                    ['hofStageList','hofBossList','hofGoldList'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.innerHTML = '<p class="text-gray-500 text-center py-4">랭킹 기능 준비 중</p>';
+                    });
+                    return;
+                }
+                const users = [];
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    if (d.name && d.name !== "방문자" && d.schoolName && d.schoolName !== 'Unknown') {
+                        users.push({ ...d, key: `${d.grade}_${d.classNum}_${d.studentNum}_${d.name}` });
+                    }
+                });
+
+                // 스테이지 랭킹
+                const stageRanked = [...users].sort((a,b) => (b.stage||1)-(a.stage||1) || (b.progress||0)-(a.progress||0));
+                const myStageRank = stageRanked.findIndex(u => u.key === studentKey) + 1;
+                document.getElementById("myStageRankText").innerText = myStageRank ? `${myStageRank}위` : "-위";
+                const stageTop5 = stageRanked.slice(0, 5);
+                document.getElementById("hofStageList").innerHTML = stageTop5.length > 0
+                    ? stageTop5.map((item, idx) => {
+                        const medal = ["🥇","🥈","🥉"][idx] || `${idx+1}.`;
+                        return `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs"><span class="text-white font-medium flex items-center gap-1">${medal} ${getTitleBadgeHtml(item)}${item.name}</span><span class="text-sky-400 font-bold font-mono">Stage ${item.stage||1}-${(item.progress||0)+1}</span></div>`;
+                    }).join('')
+                    : '<p class="text-gray-500 text-center py-4">기록 없음</p>';
+
+                // 월드보스 랭킹
+                const bossRanked = [...users].sort((a,b) => (b.wbBestDamage||0)-(a.wbBestDamage||0));
+                const myBossRank = bossRanked.findIndex(u => u.key === studentKey) + 1;
+                document.getElementById("myBossRankText").innerText = myBossRank ? `${myBossRank}위` : "-위";
+                const bossTop5 = bossRanked.slice(0, 5).filter(u => (u.wbBestDamage||0) > 0);
+                document.getElementById("hofBossList").innerHTML = bossTop5.length > 0
+                    ? bossTop5.map((item, idx) => {
+                        const medal = ["🥇","🥈","🥉"][idx] || `${idx+1}.`;
+                        return `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs"><span class="text-white font-medium flex items-center gap-1">${medal} ${getTitleBadgeHtml(item)}${item.name}</span><span class="text-red-400 font-bold font-mono">${(item.wbBestDamage||0).toLocaleString()} DMG</span></div>`;
+                    }).join('')
+                    : '<p class="text-gray-500 text-center py-4">기록 없음</p>';
+
+                // 골드 랭킹
+                const goldRanked = [...users].sort((a,b) => (b.gold||0)-(a.gold||0));
+                const myGoldRank = goldRanked.findIndex(u => u.key === studentKey) + 1;
+                document.getElementById("myGoldRankText").innerText = myGoldRank ? `${myGoldRank}위` : "-위";
+                const goldTop5 = goldRanked.slice(0, 5).filter(u => (u.gold||0) > 0);
+                document.getElementById("hofGoldList").innerHTML = goldTop5.length > 0
+                    ? goldTop5.map((item, idx) => {
+                        const medal = ["🥇","🥈","🥉"][idx] || `${idx+1}.`;
+                        return `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs"><span class="text-white font-medium flex items-center gap-1">${medal} ${getTitleBadgeHtml(item)}${item.name}</span><span class="text-yellow-400 font-bold font-mono">${(item.gold||0).toLocaleString()} G</span></div>`;
+                    }).join('')
+                    : '<p class="text-gray-500 text-center py-4">기록 없음</p>';
+
+                cachedHofData = { myStageRank, myBossRank, myGoldRank };
+            }).catch(err => {
+                console.error("[HoF] Firestore query error:", err);
+                ['hofStageList','hofBossList','hofGoldList'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerHTML = '<p class="text-gray-500 text-center py-4">랭킹 로드 실패</p>';
+                });
+            });
+        }
 
         // ==========================================
         // TITLE EQUIPMENT SYSTEM (칭호 등급 체계: 신화/전설/영웅/희귀/일반)
@@ -7741,7 +7774,7 @@
             document.getElementById("wbGradeTitle").innerText = `${gameState.grade}학년 전용 공유 체력`;
             document.getElementById("playerMaxHpDisplay").innerText = `💖 ${wbPlayerMaxHp} HP (무구 강화 수치에 비례)`;
             const dpsDisplay = document.getElementById("wbDpsPreviewText");
-            if (dpsDisplay) dpsDisplay.innerText = calculateDPSPower().toLocaleString();
+            if (dpsDisplay) dpsDisplay.innerText = calculatePlayerCP().toLocaleString();
 
             // 1. 펫 3종 동시 렌더링 (레벨별 진화 1~10단계 이미지 적용)
             const petContainer = document.getElementById("wbPetPreviewContainer");

@@ -490,7 +490,7 @@
 
             <!-- Interactive Combat Arena Viewport (Vertical Racetrack) -->
             <div id="battleArena"
-                class="relative z-10 w-full flex-1 min-h-[360px] border border-[#3c3c3c] bg-[#000000] flex flex-col items-center justify-between py-4 cursor-pointer select-none overflow-hidden my-1 rounded-none-forced"
+                class="relative z-10 w-full flex-1 min-h-[200px] border border-[#3c3c3c] bg-[#000000] flex flex-col items-center justify-between py-4 cursor-pointer select-none overflow-hidden my-1 rounded-none-forced"
                 onclick="handleArenaClick(event)">
 
                 <!-- Racetrack vertical center stripes in the background -->
@@ -607,9 +607,9 @@
                     <span>대장간</span>
                 </button>
                 <button onclick="switchTab('petTab')" id="petTabBtn"
-                    class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition">
-                    <i data-lucide="cat" class="w-3.5 h-3.5"></i>
-                    <span>펫/유물 소환</span>
+                    class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap">
+                    <i data-lucide="cat" class="w-3.5 h-3.5 shrink-0"></i>
+                    <span class="whitespace-nowrap">펫/유물 소환</span>
                 </button>
                 <button onclick="switchTab('skillTab')" id="skillTabBtn"
                     class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition">
@@ -635,7 +635,7 @@
 
             <!-- TAB 1: Combat Learning Quiz View -->
             <div id="quizTab"
-                class="bg-black border border-[#3c3c3c] p-5 flex-grow flex flex-col justify-between min-h-[420px] rounded-none-forced">
+                class="bg-black border border-[#3c3c3c] p-5 flex-grow flex flex-col justify-between min-h-0 overflow-y-auto custom-scrollbar rounded-none-forced">
 
                 <!-- Boss Timer Visualizer (Visible during Boss Combat) -->
                 <div id="bossBattleTimerHeader"

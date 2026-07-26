@@ -241,7 +241,6 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, runTransaction, onSnapshot, serverTimestamp, query, collection, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-        import { getAuth, deleteUser, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDzoSioPR8cmkMVzKl5_mD-mX3hhhCKZ0Y",
@@ -255,14 +254,10 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const auth = getAuth(app);
         // ── 전역 노출 (일반 script 블록에서도 접근 가능) ──
         window._fbDb = db;
         window._fbDoc = doc;
         window._fbDeleteDoc = deleteDoc;
-        window._fbAuth = auth;
-        window._fbDeleteUser = deleteUser;
-        window._fbSignInAnonymously = signInAnonymously;
         window._fbGetDoc = getDoc;
         window._fbSetDoc = setDoc;
         window._fbUpdateDoc = updateDoc;

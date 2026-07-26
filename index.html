@@ -3017,7 +3017,7 @@
                                         else if (shortName.endsWith('고등학교')) shortName = shortName.replace('고등학교', '고');
                                         else shortName = shortName.replace(/학교$/, '');
                                         inputSchool.value = shortName;
-                                        selectedSchoolName = shortName;
+                                        selectedSchoolName = school.SCHUL_NM;
                                         resultsUl.classList.add('hidden');
                                     };
                                     resultsUl.appendChild(li);
@@ -8609,7 +8609,12 @@
                 try {
                     const last = JSON.parse(lastStudentRaw);
                     if (last.schoolName) {
-                        document.getElementById("inputSchool").value = last.schoolName;
+                        let sn = last.schoolName;
+                        if (sn.endsWith('초등학교')) sn = sn.replace('초등학교', '초');
+                        else if (sn.endsWith('중학교')) sn = sn.replace('중학교', '중');
+                        else if (sn.endsWith('고등학교')) sn = sn.replace('고등학교', '고');
+                        else sn = sn.replace(/학교$/, '');
+                        document.getElementById("inputSchool").value = sn;
                         selectedSchoolName = last.schoolName;
                     }
                     if (last.grade) document.getElementById("inputGrade").value = last.grade;

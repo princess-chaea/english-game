@@ -7038,45 +7038,36 @@
         function saveAndExit() {
             saveLocalCache();
             showToast("💾 데이터 저장 중... 잠시 후 창을 안전하게 닫습니다.");
+            
+            // 핵심: '저장하고 나가기' 버튼을 누른 직후(사용자 터치 제스처가 유효할 때) 즉시 안드로이드 홈 인텐트 실행
+            // 이렇게 하면 즉각 바탕화면으로 최소화되며, 백그라운드에서 JS가 남아 저장을 안전하게 완료합니다.
+            if (/android/i.test(navigator.userAgent)) {
+                try {
+                    window.location.href = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end";
+                } catch (e) {}
+            }
+            
             const savedUrl = getGasUrl();
             const doExit = () => {
-                // 비동기 콜백(저장 완료 후)에서 바로 intent/close를 호출하면 브라우저 보안(User Gesture 요구)에 의해 차단되거나 검은 화면이 뜹니다.
-                // 따라서 저장 완료 화면을 띄우고, 사용자가 직접 '종료' 버튼을 누르게 하여 확실하게 시스템 홈으로 내보냅니다.
-                document.body.innerHTML = `
-                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background-color:#050505; color:#fff; text-align:center; padding: 20px; box-sizing: border-box;">
-                        <span style="font-size: 5rem; margin-bottom: 10px;">💾</span>
-                        <h2 style="font-size: 1.8rem; font-weight: 900; color: #4ade80; margin-bottom: 10px;">안전하게 저장되었습니다!</h2>
-                        <p style="color: #9ca3af; margin-bottom: 40px; font-size: 0.95rem; line-height: 1.5;">모든 플레이 데이터가 성공적으로 기록되었습니다.<br>이제 게임을 종료하셔도 됩니다.</p>
-                        
-                        <button onclick="executeNativeExit()" style="padding: 16px 32px; background: linear-gradient(135deg, #eab308, #d97706); border: none; color: black; border-radius: 8px; font-weight: 900; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(234, 179, 8, 0.4); width: 80%; max-width: 320px; cursor: pointer;">
-                            🚪 바탕화면으로 나가기
-                        </button>
-                    </div>
-                `;
-
-                // 버튼 클릭 시 즉시 실행될 실제 종료 함수 (전역)
-                window.executeNativeExit = function() {
-                    // 1차: 안드로이드 네이티브 홈 화면 복귀 (사용자 직접 클릭이므로 차단 안 됨!)
-                    if (/android/i.test(navigator.userAgent)) {
-                        window.location.href = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end";
-                    }
+                setTimeout(() => {
+                    // 홈 화면으로 이미 나갔거나, 피씨 등 다른 기기일 경우 남은 웹 닫기 처리
+                    try {
+                        window.close();
+                        if (window.history.length > 1) {
+                            window.history.go(-window.history.length);
+                        } else {
+                            window.history.back();
+                        }
+                    } catch (e) {}
                     
-                    // 2차: 일반 웹앱 종료 시도
-                    setTimeout(() => {
-                        try {
-                            window.close();
-                            if (window.history.length > 1) {
-                                window.history.go(-window.history.length);
-                            } else {
-                                window.history.back();
-                            }
-                        } catch (e) {}
-                        
-                        // 그래도 실패하면 안내 문구 변경
-                        document.querySelector('h2').innerText = "종료 대기 중...";
-                        document.querySelector('p').innerHTML = "앱이 자동으로 꺼지지 않으면<br>기기의 물리적인 홈 버튼이나 뒤로가기를 눌러주세요.";
-                    }, 400);
-                };
+                    document.body.innerHTML = `
+                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background-color:#050505; color:#fff; text-align:center; padding: 20px;">
+                            <span style="font-size: 5rem; margin-bottom: 10px;">💾</span>
+                            <h2 style="font-size: 1.8rem; font-weight: 900; color: #4ade80; margin-bottom: 10px;">저장 완료!</h2>
+                            <p style="color: #9ca3af; margin-bottom: 40px;">데이터 저장이 완료되었습니다.<br>이 창을 직접 닫으셔도 됩니다.</p>
+                        </div>
+                    `;
+                }, 500);
             };
 
             if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {

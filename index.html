@@ -241,7 +241,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, runTransaction, onSnapshot, serverTimestamp, query, collection, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-          import { getAuth, deleteUser, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getAuth, deleteUser, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDzoSioPR8cmkMVzKl5_mD-mX3hhhCKZ0Y",
@@ -255,14 +255,14 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-
+        const auth = getAuth(app);
         // ── 전역 노출 (일반 script 블록에서도 접근 가능) ──
         window._fbDb = db;
         window._fbDoc = doc;
         window._fbDeleteDoc = deleteDoc;
-          window._fbAuth = auth;
-          window._fbDeleteUser = deleteUser;
-          window._fbSignInAnonymously = signInAnonymously;
+        window._fbAuth = auth;
+        window._fbDeleteUser = deleteUser;
+        window._fbSignInAnonymously = signInAnonymously;
         window._fbGetDoc = getDoc;
         window._fbSetDoc = setDoc;
         window._fbUpdateDoc = updateDoc;
@@ -3822,7 +3822,8 @@
             const antiFlash = document.getElementById("antiFlashStyle");
             if (antiFlash) antiFlash.remove();
 
-            document.getElementById("userInfoDisplay").classList.remove("hidden");
+            const _userInfoDisplay = document.getElementById("userInfoDisplay");
+            if (_userInfoDisplay) _userInfoDisplay.classList.remove("hidden");
             let shortSchoolName = gameState.schoolName || "";
                 if (shortSchoolName.endsWith("등학교")) {
                     shortSchoolName = shortSchoolName.replace("등학교", "");
@@ -3830,8 +3831,10 @@
                     shortSchoolName = shortSchoolName.replace("학교", "");
                 }
                 const schoolPrefix = shortSchoolName ? `${shortSchoolName} ` : "";
-            document.getElementById("displayStudentName").innerText = `${schoolPrefix}${gameState.grade}학년 ${gameState.classNum}반 ${gameState.studentNum}번 - [${gameState.name}]`;
-            document.getElementById("gradeLevelBadge").innerText = `교과 영단어 ${gameState.grade}학년`;
+            const _nameEl = document.getElementById("displayStudentName");
+            if (_nameEl) _nameEl.innerText = `${schoolPrefix}${gameState.grade}학년 ${gameState.classNum}반 ${gameState.studentNum}번 - [${gameState.name}]`;
+            const _badgeEl = document.getElementById("gradeLevelBadge");
+            if (_badgeEl) _badgeEl.innerText = `교과 영단어 ${gameState.grade}학년`;
 
             if (typeof gameState.skillsInventory === 'string') {
                 try { gameState.skillsInventory = JSON.parse(gameState.skillsInventory); } catch(e) { gameState.skillsInventory = []; }
@@ -5345,19 +5348,19 @@
             grid.innerHTML = html;
             const modal = document.getElementById("relicDrawResultModal");
             if (modal) {
-                modal.classList.remove("hidden");
-                modal.classList.add("flex");
-        }
-
-        function closeSkillAcquireModal() {
-            document.getElementById('skillAcquireModal').classList.remove('flex');
-            document.getElementById('skillAcquireModal').classList.add('hidden');
-            if (typeof tutorialStep !== 'undefined' && !gameState.tutorialCompleted && tutorialStep === 7) {
-                tutorialStep = 8;
-                setTimeout(showTutorialOverlay, 500);
-            }
-        }
-        }
+                  modal.classList.remove("hidden");
+                  modal.classList.add("flex");
+              }
+          }
+  
+          function closeSkillAcquireModal() {
+              document.getElementById('skillAcquireModal').classList.remove('flex');
+              document.getElementById('skillAcquireModal').classList.add('hidden');
+              if (typeof tutorialStep !== 'undefined' && !gameState.tutorialCompleted && tutorialStep === 7) {
+                  tutorialStep = 8;
+                  setTimeout(showTutorialOverlay, 500);
+              }
+          }
 
         // ==========================================
         // QUIZ, SKILLS & SPELLS
@@ -9336,36 +9339,42 @@
                                 }
                             }, 6000);
 
-                                                        const uid = `${session.schoolName || 'Unknown'}_${session.grade}_${session.classNum}_${session.studentNum}_${session.name}`;
-                            if (window._fbDb && window._fbGetDoc) {
-                                window._fbGetDoc(window._fbDoc(window._fbDb, "users", uid))
-                                    .then(docSnap => {
-                                        if (cloudLoginDone) return;
-                                        cloudLoginDone = true;
-                                        clearTimeout(cloudLoginTimeout);
-                                        if (docSnap.exists()) {
-                                            const data = docSnap.data();
-                                            if (data.password === session.password) {
-                                                closeModal("loginModal");
-                                                closeModal("pinVerifyModal");
-                                                closeModal("newUserRegisterModal");
-                                                syncStateFromServer(data);
-                                                showToast(`👋 어서오세요, ${session.name} 용사님! 자동 로그인되었습니다.`);
+                            // Firebase 준비 대기 후 로그인 시도 (100ms 간격 최대 5초)
+                            const uid = `${session.schoolName || 'Unknown'}_${session.grade}_${session.classNum}_${session.studentNum}_${session.name}`;
+                            const tryCloudLogin2 = () => {
+                                if (cloudLoginDone) return;
+                                if (window._fbDb && window._fbGetDoc) {
+                                    window._fbGetDoc(window._fbDoc(window._fbDb, "users", uid))
+                                        .then(docSnap => {
+                                            if (cloudLoginDone) return;
+                                            cloudLoginDone = true;
+                                            clearTimeout(cloudLoginTimeout);
+                                            if (docSnap.exists()) {
+                                                const data = docSnap.data();
+                                                if (data.password === session.password) {
+                                                    closeModal("loginModal");
+                                                    closeModal("pinVerifyModal");
+                                                    closeModal("newUserRegisterModal");
+                                                    syncStateFromServer(data);
+                                                    showToast(`👋 어서오세요, ${session.name} 용사님! 자동 로그인되었습니다.`);
+                                                } else {
+                                                    handleLocalVerify(session.schoolName, session.grade, session.classNum, session.studentNum, session.name, session.password);
+                                                }
                                             } else {
                                                 handleLocalVerify(session.schoolName, session.grade, session.classNum, session.studentNum, session.name, session.password);
                                             }
-                                        } else {
+                                        }).catch(err => {
+                                            if (cloudLoginDone) return;
+                                            cloudLoginDone = true;
+                                            clearTimeout(cloudLoginTimeout);
                                             handleLocalVerify(session.schoolName, session.grade, session.classNum, session.studentNum, session.name, session.password);
-                                        }
-                                    }).catch(err => {
-                                        if (cloudLoginDone) return;
-                                        cloudLoginDone = true;
-                                        clearTimeout(cloudLoginTimeout);
-                                        handleLocalVerify(session.schoolName, session.grade, session.classNum, session.studentNum, session.name, session.password);
-                                    });
-                            } else {
-                                handleLocalVerify(session.schoolName, session.grade, session.classNum, session.studentNum, session.name, session.password);
-                            }
+                                        });
+                                } else {
+                                    // Firebase 미준비 → 100ms 후 재시도 (타임아웃이 6초 후 로컬로 대체)
+                                    setTimeout(tryCloudLogin2, 100);
+                                }
+                            };
+                            tryCloudLogin2();
                         return; // 로그인 모달 팝업 방지
                     }
                 } catch(e) {

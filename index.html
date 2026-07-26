@@ -9491,7 +9491,8 @@
             nextBtn.classList.add("hidden");
 
             // Reset overlay classes
-            overlay.className = "fixed inset-0 z-[9999] hidden flex-col items-center justify-center p-4 transition-opacity duration-300";
+            overlay.className = "fixed inset-0 z-[9999] flex-col items-center justify-center p-4 transition-opacity duration-300";
+            overlay.classList.remove("hidden");
             overlay.classList.add("flex");
             
             const popup = overlay.querySelector('.max-w-sm');

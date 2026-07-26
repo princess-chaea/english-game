@@ -427,7 +427,7 @@
 
         <!-- LEFT PANEL: Dynamic RPG Battle Arena (4 Cols) -->
         <section id="leftRpgPanel"
-            class="lg:col-span-4 bg-black border border-[#3c3c3c] p-3 flex flex-col justify-between relative overflow-hidden h-full rounded-none-forced">
+            class="lg:col-span-4 bg-black border border-[#3c3c3c] p-3 flex flex-col justify-between relative overflow-hidden h-full min-h-0 rounded-none-forced">
             
             <!-- Stage Header & Progress -->
             <div class="z-10 flex flex-wrap justify-between items-center bg-[#0d0d0d] border border-[#3c3c3c] px-2 py-1.5 rounded-none-forced gap-1 overflow-hidden">
@@ -489,7 +489,7 @@
 
             <!-- Interactive Combat Arena Viewport (Vertical Racetrack) -->
             <div id="battleArena"
-                class="relative z-10 w-full flex-1 min-h-[140px] border border-[#3c3c3c] bg-[#000000] flex flex-col items-center justify-between py-2 cursor-pointer select-none overflow-hidden my-1 rounded-none-forced"
+                class="relative z-10 w-full flex-1 min-h-0 border border-[#3c3c3c] bg-[#000000] flex flex-col items-center justify-between py-2 cursor-pointer select-none overflow-hidden my-1 rounded-none-forced"
                 onclick="handleArenaClick(event)">
 
                 <!-- Racetrack vertical center stripes in the background -->
@@ -513,8 +513,8 @@
                             style="width: 100%"></div>
                     </div>
                     <div id="monsterContainer"
-                        class="w-20 h-20 md:w-28 md:h-28 shrink-0 flex items-center justify-center transition-transform duration-100">
-                        <svg viewBox="0 0 100 120" class="w-full h-full" id="monsterSvg"></svg>
+                        class="w-20 h-20 md:w-28 md:h-28 shrink flex items-center justify-center transition-transform duration-100 min-h-0">
+                        <svg viewBox="0 0 100 120" class="w-full h-full max-h-full" id="monsterSvg"></svg>
                     </div>
                     <!-- 전투 알림 (몬스터 아래 화면 중앙에 표시) -->
                     <div id="battleToast" class="px-2 py-0.5 text-[9px] font-bold text-center text-[#ffdd88] opacity-0 transition-opacity duration-300 pointer-events-none leading-relaxed"></div>
@@ -539,8 +539,8 @@
                     </div>
 
                     <!-- Character Body Avatar -->
-                    <div id="heroCharacter" class="w-16 h-20 md:w-24 md:h-28 shrink-0 relative flex items-end justify-center">
-                        <svg viewBox="0 0 100 120" class="w-full h-full transition-transform duration-100"
+                    <div id="heroCharacter" class="w-16 h-20 md:w-24 md:h-28 shrink flex items-end justify-center min-h-0">
+                        <svg viewBox="0 0 100 120" class="w-full h-full max-h-full transition-transform duration-100"
                             id="heroSvg"></svg>
                     </div>
                     <!-- Name tag, Relic & Accessories flex container (이름 중앙, 양옆 장비 배치) -->

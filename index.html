@@ -4121,7 +4121,7 @@
         }
 
         function upgradeGearItem(gearKey) {
-            if (!gameState.tutorialCompleted && tutorialStep === 3 && gearKey === \'weapon\') {
+            if (!gameState.tutorialCompleted && tutorialStep === 3 && gearKey === 'weapon') {
                 tutorialStep = 4;
                 setTimeout(showTutorialOverlay, 300);
             }
@@ -7332,7 +7332,7 @@
         });
 
         function switchTab(tabId) {
-            if (!gameState.tutorialCompleted && tutorialStep === 2 && tabId === \'gearTab\') {
+            if (!gameState.tutorialCompleted && tutorialStep === 2 && tabId === 'gearTab') {
                 tutorialStep = 3;
                 setTimeout(showTutorialOverlay, 300);
             }

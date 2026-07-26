@@ -7089,31 +7089,27 @@
             showToast("💾 데이터 저장 중...");
             
             const savedUrl = getGasUrl();
+
+            // 저장 완료 후 앱을 완전히 닫는 함수
+            // showAlert의 onConfirm 콜백으로 주입 → 사용자가 OK를 누르는 순간 User Gesture 유효 상태에서 즉시 종료
+            const exitNow = () => {
+                if (fromBackButton && /android/i.test(navigator.userAgent)) return; // 이미 홈으로 나간 경우
+                if (/android/i.test(navigator.userAgent)) {
+                    // 안드로이드 폰/태블릿: 홈 화면으로 즉시 이동 (일반 앱처럼 꺼짐)
+                    try { window.location.href = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end"; } catch(e) {}
+                } else {
+                    // 웹 (PC/브라우저): 탭/창 닫기
+                    try { window.close(); } catch(e) {}
+                }
+            };
+
             const doExit = () => {
-                // 폰 뒤로가기 버튼으로 시작된 종료라면 이미 홈 화면으로 나갔으므로 화면을 바꿀 필요가 없습니다.
                 if (fromBackButton && /android/i.test(navigator.userAgent)) {
+                    // 뒤로가기 버튼 경로: 이미 저장하기 버튼(User Gesture) 클릭 시 홈으로 나갔으므로 추가 조치 불필요
                     return;
                 }
-
-                // b9ab3e7 버전 복구: 전체 화면을 덮어쓰지 않고 showAlert 팝업을 유지한 상태로 몇 초 후 종료 시도
-                setTimeout(() => {
-                    // 1차: 안드로이드 홈 화면으로 내보내기 
-                    if (/android/i.test(navigator.userAgent)) {
-                        try {
-                            const a = document.createElement("a");
-                            a.href = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end";
-                            a.style.display = "none";
-                            document.body.appendChild(a);
-                            a.click();
-                        } catch (e) {}
-                    }
-                    
-                    // 2차: 창 닫기 등
-                    setTimeout(() => {
-                        try { window.close(); if (window.history.length > 1) { window.history.back(); } } catch (e) {}
-                        showToast("영웅의 영혼에 기록이 각인되었습니다! 기기의 뒤로가기 버튼으로 닫아주세요.");
-                    }, 300);
-                }, 1000);
+                // 저장 완료 팝업 표시 → 확인 버튼 클릭 시 exitNow() 즉시 실행
+                showAlert("영웅의 영혼에 기록이 각인되었습니다!\n확인을 누르면 앱이 종료됩니다.", "💾", "기록 각인 완료", exitNow);
             };
 
             if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {
@@ -7131,20 +7127,11 @@
                         extraDataStr, meta.mastered, meta.wrong,
                         gameState.rowIndex || 0
                     ],
-                    function () {
-                        showAlert("영웅의 영혼에 기록이 각인되었습니다! 이제 창이 닫힙니다.", "💾", "기록 각인 완료");
-                        doExit();
-                    },
-                    function () {
-                        showAlert("로컬 영혼석에 기록이 각인되었습니다! 이제 창이 닫힙니다.", "💾", "기록 각인 완료");
-                        doExit();
-                    }
+                    function () { doExit(); },
+                    function () { doExit(); }
                 );
             } else {
-                setTimeout(() => {
-                    showAlert("로컬 영혼석에 기록이 각인되었습니다! 이제 창이 닫힙니다.", "💾", "기록 각인 완료");
-                    doExit();
-                }, 800);
+                setTimeout(() => { doExit(); }, 800);
             }
         }
 
@@ -9080,15 +9067,16 @@
         }
 
         /** alert() 대체 */
-        function showAlert(message, icon, title) {
+        function showAlert(message, icon, title, onConfirm) {
             icon = icon || "ℹ️";
             title = title || "알림";
             try {
                 _openCustomModal(icon, title, message, [
-                    { label: "확인", primary: true, onClick: null }
+                    { label: "확인", primary: true, onClick: onConfirm || null }
                 ]);
             } catch (err) {
                 window.alert(`${icon} ${title}\n\n${message}`);
+                if (typeof onConfirm === 'function') onConfirm();
             }
         }
 

@@ -788,7 +788,7 @@
                     </div>
 
                     <!-- Bottom Title: Ancient Relic Altar + Boss Token Display & Summon Buttons -->
-                    <div class="border-t border-purple-900/50 pt-3 mt-2">
+                    <div id="relicAltarUnlockedSection" class="border-t border-purple-900/50 pt-3 mt-2">
                         <div class="flex flex-wrap justify-between items-center gap-2 mb-2.5">
                             <h4 class="text-sm font-extrabold text-yellow-400 flex items-center gap-2 uppercase tracking-wider shrink-0 whitespace-nowrap">
                                 <i data-lucide="sparkles" class="w-4 h-4 text-yellow-400 shrink-0"></i>
@@ -822,6 +822,14 @@
                         <div id="relicsInventoryGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-2 p-2 bg-[#0d0d0d] border border-[#262626] rounded-none-forced">
                             <!-- Dynamic Relic Cards (Rendered with high quality images & single equip button) -->
                         </div>
+                    </div>
+                    
+                    <!-- Locked State -->
+                    <div id="relicAltarLockedSection" class="border-t border-gray-800 pt-8 mt-2 pb-6 text-center hidden">
+                        <i data-lucide="lock" class="w-8 h-8 text-gray-600 mx-auto mb-3"></i>
+                        <p class="text-[12px] text-gray-400 font-bold uppercase tracking-widest">유물 소환 제단은 30스테이지부터 해금됩니다</p>
+                        <p class="text-[10px] text-gray-600 mt-2">획득하신 증표와 정수는 해금 전에도 정상적으로 누적됩니다.</p>
+                    </div>
 
                         <!-- 📊 유물 소환 등급 확률 가이드 -->
                         <div class="mt-3 bg-[#080808] border border-purple-900/40 p-3 rounded-none-forced">
@@ -6672,6 +6680,18 @@
                 stageEl.innerText = isBossBattleActive 
                     ? `보스 스테이지 ${gameState.stage}`
                     : `스테이지 ${gameState.stage}-${gameState.progress + 1}`;
+            }
+
+            const relicUnlockedSection = document.getElementById("relicAltarUnlockedSection");
+            const relicLockedSection = document.getElementById("relicAltarLockedSection");
+            if (relicUnlockedSection && relicLockedSection) {
+                if ((gameState.stage || 1) >= 30) {
+                    relicUnlockedSection.classList.remove("hidden");
+                    relicLockedSection.classList.add("hidden");
+                } else {
+                    relicUnlockedSection.classList.add("hidden");
+                    relicLockedSection.classList.remove("hidden");
+                }
             }
 
             // ⚔️ 권장 전투력(Required CP) 및 내 전투력(My CP) 동기화 & 미달 피드백

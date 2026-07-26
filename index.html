@@ -2027,7 +2027,7 @@
                         <span>단어 일괄 업로드 (CSV)</span>
                     </h3>
                     <p class="text-[10px] text-[#7e7e7e] mb-2 uppercase tracking-wide">
-                        엑셀이나 구글 스프레드시트에서 작성한 단어 목록을 CSV 파일로 업로드하여 게임 데이터베이스(구글 시트)에 추가할 수 있습니다. 
+                        엑셀이나 스프레드시트 프로그램에서 작성한 단어 목록을 CSV 파일로 업로드하여 게임 데이터베이스 서버에 추가할 수 있습니다. 
                         먼저 양식을 다운로드하여 제목줄을 확인하세요.
                     </p>
                     <div class="flex flex-col sm:flex-row gap-2 mt-2">
@@ -9471,17 +9471,17 @@
                 const qContainer = document.getElementById('quizContainer');
                 if (qContainer) qContainer.classList.add('tutorial-highlight', 'relative', 'z-[10000]');
             } else if (tutorialStep === 2) {
-                overlay.classList.add('justify-end', 'pb-24');
                 msg.innerHTML = "훌륭합니다!<br>몬스터를 처치해 얻은 골드로 <b>[대장간]</b> 탭으로 이동하여 장비를 강화해보세요.";
                 const gearTabBtn = document.getElementById("gearTabBtn");
                 if(gearTabBtn) gearTabBtn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
             } else if (tutorialStep === 3) {
-                overlay.classList.add('justify-end', 'pb-24');
+                // 무기를 자동 선택하여 노란 테두리 활성화
+                selectedGearKey = 'weapon';
+                buildUpgradeblacksmith();
                 msg.innerHTML = "이제 <b>무기 강화</b> 버튼을 눌러 전투력을 올리세요! (무기는 클릭 데미지와 초당 피해량을 대폭 올려줍니다)";
                 const weaponBtnContainer = document.getElementById("gearInfo_weapon");
                 if(weaponBtnContainer) weaponBtnContainer.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
             } else if (tutorialStep === 4) {
-                overlay.classList.add('justify-center');
                 msg.innerHTML = "잘하셨습니다!<br>전투력이 올라가면 더 강한 몬스터를 처치할 수 있습니다.<br><br><span class='text-yellow-300'>튜토리얼 완료 보상으로 10,000 골드와 보스 증표를 드립니다!</span> 건투를 빕니다!";
                 nextBtn.classList.remove("hidden");
                 nextBtn.innerHTML = '튜토리얼 완료 (보상 받기) <i data-lucide="gift" class="w-3 h-3"></i>';
@@ -9562,13 +9562,13 @@
                     <span class="text-3xl animate-pulse">🚨</span>
                     <div>
                         <h3 class="font-extrabold text-base text-red-400">영웅 은퇴 및 데이터 영구 삭제</h3>
-                        <p class="text-[10px] text-gray-400">이 작업은 서버 시트와 브라우저 데이터를 완전히 지우며 되돌릴 수 없습니다.</p>
+                        <p class="text-[10px] text-gray-400">이 작업은 서버 데이터베이스와 기기에 저장된 데이터를 완전히 지우며 되돌릴 수 없습니다.</p>
                     </div>
                 </div>
                 <div class="bg-black/60 border border-red-900/50 p-3 rounded mb-4 text-xs leading-relaxed text-gray-300">
                     <p class="mb-1.5 font-bold text-red-300">⚠️ 정말로 은퇴하시겠습니까?</p>
                     <p class="text-[11px] text-gray-400">
-                        구글 시트(데이터베이스)에 저장된 **골드, 연마한 장비, 펫, 유물, 장신구, 영단어 서고** 기록이 통째로 완전히 삭제되며 로그인 화면으로 돌아갑니다.
+                        서버에 저장된 **골드, 연마한 장비, 펫, 유물, 장신구, 영단어 서고** 기록이 통째로 완전히 삭제되며 로그인 화면으로 돌아갑니다.
                     </p>
                 </div>
                 <p class="text-xs font-bold text-yellow-300 mb-2">
@@ -9589,7 +9589,7 @@
 
     <!-- TUTORIAL OVERLAY -->
     <div id="tutorialOverlay" class="fixed inset-0 z-[9999] bg-black/90 hidden flex-col items-center justify-center p-4 transition-opacity duration-300">
-        <div class="max-w-sm w-full bg-[#0d0d0d] border border-yellow-500 p-5 rounded-none-forced shadow-[0_0_20px_rgba(234,179,8,0.3)] relative animate-bounce flex flex-col gap-3">
+        <div class="max-w-sm w-full bg-[#0d0d0d] border border-yellow-500 p-5 rounded-none-forced shadow-[0_0_20px_rgba(234,179,8,0.3)] relative flex flex-col gap-3">
             <h3 class="text-yellow-400 font-bold text-base flex items-center gap-2">
                 <i data-lucide="sparkles" class="w-4 h-4"></i> 🎓 여신의 안내
             </h3>

@@ -7037,37 +7037,17 @@
 
         function saveAndExit() {
             saveLocalCache();
-            showToast("💾 데이터 저장 중... 잠시 후 창을 안전하게 닫습니다.");
-            
-            // 핵심: '저장하고 나가기' 버튼을 누른 직후(사용자 터치 제스처가 유효할 때) 즉시 안드로이드 홈 인텐트 실행
-            // 이렇게 하면 즉각 바탕화면으로 최소화되며, 백그라운드에서 JS가 남아 저장을 안전하게 완료합니다.
-            if (/android/i.test(navigator.userAgent)) {
-                try {
-                    window.location.href = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end";
-                } catch (e) {}
-            }
+            showToast("💾 데이터 저장 중...");
             
             const savedUrl = getGasUrl();
             const doExit = () => {
+                // PWA 스탠드얼론 모드에서 history.back()이 홈 화면으로 내보내는 정식 방법입니다.
+                // 브라우저 일반 모드에서는 window.close()가 동작합니다.
+                showToast("✅ 저장 완료!");
                 setTimeout(() => {
-                    // 홈 화면으로 이미 나갔거나, 피씨 등 다른 기기일 경우 남은 웹 닫기 처리
-                    try {
-                        window.close();
-                        if (window.history.length > 1) {
-                            window.history.go(-window.history.length);
-                        } else {
-                            window.history.back();
-                        }
-                    } catch (e) {}
-                    
-                    document.body.innerHTML = `
-                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background-color:#050505; color:#fff; text-align:center; padding: 20px;">
-                            <span style="font-size: 5rem; margin-bottom: 10px;">💾</span>
-                            <h2 style="font-size: 1.8rem; font-weight: 900; color: #4ade80; margin-bottom: 10px;">저장 완료!</h2>
-                            <p style="color: #9ca3af; margin-bottom: 40px;">데이터 저장이 완료되었습니다.<br>이 창을 직접 닫으셔도 됩니다.</p>
-                        </div>
-                    `;
-                }, 500);
+                    try { window.close(); } catch(e) {}
+                    try { history.back(); } catch(e) {}
+                }, 800);
             };
 
             if (isGoogleScriptActive || (savedUrl && savedUrl.trim() !== "")) {

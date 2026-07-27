@@ -3238,6 +3238,10 @@
                             showToast("❌ 비밀번호가 틀렸습니다! 암호를 다시 확인해 주세요.");
                             return;
                         }
+                        gameState.schoolName = schoolName;
+                        gameState.grade = grade;
+                        gameState.classNum = classNum;
+                        gameState.studentNum = studentNum;
                         gameState.name = name; // 통신 에러나 누락 시 방문자로 덮어씌워지는 현상 방지
                         syncStateFromServer(data);
                         closeModal("loginModal");
@@ -9169,6 +9173,10 @@
                                         closeModal("loginModal");
                                         closeModal("pinVerifyModal");
                                         closeModal("newUserRegisterModal");
+                                        gameState.schoolName = session.schoolName;
+                                        gameState.grade = session.grade;
+                                        gameState.classNum = session.classNum;
+                                        gameState.studentNum = session.studentNum;
                                         gameState.name = session.name; // 누락으로 인한 방문자 덮어씌움 방지
                                         syncStateFromServer(data);
                                         showToast(`👋 어서오세요, ${session.name} 용사님! 자동 로그인되었습니다.`);
@@ -9971,12 +9979,12 @@
                 }
                 if(tutorialStep === 10) {
                     tabName = "명예의 전당";
-                    tabDesc = "누적 골드 순위로 학교 랭킹을 확인할 수 있습니다.";
+                    tabDesc = "같은 학년 랭킹을 확인하고, 업적을 해금하여 칭호를 장착해보세요!";
                     nextTabName = "[내 영웅 정보] 탭을 클릭해보세요"; nextBtnId = "statsTabBtn";
                 }
                 if(tutorialStep === 11) {
                     tabName = "내 영웅 정보";
-                    tabDesc = "내 캐릭터의 상세 스탯, PIN 변경, 구글 연동 등 영웅 관리를 할 수 있습니다.";
+                    tabDesc = "내 영웅의 스탯, 정복한 단어, 오답 단어를 확인하고 매뉴얼을 살펴볼 수 있습니다.";
                     nextTabName = "다음 버튼을 클릭하세요"; nextBtnId = "tutorialNextBtn";
                 }
                 

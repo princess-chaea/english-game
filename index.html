@@ -86,13 +86,11 @@
                             // UI 업데이트
                             const modal = document.getElementById("wbVictoryNoticeModal");
                             if (modal) {
-                                document.getElementById("wbVictoryNoticeRank").innerText = myRank + "위";
-                                document.getElementById("wbVictoryNoticeDmg").innerText = myDamage.toLocaleString() + " 피해";
-                                document.getElementById("wbVictoryNoticePct").innerText = (sharePct * 100).toFixed(1) + "% 기여";
+                                document.getElementById("wbModalMyDamage").innerText = myDamage.toLocaleString() + " HP";
+                                document.getElementById("wbModalMyShare").innerText = (sharePct * 100).toFixed(1) + "%";
                                 
-                                let titleBadge = getsTitle ? "\n🏆 [수호신] 칭호 획득!" : "";
-                                let resultMsg = isVictory ? "🎉 월드보스 토벌 성공!" : "☠️ 월드보스 토벌 실패...";
-                                document.getElementById("wbVictoryNoticeReward").innerText = `${resultMsg}\n\n🎁 보상: ${totalFp.toLocaleString()} FP${titleBadge}`;
+                                let titleBadge = getsTitle ? " / [수호신]" : "";
+                                document.getElementById("wbModalRewardSummary").innerText = `+${totalFp.toLocaleString()} FP${titleBadge}`;
                                 
                                 document.getElementById("wbVictoryNoticeClaimBtn").onclick = () => {
                                     gameState.fp = (gameState.fp || 0) + totalFp;
@@ -7463,6 +7461,8 @@
                                 sessionStorage.removeItem("vocahero_active_session");
                                 const last = { schoolName: oldData.schoolName, grade: oldData.grade, classNum: oldData.classNum, studentNum: oldData.studentNum, name: oldData.name, password: oldData.password };
                                 localStorage.setItem("vocahero_last_student", JSON.stringify(last));
+                                gameState.name = newName.trim();
+                                gameState.uid = newUid;
                                 showAlert("닉네임이 성공적으로 변경되었습니다.<br>다시 로그인합니다.", "✅", "변경 완료", () => { location.reload(); });
                             } catch(e) {
                                 console.error(e);

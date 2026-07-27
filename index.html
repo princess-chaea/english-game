@@ -7763,6 +7763,7 @@
 
             const doReload = () => {
                 showToast("✨ 영웅의 영혼이 안식처로 떠납니다...");
+                gameState.name = "방문자"; // 새로고침 시 beforeunload가 데이터를 부활시키는 것 방지
                 setTimeout(() => { location.reload(); }, 1500);
             };
 

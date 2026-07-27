@@ -3041,12 +3041,12 @@
 
                     clearTimeout(neisDebounceTimer);
                     neisDebounceTimer = setTimeout(() => {
-                        fetch(`https://open.neis.go.kr/hub/schoolInfo?KEY=04f275416e194b508bbd3ad51e42d887&Type=json&pIndex=1&pSize=20&SCHUL_NM=${encodeURIComponent(query)}`)
+                        fetch(`https://open.neis.go.kr/hub/schoolInfo?KEY=04f275416e194b508bbd3ad51e42d887&Type=json&pIndex=1&pSize=20&SCHUL_KND_SC_NM=${encodeURIComponent('초등학교')}&SCHUL_NM=${encodeURIComponent(query)}`)
                         .then(res => res.json())
                         .then(data => {
                             resultsUl.innerHTML = '';
                             if (data.schoolInfo && data.schoolInfo[1] && data.schoolInfo[1].row) {
-                                const schools = data.schoolInfo[1].row;
+                                const schools = data.schoolInfo[1].row.filter(s => s.SCHUL_KND_SC_NM === '초등학교');
                                 schools.forEach(school => {
                                     const li = document.createElement('li');
                                     li.className = "px-3 py-2 cursor-pointer hover:bg-[#3c3c3c] text-xs font-bold text-white border-b border-[#3c3c3c] last:border-0";
@@ -8825,18 +8825,213 @@
             // 🔄 새로고침 시 자동 로그인 세션 복원 장치
             const activeSessionRaw = sessionStorage.getItem("vocahero_active_session") || localStorage.getItem("vocahero_active_session");
             if (activeSessionRaw) {
+// 월드보스는 "내 전투력" 수치를 기반으로 데미지가 결정됨
+            // 기본 타격 = 전투력 * 2
+            const baseDmg = calculatePlayerCP() * 2;
+            const statSkillDmg = Math.floor(baseDmg * mult * totalSkillMult);
+
+            // 최소 보장 데미지 로직 (기본 타격력 반영)
+            const wbQuizDmgFloor = Math.floor(calculatePlayerCP() * (mult / 2));
+            const skillDmg = Math.max(statSkillDmg, wbQuizDmgFloor);
+
+            wbTotalDamageDealt += skillDmg;
+            updateWorldBossBattleHpBar();
+            
+            triggerHeroAttackAnim();
+
+            // 전장 화려한 검기/마법 비기 베기 이펙트(Magic Blast) 생성
+            const arena = document.getElementById("wbVisualStage");
+            if (arena) {
+                const blastEffect = document.createElement("div");
+                blastEffect.className = "animate-skill-blast flex flex-col items-center justify-center pointer-events-none z-50";
+                
+                let blastIcon = "💥";
+                if (skill.grade === "mythic") blastIcon = "🌌";
+                else if (skill.grade === "legendary") blastIcon = "🔥";
+                else if (skill.grade === "hero") blastIcon = "⚡";
+                else if (skill.grade === "rare") blastIcon = "✨";
+
+                blastEffect.innerHTML = `
+                    <span class="text-7xl filter drop-shadow-[0_0_25px_#ec4899] animate-bounce">${blastIcon}</span>
+                    <span class="text-xs font-black font-mono bg-black/90 text-yellow-300 border-2 border-pink-500 px-3 py-1 mt-1 uppercase tracking-widest shadow-2xl">${capitalizeFirstLetter(skill.word)}!</span>
+                `;
+                arena.appendChild(blastEffect);
+                setTimeout(() => blastEffect.remove(), 700);
+            }
+
+            spawnWbDamageParticle(`💥 -${skillDmg.toLocaleString()}`, true);
+            showWorldBossFxNotice(`⚡ [비기] ${gradeInfo.name} ${capitalizeFirstLetter(skill.word)}! -${skillDmg.toLocaleString()}`, "text-pink-400 border-pink-500");
+            playSoundEffect('levelup');
+            renderWorldBossRaidSkills();
+        }
+
+        let wbCurrentQuizType = "meaning"; // "meaning", "english", "short_answer", "unscramble"
+        let wbUnscrambleCurrentTiles = [];
+
+        function generateWorldBossQuiz() {
+            let pool = gameState.wordsPool && gameState.wordsPool.length > 0 ? gameState.wordsPool : MOCK_WORDS["4"];
+            wbCurrentWordObj = pool[Math.floor(Math.random() * pool.length)];
+
+            // 4가지 문제 유형 무작위 선택
+            const quizTypes = ["meaning", "english", "short_answer", "unscramble"];
+            wbCurrentQuizType = quizTypes[Math.floor(Math.random() * quizTypes.length)];
+
+            const quizWordEl = document.getElementById("wbQuizWord");
+            const choiceContainer = document.getElementById("wbChoiceContainer");
+
+            if (wbCurrentQuizType === "meaning") {
+                // 1. 뜻 찾기 (영단어 제시 -> 4개 한글 뜻 사지선다)
+                quizWordEl.innerText = `[뜻 찾기] ${capitalizeFirstLetter(wbCurrentWordObj.word)}`;
+                
+                let choices = [wbCurrentWordObj.meaning];
+                let meanings = [];
+                for (let g in MOCK_WORDS) {
+                    MOCK_WORDS[g].forEach(item => {
+                        if (item.meaning !== wbCurrentWordObj.meaning && !meanings.includes(item.meaning)) {
+                            meanings.push(item.meaning);
+                        }
+                    });
+                }
+                meanings.sort(() => 0.5 - Math.random());
+                for (let i = 0; i < Math.min(3, meanings.length); i++) choices.push(meanings[i]);
+                choices.sort(() => 0.5 - Math.random());
+
+                let html = "";
+                choices.forEach(m => {
+                    const isCorrect = (m === wbCurrentWordObj.meaning);
+                    html += `
+                        <button onclick="handleWorldBossAnswer(${isCorrect})" class="p-3.5 bg-[#0d0d0d] hover:bg-[#1f1919] border border-red-900 hover:border-yellow-400 text-white font-bold text-xs rounded-none-forced transition active:scale-95 shadow-sm">
+                            ${m}
+                        </button>
+                    `;
+                });
+                choiceContainer.className = "grid grid-cols-2 gap-2 z-10";
+                choiceContainer.innerHTML = html;
+
+            } else if (wbCurrentQuizType === "english") {
+                // 2. 영어 찾기 (한글 뜻 제시 -> 4개 영단어 사지선다)
+                quizWordEl.innerText = `[영어 찾기] ${wbCurrentWordObj.meaning}`;
+
+                let choices = [wbCurrentWordObj.word];
+                let words = [];
+                for (let g in MOCK_WORDS) {
+                    MOCK_WORDS[g].forEach(item => {
+                        if (item.word !== wbCurrentWordObj.word && !words.includes(item.word)) {
+                            words.push(item.word);
+                        }
+                    });
+                }
+                words.sort(() => 0.5 - Math.random());
+                for (let i = 0; i < Math.min(3, words.length); i++) choices.push(words[i]);
+                choices.sort(() => 0.5 - Math.random());
+
+                let html = "";
+                choices.forEach(w => {
+                    const isCorrect = (w === wbCurrentWordObj.word);
+                    html += `
+                        <button onclick="handleWorldBossAnswer(${isCorrect})" class="p-3.5 bg-[#0d0d0d] hover:bg-[#1f1919] border border-red-900 hover:border-yellow-400 text-yellow-300 font-bold text-xs font-mono rounded-none-forced transition active:scale-95 shadow-sm">
+                            ${capitalizeFirstLetter(w)}
+                        </button>
+                    `;
+                });
+                choiceContainer.className = "grid grid-cols-2 gap-2 z-10";
+                choiceContainer.innerHTML = html;
+
+            } else if (wbCurrentQuizType === "short_answer") {
+                // 3. 단답식 (한글 뜻 제시 -> 영단어 입력창 제출)
+                quizWordEl.innerText = `[단답식 필기] ${wbCurrentWordObj.meaning}`;
+
+                choiceContainer.className = "flex flex-col gap-2 z-10 w-full col-span-2";
+                choiceContainer.innerHTML = `
+                    <div class="flex gap-2 w-full">
+                        <input type="text" id="wbShortAnswerInput" placeholder="영단어를 정확히 입력하세요..." autocomplete="off"
+                            class="flex-1 bg-black border-2 border-red-800 focus:border-yellow-400 px-4 py-2.5 font-bold font-mono text-sm text-yellow-300 outline-none rounded-none-forced"
+                            oninput="checkWbShortAnswerAutoSubmit(this)"
+                            onkeypress="if(event.key==='Enter') submitWbShortAnswer()">
+                        <button onclick="submitWbShortAnswer()" class="bg-red-900 hover:bg-red-700 text-white font-bold text-xs px-5 py-2.5 border border-yellow-500 rounded-none-forced transition">
+                            타격 제출! ⚔️
+                        </button>
+                    </div>
+                `;
+                setTimeout(() => {
+                    const input = document.getElementById("wbShortAnswerInput");
+                    if (input) input.focus();
+                }, 50);
+
+            } else if (wbCurrentQuizType === "unscramble") {
+                // 4. 영단어 순서 맞추기 (알파벳 블록 조합)
+                quizWordEl.innerText = `[철자 조합] ${wbCurrentWordObj.meaning}`;
+
+                const letters = wbCurrentWordObj.word.toLowerCase().split("");
+                // Shuffle letters
+                letters.sort(() => 0.5 - Math.random());
+                wbUnscrambleCurrentTiles = [];
+
+                let letterButtonsHtml = letters.map((char, idx) => `
+                    <button id="wbTile_${idx}" onclick="clickWbUnscrambleTile('${char}', 'wbTile_${idx}')"
+                        class="w-10 h-10 bg-red-950 hover:bg-red-800 border border-yellow-500 text-yellow-300 font-black font-mono text-base rounded-none-forced transition shadow-md">
+                        ${char}
+                    </button>
+                `).join("");
+
+                choiceContainer.className = "flex flex-col gap-2 z-10 w-full col-span-2";
+                choiceContainer.innerHTML = `
+                    <div class="bg-black border border-red-900 p-2 flex flex-col items-center gap-2">
+                        <div id="wbUnscrambleAnswerDisplay" class="h-10 min-w-[200px] bg-[#0d0d0d] border border-yellow-500/80 px-4 flex items-center justify-center font-mono font-black text-lg text-yellow-300 tracking-widest">
+                            _ _ _ _
+                        </div>
+                        <div class="flex flex-wrap justify-center gap-1.5 my-1">
+                            ${letterButtonsHtml}
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="resetWbUnscramble()" class="text-[10px] bg-gray-800 text-gray-300 px-3 py-1 font-bold">🔄 다시 조립</button>
+                            <button onclick="submitWbUnscramble()" class="text-[10px] bg-yellow-600 hover:bg-yellow-500 text-black font-black px-4 py-1">💥 최종 공격!</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        window.onload = function () {
+            lucide.createIcons();
+            checkConnectionState();
+
+            // Auto fill last logged in student info from localStorage cache
+            const lastStudentRaw = localStorage.getItem("vocahero_last_student");
+            if (lastStudentRaw) {
+                try {
+                    const last = JSON.parse(lastStudentRaw);
+                    if (last.schoolName) {
+                        let sn = last.schoolName;
+                        if (sn.endsWith('초등학교')) sn = sn.replace('초등학교', '초');
+                        else if (sn.endsWith('중학교')) sn = sn.replace('중학교', '중');
+                        else if (sn.endsWith('고등학교')) sn = sn.replace('고등학교', '고');
+                        else sn = sn.replace(/학교$/, '');
+                        document.getElementById("inputSchool").value = sn;
+                        selectedSchoolName = last.schoolName;
+                    }
+                    if (last.grade) document.getElementById("inputGrade").value = last.grade;
+                    if (last.classNum) document.getElementById("inputClass").value = last.classNum;
+                    if (last.studentNum) document.getElementById("inputNumber").value = last.studentNum;
+                    if (last.name) document.getElementById("inputName").value = last.name;
+                } catch(e) {}
+            }
+
+            // 🔄 새로고침 시 자동 로그인 세션 복원 장치
+            const activeSessionRaw = sessionStorage.getItem("vocahero_active_session") || localStorage.getItem("vocahero_active_session");
+            if (activeSessionRaw) {
                 try {
                     const session = JSON.parse(activeSessionRaw);
                     if (session && session.schoolName && session.grade && session.name && session.password) {
                         // ✨ 새로고침 자동 복원 시에도 로딩바 오버레이 출력
                         showGameLoadingOverlay();
-                        tempCredentials = { schoolName: session.schoolName, grade: session.grade, classNum: session.classNum, studentNum: session.studentNum, name: session.name };
-
-                        if (window._fbReady) {
-                            const uid = getUid(session.schoolName, session.grade, session.classNum, session.studentNum, session.name);
-                            window._fbGetDoc(window._fbDoc(window._fbDb, "users", uid)).then(async docSnap => {
-                                if (!docSnap.exists()) {
-                                    const legacyUid = getUid("Unknown", session.grade, session.classNum, session.studentNum, session.name);
+                             if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('[SW] Registered:', reg.scope))
+                    .catch(err => console.warn('[SW] Registration failed:', err));
+            });
+        }                             const legacyUid = getUid("Unknown", session.grade, session.classNum, session.studentNum, session.name);
                                     try {
                                         const legacyDocSnap = await window._fbGetDoc(window._fbDoc(window._fbDb, "users", legacyUid));
                                         if (legacyDocSnap.exists()) {
@@ -9398,20 +9593,7 @@
             }
         });
 
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.getRegistrations().then(registrations => {
-                    for (let registration of registrations) {
-                        registration.unregister();
-                    }
-                });
-                if (window.caches) {
-                    caches.keys().then(names => {
-                        for (let name of names) caches.delete(name);
-                    });
-                }
-            });
-        }
+
         function showDamageOverlay(text) {
             const overlay = document.getElementById("damageOverlay");
             const overlayText = document.getElementById("damageOverlayText");

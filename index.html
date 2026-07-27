@@ -57,6 +57,12 @@
                         const data = docSnap.data();
                         const damages = data.damages || {};
                         const myDamage = damages[studentKey] || 0;
+                    const curWeek = getCurrentWeekNum();
+                    if (gameState.wbBestDamage !== myDamage || gameState.wbBestDamageWeek !== curWeek) {
+                        gameState.wbBestDamage = myDamage;
+                        gameState.wbBestDamageWeek = curWeek;
+                        saveSessionToCloud(true);
+                    }
                         
                         if (myDamage > 0) {
                             const curHp = typeof data.curHp !== 'undefined' ? data.curHp : 0;
@@ -7272,7 +7278,7 @@
                 const querySnapshot = await window._fbGetDocs(q);
                 
                 if (querySnapshot.empty) {
-                    showAlert("영혼에 각인된 영웅을 찾을 수 없습니다.<br>기존 로그인 후 설정에서 구글 계정을 연동해주세요.", "alert-triangle", "연동 계정 없음");
+                    showAlert("영혼에 각인된 영웅을 찾을 수 없습니다.<br>기존 로그인 후 설정에서 구글 계정을 연동해주세요.", "⚠️", "연동 계정 없음");
                     return;
                 }
                 
@@ -7943,10 +7949,15 @@
                     : '<p class="text-gray-500 text-center py-4">기록 없음</p>';
 
                 // 월드보스 랭킹
-                const bossRanked = [...users].sort((a,b) => (b.wbBestDamage||0)-(a.wbBestDamage||0));
+                const curWeek = getCurrentWeekNum();
+                const bossRanked = [...users].sort((a,b) => {
+                    const aDmg = (a.wbBestDamageWeek === curWeek) ? (a.wbBestDamage || 0) : 0;
+                    const bDmg = (b.wbBestDamageWeek === curWeek) ? (b.wbBestDamage || 0) : 0;
+                    return bDmg - aDmg;
+                });
                 const myBossRank = bossRanked.findIndex(u => u.key === studentKey) + 1;
-                document.getElementById("myBossRankText").innerText = myBossRank ? `${myBossRank}위` : "-위";
-                const bossTop5 = bossRanked.slice(0, 100).filter(u => (u.wbBestDamage||0) > 0);
+                document.getElementById("myBossRankText").innerText = (myBossRank && bossRanked[myBossRank-1].wbBestDamageWeek === curWeek && bossRanked[myBossRank-1].wbBestDamage > 0) ? `${myBossRank}위` : "-위";
+                const bossTop5 = bossRanked.slice(0, 100).filter(u => u.wbBestDamageWeek === curWeek && (u.wbBestDamage||0) > 0);
                 document.getElementById("hofBossList").innerHTML = bossTop5.length > 0
                     ? bossTop5.map((item, idx) => {
                         const medal = ["🥇","🥈","🥉"][idx] || `${idx+1}.`;
@@ -9700,7 +9711,7 @@
 
             if (iconEl) iconEl.innerText = icon;
             if (titleEl) titleEl.innerText = title;
-            if (msgEl) msgEl.innerText = message;
+            if (msgEl) msgEl.innerHTML = message;
 
             if (btnsEl) {
                 btnsEl.innerHTML = "";

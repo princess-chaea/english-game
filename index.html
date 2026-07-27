@@ -2218,33 +2218,43 @@
                 </div>
 
                 <div class="space-y-3 my-2 text-xs">
-                    <!-- 전체 효과음 사운드 토글 (ON: 사운드 켬 / OFF: 전체 음소거) 및 전체 볼륨 -->
-                    <div class="bg-[#121216] p-3 border border-yellow-900/40 space-y-2">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <span class="font-black text-yellow-300 block text-xs">🔊 전체 효과음 사운드</span>
-                                <span class="text-[9px] text-gray-400 block mt-0.5">모든 게임 사운드 및 효과음을 한 번에 켜거나 끕니다.</span>
-                            </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="settingMasterMute" class="sr-only peer" onchange="toggleMasterMute(this.checked)">
-                                <div class="w-11 h-6 bg-gray-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
-                            </label>
-                        </div>
-                        <div class="flex items-center gap-2 pt-1 border-t border-gray-800/80">
-                            <span class="text-[10px] text-yellow-400 font-bold whitespace-nowrap">전체 음량:</span>
-                            <input type="range" id="volumeMaster" min="0" max="10" step="1" class="w-full accent-yellow-500 h-1.5 bg-gray-800 rounded cursor-pointer" oninput="changeSoundVolume('masterVolume', this.value)">
-                            <span id="volumeMasterVal" class="text-[10px] font-mono text-yellow-300 font-bold w-6 text-right">10</span>
-                        </div>
+                    <!-- 마스터 사운드 토글 -->
+                    <div class="flex justify-between items-center bg-gray-900/50 p-2 border border-gray-800">
+                        <span class="text-gray-300 font-bold">🔊 전체 사운드 켜기/끄기 (Master)</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="settingSfxMaster" class="sr-only peer" onchange="toggleMasterSound(this.checked)">
+                            <div class="w-11 h-6 bg-gray-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
                     </div>
 
-                    <!-- 세부 효과음 켜고 끄기 및 볼륨 조절 영역 -->
-                    <div id="detailSoundSettingsContainer" class="bg-[#121216] p-3 border border-gray-800 space-y-3 transition-all duration-200">
-                        <h4 class="font-bold text-gray-300 text-[10px] uppercase tracking-wider mb-1 border-b border-gray-800 pb-1">🔊 세부 효과음 & 볼륨(0~10) 설정</h4>
+                    <!-- 세부 설정 토글 버튼 -->
+                    <button onclick="document.getElementById('detailSoundSettingsContainer').classList.toggle('hidden')" class="w-full py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-[10px] font-bold rounded flex items-center justify-center gap-1 transition">
+                        <i data-lucide="settings-2" class="w-3 h-3"></i> 상세 사운드 설정 열기/닫기
+                    </button>
+
+                    <!-- 세부 사운드 설정 영역 -->
+                    <div id="detailSoundSettingsContainer" class="hidden mt-3 pl-2 border-l border-gray-800 space-y-3">
                         
-                        <!-- 공격/타격 -->
+                        <!-- 배경 음악 (BGM) -->
                         <div class="space-y-1.5">
                             <div class="flex justify-between items-center">
-                                <span class="text-gray-300 text-[11px] font-bold">⚔️ 공격 및 타격 소리 (Click/Hit/Crit)</span>
+                                <span class="text-gray-300 text-[11px] font-bold">🎵 배경 음악 (BGM)</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="settingBgm" class="sr-only peer" onchange="toggleSoundSetting('bgm', this.checked)">
+                                    <div class="w-9 h-5 bg-gray-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-yellow-500"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center gap-2 pl-2">
+                                <span class="text-[9px] text-gray-400 font-bold whitespace-nowrap">음량:</span>
+                                <input type="range" id="volumeBgm" min="0" max="10" step="1" class="w-full accent-yellow-500 h-1 bg-gray-800 rounded cursor-pointer" oninput="changeSoundVolume('volBgm', this.value)">
+                                <span id="volumeBgmVal" class="text-[9px] font-mono text-yellow-400 font-bold w-5 text-right">10</span>
+                            </div>
+                        </div>
+
+                        <!-- 전투 효과음 (타격음) -->
+                        <div class="space-y-1.5 border-t border-gray-800/60 pt-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-300 text-[11px] font-bold">⚔️ 전투 효과음 (Attack/Hit)</span>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" id="settingSfxAttack" class="sr-only peer" onchange="toggleSoundSetting('sfxAttack', this.checked)">
                                     <div class="w-9 h-5 bg-gray-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
@@ -2271,8 +2281,7 @@
                                 <input type="range" id="volumeQuiz" min="0" max="10" step="1" class="w-full accent-green-500 h-1 bg-gray-800 rounded cursor-pointer" oninput="changeSoundVolume('volQuiz', this.value)">
                                 <span id="volumeQuizVal" class="text-[9px] font-mono text-green-400 font-bold w-5 text-right">10</span>
                             </div>
-                        </div></div>
-                    </div>
+                        </div>
 
                         <!-- 레벨업/획득 -->
                         <div class="space-y-1.5 border-t border-gray-800/60 pt-2">
@@ -2289,32 +2298,29 @@
                                 <span id="volumeLevelupVal" class="text-[9px] font-mono text-purple-400 font-bold w-5 text-right">10</span>
                             </div>
                         </div>
+                    </div> <!-- detailSoundSettingsContainer end -->
+                </div> <!-- space-y-3 end -->
+                
+                <!-- 계정 관리 -->
+                <div class="bg-[#121216] p-3 border border-blue-900/40 space-y-2 mt-4 mb-2">
+                    <h4 class="font-bold text-blue-300 text-[10px] uppercase tracking-wider mb-2 border-b border-gray-800 pb-1">🔐 계정 관리</h4>
+                    <div class="flex flex-col gap-2">
+                        <button onclick="linkGoogleAccount()" id="btnLinkGoogle" class="w-full py-2 bg-blue-900/50 hover:bg-blue-800 border border-blue-700 text-blue-300 font-bold text-[10px] rounded flex items-center justify-center gap-2 transition">
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-3 h-3" alt="Google">
+                            <span>구글 계정 연동하기</span>
+                        </button>
+                        <div class="flex gap-2">
+                            <button onclick="changeHeroName()" class="flex-1 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-600 text-gray-300 font-bold text-[10px] rounded transition">
+                                영웅 닉네임 변경
+                            </button>
+                            <button onclick="changePinCode()" class="flex-1 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-600 text-gray-300 font-bold text-[10px] rounded transition">
+                                PIN 암호 변경
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </div> <!-- content wrapper end -->
 
-            
-
-                        
-                    <!-- 계정 관리 -->
-                    <div class="bg-[#121216] p-3 border border-blue-900/40 space-y-2 mt-3">
-                        <h4 class="font-bold text-blue-300 text-[10px] uppercase tracking-wider mb-2 border-b border-gray-800 pb-1">🔐 계정 관리</h4>
-                        <div class="flex flex-col gap-2">
-                            <button onclick="linkGoogleAccount()" id="btnLinkGoogle" class="w-full py-2 bg-blue-900/50 hover:bg-blue-800 border border-blue-700 text-blue-300 font-bold text-[10px] rounded flex items-center justify-center gap-2 transition">
-                                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-3 h-3" alt="Google">
-                                <span>구글 계정 연동하기</span>
-                            </button>
-                            <div class="flex gap-2">
-                                <button onclick="changeHeroName()" class="flex-1 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-600 text-gray-300 font-bold text-[10px] rounded transition">
-                                    영웅 닉네임 변경
-                                </button>
-                                <button onclick="changePinCode()" class="flex-1 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-600 text-gray-300 font-bold text-[10px] rounded transition">
-                                    PIN 암호 변경
-                                </button>
-                            </div>
-                        
-            </div>
-                    </div>
             <div class="border-t border-gray-800 pt-3 flex justify-between gap-2 mt-2">
                 <button onclick="logoutSession()" class="bg-red-900/50 hover:bg-red-800 border border-red-700 text-red-300 font-bold px-4 py-1.5 text-xs rounded-none-forced flex items-center gap-1 transition shadow-lg">
                     <i data-lucide="log-out" class="w-3.5 h-3.5"></i>

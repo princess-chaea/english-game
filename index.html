@@ -7328,8 +7328,19 @@
             }
         };
 
+        
+        window._getTempUid = function() {
+            if (!tempCredentials) return null;
+            if (tempCredentials.uid) return tempCredentials.uid;
+            if (typeof getUid === 'function' && tempCredentials.schoolName) {
+                return getUid(tempCredentials.schoolName, tempCredentials.grade, tempCredentials.classNum, tempCredentials.studentNum, tempCredentials.name);
+            }
+            return null;
+        };
+
         window.linkGoogleAccount = async function() {
-            if (!tempCredentials || !tempCredentials.uid) {
+            const currentUid = window._getTempUid();
+            if (!currentUid) {
                 alert("먼저 게임에 로그인해야 연동할 수 있습니다.");
                 return;
             }
@@ -7341,12 +7352,12 @@
                 const q = window._fbQuery(usersRef, window._fbWhere("linkedGoogleUid", "==", googleUid));
                 const querySnapshot = await window._fbGetDocs(q);
                 
-                if (!querySnapshot.empty && querySnapshot.docs[0].id !== tempCredentials.uid) {
+                if (!querySnapshot.empty && querySnapshot.docs[0].id !== currentUid) {
                     alert("이 구글 계정은 이미 다른 게임 계정에 연동되어 있습니다.");
                     return;
                 }
                 
-                await window._fbUpdateDoc(window._fbDoc(window._fbDb, "users", tempCredentials.uid), {
+                await window._fbUpdateDoc(window._fbDoc(window._fbDb, "users", currentUid), {
                     linkedGoogleUid: googleUid
                 });
                 
@@ -7365,7 +7376,8 @@
         };
 
         window.changePinCode = async function() {
-            if (!tempCredentials || !tempCredentials.uid) return;
+            const currentUid = window._getTempUid();
+            if (!currentUid) return;
             const newPin = prompt("새로 사용할 4자리 PIN 암호를 입력하세요 (숫자만):");
             if (!newPin) return;
             if (!/^\d{4}$/.test(newPin)) {
@@ -7374,7 +7386,7 @@
             }
             
             try {
-                await window._fbUpdateDoc(window._fbDoc(window._fbDb, "users", tempCredentials.uid), {
+                await window._fbUpdateDoc(window._fbDoc(window._fbDb, "users", currentUid), {
                     password: newPin
                 });
                 
@@ -7390,7 +7402,8 @@
         };
 
         window.changeHeroName = async function() {
-            if (!tempCredentials || !tempCredentials.uid) return;
+            const currentUid = window._getTempUid();
+            if (!currentUid) return;
             if ((gameState.masteryPoints || 0) < 500) {
                 alert("단어 정복 포인트(FP)가 부족합니다. 닉네임 변경에는 500 FP가 필요합니다.");
                 return;
@@ -7411,8 +7424,8 @@
             }
             
             try {
-                const oldUid = tempCredentials.uid;
-                const newUid = tempCredentials.schoolName + "_" + tempCredentials.grade + "_" + tempCredentials.classNum + "_" + tempCredentials.studentNum + "_" + newName.trim();
+                const oldUid = currentUid;
+                const newUid = getUid(tempCredentials.schoolName, tempCredentials.grade, tempCredentials.classNum, tempCredentials.studentNum, newName.trim());
                 
                 const newDocSnap = await window._fbGetDoc(window._fbDoc(window._fbDb, "users", newUid));
                 if (newDocSnap.exists()) {

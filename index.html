@@ -3404,6 +3404,24 @@
                 }
             }
 
+            if (data.linkedGoogleUid) {
+                gameState.linkedGoogleUid = data.linkedGoogleUid;
+                const btn = document.getElementById("btnLinkGoogle");
+                if (btn) {
+                    btn.innerHTML = '✅ 연동 완료';
+                    btn.classList.add("opacity-50", "cursor-not-allowed");
+                    btn.onclick = null;
+                }
+            } else {
+                gameState.linkedGoogleUid = null;
+                const btn = document.getElementById("btnLinkGoogle");
+                if (btn) {
+                    btn.innerHTML = '구글 계정 연동';
+                    btn.classList.remove("opacity-50", "cursor-not-allowed");
+                    btn.onclick = window.linkGoogleAccount;
+                }
+            }
+            
             gameState.password = data.password || gameState.password;
             gameState.schoolName = data.schoolName || gameState.schoolName;
             gameState.grade = data.grade || gameState.grade;

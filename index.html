@@ -3608,6 +3608,7 @@
             }
             
             gameState.currentQuizIndex = gameState.progress % (gameState.wordsPool.length || 1);
+            console.log(`[WordsPool] 학년: ${gameState.grade}, 단어 수: ${gameState.wordsPool.length}, 적재: ${gameState.wordsPool.slice(0,3).map(w=>w.word).join(', ')}...`);
             initGameEngine();
         }
 

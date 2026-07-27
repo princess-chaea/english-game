@@ -258,6 +258,9 @@
         const db = getFirestore(app);
         // ── 전역 노출 (일반 script 블록에서도 접근 가능) ──
         window._fbDb = db;
+        window._fbAuth = getAuth(app);
+        window._fbGoogleProvider = new GoogleAuthProvider();
+        window._signInWithPopup = signInWithPopup;
         window._fbDoc = doc;
         window._fbDeleteDoc = deleteDoc;
         window._fbGetDoc = getDoc;

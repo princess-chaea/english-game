@@ -9975,32 +9975,19 @@
                     nextTabName = "다음 버튼을 클릭하세요"; nextBtnId = "tutorialNextBtn";
                 }
                 
-                msg.innerHTML = `📣 <b>${tabName}</b> 탭입니다.<br><span class='text-gray-400 text-xs'>${tabDesc}</span>`;
+                msg.innerHTML = `📣 <b>${tabName}</b> 탭입니다.<br><span class='text-gray-400 text-xs'>${tabDesc}</span><br><span class='text-yellow-400 text-xs'>자유롭게 살펴본 후 ➜ <b>${nextTabName}</b></span>`;
                 
-                const advanceTutorial = () => {
-                    msg.innerHTML = `📣 <b>${tabName}</b> 탭 확인 완료!<br>다음으로 <b>${nextTabName}</b>.`;
-                    if (tutorialStep === 11) {
-                        nextBtn.classList.remove("hidden");
-                        nextBtn.innerHTML = '다음';
-                        nextBtn.className = "bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-1.5 px-5 text-sm transition-colors rounded shadow-sm flex items-center justify-center";
-                        if(skipBtn) skipBtn.style.display = "block";
-                    } else {
+                // 즉시 다음 버튼 활성화 (자유 스크롤 탐색 후 직접 클릭)
+                if (tutorialStep === 11) {
+                    nextBtn.classList.remove("hidden");
+                    nextBtn.innerHTML = '다음';
+                    nextBtn.className = "bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-1.5 px-5 text-sm transition-colors rounded shadow-sm flex items-center justify-center";
+                    if(skipBtn) skipBtn.style.display = "block";
+                } else {
+                    setTimeout(() => {
                         const btn = document.getElementById(nextBtnId);
                         if(btn) { btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse'); btn.style.pointerEvents = 'auto'; }
-                    }
-                };
-                
-                // If page doesn't need scrolling, advance after short delay
-                if (document.body.scrollHeight <= window.innerHeight + 10) {
-                    setTimeout(advanceTutorial, 1500);
-                } else {
-                    const checkScroll = () => {
-                        if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 50) {
-                            window.removeEventListener('scroll', checkScroll);
-                            advanceTutorial();
-                        }
-                    };
-                    window.addEventListener('scroll', checkScroll);
+                    }, 300);
                 }
             } else if (tutorialStep === 12) {
                 overlay.classList.add('bg-black/90');

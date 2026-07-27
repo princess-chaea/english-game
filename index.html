@@ -3406,6 +3406,7 @@
             gameState.studentNum = data.studentNum || gameState.studentNum;
             gameState.name = data.name || gameState.name;
             gameState.gold = typeof data.gold !== 'undefined' ? data.gold : gameState.gold;
+            gameState.accGold = typeof data.accGold !== 'undefined' ? data.accGold : (data.gold || 0);
             gameState.avatarType = data.avatarType || "male";
             gameState.helmetLvl = data.helmetLvl || 1;
             gameState.armorLvl = data.armorLvl || 1;
@@ -3906,7 +3907,7 @@
                 if (goldAccumulator >= 1) {
                     const addG = Math.floor(goldAccumulator);
                     goldAccumulator -= addG;
-                    gameState.gold = (gameState.gold || 0) + addG;
+                    gameState.gold = (gameState.gold || 0) + addG; gameState.accGold = (gameState.accGold || gameState.gold || 0) + addG;
                     const gEl = document.getElementById("goldCount");
                     if (gEl) gEl.innerText = gameState.gold.toLocaleString();
                 }
@@ -4032,7 +4033,7 @@
                 const goldGained = Math.floor(dps * eligible * 0.1);
 
                 if (goldGained > 0) {
-                    gameState.gold += goldGained;
+                    gameState.gold += goldGained; gameState.accGold = (gameState.accGold || gameState.gold || 0) + goldGained;
                     showToast(`💤 오프라인 보상 획득! 용사단이 부재중에 ${goldGained.toLocaleString()}G를 축적했습니다.`);
                 }
             }
@@ -4112,7 +4113,7 @@
 
             if (isBossBattleActive) {
                 reward = gameState.stage * 1500;
-                gameState.gold += reward;
+                gameState.gold += reward; gameState.accGold = (gameState.accGold || gameState.gold || 0) + reward;
                 const tokenGain = Math.floor(gameState.stage * 3);
                 gameState.bossTokens += tokenGain;
                 showBattleToast(`🐉 보스 퇴치! +${reward.toLocaleString()}G / 🪙 [고대 보스 증표] +${tokenGain}개 획득!`);
@@ -4120,7 +4121,7 @@
                 concludeBossSuccess();
             } else {
                 reward = gameState.stage * 80 + Math.floor(Math.random() * 50);
-                gameState.gold += reward;
+                gameState.gold += reward; gameState.accGold = (gameState.accGold || gameState.gold || 0) + reward;
                 if (Math.random() < 0.5) {
                     gameState.bossTokens += 1;
                 }
@@ -6518,7 +6519,7 @@
                 const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus;
                 const reward = Math.floor(baseReward * goldMultiplier);
 
-                gameState.gold += reward;
+                gameState.gold += reward; gameState.accGold = (gameState.accGold || gameState.gold || 0) + reward;
                 if (typeof gameState.masteryPoints === 'undefined') gameState.masteryPoints = 0;
                 
                 // 퀴즈 정답 시 FP 적립 (태양의 왕관 유물 장착 시 증가)
@@ -7954,14 +7955,14 @@
                     : '<p class="text-gray-500 text-center py-4">기록 없음</p>';
 
                 // 골드 랭킹
-                const goldRanked = [...users].sort((a,b) => (b.gold||0)-(a.gold||0));
+                const goldRanked = [...users].sort((a,b) => (b.accGold||b.gold||0)-(a.accGold||a.gold||0));
                 const myGoldRank = goldRanked.findIndex(u => u.key === studentKey) + 1;
                 document.getElementById("myGoldRankText").innerText = myGoldRank ? `${myGoldRank}위` : "-위";
-                const goldTop5 = goldRanked.slice(0, 100).filter(u => (u.gold||0) > 0);
+                const goldTop5 = goldRanked.slice(0, 100).filter(u => (u.accGold||u.gold||0) > 0);
                 document.getElementById("hofGoldList").innerHTML = goldTop5.length > 0
                     ? goldTop5.map((item, idx) => {
                         const medal = ["🥇","🥈","🥉"][idx] || `${idx+1}.`;
-                        return `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs"><span class="text-white font-medium flex items-center gap-1">${medal} <span class="text-gray-400 text-[10px] mr-1">[${(item.schoolName || '무소속').replace(/(초|중|고)등학교$/, '$1')}]</span> ${getTitleBadgeHtml(item)}${item.name}</span><span class="text-yellow-400 font-bold font-mono">${(item.gold||0).toLocaleString()} G</span></div>`;
+                        return `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs"><span class="text-white font-medium flex items-center gap-1">${medal} <span class="text-gray-400 text-[10px] mr-1">[${(item.schoolName || '무소속').replace(/(초|중|고)등학교$/, '$1')}]</span> ${getTitleBadgeHtml(item)}${item.name}</span><span class="text-yellow-400 font-bold font-mono">${(item.accGold||item.gold||0).toLocaleString()} G</span></div>`;
                     }).join('')
                     : '<p class="text-gray-500 text-center py-4">기록 없음</p>';
 
@@ -9293,7 +9294,7 @@
             const rewardGold = Math.max(500, Math.floor(wbTotalDamageDealt / 500));
             const rewardFp = Math.max(100, Math.floor(wbTotalDamageDealt / 2000));
 
-            gameState.gold = (gameState.gold || 0) + rewardGold;
+            gameState.gold = (gameState.gold || 0) + rewardGold; gameState.accGold = (gameState.accGold || gameState.gold || 0) + rewardGold;
             gameState.masteryPoints = (gameState.masteryPoints || 0) + rewardFp;
 
             // 참전 완료 후 즉시 1일 1회 도전 완료 잠금 처리 (로컬 + 서버 이중 락)
@@ -9988,7 +9989,7 @@
             });
 
                         if (!skipReward) {
-                gameState.gold = (gameState.gold || 0) + 100000;
+                gameState.gold = (gameState.gold || 0) + 100000; gameState.accGold = (gameState.accGold || gameState.gold || 0) + 100000;
                 gameState.masteryPoints = (gameState.masteryPoints || 0) + 450;
                 showToast("🎉 튜토리얼 완료! 정착 지원금 100,000 골드와 단어 정력(FP) 450을 받았습니다.");
             } else {

@@ -3598,13 +3598,16 @@
                         gameState.wordsPool = data["grade_" + gradeStr];
                     } else {
                         gameState.wordsPool = MOCK_WORDS[gradeStr] || MOCK_WORDS["4"];
+                        setTimeout(() => showToast(`⚠️ Firebase에 ${gradeStr}학년 단어(grade_${gradeStr})가 없어 임시 단어 10개만 반복됩니다.`), 2000);
                     }
                 } else {
                     gameState.wordsPool = MOCK_WORDS[String(gameState.grade)] || MOCK_WORDS["4"];
+                    setTimeout(() => showToast(`⚠️ Firebase에 단어 문서(game_data/words)가 존재하지 않습니다.`), 2000);
                 }
             } catch (err) {
                 console.error("Firebase words fetch error:", err);
                 gameState.wordsPool = MOCK_WORDS[String(gameState.grade)] || MOCK_WORDS["4"];
+                setTimeout(() => showToast(`⚠️ 단어장 로드 에러: 권한 부족 또는 통신 실패 (${err.message})`), 2000);
             }
             
             gameState.currentQuizIndex = gameState.progress % (gameState.wordsPool.length || 1);

@@ -25,7 +25,7 @@
                 try {
                     const uid = getUid(gameState.schoolName, gameState.grade, gameState.classNum, gameState.studentNum, gameState.name);
                     if (!gameState.schoolName || gameState.schoolName === "Unknown") throw new Error("Unknown school");
-                    await window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), gameState);
+                    await window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), gameState, { merge: true });
                 } catch(e) { console.error(e); }
             }
             doLogout();
@@ -3297,7 +3297,7 @@
                         syncStateFromServer(data);
                         gameState.password = password;
                         gameState.schoolName = schoolName;
-                        window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), gameState).then(() => {
+                        window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), gameState, { merge: true }).then(() => {
                             closeModal("loginModal");
                             const sessData = { schoolName, grade, classNum, studentNum, name, password };
                             sessionStorage.setItem("vocahero_active_session", JSON.stringify(sessData));
@@ -3312,7 +3312,7 @@
                     } else {
                         // 완전 신규 유저
                         loadLocalSimulation(schoolName, grade, classNum, studentNum, name, password);
-                        window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), gameState).then(() => {
+                        window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), gameState, { merge: true }).then(() => {
                             closeModal("loginModal");
                             const sessData = { schoolName, grade, classNum, studentNum, name, password };
                             sessionStorage.setItem("vocahero_active_session", JSON.stringify(sessData));
@@ -3537,7 +3537,7 @@
             const uid = getUid(gameState.schoolName, gameState.grade, gameState.classNum, gameState.studentNum, gameState.name);
             gameState.lastSaved = Date.now();
 
-            window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), gameState).then(() => {
+            window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), gameState, { merge: true }).then(() => {
                 showToast("⚔️ 진행 상황이 영웅의 영혼에 각인되었습니다.");
             }).catch(err => {
                 console.error("Firebase saveSession error:", err);
@@ -7435,7 +7435,7 @@
                                 oldData.name = newName.trim();
                                 oldData.uid = newUid;
                                 oldData.masteryPoints = Math.max(0, (oldData.masteryPoints || 0) - 500);
-                                await window._fbSetDoc(window._fbDoc(window._fbDb, "users", newUid), oldData);
+                                await window._fbSetDoc(window._fbDoc(window._fbDb, "users", newUid), oldData, { merge: true });
                                 await window._fbDeleteDoc(window._fbDoc(window._fbDb, "users", oldUid));
                                 sessionStorage.removeItem("vocahero_active_session");
                                 const last = { schoolName: oldData.schoolName, grade: oldData.grade, classNum: oldData.classNum, studentNum: oldData.studentNum, name: oldData.name, password: oldData.password };
@@ -7661,7 +7661,7 @@
                     && gameState.schoolName && gameState.schoolName !== 'Unknown') {
                 const uid = getUid(gameState.schoolName, gameState.grade, gameState.classNum, gameState.studentNum, gameState.name);
                 gameState.lastSaved = Date.now();
-                window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), gameState)
+                window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), gameState, { merge: true })
                     .then(() => doExit())
                     .catch((e) => { console.error(e); doExit(); });
             } else {

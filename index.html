@@ -9395,10 +9395,17 @@
                         const damages = data.damages || {};
                         const oldDamage = damages[studentKey] || 0;
                         damages[studentKey] = oldDamage + wbTotalDamageDealt;
-                        transaction.update(bossDocRef, { curHp: newHp, damages });
+                        transaction.update(bossDocRef, { maxHp: wbMaxBossHp, curHp: newHp, damages });
                     }
                 }).then(() => {
                     showToast("✨ 서버에 월드보스 누적 피해 기록이 반영되었습니다!");
+                    // 랜킹용 필드 저장 (users 문서 동기화)
+                    const newBestDmg = (gameState.wbBestDamageWeek === getCurrentWeekNum())
+                        ? Math.max(wbTotalDamageDealt, gameState.wbBestDamage || 0)
+                        : wbTotalDamageDealt;
+                    gameState.wbBestDamage = newBestDmg;
+                    gameState.wbBestDamageWeek = getCurrentWeekNum();
+                    saveSessionToCloud(true);
                     updateWorldBossUI();
                     setTimeout(() => { checkWorldBossVictoryOnStartup(); }, 1000);
                 }).catch(err => {

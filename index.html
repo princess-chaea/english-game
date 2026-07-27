@@ -3414,6 +3414,7 @@
             gameState.totalQuizTries = extra.totalQuizTries || data.totalQuizTries || 0;
             gameState.totalQuizCorrect = extra.totalQuizCorrect || data.totalQuizCorrect || 0;
             gameState.soundSettings = extra.soundSettings || { masterMute: false, sfxAttack: true, sfxQuiz: true, sfxLevelup: true };
+            gameState.tutorialCompleted = typeof extra.tutorialCompleted !== 'undefined' ? extra.tutorialCompleted : (data.tutorialCompleted || false);
 
             fetchWordsFromSpreadsheet();
         }

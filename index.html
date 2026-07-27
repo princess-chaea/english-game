@@ -4424,8 +4424,8 @@
 
             let cost = Math.floor(info.base * 3.0 * Math.pow(GROWTH_RATE, currentLvl));
 
-            // 튜토리얼 3단계(무기 강화)는 무료(0골드)로 강제 진행
-            if (!gameState.tutorialCompleted && tutorialStep === 3 && gearKey === 'weapon') {
+            // 튜토리얼 중 무기 강화는 무료(0골드)로 강제 진행 (step 3~4 모두 적용)
+            if (!gameState.tutorialCompleted && tutorialStep >= 3 && tutorialStep <= 4 && gearKey === 'weapon') {
                 cost = 0;
             }
 
@@ -9975,7 +9975,7 @@
                     nextTabName = "다음 버튼을 클릭하세요"; nextBtnId = "tutorialNextBtn";
                 }
                 
-                msg.innerHTML = `📣 <b>${tabName}</b> 탭입니다.<br><span class='text-gray-400 text-xs'>${tabDesc}</span><br><span class='text-yellow-400 text-xs'>자유롭게 살펴본 후 ➜ <b>${nextTabName}</b></span>`;
+                msg.innerHTML = `📣 <b>${tabName}</b> 탭입니다.<br><span class='text-gray-400 text-xs'>${tabDesc}</span>`;
                 
                 // 즉시 다음 버튼 활성화 (자유 스크롤 탐색 후 직접 클릭)
                 if (tutorialStep === 11) {

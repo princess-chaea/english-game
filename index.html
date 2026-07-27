@@ -7488,6 +7488,18 @@
             saveSessionToCloud(true);
         }
 
+        function toggleMasterSound(isEnabled) {
+            if (!gameState.soundSettings) gameState.soundSettings = {};
+            gameState.soundSettings.masterSoundOn = isEnabled;
+            const detailContainer = document.getElementById('detailSoundSettingsContainer');
+            if (detailContainer) {
+                detailContainer.style.opacity = isEnabled ? '1' : '0.4';
+                detailContainer.style.pointerEvents = isEnabled ? 'auto' : 'none';
+            }
+            updateSoundSettingsUI();
+            saveSessionToCloud(true);
+        }
+
         function changeSoundVolume(key, val) {
             if (!gameState.soundSettings) gameState.soundSettings = {};
             const numVal = parseInt(val, 10);
@@ -9558,7 +9570,7 @@
                     const session = JSON.parse(activeSessionRaw);
                     if (session && session.grade && session.name && session.password) {
                         showGameLoadingOverlay();
-                        tempCredentials = { grade: session.grade, classNum: session.classNum, studentNum: session.studentNum, name: session.name };
+                        tempCredentials = { schoolName: session.schoolName, grade: session.grade, classNum: session.classNum, studentNum: session.studentNum, name: session.name };
 
 
 

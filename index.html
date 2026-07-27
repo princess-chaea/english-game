@@ -2313,6 +2313,8 @@
                                 </button>
                             </div>
                         
+            </div>
+                    </div>
             <div class="border-t border-gray-800 pt-3 flex justify-between gap-2 mt-2">
                 <button onclick="logoutSession()" class="bg-red-900/50 hover:bg-red-800 border border-red-700 text-red-300 font-bold px-4 py-1.5 text-xs rounded-none-forced flex items-center gap-1 transition shadow-lg">
                     <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
@@ -7672,7 +7674,7 @@
             }
 
             // 1. Firebase Firestore에서 유저 문서 삭제
-            const uid = `${gameState.schoolName || 'Unknown'}_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+            const uid = tempCredentials && tempCredentials.uid ? tempCredentials.uid : `${gameState.schoolName || 'Unknown'}_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
             console.log('[Retire] Deleting Firestore doc:', 'users/' + uid);
             try {
                 await window._fbDeleteDoc(window._fbDoc(window._fbDb, "users", uid));

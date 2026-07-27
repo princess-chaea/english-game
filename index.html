@@ -4422,7 +4422,12 @@
                 return;
             }
 
-            const cost = Math.floor(info.base * 3.0 * Math.pow(GROWTH_RATE, currentLvl));
+            let cost = Math.floor(info.base * 3.0 * Math.pow(GROWTH_RATE, currentLvl));
+
+            // 튜토리얼 3단계(무기 강화)는 무료(0골드)로 강제 진행
+            if (!gameState.tutorialCompleted && tutorialStep === 3 && gearKey === 'weapon') {
+                cost = 0;
+            }
 
             if (gameState.gold >= cost) {
                 gameState.gold -= cost;

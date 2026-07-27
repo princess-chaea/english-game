@@ -9025,13 +9025,13 @@
                     if (session && session.schoolName && session.grade && session.name && session.password) {
                         // ✨ 새로고침 자동 복원 시에도 로딩바 오버레이 출력
                         showGameLoadingOverlay();
-                             if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('[SW] Registered:', reg.scope))
-                    .catch(err => console.warn('[SW] Registration failed:', err));
-            });
-        }                             const legacyUid = getUid("Unknown", session.grade, session.classNum, session.studentNum, session.name);
+                        tempCredentials = { schoolName: session.schoolName, grade: session.grade, classNum: session.classNum, studentNum: session.studentNum, name: session.name };
+
+                        if (window._fbReady) {
+                            const uid = getUid(session.schoolName, session.grade, session.classNum, session.studentNum, session.name);
+                            window._fbGetDoc(window._fbDoc(window._fbDb, "users", uid)).then(async docSnap => {
+                                if (!docSnap.exists()) {
+                                    const legacyUid = getUid("Unknown", session.grade, session.classNum, session.studentNum, session.name);
                                     try {
                                         const legacyDocSnap = await window._fbGetDoc(window._fbDoc(window._fbDb, "users", legacyUid));
                                         if (legacyDocSnap.exists()) {
@@ -9920,7 +9920,14 @@
                 lucide.createIcons();
             }
         }
-</script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('[SW] Registered:', reg.scope))
+                    .catch(err => console.warn('[SW] Registration failed:', err));
+            });
+        }
+        </script>
 
     <!-- Damage Overlay (Scratch & Flash) -->
     <div id="damageOverlay" class="fixed inset-0 pointer-events-none hidden z-[100] flex-col items-center justify-center bg-red-900/60 transition-opacity duration-300">

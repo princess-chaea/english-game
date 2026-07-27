@@ -1990,11 +1990,11 @@
             </div>
 
             <div class="flex gap-2">
-                <button onclick="closeModal('newUserRegisterModal'); openModal('loginModal');" class="flex-1 py-3 bg-[#1a1a1a] border border-[#3c3c3c] text-white font-bold text-xs uppercase rounded-none-forced">
-                    뒤로가기
-                </button>
                 <button onclick="submitNewUserRegister()" class="flex-1 py-3 bg-green-700 hover:bg-green-600 text-white font-bold text-xs uppercase rounded-none-forced">
                     등록 완료 & 출격!
+                </button>
+                <button onclick="closeModal('newUserRegisterModal'); openModal('loginModal');" class="flex-1 py-3 bg-[#1a1a1a] border border-[#3c3c3c] text-white font-bold text-xs uppercase rounded-none-forced">
+                    뒤로가기
                 </button>
             </div>
         </div>
@@ -6631,15 +6631,15 @@
 
             if (gameState[targetGear] > 1) {
                 gameState[targetGear] -= 1;
-                const msg = `❌ 방어 실패! ${targetName}의 강화 수치가 -1 되었습니다.`;
-                errorEl.innerText = msg;
+                const msg = `❌ 방어 실패! ${targetName}의 강화 수치가 -1 되었습니다.<br>(정답: <span class="text-white">${currentCriticalWord}</span>)`;
+                errorEl.innerHTML = msg;
                 showBattleToast(`💥 방어 실패! ${targetName} -1강 하락!`);
-                showDamageOverlay(msg);
+                showDamageOverlay(`❌ 방어 실패! ${targetName}의 강화 수치가 -1 되었습니다.\n(정답: ${currentCriticalWord})`);
             } else {
-                const msg = `❌ 방어 실패! 치명적인 공격을 받았습니다!`;
-                errorEl.innerText = msg;
+                const msg = `❌ 방어 실패! 치명적인 공격을 받았습니다!<br>(정답: <span class="text-white">${currentCriticalWord}</span>)`;
+                errorEl.innerHTML = msg;
                 showBattleToast("💥 크리티컬 피격!");
-                showDamageOverlay(msg);
+                showDamageOverlay(`❌ 방어 실패! 치명적인 공격을 받았습니다!\n(정답: ${currentCriticalWord})`);
             }
             errorEl.classList.remove("hidden");
             

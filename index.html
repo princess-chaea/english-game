@@ -3939,8 +3939,15 @@
             let goldAccumulator = 0;
             gameLoopInterval = setInterval(() => {
                 const now = Date.now();
-                const delta = (now - lastTick) / 1000;
+                const actualDelta = (now - lastTick) / 1000;
                 lastTick = now;
+
+                if (actualDelta > 60) {
+                    // 앱이 백그라운드에 오래 있다가 활성화됨 -> 오프라인 보상으로 전환
+                    calculateOfflineGains();
+                    return;
+                }
+                const delta = actualDelta;
 
                 const dps = calculateDPSPower();
                 const isCritModalOpen = document.getElementById("criticalDefenseModal") && document.getElementById("criticalDefenseModal").classList.contains("flex");
@@ -3954,7 +3961,9 @@
                 if (goldAccumulator >= 1) {
                     const addG = Math.floor(goldAccumulator);
                     goldAccumulator -= addG;
-                    gameState.gold = (gameState.gold || 0) + addG; gameState.accGold = (gameState.accGold || gameState.gold || 0) + addG;
+                    const prevGold = gameState.gold || 0;
+                    gameState.gold = prevGold + addG;
+                    gameState.accGold = (gameState.accGold || prevGold) + addG;
                     const gEl = document.getElementById("goldCount");
                     if (gEl) gEl.innerText = gameState.gold.toLocaleString();
                 }
@@ -4080,7 +4089,9 @@
                 const goldGained = Math.floor(dps * eligible * 0.1);
 
                 if (goldGained > 0) {
-                    gameState.gold += goldGained; gameState.accGold = (gameState.accGold || gameState.gold || 0) + goldGained;
+                    const prevGold = gameState.gold || 0;
+                    gameState.gold = prevGold + goldGained; 
+                    gameState.accGold = (gameState.accGold || prevGold) + goldGained;
                     showToast(`💤 오프라인 보상 획득! 용사단이 부재중에 ${goldGained.toLocaleString()}G를 축적했습니다.`);
                 }
             }
@@ -8043,8 +8054,8 @@
             // ========================================
             // 🌟 [신화 등급 - Mythic] — 최상위 랭커 전용
             // ========================================
-            { id: "수호신", name: "수호신", tier: "신화", desc: "월드보스 타격 기여도 전체 1위", condition: (gs, res) => res?.myBossRank === 1 || gs.wbTitle === "수호신", style: "mythic-aurora-card border-[#f59e0b] text-yellow-300 shadow-[0_0_15px_rgba(245,158,11,0.8)]" },
-            { id: "정복왕", name: "정복왕", tier: "신화", desc: "스테이지 정복 랭킹 전체 1위", condition: (gs, res) => res?.myStageRank === 1, style: "mythic-aurora-card border-[#3b82f6] text-sky-300 shadow-[0_0_15px_rgba(59,130,246,0.8)]" },
+            { id: "수호신", name: "수호신", tier: "신화", desc: "월드보스 타격 기여도 전체 1위", condition: (gs, res) => (res?.myBossRank === 1 && (gs.wbBestDamage||0) > 0) || gs.wbTitle === "수호신", style: "mythic-aurora-card border-[#f59e0b] text-yellow-300 shadow-[0_0_15px_rgba(245,158,11,0.8)]" },
+            { id: "정복왕", name: "정복왕", tier: "신화", desc: "스테이지 정복 랭킹 전체 1위", condition: (gs, res) => res?.myStageRank === 1 && ((gs.stage||1)>1 || (gs.progress||0)>0), style: "mythic-aurora-card border-[#3b82f6] text-sky-300 shadow-[0_0_15px_rgba(59,130,246,0.8)]" },
             { id: "황금 거상", name: "황금 거상", tier: "신화", desc: "누적 100,000,000(1억) 골드 이상 보유", condition: (gs) => (gs.gold || 0) >= 100000000, style: "mythic-aurora-card border-[#eab308] text-yellow-200 shadow-[0_0_15px_rgba(234,179,8,0.8)]" },
             { id: "단어의 신", name: "단어의 신", tier: "신화", desc: "단어 정답 1,000개 이상 누적 달성", condition: (gs) => (gs.totalQuizCorrect || 0) >= 1000, style: "mythic-aurora-card border-[#10b981] text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.8)]" },
             { id: "유물의 신", name: "유물의 신", tier: "신화", desc: "고대 유물 10종 수집 및 모두 6성(MAX) 돌파", condition: (gs) => (gs.acquiredRelics || []).filter(r => (r.stars||0) >= 6).length >= 10, style: "mythic-aurora-card border-[#8b5cf6] text-violet-300 shadow-[0_0_15px_rgba(139,92,246,0.8)]" },
@@ -8058,11 +8069,10 @@
             // ========================================
             // 🔥 [전설 등급 - Legendary]
             // ========================================
-            { id: "추호신", name: "추호신", tier: "전설", desc: "월드보스 레이드 1위로 완전 격퇴 성공", condition: (gs) => gs.wbTitle === "추호신" || (gs.unlockedTitles || []).includes("추호신"), style: "border-[#dc2626] bg-gradient-to-r from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] shadow-[0_0_10px_rgba(220,38,38,0.7)]" },
-            { id: "개척자", name: "개척자", tier: "전설", desc: "스테이지 Top 3 이내 진입", condition: (gs, res) => typeof res?.myStageRank === 'number' && res.myStageRank <= 3, style: "border-[#dc2626] bg-gradient-to-r from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] shadow-[0_0_10px_rgba(220,38,38,0.7)]" },
+            { id: "개척자", name: "개척자", tier: "전설", desc: "스테이지 Top 3 이내 진입", condition: (gs, res) => typeof res?.myStageRank === 'number' && res.myStageRank > 0 && res.myStageRank <= 3 && ((gs.stage||1)>1 || (gs.progress||0)>0), style: "border-[#dc2626] bg-gradient-to-r from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] shadow-[0_0_10px_rgba(220,38,38,0.7)]" },
             { id: "전설의 대장장이", name: "전설의 대장장이", tier: "전설", desc: "모든 무구 50강(MAX) 달성", condition: (gs) => (gs.helmetLvl||1)>=50 && (gs.armorLvl||1)>=50 && (gs.weaponLvl||1)>=50 && (gs.shieldLvl||1)>=50 && (gs.shoesLvl||1)>=50, style: "border-[#d97706] bg-gradient-to-r from-[#b45309] to-[#78350f] text-[#fde68a] shadow-[0_0_10px_rgba(217,119,6,0.7)]" },
             { id: "고고학자", name: "고고학자", tier: "전설", desc: "고대 유물 전종(10종) 수집 및 모두 3성 이상", condition: (gs) => (gs.acquiredRelics || []).length >= 10 && (gs.acquiredRelics || []).every(r => (r.stars||0) >= 3), style: "border-[#059669] bg-gradient-to-r from-[#047857] to-[#064e3b] text-[#a7f3d0] shadow-[0_0_10px_rgba(5,150,105,0.7)]" },
-            { id: "잠재력 마스터", name: "잠재력 마스터", tier: "전설", desc: "잠재력 슬롯 15개 모두 해금", condition: (gs) => { let c=0; ["helmet","armor","weapon","shield","shoes"].forEach(k=>c+=Object.keys(gs.gearPotentials?.[k]||{}).length); return c>=15; }, style: "border-[#059669] bg-gradient-to-r from-[#047857] to-[#064e3b] text-[#a7f3d0] shadow-[0_0_10px_rgba(5,150,105,0.7)]" },
+            { id: "잠재력 마스터", name: "잠재력 마스터", tier: "전설", desc: "잠재력 슬롯 15개 모두 해금", condition: (gs) => { let c=0; ["helmet","armor","weapon","shield","shoes"].forEach(k=>c+=(gs.gearPotentials?.[k]||[]).filter(x=>x).length); return c>=15; }, style: "border-[#059669] bg-gradient-to-r from-[#047857] to-[#064e3b] text-[#a7f3d0] shadow-[0_0_10px_rgba(5,150,105,0.7)]" },
             { id: "신화적 마법사", name: "신화적 마법사", tier: "전설", desc: "신화(Mythic) 스킬 5개 이상 보유", condition: (gs) => (gs.skillsInventory || []).filter(s => s.grade === 'mythic').length >= 5, style: "border-[#059669] bg-gradient-to-r from-[#047857] to-[#064e3b] text-[#a7f3d0] shadow-[0_0_10px_rgba(5,150,105,0.7)]" },
             { id: "서고의 현자", name: "서고의 현자", tier: "전설", desc: "영단어 마스터 단어 500개 이상 기록", condition: (gs) => (gs.masteredWords || []).length >= 500, style: "border-[#6366f1] bg-gradient-to-r from-[#4f46e5] to-[#3730a3] text-[#c7d2fe] shadow-[0_0_10px_rgba(99,102,241,0.7)]" },
             { id: "스테이지 70 정복자", name: "스테이지 70 정복자", tier: "전설", desc: "스테이지 70 이상 돌파", condition: (gs) => (gs.stage || 1) >= 70, style: "border-[#dc2626] bg-gradient-to-r from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] shadow-[0_0_10px_rgba(220,38,38,0.7)]" },
@@ -8073,7 +8083,7 @@
             // ========================================
             // 💜 [영웅 등급 - Hero]
             // ========================================
-            { id: "토벌 대장", name: "토벌 대장", tier: "영웅", desc: "월드보스 랭킹 Top 5 이내 진입", condition: (gs, res) => typeof res?.myBossRank === 'number' && res.myBossRank <= 5, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
+            { id: "토벌 대장", name: "토벌 대장", tier: "영웅", desc: "월드보스 랭킹 Top 5 이내 진입", condition: (gs, res) => typeof res?.myBossRank === 'number' && res.myBossRank > 0 && res.myBossRank <= 5 && (gs.wbBestDamage||0) > 0, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
             { id: "정복 선봉장", name: "정복 선봉장", tier: "영웅", desc: "스테이지 40 이상 정복 달성", condition: (gs) => (gs.stage || 1) >= 40, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
             { id: "단어 마스터", name: "단어 마스터", tier: "영웅", desc: "단어 정답 300개 이상 정복", condition: (gs) => (gs.totalQuizCorrect || 0) >= 300, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
             { id: "완벽주의자", name: "완벽주의자", tier: "영웅", desc: "영단어 서고 마스터 단어 150개 이상 기록", condition: (gs) => (gs.masteredWords || []).length >= 150, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },

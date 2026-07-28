@@ -687,11 +687,11 @@
     <div class="m-stripe-divider"></div>
 
     <!-- Main RPG Arena & Upgrade Panel Container -->
-    <main class="max-w-[1400px] w-full mx-auto px-4 py-2 md:py-3 flex-grow overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-stretch">
+    <main class="max-w-[1400px] w-full mx-auto px-4 py-2 md:py-3 flex-grow overflow-hidden grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 items-stretch">
 
         <!-- LEFT PANEL: Dynamic RPG Battle Arena (4 Cols) -->
         <section id="leftRpgPanel"
-            class="lg:col-span-4 bg-black border border-[#3c3c3c] p-3 flex flex-col justify-between relative overflow-hidden h-full min-h-0 rounded-none-forced">
+            class="md:col-span-4 bg-black border border-[#3c3c3c] p-3 flex flex-col justify-between relative overflow-hidden h-full min-h-0 rounded-none-forced">
             
             <!-- Stage Header & Progress -->
             <div class="z-10 flex flex-wrap justify-between items-center bg-[#0d0d0d] border border-[#3c3c3c] px-2 py-1.5 rounded-none-forced gap-1 overflow-hidden">
@@ -855,7 +855,7 @@
         </section>
 
         <!-- RIGHT PANEL: Action Quiz, Equipment Upgrades, Pets (8 Cols) -->
-        <section id="rightMainPanel" class="lg:col-span-8 flex flex-col gap-2 transition-all duration-300 overflow-y-auto h-full pr-1.5">
+        <section id="rightMainPanel" class="md:col-span-8 flex flex-col gap-2 transition-all duration-300 overflow-y-auto h-full pr-1.5">
 
             <!-- Header Navigation & Title -->
             <nav class="grid grid-cols-3 sm:grid-cols-7 gap-1 bg-[#0d0d0d] p-1 border border-[#3c3c3c] rounded-none-forced">
@@ -3024,12 +3024,13 @@
 
 
                 if (type === 'click') {
-                    osc.frequency.setValueAtTime(320, now);
-                    osc.frequency.exponentialRampToValueAtTime(80, now + 0.12);
-                    gain.gain.setValueAtTime(0.2 * volScale, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01 * volScale, now + 0.12);
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(350, now);
+                    osc.frequency.exponentialRampToValueAtTime(50, now + 0.15);
+                    gain.gain.setValueAtTime(0.4 * volScale, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01 * volScale, now + 0.15);
                     osc.start(now);
-                    osc.stop(now + 0.12);
+                    osc.stop(now + 0.15);
                 } else if (type === 'hit') {
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(150, now);

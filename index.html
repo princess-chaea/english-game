@@ -691,7 +691,7 @@
 
         <!-- LEFT PANEL: Dynamic RPG Battle Arena (4 Cols) -->
         <section id="leftRpgPanel"
-            class="md:col-span-5 lg:col-span-4 bg-black border border-[#3c3c3c] p-3 flex flex-col justify-between relative overflow-hidden h-full min-h-0 rounded-none-forced">
+            class="md:col-span-5 lg:col-span-4 bg-black border border-[#3c3c3c] p-3 flex flex-col justify-between relative overflow-y-auto h-full min-h-0 rounded-none-forced custom-scrollbar">
             
             <!-- Stage Header & Progress -->
             <div class="z-10 flex flex-wrap justify-between items-center bg-[#0d0d0d] border border-[#3c3c3c] px-2 py-1.5 rounded-none-forced gap-1 overflow-hidden">
@@ -753,7 +753,7 @@
 
             <!-- Interactive Combat Arena Viewport (Vertical Racetrack) -->
             <div id="battleArena"
-                class="relative z-10 w-full flex-1 min-h-0 border border-[#3c3c3c] bg-[#000000] flex flex-col items-center justify-between py-2 cursor-pointer select-none overflow-hidden my-1 rounded-none-forced"
+                class="relative z-10 w-full flex-1 min-h-[160px] border border-[#3c3c3c] bg-[#000000] flex flex-col items-center justify-between py-2 cursor-pointer select-none overflow-hidden my-1 rounded-none-forced"
                 onclick="handleArenaClick(event)">
 
                 <!-- Racetrack vertical center stripes in the background -->

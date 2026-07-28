@@ -4484,11 +4484,12 @@
             const progress = (s - 1) / 99; // 1스테이지 0%, 100스테이지 100%
 
             // 전투력 곡선(Math.pow(progress, 1.7))과 동일한 다항식 곡선 적용
-            // 1스테이지 600 HP -> 100스테이지 약 275,000 HP (보스 1,100만)
-            const regularHp = Math.floor(600 + 274400 * Math.pow(progress, 1.7));
+            // 일반몹 기준: 자동 사냥 10초 이상 (DPS의 10배 이상 HP 세팅)
+            // 1스테이지 1,500 HP -> 100스테이지 700,000 HP
+            const regularHp = Math.floor(1500 + 698500 * Math.pow(progress, 1.7));
 
             if (isBoss) {
-                return regularHp * 40;
+                return regularHp * 16; // 100스테이지 보스 약 1,120만 HP 유지
             }
             return regularHp;
         }
@@ -6736,7 +6737,7 @@
             const bossBonus = isBossBattleActive 
                 ? (1.0 + (getEquippedRelicBonus("relic_feather") + getPotentialStatBonus('bossDmg')) / 100)
                 : 1.0;
-            const statDmg = (calculateClickAttackPower() * 15) + (calculateDPSPower() * 3);
+            const statDmg = (calculateClickAttackPower() * 5) + Math.floor(calculateDPSPower() * 0.5);
             const rawQuizDmg = isBossBattleActive 
                 ? Math.max(statDmg, Math.floor(monsterMaxHp * 0.035)) 
                 : statDmg;
@@ -6854,7 +6855,7 @@
                 const bossBonus = isBossBattleActive 
                     ? (1.0 + (getEquippedRelicBonus("relic_feather") + getPotentialStatBonus('bossDmg')) / 100)
                     : 1.0;
-                const statDmg = (calculateClickAttackPower() * 15) + (calculateDPSPower() * 3);
+                const statDmg = (calculateClickAttackPower() * 5) + Math.floor(calculateDPSPower() * 0.5);
                 const rawQuizDmg = isBossBattleActive 
                     ? Math.max(statDmg, Math.floor(monsterMaxHp * 0.035)) 
                     : statDmg;
@@ -7103,7 +7104,7 @@
             if (profileGold) profileGold.innerText = `×${goldMultiplier.toFixed(2)}배`;
 
             // 📖 퀴즈 단어 정답 타격 피해 수치 & 증폭률
-            const baseQuizStatDmg = (calculateClickAttackPower() * 15) + (calculateDPSPower() * 3);
+            const baseQuizStatDmg = (calculateClickAttackPower() * 5) + Math.floor(calculateDPSPower() * 0.5);
             const relicChaliceDmg = getEquippedRelicBonus("relic_chalice");
             const quizCombo = gameState.combo || 0;
             const comboDmgPct = Math.min(150, quizCombo * 5); // 콤보당 +5% (최대 +150%)

@@ -1351,9 +1351,9 @@
                                         <span class="text-[#7e7e7e] block text-[10px] mb-1">기여 지분 (%)</span>
                                         <span id="myWorldBossShareDisplay" class="font-bold text-yellow-400 font-mono text-sm">0.00%</span>
                                     </div>
-                                    <div class="text-center">
-                                        <span class="text-[#7e7e7e] block text-[10px] mb-1">예상 시즌 보상</span>
-                                        <span id="myWorldBossRewardDisplay" class="font-bold text-pink-400 text-sm">+0 FP / [수호신]</span>
+                                    <div class="text-center col-span-3 border-t border-[#262626] pt-1.5 mt-1">
+                                        <span class="text-[#7e7e7e] block text-[10px] mb-1">예상 주간 보상</span>
+                                        <span id="myWorldBossRewardDisplay" class="font-bold text-pink-400 text-[11px] tracking-tight">계산 중...</span>
                                     </div>
                                 </div>
                             </div>
@@ -1409,10 +1409,9 @@
                                         <span class="font-bold text-yellow-400 text-xs tracking-wider">월드보스 참전 및 주간 보상 안내</span>
                                     </div>
                                     <ul class="text-[10px] text-gray-400 flex flex-col gap-1 list-disc list-inside">
-                                        <li><strong class="text-gray-200">일일 참전 보상:</strong> 누적 타격량 비례 즉시 <span class="text-yellow-400 font-bold">골드</span> 및 <span class="text-pink-300 font-bold">고대 증표(유물)</span> 획득</li>
-                                        <li><strong class="text-gray-200">토벌 성공 (HP 0):</strong> 보스 격파 시 학년 전체에 <span class="text-pink-400 font-bold">100,000 FP</span> 기여도 비례 즉시 분배</li>
-                                        <li><strong class="text-gray-200">주간 결산 보상:</strong> 매주 월요일 자정 결산 시 깎은 HP의 기여도만큼 비례하여 <span class="text-pink-400 font-bold">FP</span> 분배</li>
-                                        <li><strong class="text-gray-200">최우수 용사:</strong> 보스 토벌 시 누적 딜량 1위 유저에게 영구 <span class="text-purple-400 font-bold">[수호신] 칭호</span> 부여</li>
+                                        <li><strong class="text-gray-200">일일 참전 보상:</strong> 누적 타격량 비례 즉시 <span class="text-yellow-400 font-bold">골드</span> 및 <span class="text-pink-300 font-bold">고대 증표(유물)</span> 획득 (기본 20개 + 데미지 5만당 20개, 최대 200개)</li>
+                                        <li><strong class="text-gray-200">주간 결산 보상:</strong> 매주 월요일 자정 결산 시 기여도 비례하여 최대 <span class="text-pink-400 font-bold">100,000 FP</span> 분배 (보스 미처치 시 1/2 지급)</li>
+                                        <li><strong class="text-gray-200">최우수 용사:</strong> 보스 토벌 성공 시 누적 딜량 1위 유저에게 영구 <span class="text-purple-400 font-bold">[수호신] 칭호</span> 부여</li>
                                     </ul>
                                 </div>
                             </div>
@@ -8711,7 +8710,8 @@
                 document.getElementById("myWorldBossDmgDisplay").innerText = cachedWb.myDamage.toLocaleString();
                 document.getElementById("myWorldBossShareDisplay").innerText = `${cachedWb.sharePct}%`;
                 const expectedTokensCache = Math.min(200, 20 + Math.floor(cachedWb.myDamage / 50000));
-                document.getElementById("myWorldBossRewardDisplay").innerText = `주간결산 FP / 칭호 (일일 증표 +${expectedTokensCache})`;
+                const expectedFpCache = Math.round(parseFloat(cachedWb.sharePct) * 1000);
+                document.getElementById("myWorldBossRewardDisplay").innerHTML = `처치: <span class="text-white">+${expectedFpCache.toLocaleString()} FP</span> / 미처치: <span class="text-gray-300">+${Math.floor(expectedFpCache / 2).toLocaleString()} FP</span> <span class="text-[9px] text-gray-500">(일일 증표 +${expectedTokensCache})</span>`;
 
                 // 캐시 기반 클리어 오버레이 즉시 표시
                 const defeatedOverlay = document.getElementById("wbDefeatedOverlay");
@@ -8760,7 +8760,8 @@
                     document.getElementById("myWorldBossShareDisplay").innerText = `${cappedShare}%`;
                     
                     const expectedTokens = Math.min(200, 20 + Math.floor(myDamage / 50000));
-                    document.getElementById("myWorldBossRewardDisplay").innerText = `주간결산 FP / 칭호 (일일 증표 +${expectedTokens})`;
+                    const expectedFp = Math.round(parseFloat(cappedShare) * 1000);
+                    document.getElementById("myWorldBossRewardDisplay").innerHTML = `처치: <span class="text-white">+${expectedFp.toLocaleString()} FP</span> / 미처치: <span class="text-gray-300">+${Math.floor(expectedFp / 2).toLocaleString()} FP</span> <span class="text-[9px] text-gray-500">(일일 증표 +${expectedTokens})</span>`;
 
                     // ✅ 서버 응답 데이터를 로컬 캐시에 저장 (다음 탭 전환 시 즉시 표시용)
                     localStorage.setItem(wbCacheKey, JSON.stringify({

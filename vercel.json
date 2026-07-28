@@ -2,7 +2,42 @@
   "cleanUrls": true,
   "headers": [
     {
-      "source": "/(.*)\\.(jpg|jpeg|png|gif|webp|svg|ico|mp3|wav|ogg|css|js)",
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Pragma",
+          "value": "no-cache"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)\\.(jpg|jpeg|png|gif|webp|svg|ico|mp3|wav|ogg|css)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -11,7 +46,7 @@
       ]
     },
     {
-      "source": "/(.*)\\.(txt|json)",
+      "source": "/(.*)\\.(txt)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -24,7 +59,7 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=3600, stale-while-revalidate=86400"
+          "value": "public, max-age=0, must-revalidate"
         },
         {
           "key": "Cross-Origin-Opener-Policy",

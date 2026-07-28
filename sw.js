@@ -50,17 +50,30 @@ self.addEventListener('fetch', event => {
 
   // Cache-First strategy for same-origin static files
   if (url.origin === self.location.origin) {
+    // index.html은 항상 네트워크 우선 (캐시 무시) → 최신 게임 반영 보장
+    if (url.pathname === '/' || url.pathname === '/index.html') {
+      event.respondWith(
+        fetch(event.request).then(networkResp => {
+          if (networkResp && networkResp.status === 200) {
+            const clone = networkResp.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          }
+          return networkResp;
+        }).catch(() => caches.match(event.request)) // 오프라인 시 캐시 fallback
+      );
+      return;
+    }
+
     event.respondWith(
       caches.match(event.request).then(cached => {
         if (cached) {
           // Serve from cache, revalidate in background (stale-while-revalidate)
-          const fetchPromise = fetch(event.request).then(networkResp => {
+          fetch(event.request).then(networkResp => {
             if (networkResp && networkResp.status === 200) {
               const clone = networkResp.clone();
               caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
             }
-            return networkResp;
-          }).catch(() => cached); // fallback to cache if offline
+          }).catch(() => {});
           return cached;
         }
         // Not in cache: fetch from network and store

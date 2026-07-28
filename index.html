@@ -8031,29 +8031,49 @@
                 if (typeof wbInterval !== 'undefined') clearInterval(wbInterval);
                 if (typeof wbCombatInterval !== 'undefined') clearInterval(wbCombatInterval);
                 if (typeof stopCombatSounds === 'function') stopCombatSounds();
-                
+
                 if (fromBackButton && /android/i.test(navigator.userAgent)) return; // 이미 홈으로 나간 경우
-                let closeAttempted = false;
-                if (/android/i.test(navigator.userAgent)) {
-                    // 안드로이드 폰/태블릿: 홈 화면으로 즉시 이동 (일반 앱처럼 꺼짐)
-                    try { 
-                        window.location.href = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end"; 
-                        closeAttempted = true;
-                    } catch(e) {}
-                }
-                
+
+                // 삼성 덱스 또는 PC 브라우저 환경 감지
+                const isAndroid = /android/i.test(navigator.userAgent);
+                // 덱스 모드: 안드로이드이지만 화면이 크거나 마우스가 연결된 환경 (window.innerWidth > 700 + 안드로이드)
+                const isDeX = isAndroid && (window.innerWidth > 700 || window.screen.width > 700);
+
+                let closed = false;
+
+                // 1순위: window.close() (열린 탭/PWA 팝업에서 동작)
+                try {
+                    window.close();
+                    closed = true;
+                } catch(e) {}
+
                 setTimeout(() => {
-                    try { window.close(); } catch(e) {}
-                    
-                    // 최후의 수단: 홈 인텐트나 window.close()가 무시되는 PWA(모바일) 환경을 위한 풀스크린 안내
-                    // 웹(PC)에서는 불필요한 검은 화면이 뜨지 않도록 모바일 환경일 때만 표시
-                    if (/android|iphone|ipad|ipod/i.test(navigator.userAgent)) {
-                        setTimeout(() => {
-                            document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#000;color:#fff;font-size:24px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.5;">영웅의 영혼석에 기록이<br>안전하게 각인되었습니다!<br><br>이제 앱을 완전히 종료하셔도 됩니다.<br><br><span style="font-size:14px;color:#888;">(뒤로가기를 두 번 누르거나 홈 버튼을 눌러주세요)</span></div>';
-                        }, 500);
+                    // window.close()가 먹혔는지 확인 (창이 살아있으면 아직 닫히지 않은 것)
+                    try {
+                        if (!closed || !window.closed) {
+                            if (isAndroid && !isDeX) {
+                                // 일반 안드로이드 폰: 홈 인텐트 시도
+                                try {
+                                    window.location.href = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end";
+                                } catch(e) {}
+
+                                // 그래도 안되면 검은 안내 화면
+                                setTimeout(() => {
+                                    document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#000;color:#fff;font-size:22px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.8;">💾 기록이 안전하게 저장되었습니다!<br><br><span style="font-size:14px;color:#888;">(뒤로가기 두 번 또는 홈 버튼을 눌러주세요)</span></div>';
+                                }, 600);
+                            } else {
+                                // 덱스 / PC: 안내 메시지만 (window.close 불가, 검은 화면 불필요)
+                                showToast("💾 저장 완료! 브라우저 탭을 닫아주세요.");
+                                isExiting = false; // 게임 계속 진행 가능하게
+                            }
+                        }
+                    } catch(e) {
+                        showToast("💾 저장 완료! 브라우저 탭을 닫아주세요.");
+                        isExiting = false;
                     }
                 }, 400);
             };
+
 
             const doExit = () => {
                 if (fromBackButton && /android/i.test(navigator.userAgent)) {

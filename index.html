@@ -3037,6 +3037,11 @@
                 const volScale = masterScale * detailScale;
                 if (volScale <= 0) return;
 
+                // 브라우저 자동재생 정책으로 suspended 상태일 경우 재개
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.connect(gain);
@@ -8040,6 +8045,7 @@
         });
 
         function saveAndExit(fromBackButton = false) {
+            if (typeof gameLoopInterval !== 'undefined' && gameLoopInterval) clearInterval(gameLoopInterval);
             isExiting = true;
             saveLocalCache();
             showToast("💾 데이터 저장 중...");

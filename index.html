@@ -84,13 +84,15 @@
                             if(sortedDmg.length > 0) myRank = sortedDmg.indexOf(myDamage) + 1;
                             
                             const baseFp = Math.floor(myDamage / 1000);
-                            const victoryFp = isVictory ? Math.floor(100000 * sharePct) : 0;
-                            const totalFp = baseFp + victoryFp;
+                            const shareFp = Math.round(100000 * sharePct);
+                            const totalFp = baseFp + shareFp;
                             const getsTitle = isVictory && myRank === 1;
 
                             // UI 업데이트
                             const modal = document.getElementById("wbVictoryNoticeModal");
                             if (modal) {
+                                document.getElementById("wbVictoryNoticeModal").querySelector('h2').innerHTML = "🏆 월드보스 주간 결산 🏆";
+                                document.getElementById("wbVictoryNoticeModal").querySelector('p').innerText = "지난 주 월드보스 전투 결과가 집계되었습니다!";
                                 document.getElementById("wbModalMyDamage").innerText = myDamage.toLocaleString() + " HP";
                                 document.getElementById("wbModalMyShare").innerText = (sharePct * 100).toFixed(1) + "%";
                                 
@@ -110,7 +112,7 @@
                                     showToast("월드보스 주간 보상을 수령했습니다!");
                                 };
                                 openModal("wbVictoryNoticeModal");
-                                playSoundEffect(isVictory ? 'levelup' : 'incorrect');
+                                playSoundEffect('levelup');
                             } else {
                                 // 모달이 없는 경우 자동 수령
                                 gameState.fp = (gameState.fp || 0) + totalFp;
@@ -2467,6 +2469,97 @@
             </div>
         </div>
     </div>
+    <!-- 💤 오프라인 보상 퀴즈 모달 -->
+    <div id="offlineRewardModal" class="fixed inset-0 z-[9990] hidden items-center justify-center p-4"
+         style="background: rgba(0,0,0,0.92); backdrop-filter: blur(6px);">
+        <div class="relative max-w-md w-full" style="border:2px solid #7c3aed; border-radius:4px;
+             background: linear-gradient(160deg, #0f0720 0%, #0a0514 100%);
+             box-shadow: 0 0 60px rgba(124,58,237,0.5), inset 0 0 30px rgba(124,58,237,0.05);">
+
+            <!-- 상단 배너 -->
+            <div style="background: linear-gradient(90deg, #4c1d95, #7c3aed, #a855f7, #7c3aed, #4c1d95);
+                        padding: 8px 20px; font-size:10px; font-weight:900; color:#e9d5ff; letter-spacing:0.2em; font-family:monospace; text-align:center;">
+                ⚡ OFFLINE BONUS CHALLENGE ⚡
+            </div>
+
+            <div style="padding: 20px 24px 24px;">
+                <!-- 안내문 -->
+                <div id="offlineRewardIntro">
+                    <div class="text-center mb-4">
+                        <div style="font-size:48px; margin-bottom:8px;">💤</div>
+                        <h2 style="font-size:18px; font-weight:900; color:#a855f7; margin-bottom:6px; font-family:monospace;">오프라인 부재 보상!</h2>
+                        <p style="color:#9ca3af; font-size:12px; margin-bottom:4px;">용사단이 부재 중 열심히 활동했습니다.</p>
+                        <p style="color:#c4b5fd; font-size:13px; font-weight:700;" id="offlineBaseGoldText">+0G 준비 완료</p>
+                    </div>
+                    <!-- 보상 선택 -->
+                    <div style="background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.4); border-radius:4px; padding:14px; margin-bottom:14px;">
+                        <div style="color:#e9d5ff; font-size:12px; font-weight:700; margin-bottom:10px; text-align:center;">📚 영단어 3문제 도전 → 1.5배 보상!</div>
+                        <div style="display:flex; gap:8px; font-size:11px; color:#9ca3af; margin-bottom:6px;">
+                            <span style="flex:1; text-align:center; padding:6px; background:rgba(0,0,0,0.3); border:1px solid rgba(99,102,241,0.4); border-radius:3px;">①<br>4지선다</span>
+                            <span style="flex:1; text-align:center; padding:6px; background:rgba(0,0,0,0.3); border:1px solid rgba(99,102,241,0.4); border-radius:3px;">②<br>4지선다</span>
+                            <span style="flex:1; text-align:center; padding:6px; background:rgba(0,0,0,0.3); border:1px solid rgba(168,85,247,0.4); border-radius:3px;">③<br>단답형</span>
+                        </div>
+                        <p style="color:#6b7280; font-size:10px; text-align:center;">하나라도 틀리면 기본 보상(1배) 즉시 지급</p>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="offlineSkipChallenge()" style="flex:1; padding:12px; font-size:12px; font-weight:700; background:rgba(55,65,81,0.8); color:#9ca3af; border:1px solid #374151; border-radius:4px; cursor:pointer;">
+                            그냥 받기 (×1)
+                        </button>
+                        <button onclick="offlineStartChallenge()" style="flex:2; padding:12px; font-size:13px; font-weight:900; background: linear-gradient(90deg, #6d28d9, #7c3aed); color:#fff; border:none; border-radius:4px; cursor:pointer; box-shadow: 0 0 15px rgba(124,58,237,0.5);">
+                            ⚡ 도전! (×1.5)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 퀴즈 영역 (처음엔 숨김) -->
+                <div id="offlineQuizArea" class="hidden">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                        <span style="color:#a855f7; font-size:11px; font-weight:700; font-family:monospace;" id="offlineQuizCounter">문제 1 / 3</span>
+                        <div id="offlineQuizHearts" style="font-size:14px;">❤️❤️❤️</div>
+                    </div>
+
+                    <!-- 문제 카드 -->
+                    <div style="background:rgba(0,0,0,0.5); border:1px solid rgba(124,58,237,0.4); border-radius:4px; padding:16px; margin-bottom:14px; min-height:70px; display:flex; align-items:center; justify-content:center;">
+                        <p id="offlineQuizQuestion" style="color:#e9d5ff; font-size:15px; font-weight:700; text-align:center; font-family:monospace; word-break:break-all;"></p>
+                    </div>
+
+                    <!-- 객관식 보기 -->
+                    <div id="offlineMCQArea" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+                        <button id="offlineOpt0" onclick="offlineAnswerMCQ(0)" style="padding:10px 6px; font-size:12px; font-weight:700; background:rgba(30,30,60,0.8); color:#d1d5db; border:1px solid rgba(99,102,241,0.5); border-radius:4px; cursor:pointer;"></button>
+                        <button id="offlineOpt1" onclick="offlineAnswerMCQ(1)" style="padding:10px 6px; font-size:12px; font-weight:700; background:rgba(30,30,60,0.8); color:#d1d5db; border:1px solid rgba(99,102,241,0.5); border-radius:4px; cursor:pointer;"></button>
+                        <button id="offlineOpt2" onclick="offlineAnswerMCQ(2)" style="padding:10px 6px; font-size:12px; font-weight:700; background:rgba(30,30,60,0.8); color:#d1d5db; border:1px solid rgba(99,102,241,0.5); border-radius:4px; cursor:pointer;"></button>
+                        <button id="offlineOpt3" onclick="offlineAnswerMCQ(3)" style="padding:10px 6px; font-size:12px; font-weight:700; background:rgba(30,30,60,0.8); color:#d1d5db; border:1px solid rgba(99,102,241,0.5); border-radius:4px; cursor:pointer;"></button>
+                    </div>
+
+                    <!-- 주관식 입력 -->
+                    <div id="offlineFIBArea" class="hidden" style="margin-bottom:12px;">
+                        <p style="color:#9ca3af; font-size:11px; margin-bottom:8px; text-align:center;">영어 단어를 입력하세요 (대소문자 무관)</p>
+                        <div style="display:flex; gap:8px;">
+                            <input id="offlineFIBInput" type="text" placeholder="spell it out..."
+                                style="flex:1; padding:10px 12px; font-size:14px; font-family:monospace; font-weight:700; background:rgba(0,0,0,0.5); color:#e9d5ff; border:1px solid rgba(124,58,237,0.6); border-radius:4px; outline:none; text-transform:lowercase;"
+                                onkeydown="if(event.key==='Enter') offlineAnswerFIB()" />
+                            <button onclick="offlineAnswerFIB()" style="padding:10px 16px; font-size:13px; font-weight:900; background:linear-gradient(90deg,#6d28d9,#7c3aed); color:#fff; border:none; border-radius:4px; cursor:pointer;">확인</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 결과 영역 (처음엔 숨김) -->
+                <div id="offlineResultArea" class="hidden" style="text-align:center;">
+                    <div id="offlineResultIcon" style="font-size:52px; margin-bottom:12px;"></div>
+                    <h3 id="offlineResultTitle" style="font-size:18px; font-weight:900; margin-bottom:6px; font-family:monospace;"></h3>
+                    <p id="offlineResultDesc" style="font-size:13px; color:#9ca3af; margin-bottom:16px;"></p>
+                    <div style="background:rgba(0,0,0,0.4); border:1px solid rgba(124,58,237,0.3); border-radius:4px; padding:12px; margin-bottom:16px;">
+                        <span style="color:#c4b5fd; font-size:12px; font-weight:700;">획득 보상</span><br>
+                        <span id="offlineResultReward" style="font-size:22px; font-weight:900; color:#fbbf24; font-family:monospace;"></span>
+                    </div>
+                    <button onclick="closeOfflineModal()" style="width:100%; padding:14px; font-size:14px; font-weight:900; background:linear-gradient(90deg,#6d28d9,#7c3aed); color:#fff; border:none; border-radius:4px; cursor:pointer; box-shadow:0 0 20px rgba(124,58,237,0.5);">
+                        ✨ 보상 수령!
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- World Boss Victory Announcement Modal -->
     <!-- ✅ 월드보스 격퇴 보상 수령 모달 (화면 중앙 대형 팝업) -->
     <div id="wbVictoryNoticeModal" class="fixed inset-0 z-[9999] hidden items-center justify-center p-4"
@@ -4076,6 +4169,12 @@
             return Math.max(1, Math.floor(totalBase * relicMult));
         }
 
+        // ========================================
+        // 💤 오프라인 보상 퀴즈 시스템
+        // ========================================
+        let _offlineGoldPending = 0;
+        let _offlineQuizState = { questions: [], current: 0, allCorrect: true };
+
         function calculateOfflineGains() {
             const now = Date.now();
             const deltaSeconds = Math.floor((now - gameState.lastSaved) / 1000);
@@ -4087,13 +4186,194 @@
                 const goldGained = Math.floor(dps * eligible * 0.1);
 
                 if (goldGained > 0) {
-                    const prevGold = gameState.gold || 0;
-                    gameState.gold = prevGold + goldGained; 
-                    gameState.accGold = (gameState.accGold || prevGold) + goldGained;
-                    showToast(`💤 오프라인 보상 획득! 용사단이 부재중에 ${goldGained.toLocaleString()}G를 축적했습니다.`);
+                    _offlineGoldPending = goldGained;
+                    // 단어장이 준비된 경우 퀴즈 모달, 아닌 경우 즉시 지급
+                    if (gameState.wordsPool && gameState.wordsPool.length >= 4) {
+                        _showOfflineRewardModal(goldGained);
+                        return; // 모달이 보상을 처리함
+                    } else {
+                        // 단어 없으면 그냥 지급
+                        const prevGold = gameState.gold || 0;
+                        gameState.gold = prevGold + goldGained;
+                        gameState.accGold = (gameState.accGold || prevGold) + goldGained;
+                        showToast(`💤 오프라인 보상 획득! ${goldGained.toLocaleString()}G 축적!`);
+                    }
                 }
             }
             saveLocalCache();
+        }
+
+        function _showOfflineRewardModal(goldGained) {
+            const modal = document.getElementById('offlineRewardModal');
+            if (!modal) return;
+            // 초기 화면으로 리셋
+            document.getElementById('offlineRewardIntro').classList.remove('hidden');
+            document.getElementById('offlineQuizArea').classList.add('hidden');
+            document.getElementById('offlineResultArea').classList.add('hidden');
+            document.getElementById('offlineBaseGoldText').innerText = `+${goldGained.toLocaleString()}G 준비 완료 → 도전 성공 시 +${Math.floor(goldGained * 1.5).toLocaleString()}G!`;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function offlineSkipChallenge() {
+            // 퀴즈 없이 기본 1배 지급
+            _grantOfflineGold(1.0);
+            _showOfflineResult(false, _offlineGoldPending);
+        }
+
+        function offlineStartChallenge() {
+            const pool = gameState.wordsPool || [];
+            if (pool.length < 4) { offlineSkipChallenge(); return; }
+
+            // 3문제 무작위 선정
+            const shuffled = [...pool].sort(() => Math.random() - 0.5);
+            const q1word = shuffled[0], q2word = shuffled[1], q3word = shuffled[2];
+
+            // 오답 보기 재료 (정답 제외 나머지 단어들)
+            const rest = shuffled.slice(3);
+            function makeMCQChoices(correctWord) {
+                const wrongs = rest.filter(w => w.word !== correctWord.word && w.meaning !== correctWord.meaning)
+                    .sort(() => Math.random() - 0.5).slice(0, 3).map(w => w.meaning);
+                const choices = [correctWord.meaning, ...wrongs].sort(() => Math.random() - 0.5);
+                return { choices, correctIdx: choices.indexOf(correctWord.meaning) };
+            }
+
+            const mcq1 = makeMCQChoices(q1word);
+            const mcq2 = makeMCQChoices(q2word);
+
+            _offlineQuizState = {
+                questions: [
+                    { type: 'mcq', prompt: `"${q1word.word}"의 뜻은?`, answer: q1word.meaning, choices: mcq1.choices, correctIdx: mcq1.correctIdx },
+                    { type: 'mcq', prompt: `"${q2word.word}"의 뜻은?`, answer: q2word.meaning, choices: mcq2.choices, correctIdx: mcq2.correctIdx },
+                    { type: 'fib', prompt: `"${q3word.meaning}"을(를) 영어로?`, answer: q3word.word }
+                ],
+                current: 0,
+                allCorrect: true
+            };
+
+            document.getElementById('offlineRewardIntro').classList.add('hidden');
+            document.getElementById('offlineQuizArea').classList.remove('hidden');
+            _renderOfflineQuestion();
+        }
+
+        function _renderOfflineQuestion() {
+            const { questions, current } = _offlineQuizState;
+            const q = questions[current];
+            document.getElementById('offlineQuizCounter').innerText = `문제 ${current + 1} / 3`;
+
+            // 남은 목숨 표시
+            const hearts = '❤️'.repeat(3 - current) + (current > 0 && !_offlineQuizState.allCorrect ? '💔' : '');
+            document.getElementById('offlineQuizHearts').innerText = '❤️❤️❤️';
+
+            document.getElementById('offlineQuizQuestion').innerText = q.prompt;
+
+            const mcqArea = document.getElementById('offlineMCQArea');
+            const fibArea = document.getElementById('offlineFIBArea');
+
+            if (q.type === 'mcq') {
+                mcqArea.style.display = 'grid';
+                fibArea.classList.add('hidden');
+                for (let i = 0; i < 4; i++) {
+                    const btn = document.getElementById(`offlineOpt${i}`);
+                    btn.innerText = q.choices[i];
+                    btn.style.background = 'rgba(30,30,60,0.8)';
+                    btn.style.color = '#d1d5db';
+                    btn.style.border = '1px solid rgba(99,102,241,0.5)';
+                    btn.disabled = false;
+                }
+            } else {
+                mcqArea.style.display = 'none';
+                fibArea.classList.remove('hidden');
+                const inp = document.getElementById('offlineFIBInput');
+                inp.value = '';
+                setTimeout(() => inp.focus(), 100);
+            }
+        }
+
+        function offlineAnswerMCQ(idx) {
+            const q = _offlineQuizState.questions[_offlineQuizState.current];
+            const correct = idx === q.correctIdx;
+            const btns = ['offlineOpt0','offlineOpt1','offlineOpt2','offlineOpt3'];
+
+            // 정답/오답 색상 표시
+            document.getElementById(`offlineOpt${q.correctIdx}`).style.background = 'rgba(22,163,74,0.4)';
+            document.getElementById(`offlineOpt${q.correctIdx}`).style.border = '1px solid #4ade80';
+            if (!correct) {
+                document.getElementById(`offlineOpt${idx}`).style.background = 'rgba(220,38,38,0.4)';
+                document.getElementById(`offlineOpt${idx}`).style.border = '1px solid #ef4444';
+                _offlineQuizState.allCorrect = false;
+            }
+            btns.forEach(id => document.getElementById(id).disabled = true);
+
+            setTimeout(() => _offlineNextQuestion(correct), 900);
+        }
+
+        function offlineAnswerFIB() {
+            const q = _offlineQuizState.questions[_offlineQuizState.current];
+            const inp = document.getElementById('offlineFIBInput');
+            const userAnswer = (inp.value || '').trim().toLowerCase();
+            const correct = userAnswer === q.answer.toLowerCase();
+            if (!correct) _offlineQuizState.allCorrect = false;
+            _offlineNextQuestion(correct);
+        }
+
+        function _offlineNextQuestion(wasCorrect) {
+            if (!wasCorrect) {
+                // 틀리면 즉시 기본 보상 지급 후 결과
+                const gold = _offlineGoldPending;
+                _grantOfflineGold(1.0);
+                _showOfflineResult(false, gold);
+                return;
+            }
+            _offlineQuizState.current++;
+            if (_offlineQuizState.current >= 3) {
+                // 3문제 모두 정답!
+                const gold = _offlineGoldPending;
+                _grantOfflineGold(1.5);
+                _showOfflineResult(true, gold);
+            } else {
+                _renderOfflineQuestion();
+            }
+        }
+
+        function _grantOfflineGold(multiplier) {
+            const goldGained = Math.floor(_offlineGoldPending * multiplier);
+            const prevGold = gameState.gold || 0;
+            gameState.gold = prevGold + goldGained;
+            gameState.accGold = (gameState.accGold || prevGold) + goldGained;
+            saveLocalCache();
+            const gEl = document.getElementById('goldCount');
+            if (gEl) gEl.innerText = gameState.gold.toLocaleString();
+        }
+
+        function _showOfflineResult(allCorrect, baseGold) {
+            document.getElementById('offlineRewardIntro').classList.add('hidden');
+            document.getElementById('offlineQuizArea').classList.add('hidden');
+            const resultArea = document.getElementById('offlineResultArea');
+            resultArea.classList.remove('hidden');
+
+            if (allCorrect) {
+                document.getElementById('offlineResultIcon').innerText = '🏆';
+                document.getElementById('offlineResultTitle').style.color = '#fbbf24';
+                document.getElementById('offlineResultTitle').innerText = '완벽 정복!';
+                document.getElementById('offlineResultDesc').innerText = '3문제 모두 정답! 1.5배 보상을 획득했습니다!';
+                document.getElementById('offlineResultReward').innerText = `+${Math.floor(baseGold * 1.5).toLocaleString()}G (×1.5)`;
+            } else {
+                document.getElementById('offlineResultIcon').innerText = '😓';
+                document.getElementById('offlineResultTitle').style.color = '#9ca3af';
+                document.getElementById('offlineResultTitle').innerText = '아쉽네요...';
+                document.getElementById('offlineResultDesc').innerText = '오답이 있어 기본 보상을 지급합니다. 다음엔 꼭!';
+                document.getElementById('offlineResultReward').innerText = `+${baseGold.toLocaleString()}G (×1.0)`;
+            }
+        }
+
+        function closeOfflineModal() {
+            const modal = document.getElementById('offlineRewardModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+            refreshStateVisuals();
         }
 
         function calculatePlayerCP() {
@@ -9364,11 +9644,13 @@
 
             document.getElementById("worldBossReadyBox").classList.remove("hidden");
 
-            // ✅ 참전 즉시 보상: 피해량 비례 골드 적립 (FP는 주간 결산 시 수여)
+            // ✅ 참전 즉시 보상: 피해량 비례 골드 및 고대 보스 증표(유물 재화) 적립
             const rewardGold = Math.max(500, Math.floor(wbTotalDamageDealt / 500));
+            const rewardTokens = Math.min(200, 20 + Math.floor(wbTotalDamageDealt / 50000));
 
             gameState.gold = (gameState.gold || 0) + rewardGold; 
             gameState.accGold = (gameState.accGold || gameState.gold || 0) + rewardGold;
+            gameState.bossTokens = (gameState.bossTokens || 0) + rewardTokens;
 
             // 참전 완료 후 즉시 1일 1회 도전 완료 잠금 처리 (로컬 + 서버 이중 락)
             const todayStr = new Date().toISOString().slice(0, 10);
@@ -9380,11 +9662,11 @@
             saveLocalCache();
 
             updateWorldBossUI();
-            showToast(`${reasonMessage} 🪙 골드: +${rewardGold.toLocaleString()}G 획득!`);
+            showToast(`${reasonMessage} 🪙 골드: +${rewardGold.toLocaleString()}G / 🏺 증표: +${rewardTokens}개 획득!`);
 
             // 서버 전송 전 즉시 로컬 데이터 가상 반영
             document.getElementById("myWorldBossDmgDisplay").innerText = wbTotalDamageDealt.toLocaleString();
-            document.getElementById("myWorldBossRewardDisplay").innerText = `주간 결산 시 FP / 칭호 지급`;
+            document.getElementById("myWorldBossRewardDisplay").innerText = `주간 결산 시 FP / 칭호 지급 (증표 +${rewardTokens})`;
 
             // ✅ 서버에 피해량 전송 → 완료 후 즉시 클리어 보상 체크 (격파자 포함 통합 처리)
             const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;

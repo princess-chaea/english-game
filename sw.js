@@ -1,32 +1,87 @@
-// VOCA HERO! Service Worker - KILL SWITCH v7
-// 모든 캐시를 삭제하고 서비스 워커 자체를 완전 해제합니다
+// VOCA HERO! Service Worker - Edge Request & Cache Optimization
+const CACHE_NAME = 'vocahero-v8';
+const STATIC_ASSETS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/male.txt',
+  '/female.txt'
+];
+
+// Install: pre-cache static assets
 self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(STATIC_ASSETS);
+    })
+  );
   self.skipWaiting();
 });
 
+// Activate: clean up old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.map(key => {
-        console.log('[SW] Deleting cache:', key);
-        return caches.delete(key);
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => {
+        console.log('[SW] Deleting old cache:', k);
+        return caches.delete(k);
       }))
-    ).then(() => {
-      console.log('[SW] All caches cleared. Unregistering service worker...');
-      return self.registration.unregister();
-    }).then(() => {
-      console.log('[SW] Service worker unregistered. Reloading all clients...');
-      return self.clients.matchAll({ type: 'window' });
-    }).then(clients => {
-      clients.forEach(client => {
-        client.navigate(client.url);
-      });
-    })
+    )
   );
   self.clients.claim();
 });
 
-// 모든 요청을 네트워크로 직접 통과 (캐시 완전 우회)
+// Fetch: Network-First for index.html, Cache-First for others
 self.addEventListener('fetch', event => {
-  event.respondWith(fetch(event.request));
+  const url = new URL(event.request.url);
+
+  if (event.request.method !== 'GET') return;
+
+  if (
+    url.hostname.includes('firebase') ||
+    url.hostname.includes('google') ||
+    url.hostname.includes('googleapis') ||
+    url.hostname.includes('neis.go.kr') ||
+    url.hostname.includes('firestore') ||
+    url.hostname.includes('gstatic')
+  ) {
+    return;
+  }
+
+  if (url.origin === self.location.origin) {
+    // index.html, sw.js, manifest.json 은 항상 네트워크 우선
+    if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/manifest.json' || url.pathname === '/sw.js') {
+      event.respondWith(
+        fetch(event.request).then(networkResp => {
+          if (networkResp && networkResp.status === 200) {
+            const clone = networkResp.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          }
+          return networkResp;
+        }).catch(() => caches.match(event.request))
+      );
+      return;
+    }
+
+    event.respondWith(
+      caches.match(event.request).then(cached => {
+        if (cached) {
+          fetch(event.request).then(networkResp => {
+            if (networkResp && networkResp.status === 200) {
+              const clone = networkResp.clone();
+              caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+            }
+          }).catch(() => {});
+          return cached;
+        }
+        return fetch(event.request).then(networkResp => {
+          if (networkResp && networkResp.status === 200) {
+            const clone = networkResp.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          }
+          return networkResp;
+        });
+      })
+    );
+  }
 });

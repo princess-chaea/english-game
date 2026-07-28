@@ -3383,6 +3383,7 @@
                         const sessData = { schoolName, grade, classNum, studentNum, name, password };
                         sessionStorage.setItem("vocahero_active_session", JSON.stringify(sessData));
                         localStorage.setItem("vocahero_active_session", JSON.stringify(sessData));
+                        localStorage.setItem("vocahero_last_student", JSON.stringify(sessData));
                         showToast("🏰 원정대 클라우드 계정 로드 성공!");
                     } else {
                         handleLocalVerify(schoolName, grade, classNum, studentNum, name, password);
@@ -3449,6 +3450,7 @@
                             const sessData = { schoolName, grade, classNum, studentNum, name, password };
                             sessionStorage.setItem("vocahero_active_session", JSON.stringify(sessData));
                             localStorage.setItem("vocahero_active_session", JSON.stringify(sessData));
+                            localStorage.setItem("vocahero_last_student", JSON.stringify(sessData));
                             hideGameLoadingOverlay();
                             showToast("✨ 기존 데이터에 새로운 PIN이 성공적으로 등록되었습니다!");
                             initGameEngine();
@@ -3464,6 +3466,7 @@
                             const sessData = { schoolName, grade, classNum, studentNum, name, password };
                             sessionStorage.setItem("vocahero_active_session", JSON.stringify(sessData));
                             localStorage.setItem("vocahero_active_session", JSON.stringify(sessData));
+                            localStorage.setItem("vocahero_last_student", JSON.stringify(sessData));
                             hideGameLoadingOverlay();
                             showToast("✨ 새로운 원정대 대원이 등록되었습니다! 환영합니다!");
                         }).catch(err => {
@@ -3485,6 +3488,7 @@
                 closeModal("newUserRegisterModal");
                 sessionStorage.setItem("vocahero_active_session", JSON.stringify({ schoolName, grade, classNum, studentNum, name, password }));
                             localStorage.setItem("vocahero_active_session", JSON.stringify({ schoolName, grade, classNum, studentNum, name, password }));
+                            localStorage.setItem("vocahero_last_student", JSON.stringify({ schoolName, grade, classNum, studentNum, name, password }));
                 showToast("✨ 로컬 원정대에 새로운 대원이 등록되었습니다!");
             }
         }
@@ -7692,6 +7696,7 @@
                 };
                 
                 sessionStorage.setItem("vocahero_active_session", JSON.stringify(sessionData));
+                localStorage.setItem("vocahero_active_session", JSON.stringify(sessionData));
                 localStorage.setItem("vocahero_last_student", JSON.stringify(sessionData));
                 
                 window.selectedSchoolName = data.schoolName;
@@ -9799,7 +9804,7 @@
                     showToast("✨ 서버에 월드보스 누적 피해 기록이 반영되었습니다!");
                     // 랜킹용 필드 저장 (users 문서 동기화)
                     const newBestDmg = (gameState.wbBestDamageWeek === getCurrentWeekNum())
-                        ? Math.max(wbTotalDamageDealt, gameState.wbBestDamage || 0)
+                        ? (gameState.wbBestDamage || 0) + wbTotalDamageDealt
                         : wbTotalDamageDealt;
                     gameState.wbBestDamage = newBestDmg;
                     gameState.wbBestDamageWeek = getCurrentWeekNum();

@@ -8032,46 +8032,33 @@
                 if (typeof wbCombatInterval !== 'undefined') clearInterval(wbCombatInterval);
                 if (typeof stopCombatSounds === 'function') stopCombatSounds();
 
-                if (fromBackButton && /android/i.test(navigator.userAgent)) return; // 이미 홈으로 나간 경우
+                if (fromBackButton && /android/i.test(navigator.userAgent)) return;
 
-                // 삼성 덱스 또는 PC 브라우저 환경 감지
-                const isAndroid = /android/i.test(navigator.userAgent);
-                // 덱스 모드: 안드로이드이지만 화면이 크거나 마우스가 연결된 환경 (window.innerWidth > 700 + 안드로이드)
-                const isDeX = isAndroid && (window.innerWidth > 700 || window.screen.width > 700);
-
-                let closed = false;
-
-                // 1순위: window.close() (열린 탭/PWA 팝업에서 동작)
+                // 1. 가장 강력한 창 닫기 시도 (PWA / 우회)
                 try {
+                    window.open('', '_self').close();
                     window.close();
-                    closed = true;
                 } catch(e) {}
 
                 setTimeout(() => {
-                    // window.close()가 먹혔는지 확인 (창이 살아있으면 아직 닫히지 않은 것)
-                    try {
-                        if (!closed || !window.closed) {
-                            if (isAndroid && !isDeX) {
-                                // 일반 안드로이드 폰: 홈 인텐트 시도
-                                try {
-                                    window.location.href = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end";
-                                } catch(e) {}
+                    // 2. 안드로이드 기기 (덱스 포함) 라면 안드로이드 홈 인텐트 시도
+                    if (/android/i.test(navigator.userAgent)) {
+                        try {
+                            window.location.href = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end";
+                        } catch(e) {}
+                    }
 
-                                // 그래도 안되면 검은 안내 화면
-                                setTimeout(() => {
-                                    document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#000;color:#fff;font-size:22px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.8;">💾 기록이 안전하게 저장되었습니다!<br><br><span style="font-size:14px;color:#888;">(뒤로가기 두 번 또는 홈 버튼을 눌러주세요)</span></div>';
-                                }, 600);
-                            } else {
-                                // 덱스 / PC: 안내 메시지만 (window.close 불가, 검은 화면 불필요)
-                                showToast("💾 저장 완료! 브라우저 탭을 닫아주세요.");
-                                isExiting = false; // 게임 계속 진행 가능하게
+                    // 3. 그래도 창이 안 닫혔다면 (PC 등) 빈 페이지로 이동시켜버림
+                    setTimeout(() => {
+                        if (!window.closed) {
+                            try {
+                                window.location.replace('about:blank');
+                            } catch(e) {
+                                document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#000;color:#fff;font-size:22px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.8;">💾 게임이 종료되었습니다.<br><br><span style="font-size:14px;color:#888;">브라우저 탭을 직접 닫아주세요.</span></div>';
                             }
                         }
-                    } catch(e) {
-                        showToast("💾 저장 완료! 브라우저 탭을 닫아주세요.");
-                        isExiting = false;
-                    }
-                }, 400);
+                    }, 500);
+                }, 100);
             };
 
 

@@ -4814,7 +4814,7 @@
                 const petLevel = gameState.petLevels[petKey] || 0;
                 const isActive = petLevel > 0;
                 const isMax = petLevel >= MAX_PET_LEVEL;
-                const cost = isMax ? 0 : Math.floor(info.cost * Math.pow(1.12, petLevel));
+                const cost = isMax ? 0 : Math.floor(info.cost * Math.pow(1.08, petLevel));
                 const evolvedName = getPetEvolutionName(petKey, petLevel);
 
                 html += `
@@ -8722,7 +8722,7 @@
                 document.getElementById("worldBossHpText").innerText = `${cachedWb.curHp.toLocaleString()} / ${cachedWb.maxHp.toLocaleString()} HP (${cachedPct.toFixed(1)}%) [캐시]`;
                 document.getElementById("myWorldBossDmgDisplay").innerText = cachedWb.myDamage.toLocaleString();
                 document.getElementById("myWorldBossShareDisplay").innerText = `${cachedWb.sharePct}%`;
-                const expectedTokensCache = Math.min(200, 20 + Math.floor(cachedWb.myDamage / 50000));
+                const expectedTokensCache = Math.min(200, 20 + Math.floor(cachedWb.myDamage / 50000) * 20);
                 document.getElementById("myWorldBossRewardDisplay").innerText = `주간결산 FP / 칭호 (일일 증표 +${expectedTokensCache})`;
 
                 // 캐시 기반 클리어 오버레이 즉시 표시
@@ -8771,7 +8771,7 @@
                     document.getElementById("myWorldBossDmgDisplay").innerText = myDamage.toLocaleString();
                     document.getElementById("myWorldBossShareDisplay").innerText = `${cappedShare}%`;
                     
-                    const expectedTokens = Math.min(200, 20 + Math.floor(myDamage / 50000));
+                    const expectedTokens = Math.min(200, 20 + Math.floor(myDamage / 50000) * 20);
                     document.getElementById("myWorldBossRewardDisplay").innerText = `주간결산 FP / 칭호 (일일 증표 +${expectedTokens})`;
 
                     // ✅ 서버 응답 데이터를 로컬 캐시에 저장 (다음 탭 전환 시 즉시 표시용)
@@ -9675,7 +9675,7 @@
 
             // ✅ 참전 즉시 보상: 피해량 비례 골드 및 고대 보스 증표(유물 재화) 적립
             const rewardGold = Math.max(500, Math.floor(wbTotalDamageDealt / 500));
-            const rewardTokens = Math.min(200, 20 + Math.floor(wbTotalDamageDealt / 50000));
+            const rewardTokens = Math.min(200, 20 + Math.floor(wbTotalDamageDealt / 50000) * 20);
 
             gameState.gold = (gameState.gold || 0) + rewardGold; 
             gameState.accGold = (gameState.accGold || gameState.gold || 0) + rewardGold;

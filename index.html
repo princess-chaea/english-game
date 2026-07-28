@@ -2803,8 +2803,8 @@
             dragon: {
                 name: "드래곤",
                 cost: 350,
-                dpsPct: 0.05,      // 레벨당 전체 자동 DPS +5% 곱연산
-                desc: "⚔️ 화염 특화 — 레벨당 전체 자동 DPS +5% 증가"
+                dps: 50,           // 레벨당 자동 공격 DPS +50 (100렙시 +5,000 DPS)
+                desc: "⚔️ 화염 특화 — 레벨당 초당 자동 DPS +50"
             },
             fairy: {
                 name: "요정",
@@ -4124,7 +4124,7 @@
             if (gameState.petLevels) {
                 const dragonLvl = gameState.petLevels['dragon'] || 0;
                 if (dragonLvl > 0) {
-                    totalDps = Math.floor(totalDps * (1 + (dragonLvl * PET_PARAMS['dragon'].dpsPct)));
+                    totalDps += PET_PARAMS['dragon'].dps * dragonLvl;
                 }
             }
             // 💍 영웅의 반지 (ringLvl) 자동 DPS 보정 (+1500 per level)
@@ -5348,7 +5348,7 @@
                 const currentLvl = (gameState[info.key]) || 0;
                 const isUnlocked = stage >= info.unlockStage;
                 const isMax = currentLvl >= 100;
-                const cost = isMax ? 0 : Math.floor(info.baseCost * Math.pow(1.10, currentLvl));
+                const cost = isMax ? 0 : Math.floor(info.baseCost * Math.pow(1.15, currentLvl));
 
                 const slotEl = document.getElementById(`accSlot_${accKey}`);
                 if (slotEl) {
@@ -5442,7 +5442,7 @@
         function upgradeAccessory(accKey) {
             const info = ACCESSORY_PARAMS[accKey];
             const currentLvl = (gameState[info.key]) || 0;
-            const cost = Math.floor(info.baseCost * Math.pow(1.10, currentLvl));
+            const cost = Math.floor(info.baseCost * Math.pow(1.15, currentLvl));
             const currentMastered = Math.max(gameState.masteredWords ? gameState.masteredWords.length : 0, gameState.totalQuizCorrect || 0);
             const reqWords = (currentLvl + 1) * 3;
 
@@ -8550,7 +8550,7 @@
                     if (type === 'slime' && lvl > 0) {
                         petEffectText = `🪙 골드 +${(PET_PARAMS.slime.goldBonus * lvl * 100).toFixed(0)}%`;
                     } else if (type === 'dragon' && lvl > 0) {
-                        petEffectText = `⚔️ DPS +${(PET_PARAMS.dragon.dpsPct * lvl * 100).toFixed(0)}%`;
+                        petEffectText = `⚔️ DPS +${(PET_PARAMS.dragon.dps * lvl).toLocaleString()}`;
                     } else if (type === 'fairy' && lvl > 0) {
                         petEffectText = `🔨 강화율 +${(PET_PARAMS.fairy.forgeBonus * lvl).toFixed(1)}%`;
                     } else {

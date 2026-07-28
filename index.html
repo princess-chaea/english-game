@@ -2531,12 +2531,10 @@
                         <button id="offlineOpt3" onclick="offlineAnswerMCQ(3)" style="padding:10px 6px; font-size:12px; font-weight:700; background:rgba(30,30,60,0.8); color:#d1d5db; border:1px solid rgba(99,102,241,0.5); border-radius:4px; cursor:pointer;"></button>
                     </div>
 
-                    <!-- 주관식 입력 -->
                     <div id="offlineFIBArea" class="hidden" style="margin-bottom:12px;">
-                        <p style="color:#9ca3af; font-size:11px; margin-bottom:8px; text-align:center;">영어 단어를 입력하세요 (대소문자 무관)</p>
                         <div style="display:flex; gap:8px;">
                             <input id="offlineFIBInput" type="text" placeholder="spell it out..."
-                                style="flex:1; padding:10px 12px; font-size:14px; font-family:monospace; font-weight:700; background:rgba(0,0,0,0.5); color:#e9d5ff; border:1px solid rgba(124,58,237,0.6); border-radius:4px; outline:none; text-transform:lowercase;"
+                                style="flex:1; padding:10px 12px; font-size:14px; font-family:monospace; font-weight:700; background:rgba(0,0,0,0.5); color:#e9d5ff; border:1px solid rgba(124,58,237,0.6); border-radius:4px; outline:none;"
                                 onkeydown="if(event.key==='Enter') offlineAnswerFIB()" />
                             <button onclick="offlineAnswerFIB()" style="padding:10px 16px; font-size:13px; font-weight:900; background:linear-gradient(90deg,#6d28d9,#7c3aed); color:#fff; border:none; border-radius:4px; cursor:pointer;">확인</button>
                         </div>

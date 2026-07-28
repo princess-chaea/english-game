@@ -1405,14 +1405,14 @@
                                 <!-- World Boss Reward Info -->
                                 <div class="mt-1 bg-[#0d0d0d] p-2 border border-[#3c3c3c] flex flex-col gap-1.5 relative overflow-hidden rounded-none-forced">
                                     <div class="flex items-center gap-2 mb-1">
-                                        <i data-lucide="gift" class="w-4 h-4 text-pink-400"></i>
-                                        <span class="font-bold text-pink-400 text-xs tracking-wider">월드보스 토벌 보상 안내</span>
+                                        <i data-lucide="gift" class="w-4 h-4 text-yellow-400"></i>
+                                        <span class="font-bold text-yellow-400 text-xs tracking-wider">월드보스 참전 및 주간 보상 안내</span>
                                     </div>
                                     <ul class="text-[10px] text-gray-400 flex flex-col gap-1 list-disc list-inside">
-                                        <li><strong class="text-gray-200">참여 보상:</strong> 누적 피해량 비례 즉시 <span class="text-pink-300 font-bold">FP</span> 획득</li>
-                                        <li><strong class="text-gray-200">토벌 성공 (HP 0):</strong> 격파 시 학년 전체에 <span class="text-yellow-400 font-bold">100,000 FP</span> 기여도 비례 분배</li>
-                                        <li><strong class="text-gray-200">토벌 실패 시:</strong> 깎은 HP의 기여도만큼 비례하여 <span class="text-yellow-400 font-bold">FP</span> 분배</li>
-                                        <li><strong class="text-gray-200">명예의 전당:</strong> 기여도 1위 용사에게 <span class="text-purple-400 font-bold">[수호신] 칭호</span> 부여</li>
+                                        <li><strong class="text-gray-200">일일 참전 보상:</strong> 누적 타격량 비례 즉시 <span class="text-yellow-400 font-bold">골드</span> 및 <span class="text-pink-300 font-bold">고대 증표(유물)</span> 획득</li>
+                                        <li><strong class="text-gray-200">토벌 성공 (HP 0):</strong> 보스 격파 시 학년 전체에 <span class="text-pink-400 font-bold">100,000 FP</span> 기여도 비례 즉시 분배</li>
+                                        <li><strong class="text-gray-200">주간 결산 보상:</strong> 매주 월요일 자정 결산 시 깎은 HP의 기여도만큼 비례하여 <span class="text-pink-400 font-bold">FP</span> 분배</li>
+                                        <li><strong class="text-gray-200">최우수 용사:</strong> 보스 토벌 시 누적 딜량 1위 유저에게 영구 <span class="text-purple-400 font-bold">[수호신] 칭호</span> 부여</li>
                                     </ul>
                                 </div>
                             </div>
@@ -2797,14 +2797,14 @@
             slime: {
                 name: "슬라임",
                 cost: 100,
-                goldBonus: 0.05,   // 레벨당 퀴즈 골드 획득 +5%
-                desc: "🪙 골드 획득 특화 — 레벨당 퀴즈 골드 수당 +5%"
+                goldBonus: 0.10,   // 레벨당 퀴즈 골드 획득 +10%
+                desc: "🪙 골드 획득 특화 — 레벨당 퀴즈 골드 수당 +10%"
             },
             dragon: {
                 name: "드래곤",
                 cost: 350,
-                dps: 10,          // 레벨당 자동 공격 DPS +10 (100렙시 +1,000 DPS)
-                desc: "⚔️ 화염 특화 — 레벨당 초당 자동 DPS +10"
+                dpsPct: 0.05,      // 레벨당 전체 자동 DPS +5% 곱연산
+                desc: "⚔️ 화염 특화 — 레벨당 전체 자동 DPS +5% 증가"
             },
             fairy: {
                 name: "요정",
@@ -4124,7 +4124,7 @@
             if (gameState.petLevels) {
                 const dragonLvl = gameState.petLevels['dragon'] || 0;
                 if (dragonLvl > 0) {
-                    totalDps += PET_PARAMS['dragon'].dps * dragonLvl;
+                    totalDps = Math.floor(totalDps * (1 + (dragonLvl * PET_PARAMS['dragon'].dpsPct)));
                 }
             }
             // 💍 영웅의 반지 (ringLvl) 자동 DPS 보정 (+1500 per level)
@@ -8569,7 +8569,7 @@
                     if (type === 'slime' && lvl > 0) {
                         petEffectText = `🪙 골드 +${(PET_PARAMS.slime.goldBonus * lvl * 100).toFixed(0)}%`;
                     } else if (type === 'dragon' && lvl > 0) {
-                        petEffectText = `⚔️ DPS +${(PET_PARAMS.dragon.dps * lvl).toLocaleString()}`;
+                        petEffectText = `⚔️ DPS +${(PET_PARAMS.dragon.dpsPct * lvl * 100).toFixed(0)}%`;
                     } else if (type === 'fairy' && lvl > 0) {
                         petEffectText = `🔨 강화율 +${(PET_PARAMS.fairy.forgeBonus * lvl).toFixed(1)}%`;
                     } else {

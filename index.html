@@ -8206,14 +8206,14 @@
             if (tabId === 'worldBossTab' || tabId === 'hallOfFameTab' || tabId === 'statsTab') {
                 if (leftPanel) leftPanel.classList.add("hidden");
                 if (rightPanel) {
-                    rightPanel.classList.remove("lg:col-span-7");
-                    rightPanel.classList.add("lg:col-span-12");
+                    rightPanel.classList.remove("md:col-span-7", "lg:col-span-8");
+                    rightPanel.classList.add("md:col-span-12", "lg:col-span-12");
                 }
             } else {
                 if (leftPanel) leftPanel.classList.remove("hidden");
                 if (rightPanel) {
-                    rightPanel.classList.remove("lg:col-span-12");
-                    rightPanel.classList.add("lg:col-span-7");
+                    rightPanel.classList.remove("md:col-span-12", "lg:col-span-12");
+                    rightPanel.classList.add("md:col-span-7", "lg:col-span-8");
                 }
             }
 

@@ -3568,18 +3568,25 @@
             gameState.bossTokens = extra.bossTokens || data.bossTokens || 0;
             gameState.totalQuizTries = extra.totalQuizTries || data.totalQuizTries || 0;
             gameState.totalQuizCorrect = extra.totalQuizCorrect || data.totalQuizCorrect || 0;
-            gameState.soundSettings = extra.soundSettings || { masterMute: false, sfxAttack: true, sfxQuiz: true, sfxLevelup: true };
+            // 화운드 설정: 저장된 값을 불러오되, 없는 필드는 안전하게 디폴트로 시독
+            const savedSS = extra.soundSettings || data.soundSettings || {};
+            gameState.soundSettings = {
+                masterSoundOn: typeof savedSS.masterSoundOn !== 'undefined' ? savedSS.masterSoundOn : (typeof savedSS.masterMute !== 'undefined' ? !savedSS.masterMute : true),
+                masterMute: typeof savedSS.masterMute !== 'undefined' ? savedSS.masterMute : false,
+                sfxAttack: typeof savedSS.sfxAttack !== 'undefined' ? savedSS.sfxAttack : true,
+                sfxQuiz: typeof savedSS.sfxQuiz !== 'undefined' ? savedSS.sfxQuiz : true,
+                sfxLevelup: typeof savedSS.sfxLevelup !== 'undefined' ? savedSS.sfxLevelup : true,
+                masterVolume: typeof savedSS.masterVolume !== 'undefined' ? savedSS.masterVolume : 10,
+                volAttack: typeof savedSS.volAttack !== 'undefined' ? savedSS.volAttack : 10,
+                volQuiz: typeof savedSS.volQuiz !== 'undefined' ? savedSS.volQuiz : 10,
+                volLevelup: typeof savedSS.volLevelup !== 'undefined' ? savedSS.volLevelup : 10
+            };
             gameState.tutorialCompleted = typeof extra.tutorialCompleted !== 'undefined' ? extra.tutorialCompleted : (data.tutorialCompleted || false);
 
             fetchWordsFromSpreadsheet();
         }
 
-        function saveLocalCache() {
-            if (!gameState.name) return;
-            isStateDirty = true;
-            const cacheKey = `vocahero_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
-            localStorage.setItem(cacheKey, JSON.stringify(gameState));
-        }
+
 
         function compactGearPotentials(potentialsObj) {
             if (!potentialsObj || typeof potentialsObj !== "object") return {};
@@ -4481,15 +4488,15 @@
 
         function calculateSteppedHp(stage, isBoss) {
             const s = Math.max(1, stage || 1);
-            const progress = (s - 1) / 99; // 1스테이지 0%, 100스테이지 100%
+            const progress = (s - 1) / 99;
 
-            // 전투력 곡선(Math.pow(progress, 1.7))과 동일한 다항식 곡선 적용
-            // 일반몹 기준: 자동 사냥 약 20초 (권장 전투력 기준)
-            // 1스테이지 2,000 HP -> 100스테이지 1,200,000 HP
-            const regularHp = Math.floor(2000 + 1198000 * Math.pow(progress, 1.7));
+            // 전투력 곡선과 동시에 초반~후반 균일한 난이도 유지
+            // 권장 CP 기준 DPS로 21스테이지 약 11초, 100스테이지 약 28초 (자동 사냥 기준)
+            // 1스테이지 15,000 HP -> 100스테이지 1,700,000 HP
+            const regularHp = Math.floor(15000 + 1685000 * Math.pow(progress, 1.4));
 
             if (isBoss) {
-                return regularHp * 9; // 100스테이지 보스 약 1,080만 HP 유지
+                return regularHp * 6; // 100스테이지 보스 약 1,020만 HP
             }
             return regularHp;
         }

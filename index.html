@@ -2639,7 +2639,7 @@
                 </div>
 
                 <!-- 확인 버튼 -->
-                <button onclick="closeModal('wbVictoryNoticeModal')"
+                <button id="wbVictoryNoticeClaimBtn" onclick="closeModal('wbVictoryNoticeModal')"
                         style="width:100%;padding:16px;font-size:15px;font-weight:900;letter-spacing:0.15em;
                                background: linear-gradient(90deg, #d97706, #fbbf24, #d97706);
                                color:#000;border:none;cursor:pointer;border-radius:4px;
@@ -8722,7 +8722,8 @@
                 document.getElementById("worldBossHpText").innerText = `${cachedWb.curHp.toLocaleString()} / ${cachedWb.maxHp.toLocaleString()} HP (${cachedPct.toFixed(1)}%) [캐시]`;
                 document.getElementById("myWorldBossDmgDisplay").innerText = cachedWb.myDamage.toLocaleString();
                 document.getElementById("myWorldBossShareDisplay").innerText = `${cachedWb.sharePct}%`;
-                document.getElementById("myWorldBossRewardDisplay").innerText = `+${Math.floor(cachedWb.myDamage / 1000)} FP / [수호신] 칭호`;
+                const expectedTokensCache = Math.min(200, 20 + Math.floor(cachedWb.myDamage / 50000));
+                document.getElementById("myWorldBossRewardDisplay").innerText = `주간결산 FP / 칭호 (일일 증표 +${expectedTokensCache})`;
 
                 // 캐시 기반 클리어 오버레이 즉시 표시
                 const defeatedOverlay = document.getElementById("wbDefeatedOverlay");
@@ -8760,8 +8761,7 @@
                     wbMaxBossHp = maxHp;
                     
                     const myDamage = damages[studentKey] || 0;
-                    const totalDamage = Object.values(damages).reduce((a, b) => a + b, 0);
-                    const sharePct = totalDamage > 0 ? ((myDamage / totalDamage) * 100).toFixed(2) : "0.00";
+                    const sharePct = wbMaxBossHp > 0 ? ((myDamage / wbMaxBossHp) * 100).toFixed(2) : "0.00";
                     const cappedShare = Math.min(100.0, Math.max(0, parseFloat(sharePct) || 0)).toFixed(2);
 
                     const pct = Math.max(0, Math.min(100, (wbCurBossHp / wbMaxBossHp) * 100));
@@ -8770,7 +8770,9 @@
                     document.getElementById("worldBossHpText").innerText = `${wbCurBossHp.toLocaleString()} / ${wbMaxBossHp.toLocaleString()} HP (${pct.toFixed(1)}%)`;
                     document.getElementById("myWorldBossDmgDisplay").innerText = myDamage.toLocaleString();
                     document.getElementById("myWorldBossShareDisplay").innerText = `${cappedShare}%`;
-                    document.getElementById("myWorldBossRewardDisplay").innerText = `+${Math.floor(myDamage / 1000)} FP / [수호신] 칭호`;
+                    
+                    const expectedTokens = Math.min(200, 20 + Math.floor(myDamage / 50000));
+                    document.getElementById("myWorldBossRewardDisplay").innerText = `주간결산 FP / 칭호 (일일 증표 +${expectedTokens})`;
 
                     // ✅ 서버 응답 데이터를 로컬 캐시에 저장 (다음 탭 전환 시 즉시 표시용)
                     localStorage.setItem(wbCacheKey, JSON.stringify({
@@ -8794,14 +8796,40 @@
                         }
                     }
 
-                    // 👑 보스 체력이 0 HP가 되면 학년 학생들에게 최초 1회 승리 팝업(멀티모달 알림) 출력!
+                    // 👑 보스 체력이 0 HP가 되면 학년 학생들에게 최초 1회 승리 팝업(멀티모달 알림) 출력 및 보상 즉시 지급!
                     if (wbCurBossHp <= 0) {
-                        const victoryNoticeKey = `vocahero_wb_victory_modal_seen_${gameState.grade}_${gameState.name}_${gameState.studentNum}`;
-                        if (!localStorage.getItem(victoryNoticeKey)) {
-                            localStorage.setItem(victoryNoticeKey, "true");
+                        const currentWeek = getCurrentWeekNum();
+                        const rewardClaimKey = `vocahero_wb_reward_claimed_${studentKey}_week_${currentWeek}`;
+                        if (!localStorage.getItem(rewardClaimKey)) {
+                            const baseFp = Math.floor(myDamage / 1000);
+                            const shareFp = Math.round(100000 * (wbMaxBossHp > 0 ? myDamage / wbMaxBossHp : 0));
+                            const totalFp = baseFp + shareFp;
+                            
+                            let myRank = 1;
+                            let sortedDmg = Object.values(damages).sort((a,b)=>b-a);
+                            if(sortedDmg.length > 0) myRank = sortedDmg.indexOf(myDamage) + 1;
+                            const getsTitle = myRank === 1;
+
                             document.getElementById("wbModalMyDamage").innerText = `${myDamage.toLocaleString()} HP`;
                             document.getElementById("wbModalMyShare").innerText = `${cappedShare}%`;
-                            document.getElementById("wbModalRewardSummary").innerText = `+${Math.floor(myDamage / 1000)} FP / [수호신] 칭호`;
+                            let titleBadge = getsTitle ? " / [수호신]" : "";
+                            document.getElementById("wbModalRewardSummary").innerText = `+${totalFp.toLocaleString()} FP${titleBadge}`;
+
+                            const claimBtn = document.getElementById("wbVictoryNoticeClaimBtn");
+                            if (claimBtn) {
+                                claimBtn.onclick = () => {
+                                    gameState.fp = (gameState.fp || 0) + totalFp;
+                                    if (getsTitle) {
+                                        if (!gameState.unlockedTitles) gameState.unlockedTitles = [];
+                                        if (!gameState.unlockedTitles.includes("수호신")) gameState.unlockedTitles.push("수호신");
+                                    }
+                                    localStorage.setItem(rewardClaimKey, "true");
+                                    saveLocalCache();
+                                    refreshStateVisuals();
+                                    closeModal("wbVictoryNoticeModal");
+                                    showToast(`월드보스 토벌 보상(+${totalFp.toLocaleString()} FP)을 수령했습니다!`);
+                                };
+                            }
                             openModal("wbVictoryNoticeModal");
                             playSoundEffect('levelup');
                         }

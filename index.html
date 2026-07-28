@@ -731,6 +731,8 @@
                             <span class="text-sm">🎁</span>
                             <span id="masteryPointsCount" class="text-lg font-bold tracking-tight text-pink-400">0</span>
                         </div>
+                    </div>
+                </div>
                 <!-- Telemetry Stats -->
                 <div class="grid grid-cols-3 gap-1 mt-1.5">
                     <div class="telemetry-cell text-center rounded-none-forced p-1">
@@ -8047,14 +8049,14 @@
                                 } catch(e) {}
                             }
                             
-                            // 모든 환경(PC, 폰, 덱스)에서 창이 안 닫히면 무조건 검은 화면 안내 표시
+                            // 창이 안 닫히면 검은 화면 안내
                             setTimeout(() => {
-                                document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#000;color:#fff;font-size:22px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.8;">💾 기록이 안전하게 저장되었습니다!<br><br><span style="font-size:14px;color:#888;">(브라우저 탭, 창 또는 앱을 직접 닫아주세요)</span></div>';
+                                document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#000;color:#fff;font-size:24px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.5;">영웅의 영혼에 기록이<br>안전하게 각인되었습니다!<br><br>이제 앱을 완전히<br>종료하셔야 합니다!<br><br><span style="font-size:14px;color:#888;">(뒤로가기 버튼을 누르거나 홈 버튼을 눌러주세요)</span></div>';
                             }, 600);
                         }
                     } catch(e) {
                         setTimeout(() => {
-                            document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#000;color:#fff;font-size:22px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.8;">💾 기록이 안전하게 저장되었습니다!<br><br><span style="font-size:14px;color:#888;">(브라우저 탭, 창 또는 앱을 직접 닫아주세요)</span></div>';
+                            document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#000;color:#fff;font-size:24px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.5;">영웅의 영혼에 기록이<br>안전하게 각인되었습니다!<br><br>이제 앱을 완전히<br>종료하셔야 합니다!<br><br><span style="font-size:14px;color:#888;">(뒤로가기 버튼을 누르거나 홈 버튼을 눌러주세요)</span></div>';
                         }, 600);
                     }
                 }, 400);

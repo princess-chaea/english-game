@@ -3011,11 +3011,17 @@
                 const volScale = masterScale * detailScale;
                 if (volScale <= 0) return;
 
+                // 브라우저 자동재생 정책으로 suspended 상태인 경우 재개
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 const now = audioCtx.currentTime;
+
 
                 if (type === 'click') {
                     osc.frequency.setValueAtTime(320, now);
@@ -3613,10 +3619,12 @@
                 sfxAttack: typeof savedSS.sfxAttack !== 'undefined' ? savedSS.sfxAttack : true,
                 sfxQuiz: typeof savedSS.sfxQuiz !== 'undefined' ? savedSS.sfxQuiz : true,
                 sfxLevelup: typeof savedSS.sfxLevelup !== 'undefined' ? savedSS.sfxLevelup : true,
+                sfxSkill: typeof savedSS.sfxSkill !== 'undefined' ? savedSS.sfxSkill : true,
                 masterVolume: typeof savedSS.masterVolume !== 'undefined' ? savedSS.masterVolume : 10,
                 volAttack: typeof savedSS.volAttack !== 'undefined' ? savedSS.volAttack : 10,
                 volQuiz: typeof savedSS.volQuiz !== 'undefined' ? savedSS.volQuiz : 10,
-                volLevelup: typeof savedSS.volLevelup !== 'undefined' ? savedSS.volLevelup : 10
+                volLevelup: typeof savedSS.volLevelup !== 'undefined' ? savedSS.volLevelup : 10,
+                volSkill: typeof savedSS.volSkill !== 'undefined' ? savedSS.volSkill : 10
             };
             gameState.tutorialCompleted = typeof extra.tutorialCompleted !== 'undefined' ? extra.tutorialCompleted : (data.tutorialCompleted || false);
 
@@ -3662,7 +3670,7 @@
                 totalQuizCorrect: gameState.totalQuizCorrect || 0,
                 masteredWords: gameState.masteredWords || [],
                 wrongWordCounts: gameState.wrongWordCounts || {},
-                soundSettings: gameState.soundSettings || { masterMute: false, sfxAttack: true, sfxQuiz: true, sfxLevelup: true }
+                soundSettings: gameState.soundSettings || { masterSoundOn: true, sfxAttack: true, sfxQuiz: true, sfxLevelup: true, sfxSkill: true, masterVolume: 10, volAttack: 10, volQuiz: 10, volLevelup: 10, volSkill: 10 }
             });
         }
 

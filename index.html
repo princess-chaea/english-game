@@ -66,12 +66,7 @@
                         const data = docSnap.data();
                         const damages = data.damages || {};
                         const myDamage = damages[studentKey] || 0;
-                    const curWeek = getCurrentWeekNum();
-                    if (gameState.wbBestDamage !== myDamage || gameState.wbBestDamageWeek !== curWeek) {
-                        gameState.wbBestDamage = myDamage;
-                        gameState.wbBestDamageWeek = curWeek;
-                        saveSessionToCloud(true);
-                    }
+                        // ⚠️ 이 myDamage는 이전 주(prevWeek) 데이터 → 현재 주 랭킹 필드에 덮어쓰면 안 됨!
                         
                         if (myDamage > 0) {
                             const curHp = typeof data.curHp !== 'undefined' ? data.curHp : 0;
@@ -128,7 +123,24 @@
                             localStorage.setItem(victoryRewardKey, "true");
                         }
                     }
-                } catch(e) { console.error(e); }
+
+                    // [Self-Healing] 현재 주차 world_bosses 서버 데이터를 읽어 내 데미지가 로컬보다 크면 복구
+                    const curWeekNow = getCurrentWeekNum();
+                    const curBossDocRef = window._fbDoc(window._fbDb, "world_bosses", `grade_${gameState.grade}_week_${curWeekNow}`);
+                    const curDocSnap = await window._fbGetDoc(curBossDocRef);
+                    if (curDocSnap.exists()) {
+                        const curData = curDocSnap.data();
+                        const curDamages = curData.damages || {};
+                        const curMyDamage = curDamages[studentKey] || 0;
+                        if (curMyDamage > 0 && (gameState.wbBestDamageWeek !== curWeekNow || (gameState.wbBestDamage || 0) < curMyDamage)) {
+                            console.log(`[VocaHero] Self-healing WB damage: local=${gameState.wbBestDamage||0} → server=${curMyDamage}`);
+                            gameState.wbBestDamage = curMyDamage;
+                            gameState.wbBestDamageWeek = curWeekNow;
+                            saveSessionToCloud(true);
+                        }
+                    }
+
+                } catch(e) { console.error("World Boss Startup Check Error:", e); }
             }
         }
 

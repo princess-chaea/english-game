@@ -804,13 +804,13 @@
                 <!-- Hero Render Component Wrapper (Bottom) -->
                 <div class="flex flex-col items-center w-full z-10 relative h-[42%] shrink min-h-0">
                     <!-- Floating Pet Companions (Up to 3) -->
-                    <div id="petContainer_slime" class="absolute top-12 right-[calc(50%+5rem)] w-14 h-14 z-20 animate-hover-pet hidden">
+                    <div id="petContainer_slime" class="absolute top-[20%] right-[calc(50%+4rem)] h-[40%] max-h-[3.5rem] aspect-square z-20 animate-hover-pet hidden">
                         <svg viewBox="0 0 100 100" class="w-full h-full" id="petSvg_slime"></svg>
                     </div>
-                    <div id="petContainer_dragon" class="absolute top-10 left-[calc(50%+4rem)] w-20 h-20 z-20 animate-hover-pet hidden" style="animation-delay: -0.5s;">
+                    <div id="petContainer_dragon" class="absolute top-[10%] left-[calc(50%+3rem)] h-[55%] max-h-[5rem] aspect-square z-20 animate-hover-pet hidden" style="animation-delay: -0.5s;">
                         <svg viewBox="0 0 100 100" class="w-full h-full" id="petSvg_dragon"></svg>
                     </div>
-                    <div id="petContainer_fairy" class="absolute -top-14 left-[calc(50%-1.75rem)] w-14 h-14 z-20 animate-hover-pet hidden" style="animation-delay: -1s;">
+                    <div id="petContainer_fairy" class="absolute -top-[15%] left-[calc(50%-1.5rem)] h-[40%] max-h-[3.5rem] aspect-square z-20 animate-hover-pet hidden" style="animation-delay: -1s;">
                         <svg viewBox="0 0 100 100" class="w-full h-full" id="petSvg_fairy"></svg>
                     </div>
 
@@ -872,39 +872,39 @@
             <!-- Header Navigation & Title -->
             <nav class="grid grid-cols-3 sm:grid-cols-7 gap-1 bg-[#0d0d0d] p-1 border border-[#3c3c3c] rounded-none-forced">
                 <button onclick="switchTab('quizTab')" id="quizTabBtn"
-                    class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-black bg-white rounded-none-forced flex items-center justify-center gap-1 transition">
-                    <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
-                    <span>퀴즈 전투</span>
+                    class="py-2 text-center font-bold text-xs uppercase tracking-wide text-black bg-white rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap overflow-hidden">
+                    <i data-lucide="help-circle" class="w-3.5 h-3.5 shrink-0"></i>
+                    <span class="whitespace-nowrap truncate">퀴즈 전투</span>
                 </button>
                 <button onclick="switchTab('gearTab')" id="gearTabBtn"
-                    class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition">
-                    <i data-lucide="hammer" class="w-3.5 h-3.5"></i>
-                    <span>대장간</span>
+                    class="py-2 text-center font-bold text-xs uppercase tracking-wide text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap overflow-hidden">
+                    <i data-lucide="hammer" class="w-3.5 h-3.5 shrink-0"></i>
+                    <span class="whitespace-nowrap truncate">대장간</span>
                 </button>
                 <button onclick="switchTab('petTab')" id="petTabBtn"
-                    class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap">
+                    class="py-2 text-center font-bold text-xs uppercase tracking-wide text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap overflow-hidden">
                     <i data-lucide="cat" class="w-3.5 h-3.5 shrink-0"></i>
-                    <span class="whitespace-nowrap">펫/유물 소환</span>
+                    <span class="whitespace-nowrap truncate">펫/유물 소환</span>
                 </button>
                 <button onclick="switchTab('skillTab')" id="skillTabBtn"
-                    class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition">
-                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                    <span>스킬</span>
+                    class="py-2 text-center font-bold text-xs uppercase tracking-wide text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap overflow-hidden">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5 shrink-0"></i>
+                    <span class="whitespace-nowrap truncate">스킬</span>
                 </button>
                 <button onclick="switchTab('worldBossTab')" id="worldBossTabBtn"
-                    class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition animate-pulse">
-                    <i data-lucide="swords" class="w-3.5 h-3.5 text-red-500"></i>
-                    <span>월드보스</span>
+                    class="py-2 text-center font-bold text-xs uppercase tracking-wide text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition animate-pulse whitespace-nowrap overflow-hidden">
+                    <i data-lucide="swords" class="w-3.5 h-3.5 text-red-500 shrink-0"></i>
+                    <span class="whitespace-nowrap truncate">월드보스</span>
                 </button>
                 <button onclick="switchTab('hallOfFameTab')" id="hallOfFameTabBtn"
-                    class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition">
-                    <i data-lucide="trophy" class="w-3.5 h-3.5 text-yellow-400"></i>
-                    <span>명예의 전당</span>
+                    class="py-2 text-center font-bold text-xs uppercase tracking-wide text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap overflow-hidden">
+                    <i data-lucide="trophy" class="w-3.5 h-3.5 text-yellow-400 shrink-0"></i>
+                    <span class="whitespace-nowrap truncate">명예의 전당</span>
                 </button>
                 <button onclick="switchTab('statsTab')" id="statsTabBtn"
-                    class="py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition">
-                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-cyan-400"></i>
-                    <span>내 영웅 정보</span>
+                    class="py-2 text-center font-bold text-xs uppercase tracking-wide text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap overflow-hidden">
+                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-cyan-400 shrink-0"></i>
+                    <span class="whitespace-nowrap truncate">내 영웅 정보</span>
                 </button>
             </nav>
 
@@ -2232,7 +2232,7 @@
 
     <!-- ⚙️ 환경 설정 모달 팝업 -->
     <div id="settingsModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[15000] items-center justify-center p-4">
-        <div class="bg-[#0a0a0c] border border-yellow-500/50 max-w-md w-full p-4 rounded-none-forced shadow-[0_0_30px_rgba(234,179,8,0.2)] text-white flex flex-col justify-between">
+        <div class="bg-[#0a0a0c] border border-yellow-500/50 max-w-md w-full p-4 rounded-none-forced shadow-[0_0_30px_rgba(234,179,8,0.2)] text-white flex flex-col justify-between max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div>
                 <div class="flex justify-between items-center mb-3 border-b border-gray-800 pb-2">
                     <h3 class="font-extrabold text-yellow-400 text-sm flex items-center gap-2">
@@ -8354,7 +8354,7 @@
             const curWeek = getCurrentWeekNum();
             Promise.all([
                 window._fbGetDocs ? window._fbGetDocs(window._fbQuery(window._fbCollection(window._fbDb, "users"), window._fbWhere("grade", "==", grade))) : null,
-                window._fbGetDoc ? window._fbGetDoc(window._fbDoc(window._fbDb, "world_bosses", `world_boss_${grade}_${curWeek}`)) : null
+                window._fbGetDoc ? window._fbGetDoc(window._fbDoc(window._fbDb, "world_bosses", `grade_${grade}_week_${curWeek}`)) : null
             ]).then(([snapshot, bossSnap]) => {
                 if (!snapshot) {
                     ['hofStageList','hofBossList','hofGoldList'].forEach(id => {

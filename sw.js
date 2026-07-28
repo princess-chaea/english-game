@@ -49,8 +49,8 @@ self.addEventListener('fetch', event => {
   }
 
   if (url.origin === self.location.origin) {
-    // index.html, sw.js, manifest.json 은 항상 네트워크 우선
-    if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/manifest.json' || url.pathname === '/sw.js') {
+    // index.html, js, css, manifest.json 은 항상 네트워크 우선
+    if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/manifest.json' || url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
       event.respondWith(
         fetch(event.request).then(networkResp => {
           if (networkResp && networkResp.status === 200) {

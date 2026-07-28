@@ -4488,22 +4488,22 @@
             // 5스테이지 주기의 계단식 체력 수치 점프 배율 (조정됨)
             const tierMultipliers = [
                 1.0,        // Tier 0 (Stage 1-5): 일반 ~600 HP, 보스 ~24,000 HP
-                2.0,        // Tier 1 (Stage 6-10): 일반 ~1,200 HP, 보스 ~48,000 HP
-                4.0,        // Tier 2 (Stage 11-15): 일반 ~2,400 HP, 보스 ~96,000 HP
-                8.0,        // Tier 3 (Stage 16-20): 일반 ~4,800 HP, 보스 ~192,000 HP
-                16.0,       // Tier 4 (Stage 21-25): 일반 ~9,600 HP, 보스 ~384,000 HP
-                32.0,       // Tier 5 (Stage 26-30): 일반 ~19,200 HP, 보스 ~768,000 HP
-                70.0,       // Tier 6 (Stage 31-35): 일반 ~42,000 HP, 보스 ~1.68M HP
-                150.0,      // Tier 7 (Stage 36-40): 일반 ~90,000 HP, 보스 ~3.6M HP
+                3.0,        // Tier 1 (Stage 6-10): 일반 ~1,800 HP, 보스 ~72,000 HP
+                9.0,        // Tier 2 (Stage 11-15): 일반 ~5,400 HP, 보스 ~216,000 HP
+                27.0,       // Tier 3 (Stage 16-20): 일반 ~16,200 HP, 보스 ~648,000 HP
+                81.0,       // Tier 4 (Stage 21-25): 일반 ~48,600 HP, 보스 ~1.94M HP
+                243.0,      // Tier 5 (Stage 26-30): 일반 ~145,800 HP, 보스 ~5.83M HP
+                729.0,      // Tier 6 (Stage 31-35): 일반 ~437,400 HP, 보스 ~17.49M HP
+                2187.0,     // Tier 7 (Stage 36-40): 일반 ~1.31M HP, 보스 ~52.48M HP
             ];
 
             let baseTierMult = 1.0;
             if (tier < tierMultipliers.length) {
                 baseTierMult = tierMultipliers[tier];
             } else {
-                // 40스테이지 이후 (Tier 8 이상): 5스테이지마다 1.55배씩 밸런스있게 상승
+                // 40스테이지 이후 (Tier 8 이상): 5스테이지마다 3.0배씩 폭증
                 const extraTiers = tier - 7;
-                baseTierMult = 6000.0 * Math.pow(1.55, extraTiers);
+                baseTierMult = 2187.0 * Math.pow(3.0, extraTiers);
             }
 
             const subFactor = Math.pow(1.08, inTierOffset);
@@ -4875,7 +4875,7 @@
             }
 
             const isTutorialPet = (!gameState.tutorialCompleted && tutorialStep === 5 && petKey === 'dragon');
-            const cost = isTutorialPet ? 0 : Math.floor(info.cost * Math.pow(1.08, currentLvl));
+            const cost = isTutorialPet ? 0 : Math.floor(info.cost * Math.pow(1.14, currentLvl));
 
             if (!isTutorialPet && gameState.gold < cost) {
                 showToast(`🪙 골드가 부족합니다! ${info.name} 소환/진화에는 ${cost.toLocaleString()} Gold가 필요합니다.`);

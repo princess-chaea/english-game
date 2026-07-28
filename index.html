@@ -751,79 +751,72 @@
                 </div>
             </div>
 
-            <!-- Interactive Combat Arena Viewport (Horizontal Compact) -->
+            <!-- Interactive Combat Arena Viewport (Vertical Racetrack) -->
             <div id="battleArena"
-                class="relative z-10 w-full flex-1 min-h-[140px] border border-[#3c3c3c] bg-[#000000] flex flex-row items-center justify-between px-2 sm:px-6 py-2 cursor-pointer select-none overflow-hidden my-1 rounded-none-forced"
+                class="relative z-10 w-full flex-1 min-h-0 border border-[#3c3c3c] bg-[#000000] flex flex-col items-center justify-between py-2 cursor-pointer select-none overflow-hidden my-1 rounded-none-forced"
                 onclick="handleArenaClick(event)">
 
-                <!-- Horizontal center stripes in the background -->
-                <div class="absolute inset-x-0 h-1 border-b border-dashed border-[#262626] top-1/2 transform -translate-y-1/2 pointer-events-none opacity-50"></div>
-                <!-- Track edge lines on top and bottom -->
-                <div class="absolute top-0 inset-x-0 h-1 bg-[#0066b1] opacity-35 pointer-events-none"></div>
-                <div class="absolute top-1 inset-x-0 h-1 bg-[#1c69d4] opacity-35 pointer-events-none"></div>
-                <div class="absolute top-2 inset-x-0 h-1 bg-[#e22718] opacity-35 pointer-events-none"></div>
+                <!-- Racetrack vertical center stripes in the background -->
+                <div class="absolute inset-y-0 w-1 border-r border-dashed border-[#262626] left-1/2 transform -translate-x-1/2 pointer-events-none opacity-50"></div>
+                <!-- M-Tricolor track edge lines on the sides -->
+                <div class="absolute left-0 inset-y-0 w-1 bg-[#0066b1] opacity-35 pointer-events-none"></div>
+                <div class="absolute left-1 inset-y-0 w-1 bg-[#1c69d4] opacity-35 pointer-events-none"></div>
+                <div class="absolute left-2 inset-y-0 w-1 bg-[#e22718] opacity-35 pointer-events-none"></div>
                 
-                <div class="absolute bottom-0 inset-x-0 h-1 bg-[#e22718] opacity-35 pointer-events-none"></div>
-                <div class="absolute bottom-1 inset-x-0 h-1 bg-[#1c69d4] opacity-35 pointer-events-none"></div>
-                <div class="absolute bottom-2 inset-x-0 h-1 bg-[#0066b1] opacity-35 pointer-events-none"></div>
+                <div class="absolute right-0 inset-y-0 w-1 bg-[#e22718] opacity-35 pointer-events-none"></div>
+                <div class="absolute right-1 inset-y-0 w-1 bg-[#1c69d4] opacity-35 pointer-events-none"></div>
+                <div class="absolute right-2 inset-y-0 w-1 bg-[#0066b1] opacity-35 pointer-events-none"></div>
 
-                <!-- Hero Render Component Wrapper (Left) -->
-                <div class="flex flex-col items-center w-[40%] sm:w-[45%] z-10 relative h-full shrink min-h-0 justify-end pb-1">
+                <!-- Monster Combatant Wrapper (Top) -->
+                <div class="flex flex-col items-center w-full z-10 h-[42%] shrink min-h-0">
+                    <span id="monsterNameTag" class="text-[10px] text-[#e22718] font-bold uppercase tracking-widest mb-1">슬라임</span>
+                    <!-- Monster HP Tracker bar -->
+                    <div class="w-1/2 bg-[#0d0d0d] border border-[#3c3c3c] h-1.5 relative overflow-hidden rounded-none-forced mb-1 shrink-0">
+                        <div id="monsterHpBar"
+                            class="bg-[#e22718] h-full transition-all duration-100"
+                            style="width: 100%"></div>
+                    </div>
+                    <div id="monsterContainer"
+                        class="w-full flex-1 min-h-0 flex items-center justify-center transition-transform duration-100">
+                        <svg viewBox="0 0 100 120" class="h-full w-auto max-w-full" id="monsterSvg"></svg>
+                    </div>
+                    <!-- 전투 알림 (몬스터 아래 화면 중앙에 표시) -->
+                    <div id="battleToast" class="px-2 py-0.5 text-[9px] font-bold text-center text-[#ffdd88] opacity-0 transition-opacity duration-300 pointer-events-none leading-relaxed"></div>
+                </div>
+
+                <!-- Central VS Battle Badge -->
+                <div class="flex flex-col items-center justify-center z-10 opacity-30 pointer-events-none my-1 shrink-0">
+                    <span class="text-xs font-bold tracking-widest text-[#bbbbbb] italic">--- VS ---</span>
+                </div>
+
+                <!-- Hero Render Component Wrapper (Bottom) -->
+                <div class="flex flex-col items-center w-full z-10 relative h-[42%] shrink min-h-0">
                     <!-- Floating Pet Companions (Up to 3) -->
-                    <div id="petContainer_slime" class="absolute top-0 right-[calc(50%+2rem)] w-12 h-12 sm:w-14 sm:h-14 z-20 animate-hover-pet hidden">
+                    <div id="petContainer_slime" class="absolute top-12 right-[calc(50%+5rem)] w-14 h-14 z-20 animate-hover-pet hidden">
                         <svg viewBox="0 0 100 100" class="w-full h-full" id="petSvg_slime"></svg>
                     </div>
-                    <div id="petContainer_dragon" class="absolute -top-4 left-[calc(50%+1.5rem)] w-16 h-16 sm:w-20 sm:h-20 z-20 animate-hover-pet hidden" style="animation-delay: -0.5s;">
+                    <div id="petContainer_dragon" class="absolute top-10 left-[calc(50%+4rem)] w-20 h-20 z-20 animate-hover-pet hidden" style="animation-delay: -0.5s;">
                         <svg viewBox="0 0 100 100" class="w-full h-full" id="petSvg_dragon"></svg>
                     </div>
-                    <div id="petContainer_fairy" class="absolute top-8 left-[calc(50%-1.5rem)] w-12 h-12 sm:w-14 sm:h-14 z-20 animate-hover-pet hidden" style="animation-delay: -1s;">
+                    <div id="petContainer_fairy" class="absolute -top-14 left-[calc(50%-1.75rem)] w-14 h-14 z-20 animate-hover-pet hidden" style="animation-delay: -1s;">
                         <svg viewBox="0 0 100 100" class="w-full h-full" id="petSvg_fairy"></svg>
                     </div>
 
                     <!-- Character Body Avatar -->
-                    <div id="heroCharacter" class="w-full flex-1 min-h-0 flex items-center justify-center">
+                    <div id="heroCharacter" class="w-full flex-1 min-h-0 flex items-end justify-center">
                         <svg viewBox="0 0 100 120" class="h-full w-auto max-w-full transition-transform duration-100"
                             id="heroSvg"></svg>
                     </div>
                     <!-- Name tag, Relic & Accessories flex container (이름 중앙, 양옆 장비 배치) -->
-                    <div class="flex flex-col items-center gap-1 mt-1 z-20 justify-center w-full shrink-0">
-                        <span id="heroNameTag"
-                            class="text-[9px] bg-[#1a1a1a] border border-[#3c3c3c] px-2 py-0.5 font-bold text-[#bbbbbb] tracking-wider uppercase rounded-none-forced">내 영웅</span>
-                        <div class="flex flex-row items-center justify-center gap-1">
-                            <!-- 🏺 고대 유물 -->
-                            <div id="heroRelicSlot" class="w-6 h-6 hidden relative items-center justify-center bg-black/80 border border-yellow-500 p-0.5" title="장착된 고대 유물">
-                                <div class="absolute inset-0 bg-yellow-500/30 animate-pulse shadow-[0_0_15px_rgba(234,179,8,0.8)] pointer-events-none"></div>
-                                <img id="heroRelicImg" src="media/relics/relic_1.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23eab308\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'10\'/><path d=\'M12 6v12M6 12h12\'/></svg>'" class="w-full h-full object-contain relative z-10 filter drop-shadow-[0_0_4px_#f59e0b]">
-                            </div>
-                            <!-- 💎 장착된 장신구 3종 -->
-                            <div id="heroAccSlotsContainer" class="flex flex-row gap-0.5 items-center">
-                                <div id="accSlot_necklace" class="w-6 h-6 bg-black/80 border border-purple-500 hidden items-center justify-center p-0.5 shadow-[0_0_6px_rgba(168,85,247,0.5)]" title="지혜의 목걸이">
-                                    <img id="accImg_necklace" src="media/accessories/necklace.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23c084fc\' stroke-width=\'2\'><circle cx=\'12\' cy=\'14\' r=\'5\'/><path d=\'M7 4a7 7 0 0 0 10 0\'/></svg>'" class="w-full h-full object-contain">
-                                </div>
-                                <div id="accSlot_bracelet" class="w-6 h-6 bg-black/80 border border-sky-500 hidden items-center justify-center p-0.5 shadow-[0_0_6px_rgba(56,189,248,0.5)]" title="투지의 팔찌">
-                                    <img id="accImg_bracelet" src="media/accessories/bracelet.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2338bdf8\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'8\'/></svg>'" class="w-full h-full object-contain">
-                                </div>
-                                <div id="accSlot_ring" class="w-6 h-6 bg-black/80 border border-amber-500 hidden items-center justify-center p-0.5 shadow-[0_0_6px_rgba(245,158,11,0.5)]" title="영웅의 반지">
-                                    <img id="accImg_ring" src="media/accessories/ring.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23fbbf24\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'6\'/><path d=\'M12 2v4\'/></svg>'" class="w-full h-full object-contain">
-                                </div>
-                            </div>
+                    <div class="flex items-center gap-1 mt-1 z-20 justify-center w-full shrink-0">
+                        <!-- 🏺 고대 유물 (오라만 깜빡거리고 이미지는 100% 선명하게 보임) -->
+                        <div id="heroRelicSlot" class="w-8 h-8 hidden relative items-center justify-center bg-black/80 border border-yellow-500 p-0.5" title="장착된 고대 유물">
+                            <!-- 뒤편 오라 효과만 깜빡임 -->
+                            <div class="absolute inset-0 bg-yellow-500/30 animate-pulse shadow-[0_0_15px_rgba(234,179,8,0.8)] pointer-events-none"></div>
+                            <!-- 선명한 고대 유물 아이콘 (투명도 100% 유지) -->
+                            <img id="heroRelicImg" src="media/relics/relic_1.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23eab308\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'10\'/><path d=\'M12 6v12M6 12h12\'/></svg>'" class="w-full h-full object-contain relative z-10 filter drop-shadow-[0_0_4px_#f59e0b]">
                         </div>
-                    </div>
-                </div>
-
-                <!-- Central VS Battle Badge -->
-                <div class="flex flex-col items-center justify-center z-10 opacity-30 pointer-events-none mx-1 shrink-0">
-                    <span class="text-[10px] font-bold tracking-widest text-[#bbbbbb] italic">VS</span>
-                </div>
-
-                <!-- Monster Combatant Wrapper (Right) -->
-                <div class="flex flex-col items-center w-[40%] sm:w-[45%] z-10 h-full shrink min-h-0 justify-center">
-                    <span id="monsterNameTag" class="text-[10px] text-[#e22718] font-bold uppercase tracking-widest mb-1 truncate w-full text-center">슬라임</span>
-                    <!-- Monster HP Tracker bar -->
-                    <div class="w-3/4 bg-[#0d0d0d] border border-[#3c3c3c] h-1.5 relative overflow-hidden rounded-none-forced mb-1 shrink-0">
-                        <div id="monsterHpBar"
-                            class="bg-[#e22718] h-full transition-all duration-100"
-                            style="width: 100%"></div>
+                        <span id="heroNameTag"
                     </div>
                     <div id="monsterContainer"
                         class="w-full flex-1 min-h-0 flex items-center justify-center transition-transform duration-100">
@@ -8035,9 +8028,6 @@
 
                 if (fromBackButton && /android/i.test(navigator.userAgent)) return; // 이미 홈으로 나간 경우
 
-                const isAndroid = /android/i.test(navigator.userAgent);
-                const isDeX = isAndroid && (window.innerWidth > 700 || window.screen.width > 700);
-
                 let closed = false;
                 try {
                     window.close();
@@ -8047,21 +8037,21 @@
                 setTimeout(() => {
                     try {
                         if (!closed || !window.closed) {
-                            if (isAndroid && !isDeX) {
+                            if (/android/i.test(navigator.userAgent)) {
                                 try {
                                     window.location.href = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end";
                                 } catch(e) {}
-                                setTimeout(() => {
-                                    document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#000;color:#fff;font-size:22px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.8;">💾 기록이 안전하게 저장되었습니다!<br><br><span style="font-size:14px;color:#888;">(뒤로가기 두 번 또는 홈 버튼을 눌러주세요)</span></div>';
-                                }, 600);
-                            } else {
-                                showToast("💾 저장 완료! 브라우저 탭을 닫아주세요.");
-                                isExiting = false; // 게임 계속 진행 가능
                             }
+                            
+                            // 모든 환경(PC, 폰, 덱스)에서 창이 안 닫히면 무조건 검은 화면 안내 표시
+                            setTimeout(() => {
+                                document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#000;color:#fff;font-size:22px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.8;">💾 기록이 안전하게 저장되었습니다!<br><br><span style="font-size:14px;color:#888;">(브라우저 탭, 창 또는 앱을 직접 닫아주세요)</span></div>';
+                            }, 600);
                         }
                     } catch(e) {
-                        showToast("💾 저장 완료! 브라우저 탭을 닫아주세요.");
-                        isExiting = false;
+                        setTimeout(() => {
+                            document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#000;color:#fff;font-size:22px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.8;">💾 기록이 안전하게 저장되었습니다!<br><br><span style="font-size:14px;color:#888;">(브라우저 탭, 창 또는 앱을 직접 닫아주세요)</span></div>';
+                        }, 600);
                     }
                 }, 400);
             };

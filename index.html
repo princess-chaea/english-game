@@ -2882,21 +2882,23 @@
                     if (bar) bar.style.width = `${Math.min(90, currentPct)}%`;
                 }
             }, 120);
+
+            // 🛡️ Safety net: 10초 이내에 로딩이 끝나지 않으면 강제로 로그인 화면으로 전환
+            if (_loadingSafetyTimer) clearTimeout(_loadingSafetyTimer);
+            _loadingSafetyTimer = setTimeout(function() {
+                const overlay = document.getElementById("gameLoadingOverlay");
+                if (overlay && overlay.style.display !== "none" && !overlay.classList.contains("hidden")) {
+                    console.warn("[VocaHero] 로딩 타임아웃 - 강제로 로그인 화면 전환");
+                    _doHideGameLoadingOverlay();
+                    if (!gameState.name || gameState.name === "방문자") {
+                        setTimeout(() => openModal("loginModal"), 350);
+                    }
+                }
+            }, 10000);
         }
 
-        // Removed immediate showGameLoadingOverlay() to keep it hidden until actual login logic fires
-
-        // 🛡️ Safety net: 8초 이내에 로딩이 끝나지 않으면 강제로 로그인 화면으로 전환
-        let _loadingSafetyTimer = setTimeout(function() {
-            const overlay = document.getElementById("gameLoadingOverlay");
-            if (overlay && overlay.style.display !== "none" && !overlay.classList.contains("hidden")) {
-                console.warn("[VocaHero] 로딩 타임아웃 - 강제로 로그인 화면 전환");
-                _doHideGameLoadingOverlay();
-                if (!gameState.name || gameState.name === "방문자") {
-                    setTimeout(() => openModal("loginModal"), 350);
-                }
-            }
-        }, 8000);
+        // Safety timer is now managed inside showGameLoadingOverlay
+        let _loadingSafetyTimer = null;
 
         function _doHideGameLoadingOverlay() {
             clearTimeout(_loadingSafetyTimer);

@@ -699,7 +699,7 @@
     <div class="m-stripe-divider"></div>
 
     <!-- Main RPG Arena & Upgrade Panel Container -->
-    <main class="max-w-[1400px] w-full mx-auto px-4 py-2 md:py-3 flex-grow overflow-hidden grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 items-stretch">
+    <main class="max-w-[1400px] w-full mx-auto px-4 py-2 md:py-3 flex-grow overflow-hidden flex flex-col md:grid md:grid-cols-12 gap-4 md:gap-6 items-stretch min-h-0" style="grid-template-rows: minmax(0, 1fr);">
 
         <!-- LEFT PANEL: Dynamic RPG Battle Arena (4 Cols) -->
         <section id="leftRpgPanel"
@@ -804,13 +804,13 @@
                 <!-- Hero Render Component Wrapper (Bottom) -->
                 <div class="flex flex-col items-center w-full z-10 relative h-[42%] shrink min-h-0">
                     <!-- Floating Pet Companions (Up to 3) -->
-                    <div id="petContainer_slime" class="absolute top-[10%] right-[50%] mr-[5%] h-[30%] w-auto aspect-square max-h-[2.75rem] max-w-[2.75rem] sm:max-h-[3.5rem] sm:max-w-[3.5rem] z-20 animate-hover-pet hidden">
+                    <div id="petContainer_slime" class="absolute top-12 right-[calc(50%+5rem)] w-14 h-14 z-20 animate-hover-pet hidden">
                         <svg viewBox="0 0 100 100" class="w-full h-full" id="petSvg_slime"></svg>
                     </div>
-                    <div id="petContainer_dragon" class="absolute top-[5%] left-[50%] ml-[5%] h-[40%] w-auto aspect-square max-h-[4rem] max-w-[4rem] sm:max-h-[5rem] sm:max-w-[5rem] z-20 animate-hover-pet hidden" style="animation-delay: -0.5s;">
+                    <div id="petContainer_dragon" class="absolute top-10 left-[calc(50%+4rem)] w-20 h-20 z-20 animate-hover-pet hidden" style="animation-delay: -0.5s;">
                         <svg viewBox="0 0 100 100" class="w-full h-full" id="petSvg_dragon"></svg>
                     </div>
-                    <div id="petContainer_fairy" class="absolute top-[-10%] left-[50%] ml-[-5%] h-[30%] w-auto aspect-square max-h-[2.75rem] max-w-[2.75rem] sm:max-h-[3.5rem] sm:max-w-[3.5rem] z-20 animate-hover-pet hidden" style="animation-delay: -1s;">
+                    <div id="petContainer_fairy" class="absolute -top-14 left-[calc(50%-1.75rem)] w-14 h-14 z-20 animate-hover-pet hidden" style="animation-delay: -1s;">
                         <svg viewBox="0 0 100 100" class="w-full h-full" id="petSvg_fairy"></svg>
                     </div>
 
@@ -1354,16 +1354,18 @@
                                 </div>
 
                                 <!-- Individual Contribution Grid -->
-                                <div class="grid grid-cols-2 gap-2 text-xs bg-black p-2 border border-[#262626] mt-2">
+                                <div class="grid grid-cols-3 gap-2 text-xs bg-black p-2 border border-[#262626] mt-2">
                                     <div class="text-center">
                                         <span class="text-[#7e7e7e] block text-[10px] mb-1">내 누적 타격 피해</span>
                                         <span id="myWorldBossDmgDisplay" class="font-bold text-white text-sm">0</span>
                                     </div>
-                                    <div class="text-center border-l border-[#262626]">
-                                        <span class="text-[#7e7e7e] block text-[10px] mb-1">기여 지분 &amp; 예상 FP</span>
-                                        <span id="myWorldBossShareDisplay" class="font-bold text-yellow-400 text-[10px]">0.00%</span>
-                                        <span class="text-[#7e7e7e] mx-1 text-[10px]">|</span>
-                                        <span id="myWorldBossRewardDisplay" class="font-bold text-pink-400 text-[10px] tracking-tight">계산 중...</span>
+                                    <div class="text-center border-x border-[#262626]">
+                                        <span class="text-[#7e7e7e] block text-[10px] mb-1">기여 지분 (%)</span>
+                                        <span id="myWorldBossShareDisplay" class="font-bold text-yellow-400 text-sm">0.00%</span>
+                                    </div>
+                                    <div class="text-center col-span-3 border-t border-[#262626] pt-1.5 mt-1">
+                                        <span class="text-[#7e7e7e] block text-[10px] mb-1">예상 주간 보상</span>
+                                        <span id="myWorldBossRewardDisplay" class="font-bold text-pink-400 text-[11px] tracking-tight">계산 중...</span>
                                     </div>
                                 </div>
                             </div>
@@ -8347,14 +8349,13 @@
                 return `<span class="text-[9px] font-bold px-1 py-0.5 border mr-1 rounded-none-forced ${badgeClass}">[${titleName}]</span>`;
             };
 
-            // Firestore에서 학년 내 전체 유저 데이터 조회 → 랭킹 산출
+            // Firestore에서 학년 내 전체 유저 데이터 조회 + 월드보스 데미지 병합
             const grade = gameState.grade;
+            const curWeek = getCurrentWeekNum();
             Promise.all([
-                window._fbGetDocs ? window._fbGetDocs(window._fbQuery(
-                    window._fbCollection(window._fbDb, "users"),
-                    window._fbWhere("grade", "==", grade)
-                )) : null
-            ]).then(([snapshot]) => {
+                window._fbGetDocs ? window._fbGetDocs(window._fbQuery(window._fbCollection(window._fbDb, "users"), window._fbWhere("grade", "==", grade))) : null,
+                window._fbGetDoc ? window._fbGetDoc(window._fbDoc(window._fbDb, "world_bosses", `world_boss_${grade}_${curWeek}`)) : null
+            ]).then(([snapshot, bossSnap]) => {
                 if (!snapshot) {
                     ['hofStageList','hofBossList','hofGoldList'].forEach(id => {
                         const el = document.getElementById(id);
@@ -8362,11 +8363,21 @@
                     });
                     return;
                 }
+                
+                let curWeekDamages = {};
+                if (bossSnap && bossSnap.exists()) {
+                    curWeekDamages = bossSnap.data().damages || {};
+                }
+
                 const users = [];
                 snapshot.forEach(doc => {
                     const d = doc.data();
                     if (d.name && d.name !== "방문자" && d.schoolName && d.schoolName !== 'Unknown') {
-                        users.push({ ...d, key: `${d.grade}_${d.classNum}_${d.studentNum}_${d.name}` });
+                        const key = `${d.grade}_${d.classNum}_${d.studentNum}_${d.name}`;
+                        // 월드보스 데미지를 world_bosses 컬렉션 기준으로 덮어쓰기 (가장 정확한 랭킹용)
+                        d.wbBestDamage = curWeekDamages[key] || 0;
+                        d.wbBestDamageWeek = d.wbBestDamage > 0 ? curWeek : 0;
+                        users.push({ ...d, key });
                     }
                 });
 

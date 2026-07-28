@@ -19,7 +19,7 @@
     <!-- Suppress Tailwind CDN production warning -->
     <script>
         async function logoutSession() {
-            showGameLoadingOverlay("다른 영웅의 영혼에 들어가는 중... (로그아웃 처리 및 저장 중)");
+            showToast("데이터를 저장하고 안전하게 종료 중입니다...");
             saveLocalCache();
             const doLogout = () => {
                 localStorage.removeItem("vocahero_active_session");
@@ -9524,87 +9524,7 @@
             }
         }
 
-        window.onload = function () {
-            lucide.createIcons();
-            checkConnectionState();
 
-            // Auto fill last logged in student info from localStorage cache
-            const lastStudentRaw = localStorage.getItem("vocahero_last_student");
-            if (lastStudentRaw) {
-                try {
-                    const last = JSON.parse(lastStudentRaw);
-                    if (last.schoolName) {
-                        let sn = last.schoolName;
-                        if (sn.endsWith('초등학교')) sn = sn.replace('초등학교', '초');
-                        else if (sn.endsWith('중학교')) sn = sn.replace('중학교', '중');
-                        else if (sn.endsWith('고등학교')) sn = sn.replace('고등학교', '고');
-                        else sn = sn.replace(/학교$/, '');
-                        document.getElementById("inputSchool").value = sn;
-                        selectedSchoolName = last.schoolName;
-                    }
-                    if (last.grade) document.getElementById("inputGrade").value = last.grade;
-                    if (last.classNum) document.getElementById("inputClass").value = last.classNum;
-                    if (last.studentNum) document.getElementById("inputNumber").value = last.studentNum;
-                    if (last.name) document.getElementById("inputName").value = last.name;
-                } catch(e) {}
-            }
-
-            // 🔄 새로고침 시 자동 로그인 세션 복원 장치
-            const activeSessionRaw = sessionStorage.getItem("vocahero_active_session") || localStorage.getItem("vocahero_active_session");
-            if (activeSessionRaw) {
-                try {
-                    const session = JSON.parse(activeSessionRaw);
-                    if (session && session.schoolName && session.grade && session.name && session.password) {
-                        // ✨ 새로고침 자동 복원 시에도 로딩바 오버레이 출력
-                        showGameLoadingOverlay();
-                        tempCredentials = { schoolName: session.schoolName, grade: session.grade, classNum: session.classNum, studentNum: session.studentNum, name: session.name };
-
-                        if (window._fbReady) {
-                            const uid = getUid(session.schoolName, session.grade, session.classNum, session.studentNum, session.name);
-                            window._fbGetDoc(window._fbDoc(window._fbDb, "users", uid)).then(async docSnap => {
-                                if (!docSnap.exists()) {
-                                    const legacyUid = getUid("Unknown", session.grade, session.classNum, session.studentNum, session.name);
-                                    try {
-                                        const legacyDocSnap = await window._fbGetDoc(window._fbDoc(window._fbDb, "users", legacyUid));
-                                        if (legacyDocSnap.exists()) {
-                                            docSnap = legacyDocSnap;
-                                        }
-                                    } catch(e) {}
-                                }
-                                
-                                if (docSnap.exists()) {
-                                    const data = docSnap.data();
-                                    if (String(data.password) === String(session.password)) {
-                                        closeModal("loginModal");
-                                        closeModal("pinVerifyModal");
-                                        closeModal("newUserRegisterModal");
-                                        gameState.schoolName = session.schoolName;
-                                        gameState.grade = session.grade;
-                                        gameState.classNum = session.classNum;
-                                        gameState.studentNum = session.studentNum;
-                                        gameState.name = session.name; // 누락으로 인한 방문자 덮어씌움 방지
-                                        syncStateFromServer(data);
-                                        showToast(`👋 어서오세요, ${session.name} 용사님! 자동 로그인되었습니다.`);
-                                    } else {
-                                        handleLocalVerify(session.schoolName, session.grade, session.classNum, session.studentNum, session.name, session.password);
-                                    }
-                                } else {
-                                    handleLocalVerify(session.schoolName, session.grade, session.classNum, session.studentNum, session.name, session.password);
-                                }
-                            }).catch(err => {
-                                console.error("Firebase getDoc error:", err);
-                                handleLocalVerify(session.schoolName, session.grade, session.classNum, session.studentNum, session.name, session.password);
-                            });
-                        }
-                        return; // 로그인 모달 팝업 방지
-                                        }
-                } catch(e) {}
-            }
-
-            hideGameLoadingOverlay();
-            showToast("⚠️ 자동 로그인 세션이 만료되었거나 찾을 수 없습니다.");
-            openModal("loginModal");
-        };
 
         function checkWbShortAnswerAutoSubmit(inputEl) {
             if (!isWorldBossRaidActive || !wbCurrentWordObj || !inputEl) return;

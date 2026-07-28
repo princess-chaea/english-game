@@ -77,9 +77,7 @@
                             const curHp = typeof data.curHp !== 'undefined' ? data.curHp : 0;
                             const isVictory = curHp <= 0;
                             
-                            let totalDamage = 0;
-                            for (let k in damages) totalDamage += damages[k];
-                            const sharePct = totalDamage > 0 ? (myDamage / totalDamage) : 0;
+                            const sharePct = (data.maxHp && data.maxHp > 0) ? (myDamage / data.maxHp) : 0;
                             
                             let myRank = 1;
                             let sortedDmg = Object.values(damages).sort((a,b)=>b-a);
@@ -8054,7 +8052,7 @@
             // ========================================
             // 🌟 [신화 등급 - Mythic] — 최상위 랭커 전용
             // ========================================
-            { id: "수호신", name: "수호신", tier: "신화", desc: "월드보스 타격 기여도 전체 1위", condition: (gs, res) => (res?.myBossRank === 1 && (gs.wbBestDamage||0) > 0) || gs.wbTitle === "수호신", style: "mythic-aurora-card border-[#f59e0b] text-yellow-300 shadow-[0_0_15px_rgba(245,158,11,0.8)]" },
+            { id: "수호신", name: "수호신", tier: "신화", desc: "월드보스 완전 격퇴 및 기여도 1위 (주간 결산 시 수여)", condition: (gs) => (gs.unlockedTitles || []).includes("수호신") || gs.wbTitle === "수호신", style: "mythic-aurora-card border-[#f59e0b] text-yellow-300 shadow-[0_0_15px_rgba(245,158,11,0.8)]" },
             { id: "정복왕", name: "정복왕", tier: "신화", desc: "스테이지 정복 랭킹 전체 1위", condition: (gs, res) => res?.myStageRank === 1 && ((gs.stage||1)>1 || (gs.progress||0)>0), style: "mythic-aurora-card border-[#3b82f6] text-sky-300 shadow-[0_0_15px_rgba(59,130,246,0.8)]" },
             { id: "황금 거상", name: "황금 거상", tier: "신화", desc: "누적 100,000,000(1억) 골드 이상 보유", condition: (gs) => (gs.gold || 0) >= 100000000, style: "mythic-aurora-card border-[#eab308] text-yellow-200 shadow-[0_0_15px_rgba(234,179,8,0.8)]" },
             { id: "단어의 신", name: "단어의 신", tier: "신화", desc: "단어 정답 1,000개 이상 누적 달성", condition: (gs) => (gs.totalQuizCorrect || 0) >= 1000, style: "mythic-aurora-card border-[#10b981] text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.8)]" },
@@ -9366,12 +9364,11 @@
 
             document.getElementById("worldBossReadyBox").classList.remove("hidden");
 
-            // ✅ 참전 즉시 보상: 피해량 비례 골드 + 대량 FP 적립!
+            // ✅ 참전 즉시 보상: 피해량 비례 골드 적립 (FP는 주간 결산 시 수여)
             const rewardGold = Math.max(500, Math.floor(wbTotalDamageDealt / 500));
-            const rewardFp = Math.max(100, Math.floor(wbTotalDamageDealt / 2000));
 
-            gameState.gold = (gameState.gold || 0) + rewardGold; gameState.accGold = (gameState.accGold || gameState.gold || 0) + rewardGold;
-            gameState.masteryPoints = (gameState.masteryPoints || 0) + rewardFp;
+            gameState.gold = (gameState.gold || 0) + rewardGold; 
+            gameState.accGold = (gameState.accGold || gameState.gold || 0) + rewardGold;
 
             // 참전 완료 후 즉시 1일 1회 도전 완료 잠금 처리 (로컬 + 서버 이중 락)
             const todayStr = new Date().toISOString().slice(0, 10);
@@ -9383,11 +9380,11 @@
             saveLocalCache();
 
             updateWorldBossUI();
-            showToast(`${reasonMessage} 🪙 골드: +${rewardGold.toLocaleString()}G / 🎁 대량 FP: +${rewardFp.toLocaleString()} FP 획득!`);
+            showToast(`${reasonMessage} 🪙 골드: +${rewardGold.toLocaleString()}G 획득!`);
 
             // 서버 전송 전 즉시 로컬 데이터 가상 반영
             document.getElementById("myWorldBossDmgDisplay").innerText = wbTotalDamageDealt.toLocaleString();
-            document.getElementById("myWorldBossRewardDisplay").innerText = `+${rewardFp.toLocaleString()} FP / 👑 [추호신] 칭호 (1위 격퇴 전용)`;
+            document.getElementById("myWorldBossRewardDisplay").innerText = `주간 결산 시 FP / 칭호 지급`;
 
             // ✅ 서버에 피해량 전송 → 완료 후 즉시 클리어 보상 체크 (격파자 포함 통합 처리)
             const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;

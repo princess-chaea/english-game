@@ -5348,7 +5348,7 @@
                 const currentLvl = (gameState[info.key]) || 0;
                 const isUnlocked = stage >= info.unlockStage;
                 const isMax = currentLvl >= 100;
-                const cost = isMax ? 0 : Math.floor(info.baseCost * Math.pow(1.15, currentLvl));
+                const cost = isMax ? 0 : Math.floor(info.baseCost * Math.pow(1.10, currentLvl));
 
                 const slotEl = document.getElementById(`accSlot_${accKey}`);
                 if (slotEl) {
@@ -5442,7 +5442,7 @@
         function upgradeAccessory(accKey) {
             const info = ACCESSORY_PARAMS[accKey];
             const currentLvl = (gameState[info.key]) || 0;
-            const cost = Math.floor(info.baseCost * Math.pow(1.15, currentLvl));
+            const cost = Math.floor(info.baseCost * Math.pow(1.10, currentLvl));
             const currentMastered = Math.max(gameState.masteredWords ? gameState.masteredWords.length : 0, gameState.totalQuizCorrect || 0);
             const reqWords = (currentLvl + 1) * 3;
 

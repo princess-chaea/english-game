@@ -687,11 +687,11 @@
     <div class="m-stripe-divider"></div>
 
     <!-- Main RPG Arena & Upgrade Panel Container -->
-    <main class="max-w-[1400px] w-full mx-auto px-4 py-2 md:py-3 flex-grow overflow-hidden grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 items-stretch">
+    <main class="max-w-[1400px] w-full mx-auto px-1 sm:px-4 py-2 flex-grow overflow-hidden grid grid-cols-12 gap-2 sm:gap-4 items-stretch">
 
         <!-- LEFT PANEL: Dynamic RPG Battle Arena (4 Cols) -->
         <section id="leftRpgPanel"
-            class="md:col-span-4 bg-black border border-[#3c3c3c] p-3 flex flex-col justify-between relative overflow-hidden h-full min-h-0 rounded-none-forced">
+            class="col-span-12 sm:col-span-5 md:col-span-4 bg-black border border-[#3c3c3c] p-2 sm:p-3 flex flex-col justify-between relative overflow-hidden h-full min-h-0 rounded-none-forced">
             
             <!-- Stage Header & Progress -->
             <div class="z-10 flex flex-wrap justify-between items-center bg-[#0d0d0d] border border-[#3c3c3c] px-2 py-1.5 rounded-none-forced gap-1 overflow-hidden">
@@ -855,7 +855,7 @@
         </section>
 
         <!-- RIGHT PANEL: Action Quiz, Equipment Upgrades, Pets (8 Cols) -->
-        <section id="rightMainPanel" class="md:col-span-8 flex flex-col gap-2 transition-all duration-300 overflow-y-auto h-full pr-1.5">
+        <section id="rightMainPanel" class="col-span-12 sm:col-span-7 md:col-span-8 flex flex-col gap-2 transition-all duration-300 overflow-y-auto h-full pr-1.5">
 
             <!-- Header Navigation & Title -->
             <nav class="grid grid-cols-3 sm:grid-cols-7 gap-1 bg-[#0d0d0d] p-1 border border-[#3c3c3c] rounded-none-forced">
@@ -8033,33 +8033,37 @@
                 if (typeof wbCombatInterval !== 'undefined') clearInterval(wbCombatInterval);
                 if (typeof stopCombatSounds === 'function') stopCombatSounds();
 
-                if (fromBackButton && /android/i.test(navigator.userAgent)) return;
+                if (fromBackButton && /android/i.test(navigator.userAgent)) return; // 이미 홈으로 나간 경우
 
-                // 1. 가장 강력한 창 닫기 시도 (PWA / 우회)
+                const isAndroid = /android/i.test(navigator.userAgent);
+                const isDeX = isAndroid && (window.innerWidth > 700 || window.screen.width > 700);
+
+                let closed = false;
                 try {
-                    window.open('', '_self').close();
                     window.close();
+                    closed = true;
                 } catch(e) {}
 
                 setTimeout(() => {
-                    // 2. 안드로이드 기기 (덱스 포함) 라면 안드로이드 홈 인텐트 시도
-                    if (/android/i.test(navigator.userAgent)) {
-                        try {
-                            window.location.href = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end";
-                        } catch(e) {}
-                    }
-
-                    // 3. 그래도 창이 안 닫혔다면 (PC 등) 빈 페이지로 이동시켜버림
-                    setTimeout(() => {
-                        if (!window.closed) {
-                            try {
-                                window.location.replace('about:blank');
-                            } catch(e) {
-                                document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#000;color:#fff;font-size:22px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.8;">💾 게임이 종료되었습니다.<br><br><span style="font-size:14px;color:#888;">브라우저 탭을 직접 닫아주세요.</span></div>';
+                    try {
+                        if (!closed || !window.closed) {
+                            if (isAndroid && !isDeX) {
+                                try {
+                                    window.location.href = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end";
+                                } catch(e) {}
+                                setTimeout(() => {
+                                    document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#000;color:#fff;font-size:22px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.8;">💾 기록이 안전하게 저장되었습니다!<br><br><span style="font-size:14px;color:#888;">(뒤로가기 두 번 또는 홈 버튼을 눌러주세요)</span></div>';
+                                }, 600);
+                            } else {
+                                showToast("💾 저장 완료! 브라우저 탭을 닫아주세요.");
+                                isExiting = false; // 게임 계속 진행 가능
                             }
                         }
-                    }, 500);
-                }, 100);
+                    } catch(e) {
+                        showToast("💾 저장 완료! 브라우저 탭을 닫아주세요.");
+                        isExiting = false;
+                    }
+                }, 400);
             };
 
 

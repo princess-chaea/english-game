@@ -1414,17 +1414,32 @@
                                     <span>월드보스 토벌전 참전하기 (1일 1회)</span>
                                 </button>
 
-                                <!-- World Boss Reward Info -->
+                                <!-- World Boss Reward Info - 3 Cards -->
                                 <div class="mt-1 bg-[#0d0d0d] p-2 border border-[#3c3c3c] flex flex-col gap-1.5 relative overflow-hidden rounded-none-forced">
-                                    <div class="flex items-center gap-2 mb-1">
+                                    <div class="flex items-center gap-2 mb-1.5">
                                         <i data-lucide="gift" class="w-4 h-4 text-yellow-400"></i>
                                         <span class="font-bold text-yellow-400 text-xs tracking-wider">월드보스 참전 및 주간 보상 안내</span>
                                     </div>
-                                    <ul class="text-[10px] text-gray-400 flex flex-col gap-1 list-disc list-inside">
-                                        <li><strong class="text-gray-200">일일 참전 보상:</strong> 누적 타격량 비례 즉시 <span class="text-yellow-400 font-bold">골드</span> 및 <span class="text-pink-300 font-bold">고대 증표(유물)</span> 획득 (기본 20개 + 데미지 5만당 20개, 최대 200개)</li>
-                                        <li><strong class="text-gray-200">주간 결산 보상:</strong> 매주 월요일 자정 결산 시 기여도 비례하여 최대 <span class="text-pink-400 font-bold">100,000 FP</span> 분배 (보스 미처치 시 1/2 지급)</li>
-                                        <li><strong class="text-gray-200">최우수 용사:</strong> 보스 토벌 성공 시 누적 딜량 1위 유저에게 영구 <span class="text-purple-400 font-bold">[수호신] 칭호</span> 부여</li>
-                                    </ul>
+                                    <div class="grid grid-cols-3 gap-1.5">
+                                        <!-- Card 1: Daily -->
+                                        <div class="bg-[#1a1200] border border-yellow-700/50 p-2 flex flex-col gap-1 rounded-none-forced">
+                                            <div class="text-center text-lg">⚔️</div>
+                                            <div class="text-[9px] font-black text-yellow-400 text-center">일일 참전 보상</div>
+                                            <div class="text-[8px] text-gray-400 text-center leading-relaxed">타격량 비례<br><span class="text-yellow-300 font-bold">골드 즉시 지급</span><br>고대 증표 최대 200개</div>
+                                        </div>
+                                        <!-- Card 2: Weekly -->
+                                        <div class="bg-[#1a0010] border border-pink-700/50 p-2 flex flex-col gap-1 rounded-none-forced">
+                                            <div class="text-center text-lg">📅</div>
+                                            <div class="text-[9px] font-black text-pink-400 text-center">주간 결산</div>
+                                            <div class="text-[8px] text-gray-400 text-center leading-relaxed">매주 월요일<br>기여도 비례<br><span class="text-pink-300 font-bold">최대 100,000 FP</span></div>
+                                        </div>
+                                        <!-- Card 3: MVP -->
+                                        <div class="bg-[#0d0020] border border-purple-700/50 p-2 flex flex-col gap-1 rounded-none-forced">
+                                            <div class="text-center text-lg">👑</div>
+                                            <div class="text-[9px] font-black text-purple-400 text-center">최우수 용사</div>
+                                            <div class="text-[8px] text-gray-400 text-center leading-relaxed">토벌 1위 딜러<br>영구 칭호<br><span class="text-purple-300 font-bold">[수호신] 부여</span></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2503,19 +2518,24 @@
              background: linear-gradient(160deg, #0f0720 0%, #0a0514 100%);
              box-shadow: 0 0 60px rgba(124,58,237,0.5), inset 0 0 30px rgba(124,58,237,0.05);">
 
-            <!-- 상단 배너 -->
+            <!-- 상단 배너 with treasure chest -->
             <div style="background: linear-gradient(90deg, #4c1d95, #7c3aed, #a855f7, #7c3aed, #4c1d95);
-                        padding: 8px 20px; font-size:10px; font-weight:900; color:#e9d5ff; letter-spacing:0.2em;  text-align:center;">
-                ⚡ OFFLINE BONUS CHALLENGE ⚡
+                        padding: 10px 20px; font-size:10px; font-weight:900; color:#e9d5ff; letter-spacing:0.2em; text-align:center; display:flex; align-items:center; justify-content:center; gap:10px;">
+                <span style="font-size:22px; animation: chestBounce 1s ease-in-out infinite;">🎁</span>
+                <span>OFFLINE BONUS CHALLENGE</span>
+                <span style="font-size:22px; animation: chestBounce 1s ease-in-out infinite 0.5s;">🎁</span>
             </div>
+            <style>
+                @keyframes chestBounce { 0%,100%{transform:translateY(0) rotate(-5deg)} 50%{transform:translateY(-4px) rotate(5deg)} }
+            </style>
 
             <div style="padding: 20px 24px 24px;">
                 <!-- 안내문 -->
                 <div id="offlineRewardIntro">
                     <div class="text-center mb-4">
-                        <div style="font-size:48px; margin-bottom:8px;">💤</div>
-                        <h2 style="font-size:18px; font-weight:900; color:#a855f7; margin-bottom:6px; ">오프라인 부재 보상!</h2>
-                        <p style="color:#9ca3af; font-size:12px; margin-bottom:4px;">용사단이 부재 중 열심히 활동했습니다.</p>
+                        <div style="font-size:52px; margin-bottom:8px; animation: chestBounce 1.2s ease-in-out infinite;">📦</div>
+                        <h2 style="font-size:18px; font-weight:900; color:#a855f7; margin-bottom:6px;">오프라인 보물상자 도착!</h2>
+                        <p style="color:#9ca3af; font-size:12px; margin-bottom:4px;">용사단이 부재 중 상자를 가득 채워뒀어요!</p>
                         <p style="color:#c4b5fd; font-size:13px; font-weight:700;" id="offlineBaseGoldText">+0G 준비 완료</p>
                     </div>
                     <!-- 보상 선택 -->

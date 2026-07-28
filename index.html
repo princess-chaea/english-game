@@ -8394,7 +8394,6 @@
                     : '<p class="text-gray-500 text-center py-4">기록 없음</p>';
 
                 // 월드보스 랭킹
-                const curWeek = getCurrentWeekNum();
                 const bossRanked = [...users].sort((a,b) => {
                     const aDmg = (a.wbBestDamageWeek === curWeek) ? (a.wbBestDamage || 0) : 0;
                     const bDmg = (b.wbBestDamageWeek === curWeek) ? (b.wbBestDamage || 0) : 0;

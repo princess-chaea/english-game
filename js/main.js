@@ -5359,13 +5359,13 @@
                 setTimeout(() => {
                     try { window.close(); } catch(e) {}
                     
-                    // 최후의 수단: 홈 인텐트나 window.close()가 무시되는 PWA(모바일) 환경을 위한 풀스크린 안내
-                    // 웹(PC)에서는 불필요한 검은 화면이 뜨지 않도록 모바일 환경일 때만 표시
-                    if (/android|iphone|ipad|ipod/i.test(navigator.userAgent)) {
-                        setTimeout(() => {
-                            document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#000;color:#fff;font-size:24px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.5;">영웅의 영혼석에 기록이<br>안전하게 각인되었습니다!<br><br>이제 앱을 완전히 종료하셔도 됩니다.<br><br><span style="font-size:14px;color:#888;">(뒤로가기를 두 번 누르거나 홈 버튼을 눌러주세요)</span></div>';
-                        }, 500);
-                    }
+                    // 최후의 수단: window.close()가 무시되는 환경(웹 브라우저, PWA)을 위한 풀스크린 안내
+                    setTimeout(() => {
+                        let msg = /android|iphone|ipad|ipod/i.test(navigator.userAgent) 
+                            ? "(뒤로가기를 두 번 누르거나 폰의 홈 버튼을 눌러주세요)" 
+                            : "(열려있는 브라우저 탭을 직접 닫아주세요)";
+                        document.body.innerHTML = `<div style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#000;color:#fff;font-size:24px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.5;">영웅의 영혼석에 기록이<br>안전하게 각인되었습니다!<br><br>이제 게임을 종료하셔도 됩니다.<br><br><span style="font-size:14px;color:#888;">${msg}</span></div>`;
+                    }, 500);
                 }, 400);
             };
 

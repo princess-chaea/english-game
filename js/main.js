@@ -1,4 +1,4 @@
-
+﻿
         // Secret trigger for Teacher Settings
         let teacherClickCount = 0;
         function handleTeacherSecretClick() {
@@ -2217,7 +2217,7 @@
             }
 
             const isTutorialPet = (!gameState.tutorialCompleted && tutorialStep === 5 && petKey === 'dragon');
-            const cost = isTutorialPet ? 0 : Math.floor(info.cost * Math.pow(1.14, currentLvl));
+            const cost = isTutorialPet ? 0 : Math.floor(info.cost * Math.pow(1.12, currentLvl));
 
             if (!isTutorialPet && gameState.gold < cost) {
                 showToast(`🪙 골드가 부족합니다! ${info.name} 소환/진화에는 ${cost.toLocaleString()} Gold가 필요합니다.`);
@@ -7745,6 +7745,7 @@
                     .catch(err => console.warn('[SW] Registration failed:', err));
             });
         }
+
 
 
 

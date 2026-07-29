@@ -1786,11 +1786,36 @@
 
         function calculateRequiredCP(stage, isBoss) {
             const st = Math.max(1, stage || 1);
-            // 권장 전투력: 1스테이지 약 1,000에서 시작해 100스테이지 약 300,000으로 자연스러운 곡선 스케일링
-            // 초반(1~30): 장비 강화만으로 달성 가능 / 중반(30~60): 고강화 필수 / 후반(60~100): 장신구+잠재력 필수
-            const baseCp = GAME_CONFIG.CP_BASE + GAME_CONFIG.CP_MULTIPLIER * Math.pow((st - 1) / 99, 1.7);
-            const bossFactor = isBoss ? 1.30 : 1.0;
-            return Math.max(800, Math.floor(baseCp * bossFactor));
+            let req = 800;
+
+            if (st < 20) {
+                // [구간 1: Stage 1 ~ 19] 대장간 무구 & 기본 펫 전용 구간 (800 -> 12,000)
+                const progress = (st - 1) / 18;
+                req = 800 + Math.floor(11200 * Math.pow(progress, 1.3));
+            } else if (st < 30) {
+                // [구간 2: Stage 20 ~ 29] 잠재력 연구소 해금 구간 (난이도 완화: 12,000 -> 25,000)
+                const progress = (st - 20) / 9;
+                req = 12000 + Math.floor(13000 * Math.pow(progress, 1.2));
+            } else if (st < 45) {
+                // [구간 3: Stage 30 ~ 44] 고대 유물 제단 해금 구간 (26,000 -> 65,000)
+                const progress = (st - 30) / 14;
+                req = 26000 + Math.floor(39000 * Math.pow(progress, 1.3));
+            } else if (st < 55) {
+                // [구간 4: Stage 45 ~ 54] 지혜의 목걸이 해금 구간 (68,000 -> 120,000)
+                const progress = (st - 45) / 9;
+                req = 68000 + Math.floor(52000 * Math.pow(progress, 1.3));
+            } else if (st < 65) {
+                // [구간 5: Stage 55 ~ 64] 투지의 팔찌 해금 구간 (125,000 -> 200,000)
+                const progress = (st - 55) / 9;
+                req = 125000 + Math.floor(75000 * Math.pow(progress, 1.3));
+            } else {
+                // [구간 6: Stage 65 ~ 100] 영웅의 반지 해금 구간 (210,000 -> 350,000)
+                const progress = Math.min(1.0, (st - 65) / 35);
+                req = 210000 + Math.floor(140000 * Math.pow(progress, 1.4));
+            }
+
+            const bossFactor = isBoss ? 1.25 : 1.0;
+            return Math.max(800, Math.floor(req * bossFactor));
         }
 
         function getCPDamageMultiplier() {
@@ -2165,7 +2190,7 @@
                 const petLevel = gameState.petLevels[petKey] || 0;
                 const isActive = petLevel > 0;
                 const isMax = petLevel >= MAX_PET_LEVEL;
-                const cost = isMax ? 0 : Math.floor(info.cost * Math.pow(1.13, petLevel));
+                const cost = isMax ? 0 : Math.floor(info.cost * Math.pow(1.10, petLevel));
                 const evolvedName = getPetEvolutionName(petKey, petLevel);
 
                 html += `
@@ -2222,7 +2247,7 @@
             }
 
             const isTutorialPet = (!gameState.tutorialCompleted && tutorialStep === 5 && petKey === 'dragon');
-            const cost = isTutorialPet ? 0 : Math.floor(info.cost * Math.pow(1.13, currentLvl));
+            const cost = isTutorialPet ? 0 : Math.floor(info.cost * Math.pow(1.10, currentLvl));
 
             if (!isTutorialPet && gameState.gold < cost) {
                 showToast(`🪙 골드가 부족합니다! ${info.name} 소환/진화에는 ${cost.toLocaleString()} Gold가 필요합니다.`);

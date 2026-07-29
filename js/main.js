@@ -5917,6 +5917,21 @@
             return Math.floor((thisMonday.getTime() - EPOCH_MONDAY.getTime()) / oneWeek);
         }
 
+        function getFormattedMonthWeekString() {
+            const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
+            const kstMidnight = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), kstNow.getUTCDate()));
+            const dayOfWeek = kstMidnight.getUTCDay();
+            const daysSinceMonday = (dayOfWeek + 6) % 7;
+            const thisMonday = new Date(kstMidnight.getTime() - daysSinceMonday * 24 * 60 * 60 * 1000);
+            
+            const month = thisMonday.getUTCMonth() + 1;
+            const date = thisMonday.getUTCDate();
+            const weekOfMonth = Math.floor((date - 1) / 7) + 1;
+            
+            return `${month}월 ${weekOfMonth}주차 시즌 보스`;
+        }
+
+
         function getWeeklyBossIndex() {
             const weekNum = getCurrentWeekNum();
             return ((weekNum % WORLD_BOSS_SEASONS.length) + WORLD_BOSS_SEASONS.length) % WORLD_BOSS_SEASONS.length;
@@ -5934,7 +5949,7 @@
             document.getElementById("wbBossImage").src = bossInfo.img;
             document.getElementById("wbBossName").innerText = bossInfo.name;
             document.getElementById("wbBossDesc").innerText = `"${bossInfo.desc}"`;
-            document.getElementById("wbWeekBadge").innerText = `${seasonIdx + 1}주차 시즌 보스`;
+            document.getElementById("wbWeekBadge").innerText = getFormattedMonthWeekString();
             document.getElementById("wbGradeTitle").innerText = `${gameState.grade}학년 전용 공유 체력`;
             document.getElementById("playerMaxHpDisplay").innerText = `💖 ${wbPlayerMaxHp} HP (무구 강화 수치에 비례)`;
             const dpsDisplay = document.getElementById("wbDpsPreviewText");
@@ -7745,6 +7760,7 @@
                     .catch(err => console.warn('[SW] Registration failed:', err));
             });
         }
+
 
 
 

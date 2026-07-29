@@ -19,6 +19,16 @@
     <style>
         /* 모바일 가로 모드(높이가 좁을 때) 스크롤 허용 및 강제 높이 해제 */
         
+            /* 가로 모드(짧은 화면)에서 전투창 상단 UI 강제 축소 (전투화면 비율 확보용) */
+        @media (max-height: 700px) {
+            #leftRpgPanel .text-lg { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+            #leftRpgPanel .my-1\.5 { margin-top: 0.125rem !important; margin-bottom: 0.125rem !important; }
+            #leftRpgPanel .mt-1\.5 { margin-top: 0.125rem !important; }
+            #leftRpgPanel .p-1\.5 { padding: 0.125rem !important; }
+            #leftRpgPanel .gap-1\.5 { gap: 0.125rem !important; }
+            #leftRpgPanel .py-1\.5 { padding-top: 0.125rem !important; padding-bottom: 0.125rem !important; }
+            .telemetry-cell { padding: 0.125rem !important; }
+        }
     </style>
     <!-- Suppress Tailwind CDN production warning -->
     <script>
@@ -644,6 +654,16 @@
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.3);
         }
+            /* 가로 모드(짧은 화면)에서 전투창 상단 UI 강제 축소 (전투화면 비율 확보용) */
+        @media (max-height: 700px) {
+            #leftRpgPanel .text-lg { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+            #leftRpgPanel .my-1\.5 { margin-top: 0.125rem !important; margin-bottom: 0.125rem !important; }
+            #leftRpgPanel .mt-1\.5 { margin-top: 0.125rem !important; }
+            #leftRpgPanel .p-1\.5 { padding: 0.125rem !important; }
+            #leftRpgPanel .gap-1\.5 { gap: 0.125rem !important; }
+            #leftRpgPanel .py-1\.5 { padding-top: 0.125rem !important; padding-bottom: 0.125rem !important; }
+            .telemetry-cell { padding: 0.125rem !important; }
+        }
     </style>
 </head>
 
@@ -651,7 +671,17 @@
     <script>
         // 새로고침 시 세션이 없으면 게임 UI가 깜빡이는 것을 방지
         if (!sessionStorage.getItem("vocahero_active_session") && !localStorage.getItem("vocahero_active_session")) {
-            document.write('<style id="antiFlashStyle">header, main, nav { display: none !important; }</style>');
+            document.write('<style id="antiFlashStyle">header, main, nav { display: none !important; }        /* 가로 모드(짧은 화면)에서 전투창 상단 UI 강제 축소 (전투화면 비율 확보용) */
+        @media (max-height: 700px) {
+            #leftRpgPanel .text-lg { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+            #leftRpgPanel .my-1\.5 { margin-top: 0.125rem !important; margin-bottom: 0.125rem !important; }
+            #leftRpgPanel .mt-1\.5 { margin-top: 0.125rem !important; }
+            #leftRpgPanel .p-1\.5 { padding: 0.125rem !important; }
+            #leftRpgPanel .gap-1\.5 { gap: 0.125rem !important; }
+            #leftRpgPanel .py-1\.5 { padding-top: 0.125rem !important; padding-bottom: 0.125rem !important; }
+            .telemetry-cell { padding: 0.125rem !important; }
+        }
+    </style>');
         }
     </script>
     <!-- ⏳ FULLSCREEN INITIAL LOADING OVERLAY -->
@@ -2516,7 +2546,17 @@
             </div>
             <style>
                 @keyframes chestBounce { 0%,100%{transform:translateY(0) rotate(-5deg)} 50%{transform:translateY(-4px) rotate(5deg)} }
-            </style>
+                    /* 가로 모드(짧은 화면)에서 전투창 상단 UI 강제 축소 (전투화면 비율 확보용) */
+        @media (max-height: 700px) {
+            #leftRpgPanel .text-lg { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+            #leftRpgPanel .my-1\.5 { margin-top: 0.125rem !important; margin-bottom: 0.125rem !important; }
+            #leftRpgPanel .mt-1\.5 { margin-top: 0.125rem !important; }
+            #leftRpgPanel .p-1\.5 { padding: 0.125rem !important; }
+            #leftRpgPanel .gap-1\.5 { gap: 0.125rem !important; }
+            #leftRpgPanel .py-1\.5 { padding-top: 0.125rem !important; padding-bottom: 0.125rem !important; }
+            .telemetry-cell { padding: 0.125rem !important; }
+        }
+    </style>
 
             <div style="padding: 20px 24px 24px;">
                 <!-- 안내문 -->
@@ -2713,6 +2753,16 @@
             box-shadow: 0 0 8px #fbbf24;
             animation: wbSparkFloat 1.8s ease-in-out infinite;
         }
+            /* 가로 모드(짧은 화면)에서 전투창 상단 UI 강제 축소 (전투화면 비율 확보용) */
+        @media (max-height: 700px) {
+            #leftRpgPanel .text-lg { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+            #leftRpgPanel .my-1\.5 { margin-top: 0.125rem !important; margin-bottom: 0.125rem !important; }
+            #leftRpgPanel .mt-1\.5 { margin-top: 0.125rem !important; }
+            #leftRpgPanel .p-1\.5 { padding: 0.125rem !important; }
+            #leftRpgPanel .gap-1\.5 { gap: 0.125rem !important; }
+            #leftRpgPanel .py-1\.5 { padding-top: 0.125rem !important; padding-bottom: 0.125rem !important; }
+            .telemetry-cell { padding: 0.125rem !important; }
+        }
     </style>
 
     <script src="js/config.js"></script><script src="js/main.js"></script>
@@ -2819,6 +2869,7 @@
     </div>
 </body>
 </html>
+
 
 
 

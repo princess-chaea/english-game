@@ -83,23 +83,23 @@
 
         // 💍 장신구 3종 설정 (45/55/65스테이지 해금 & 50강)
         const ACCESSORY_PARAMS = {
-            necklace: { name: "지혜의 목걸이", unlockStage: 45, baseCost: 1000, key: "necklaceLvl", img: "media/accessories/necklace.png", desc: "🪄 스킬 마법 피해 & 쿨타임 감소 특화" },
-            bracelet: { name: "투지의 팔찌", unlockStage: 55, baseCost: 5000, key: "braceletLvl", img: "media/accessories/bracelet.png", desc: "⚔️ 클릭 타격력 & 크리티컬 확률 특화" },
-            ring: { name: "영웅의 반지", unlockStage: 65, baseCost: 20000, key: "ringLvl", img: "media/accessories/ring.png", desc: "👑 전체 자동 DPS & 보스 타격 피해 특화" }
+            necklace: { name: "지혜의 목걸이", unlockStage: 45, baseCost: 1000, key: "necklaceLvl", img: "media/accessories/necklace.webp", desc: "🪄 스킬 마법 피해 & 쿨타임 감소 특화" },
+            bracelet: { name: "투지의 팔찌", unlockStage: 55, baseCost: 5000, key: "braceletLvl", img: "media/accessories/bracelet.webp", desc: "⚔️ 클릭 타격력 & 크리티컬 확률 특화" },
+            ring: { name: "영웅의 반지", unlockStage: 65, baseCost: 20000, key: "ringLvl", img: "media/accessories/ring.webp", desc: "👑 전체 자동 DPS & 보스 타격 피해 특화" }
         };
 
         // 🏺 10종 고대 유물 세부 정의 (1개 전용 장착 시스템)
         const RELIC_DEFINITIONS = [
-            { id: "relic_chalice", name: "고대 지혜의 성배", img: "media/relics/relic_1.png", effectDescTemplate: "단어 정답 피해<br>+{val}%", baseBonus: 0.1 },
-            { id: "relic_orb", name: "지옥룡의 붉은 여의주", img: "media/relics/relic_2.png", effectDescTemplate: "전체 자동 DPS<br>+{val}%", baseBonus: 0.1 },
-            { id: "relic_sword", name: "전설 용사의 성검 조각", img: "media/relics/relic_3.png", effectDescTemplate: "클릭 타격력<br>+{val}%", baseBonus: 0.1 },
-            { id: "relic_clock", name: "천공의 수호 시계", img: "media/relics/relic_4.png", effectDescTemplate: "스킬 쿨타임<br>-{val}%", baseBonus: 0.05 },
-            { id: "relic_compass", name: "황금 풍요의 번개 나침반", img: "media/relics/relic_5.png", effectDescTemplate: "획득 골드량<br>+{val}%", baseBonus: 1.0 },
-            { id: "relic_dice", name: "파괴의 거인 마법 주사위", img: "media/relics/relic_6.png", effectDescTemplate: "크리티컬 확률<br>+{val}%", baseBonus: 0.05 },
-            { id: "relic_feather", name: "불사조의 깃털 부적", img: "media/relics/relic_7.png", effectDescTemplate: "보스 타격 피해<br>+{val}%", baseBonus: 0.2 },
-            { id: "relic_scroll", name: "심해의 비밀 주문서", img: "media/relics/relic_8.png", effectDescTemplate: "스킬 추가 피해<br>+{val}%", baseBonus: 0.1 },
-            { id: "relic_crown", name: "태양의 왕관 훈장", img: "media/relics/relic_9.png", effectDescTemplate: "퀴즈 FP 적립<br>+{val}%", baseBonus: 0.5 },
-            { id: "relic_shield", name: "대지의 수호 방패", img: "media/relics/relic_10.png", effectDescTemplate: "오답 방어·강화 보호<br>+{val}%", baseBonus: 0.1 }
+            { id: "relic_chalice", name: "고대 지혜의 성배", img: "media/relics/relic_1.webp", effectDescTemplate: "단어 정답 피해<br>+{val}%", baseBonus: 0.1 },
+            { id: "relic_orb", name: "지옥룡의 붉은 여의주", img: "media/relics/relic_2.webp", effectDescTemplate: "전체 자동 DPS<br>+{val}%", baseBonus: 0.1 },
+            { id: "relic_sword", name: "전설 용사의 성검 조각", img: "media/relics/relic_3.webp", effectDescTemplate: "클릭 타격력<br>+{val}%", baseBonus: 0.1 },
+            { id: "relic_clock", name: "천공의 수호 시계", img: "media/relics/relic_4.webp", effectDescTemplate: "스킬 쿨타임<br>-{val}%", baseBonus: 0.05 },
+            { id: "relic_compass", name: "황금 풍요의 번개 나침반", img: "media/relics/relic_5.webp", effectDescTemplate: "획득 골드량<br>+{val}%", baseBonus: 1.0 },
+            { id: "relic_dice", name: "파괴의 거인 마법 주사위", img: "media/relics/relic_6.webp", effectDescTemplate: "크리티컬 확률<br>+{val}%", baseBonus: 0.05 },
+            { id: "relic_feather", name: "불사조의 깃털 부적", img: "media/relics/relic_7.webp", effectDescTemplate: "보스 타격 피해<br>+{val}%", baseBonus: 0.2 },
+            { id: "relic_scroll", name: "심해의 비밀 주문서", img: "media/relics/relic_8.webp", effectDescTemplate: "스킬 추가 피해<br>+{val}%", baseBonus: 0.1 },
+            { id: "relic_crown", name: "태양의 왕관 훈장", img: "media/relics/relic_9.webp", effectDescTemplate: "퀴즈 FP 적립<br>+{val}%", baseBonus: 0.5 },
+            { id: "relic_shield", name: "대지의 수호 방패", img: "media/relics/relic_10.webp", effectDescTemplate: "오답 방어·강화 보호<br>+{val}%", baseBonus: 0.1 }
         ];
 
         // Skill Grade Configs (색상 코드 및 배율 계수)
@@ -268,16 +268,16 @@
         ];
 
         const BOSS_PROFILES = [
-            { name: "지하 영지의 가르고일 로드", color: "#475569", hp: 300, image: "boss_gargoyle.png" },
-            { name: "분노한 용암 벌레", color: "#ef4444", hp: 700, image: "boss_lavaworm.png" },
-            { name: "심해의 악몽 크라켄", color: "#0ea5e9", hp: 1200, image: "boss_kraken.png" },
-            { name: "불사 군주 리치 킹", color: "#a855f7", hp: 2000, image: "boss_lich.png" },
-            { name: "대지의 거수 베히모스", color: "#84cc16", hp: 3500, image: "boss_behemoth.png" },
-            { name: "불멸의 화염 불사조", color: "#f97316", hp: 6000, image: "boss_phoenix.png" },
-            { name: "맹독의 거대 히드라", color: "#22c55e", hp: 10000, image: "boss_hydra.png" },
-            { name: "고대 병기 콜로서스 타이탄", color: "#cbd5e1", hp: 16000, image: "boss_titan.png" },
-            { name: "차원의 종말 고대 드래곤", color: "#fbbf24", hp: 25000, image: "boss_dragon.png" },
-            { name: "파멸의 군주 마왕 데몬 로드", color: "#dc2626", hp: 40000, image: "boss_demon_lord.png" }
+            { name: "지하 영지의 가르고일 로드", color: "#475569", hp: 300, image: "boss_gargoyle.webp" },
+            { name: "분노한 용암 벌레", color: "#ef4444", hp: 700, image: "boss_lavaworm.webp" },
+            { name: "심해의 악몽 크라켄", color: "#0ea5e9", hp: 1200, image: "boss_kraken.webp" },
+            { name: "불사 군주 리치 킹", color: "#a855f7", hp: 2000, image: "boss_lich.webp" },
+            { name: "대지의 거수 베히모스", color: "#84cc16", hp: 3500, image: "boss_behemoth.webp" },
+            { name: "불멸의 화염 불사조", color: "#f97316", hp: 6000, image: "boss_phoenix.webp" },
+            { name: "맹독의 거대 히드라", color: "#22c55e", hp: 10000, image: "boss_hydra.webp" },
+            { name: "고대 병기 콜로서스 타이탄", color: "#cbd5e1", hp: 16000, image: "boss_titan.webp" },
+            { name: "차원의 종말 고대 드래곤", color: "#fbbf24", hp: 25000, image: "boss_dragon.webp" },
+            { name: "파멸의 군주 마왕 데몬 로드", color: "#dc2626", hp: 40000, image: "boss_demon_lord.webp" }
         ];
 
         let isGoogleScriptActive = false;
@@ -1078,7 +1078,7 @@
             const svg = document.getElementById("heroSvg");
 
             // AI 생성 픽셀 아트 이미지 베이스
-            const imageUrl = isMale ? "media/player/male_warrior.png" : "media/player/female_warrior.png";
+            const imageUrl = isMale ? "media/player/male_warrior.webp" : "media/player/female_warrior.webp";
 
             let overlays = "";
 
@@ -1229,9 +1229,9 @@
                 if (level > 0) {
                     if (ENABLE_PET_STAGES) {
                         const stage = Math.min(10, Math.ceil(level / 10)); // 1 to 10 stages
-                        imageUrl = type === 'dragon' ? `media/pet_dragon/pet_dragon_${stage}.png` : `media/pet_${type}/pet_${type}_${stage}.png`;
+                        imageUrl = type === 'dragon' ? `media/pet_dragon/pet_dragon_${stage}.webp` : `media/pet_${type}/pet_${type}_${stage}.webp`;
                     } else {
-                        imageUrl = type === 'dragon' ? `media/pet_dragon/pet_dragon_1.png` : `media/pet_${type}/pet_${type}_1.png`;
+                        imageUrl = type === 'dragon' ? `media/pet_dragon/pet_dragon_1.webp` : `media/pet_${type}/pet_${type}_1.webp`;
                     }
                 }
 
@@ -1261,7 +1261,7 @@
                         y = 19;
                     }
 
-                    const fallbackUrl = type === 'dragon' ? `media/pet_dragon/pet_dragon_1.png` : `media/pet_${type}/pet_${type}_1.png`;
+                    const fallbackUrl = type === 'dragon' ? `media/pet_dragon/pet_dragon_1.webp` : `media/pet_${type}/pet_${type}_1.webp`;
                     
                     // 슬라임(좌측 펫)은 오른쪽(중앙)을 바라보고, 드래곤(우측 펫)은 왼쪽(중앙)을 바라보도록 180도 좌우 반전
                     let imgTransform = "";
@@ -1314,19 +1314,19 @@
             } else {
                 const monsterIndex = (gameState.stage - 1) % MONSTER_PROFILES.length;
                 if (monsterIndex === 0) {
-                    imageUrl = "media/monster/monster_slime.png";
+                    imageUrl = "media/monster/monster_slime.webp";
                 } else if (monsterIndex === 1) {
-                    imageUrl = "media/monster/monster_goblin.png";
+                    imageUrl = "media/monster/monster_goblin.webp";
                 } else if (monsterIndex === 2) {
-                    imageUrl = "media/monster/monster_troll.png";
+                    imageUrl = "media/monster/monster_troll.webp";
                 } else if (monsterIndex === 3) {
-                    imageUrl = "media/monster/monster_golem.png";
+                    imageUrl = "media/monster/monster_golem.webp";
                 } else if (monsterIndex === 4) {
-                    imageUrl = "media/monster/monster_skeleton.png";
+                    imageUrl = "media/monster/monster_skeleton.webp";
                 } else if (monsterIndex === 5) {
-                    imageUrl = "media/monster/monster_spider.png";
+                    imageUrl = "media/monster/monster_spider.webp";
                 } else {
-                    imageUrl = "media/monster/monster_ghost.png";
+                    imageUrl = "media/monster/monster_ghost.webp";
                 }
             }
 
@@ -2914,7 +2914,7 @@
                             
                             <!-- 🏺 유물 고유 이미지 포함 -->
                             <div class="w-12 h-12 mx-auto my-1 flex items-center justify-center bg-black/50 border border-gray-800 rounded-none-forced p-1">
-                                <img src="${r.img}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23eab308\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'10\'/><path d=\'M12 6v12M6 12h12\'/></svg>'" class="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]">
+                                <img src="${r.img}" onerror="this.onerror=null;" class="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]">
                             </div>
 
                             <h5 class="text-[9px] font-black text-white leading-tight whitespace-nowrap overflow-hidden text-ellipsis px-1 tracking-tighter">${r.name}</h5>
@@ -4594,9 +4594,9 @@
                 }
             };
             
-            applyAccProfileUI('profileNecklaceContainer', 'necklace', '목걸이', gameState.necklaceLvl, 'media/accessories/necklace.png', 'purple', 45);
-            applyAccProfileUI('profileBraceletContainer', 'bracelet', '팔찌', gameState.braceletLvl, 'media/accessories/bracelet.png', 'sky', 55);
-            applyAccProfileUI('profileRingContainer', 'ring', '반지', gameState.ringLvl, 'media/accessories/ring.png', 'amber', 65);
+            applyAccProfileUI('profileNecklaceContainer', 'necklace', '목걸이', gameState.necklaceLvl, 'media/accessories/necklace.webp', 'purple', 45);
+            applyAccProfileUI('profileBraceletContainer', 'bracelet', '팔찌', gameState.braceletLvl, 'media/accessories/bracelet.webp', 'sky', 55);
+            applyAccProfileUI('profileRingContainer', 'ring', '반지', gameState.ringLvl, 'media/accessories/ring.webp', 'amber', 65);
 
             // ⚠️ 약점 오답 노트 전체 렌더링 (스크롤 기능 추가)
             const weakContainer = document.getElementById("weakWordsContainer");
@@ -5935,17 +5935,17 @@
         const WORLD_BOSS_SEASONS = [
             {
                 name: "심연의 흑룡 파브니르",
-                img: "media/worldbose/worldbose_borndragon.png",
+                img: "media/worldbose/worldbose_borndragon.webp",
                 desc: "고대 영단어 스펠의 마력을 머금고 부활한 흑룡. 전 학년 용사들이 힘을 합쳐 약점 단어를 타격해야 물리칠 수 있다!"
             },
             {
                 name: "대지의 파멸 골렘",
-                img: "media/worldbose/worldbose_golem.png",
+                img: "media/worldbose/worldbose_golem.webp",
                 desc: "대지를 뒤흔드는 고대 암석 결계 괴수. 용사들의 연합 단어 정답 폭딜로 단단한 외피를 깨뜨려라!"
             },
             {
                 name: "불멸의 흑마법 리치",
-                img: "media/worldbose/worldbose_rich.png",
+                img: "media/worldbose/worldbose_rich.webp",
                 desc: "금단의 영단어 스펠을 해독하는 저주받은 군주. 정답 단어 주문을 지속해서 외워 파멸 마법을 저지하라!"
             }
         ];
@@ -6036,7 +6036,7 @@
                     const info = PET_PARAMS[type];
                     const lvl = (gameState.petLevels && gameState.petLevels[type]) || 0;
                     const stage = lvl > 0 ? Math.min(10, Math.ceil(lvl / 10)) : 1;
-                    const imgUrl = `media/pet_${type}/pet_${type}_${stage}.png`;
+                    const imgUrl = `media/pet_${type}/pet_${type}_${stage}.webp`;
                     // 펫별 효과 텍스트 계산
                     let petEffectText = '';
                     if (type === 'slime' && lvl > 0) {
@@ -6151,9 +6151,9 @@
 
                 let accCardHtml = `
                     <div class="bg-[#0d0d0d] p-1.5 border border-purple-500/40 grid grid-cols-3 gap-1 rounded-none-forced">
-                        ${getAccHtml('necklace', '목걸이', gameState.necklaceLvl, 'media/accessories/necklace.png', 'purple', 45)}
-                        ${getAccHtml('bracelet', '팔찌', gameState.braceletLvl, 'media/accessories/bracelet.png', 'sky', 55)}
-                        ${getAccHtml('ring', '반지', gameState.ringLvl, 'media/accessories/ring.png', 'amber', 65)}
+                        ${getAccHtml('necklace', '목걸이', gameState.necklaceLvl, 'media/accessories/necklace.webp', 'purple', 45)}
+                        ${getAccHtml('bracelet', '팔찌', gameState.braceletLvl, 'media/accessories/bracelet.webp', 'sky', 55)}
+                        ${getAccHtml('ring', '반지', gameState.ringLvl, 'media/accessories/ring.webp', 'amber', 65)}
                     </div>
                 `;
 
@@ -6621,7 +6621,7 @@
                 const info = PET_PARAMS[type];
                 const lvl = (gameState.petLevels && gameState.petLevels[type]) || 0;
                 const stage = lvl > 0 ? Math.min(10, Math.ceil(lvl / 10)) : 1;
-                const imgUrl = `media/pet_${type}/pet_${type}_${stage}.png`;
+                const imgUrl = `media/pet_${type}/pet_${type}_${stage}.webp`;
                 
                 // 3종 펫 모두 오른쪽(보스 방향)을 바라보도록 180도 좌우반전 적용!
                 const isFlipped = 'transform: scale(-1, 1);';

@@ -927,6 +927,7 @@
             gameState.wbTitle = extra.wbTitle || data.wbTitle || "";
             gameState.unlockedTitles = extra.unlockedTitles || data.unlockedTitles || [];
             gameState.bossTokens = extra.bossTokens || data.bossTokens || 0;
+            gameState.relicEssence = extra.relicEssence || data.relicEssence || 0;
             gameState.totalQuizTries = extra.totalQuizTries || data.totalQuizTries || 0;
             gameState.totalQuizCorrect = extra.totalQuizCorrect || data.totalQuizCorrect || 0;
             // 화운드 설정: 저장된 값을 불러오되, 없는 필드는 안전하게 디폴트로 시독

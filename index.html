@@ -729,17 +729,7 @@
     <script>
         // 새로고침 시 세션이 없으면 게임 UI가 깜빡이는 것을 방지
         if (!sessionStorage.getItem("vocahero_active_session") && !localStorage.getItem("vocahero_active_session")) {
-            document.write('<style id="antiFlashStyle">header, main, nav { display: none !important; }        /* 가로 모드(짧은 화면)에서 전투창 상단 UI 강제 축소 (전투화면 비율 확보용) */
-        @media (max-height: 700px) {
-            #leftRpgPanel .text-lg { font-size: 0.875rem !important; line-height: 1.25rem !important; }
-            #leftRpgPanel .my-1\.5 { margin-top: 0.125rem !important; margin-bottom: 0.125rem !important; }
-            #leftRpgPanel .mt-1\.5 { margin-top: 0.125rem !important; }
-            #leftRpgPanel .p-1\.5 { padding: 0.125rem !important; }
-            #leftRpgPanel .gap-1\.5 { gap: 0.125rem !important; }
-            #leftRpgPanel .py-1\.5 { padding-top: 0.125rem !important; padding-bottom: 0.125rem !important; }
-            .telemetry-cell { padding: 0.125rem !important; }
-        }
-    </style>');
+            document.write('<style id="antiFlashStyle">header, main, nav { display: none !important; }</style>');
         }
     </script>
     <!-- ⏳ FULLSCREEN INITIAL LOADING OVERLAY -->

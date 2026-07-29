@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 
 <head>
@@ -16,6 +16,19 @@
     <link rel="icon" type="image/png" href="media/logo_v2.png">
     <meta name="theme-color" content="#0a0a0a">
     <link rel="apple-touch-icon" href="media/logo_v2.png">
+    <style>
+        /* 모바일 가로 모드(높이가 좁을 때) 스크롤 허용 및 강제 높이 해제 */
+        @media (max-height: 750px) {
+            body, main, #leftRpgPanel, #rightMainPanel {
+                height: auto !important;
+                min-height: 100vh;
+                overflow: visible !important;
+            }
+            #leftRpgPanel, #rightMainPanel {
+                min-height: auto;
+            }
+        }
+    </style>
     <!-- Suppress Tailwind CDN production warning -->
     <script>
         async function logoutSession() {
@@ -25,7 +38,7 @@
                 localStorage.removeItem("vocahero_active_session");
                 sessionStorage.removeItem("vocahero_active_session");
                 showToast("로그아웃 되었습니다. 잠시 후 초기 화면으로 이동합니다.");
-                setTimeout(() => { location.reload(); }, 1500);
+                setTimeout(() => { try { window.close(); } catch(e) {} setTimeout(() => location.reload(), 100); }, 1500);
             };
             
             if (window._fbDb && window._fbDoc && window._fbSetDoc && gameState.name !== "방문자") {
@@ -34,7 +47,7 @@
                     if (!gameState.schoolName || gameState.schoolName === "Unknown") throw new Error("Unknown school");
                     const logoutSaveData = Object.assign({}, gameState);
                     if (!logoutSaveData.linkedGoogleUid) { delete logoutSaveData.linkedGoogleUid; }
-                    await window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), logoutSaveData, { merge: true });
+                    window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), logoutSaveData, { merge: true }).catch(e => console.error(e));
                 } catch(e) { console.error(e); }
             }
             doLogout();
@@ -227,7 +240,7 @@
                     await window._fbDeleteDoc(window._fbDoc(window._fbDb, "users", uid));
                     showToast("영웅의 데이터가 완전히 삭제되었습니다.");
                     localStorage.removeItem("vocahero_active_session");
-                    setTimeout(() => { location.reload(); }, 1500);
+                    setTimeout(() => { try { window.close(); } catch(e) {} setTimeout(() => location.reload(), 100); }, 1500);
                 }
             } catch(e) {
                 console.error(e);
@@ -712,11 +725,11 @@
                         <i data-lucide="shield" class="w-3.5 h-3.5 shrink-0"></i>
                         <span id="displayStageNum" class="whitespace-nowrap">스테이지 1-1</span>
                     </span>
-                    <span class="text-[9px]  sm:border-l border-[#3c3c3c] sm:pl-2 flex flex-wrap items-center gap-x-1 shrink-0">
+                    <span class="text-[9px]  sm:border-l border-[#3c3c3c] sm:pl-2 flex flex-wrap items-center gap-x-0.5 shrink-0">
                         <span class="text-gray-400 font-bold">권장 전투력:</span>
                         <span id="recommendedCpDisplay" class="text-orange-400 font-bold">0</span>
                         <span class="text-gray-500">|</span>
-                        <span class="text-gray-400 font-bold">내 전투:</span>
+                        <span class="text-gray-400 font-bold">내 전투력:</span>
                         <span id="playerCpDisplay" class="text-amber-300 font-bold">0</span>
                     </span>
                 </div>
@@ -867,10 +880,10 @@
         </section>
 
         <!-- RIGHT PANEL: Action Quiz, Equipment Upgrades, Pets (8 Cols) -->
-        <section id="rightMainPanel" class="md:col-span-7 lg:col-span-8 flex flex-col gap-2 transition-all duration-300 overflow-y-auto h-full pr-1.5">
+        <section id="rightMainPanel" class="md:col-span-7 lg:col-span-8 flex flex-col gap-2 transition-all duration-300 h-full pr-1.5">
 
             <!-- Header Navigation & Title -->
-            <nav class="grid grid-cols-3 sm:grid-cols-7 gap-1 bg-[#0d0d0d] p-1 border border-[#3c3c3c] rounded-none-forced">
+            <nav class="sticky top-0 z-50 grid grid-cols-3 sm:grid-cols-7 gap-1 bg-[#0d0d0d] p-1 border border-[#3c3c3c] rounded-none-forced">
                 <button onclick="switchTab('quizTab')" id="quizTabBtn"
                     class="py-2 text-center font-bold text-xs uppercase tracking-wide text-black bg-white rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap overflow-hidden">
                     <i data-lucide="help-circle" class="w-3.5 h-3.5 shrink-0"></i>
@@ -2803,9 +2816,9 @@
 
         // 🏺 10종 고대 유물 세부 정의 (1개 전용 장착 시스템)
         const RELIC_DEFINITIONS = [
-            { id: "relic_chalice", name: "고대 지혜의 성배", img: "media/relics/relic_1.png", effectDescTemplate: "단어 정답 피해<br>+{val}%", baseBonus: 0.8 },
-            { id: "relic_orb", name: "지옥룡의 붉은 여의주", img: "media/relics/relic_2.png", effectDescTemplate: "전체 자동 DPS<br>+{val}%", baseBonus: 1.0 },
-            { id: "relic_sword", name: "전설 용사의 성검 조각", img: "media/relics/relic_3.png", effectDescTemplate: "클릭 타격력<br>+{val}%", baseBonus: 1.0 },
+            { id: "relic_chalice", name: "고대 지혜의 성배", img: "media/relics/relic_1.png", effectDescTemplate: "단어 정답 피해<br>+{val}%", baseBonus: 0.1 },
+            { id: "relic_orb", name: "지옥룡의 붉은 여의주", img: "media/relics/relic_2.png", effectDescTemplate: "전체 자동 DPS<br>+{val}%", baseBonus: 0.1 },
+            { id: "relic_sword", name: "전설 용사의 성검 조각", img: "media/relics/relic_3.png", effectDescTemplate: "클릭 타격력<br>+{val}%", baseBonus: 0.1 },
             { id: "relic_clock", name: "천공의 수호 시계", img: "media/relics/relic_4.png", effectDescTemplate: "스킬 쿨타임<br>-{val}%", baseBonus: 0.05 },
             { id: "relic_compass", name: "황금 풍요의 번개 나침반", img: "media/relics/relic_5.png", effectDescTemplate: "획득 골드량<br>+{val}%", baseBonus: 1.0 },
             { id: "relic_dice", name: "파괴의 거인 마법 주사위", img: "media/relics/relic_6.png", effectDescTemplate: "크리티컬 확률<br>+{val}%", baseBonus: 0.05 },
@@ -4495,7 +4508,7 @@
             const st = Math.max(1, stage || 1);
             // 권장 전투력: 1스테이지 약 1,000에서 시작해 100스테이지 약 300,000으로 자연스러운 곡선 스케일링
             // 초반(1~30): 장비 강화만으로 달성 가능 / 중반(30~60): 고강화 필수 / 후반(60~100): 장신구+잠재력 필수
-            const baseCp = 1000 + 299000 * Math.pow((st - 1) / 99, 1.7);
+            const baseCp = 1000 + 499000 * Math.pow((st - 1) / 99, 1.7);
             const bossFactor = isBoss ? 1.30 : 1.0;
             return Math.max(800, Math.floor(baseCp * bossFactor));
         }
@@ -6819,7 +6832,7 @@
             const statSkillDmg = Math.floor(baseSkillDmg * totalSkillMult);
 
             // 🎯 후반 스테이지/보스 HP 폭발 시 퀴즈 정답 딜과의 역전 방지 & mult(등급/티어/별) 보장 보정
-            const chaliceMult = 1.0 + (getEquippedRelicBonus("relic_chalice") / 100);
+            const chaliceMult = 1.0;
             const bossBonus = isBossBattleActive 
                 ? (1.0 + (getEquippedRelicBonus("relic_feather") + getPotentialStatBonus('bossDmg')) / 100)
                 : 1.0;
@@ -6937,7 +6950,7 @@
                 const arena = document.getElementById("battleArena");
                 
                 // 단어 정답 시 약점 타격 (스탯 기반 데미지가 최소 안전선 3.5%를 넘어서면 강화/펫/유물 효과로 상한선 자유롭게 돌파!)
-                const chaliceMult = 1.0 + (getEquippedRelicBonus("relic_chalice") / 100);
+                const chaliceMult = 1.0;
                 const bossBonus = isBossBattleActive 
                     ? (1.0 + (getEquippedRelicBonus("relic_feather") + getPotentialStatBonus('bossDmg')) / 100)
                     : 1.0;
@@ -7191,7 +7204,7 @@
 
             // 📖 퀴즈 단어 정답 타격 피해 수치 & 증폭률
             const baseQuizStatDmg = (calculateClickAttackPower() * 8) + Math.floor(calculateDPSPower() * 1.5);
-            const relicChaliceDmg = getEquippedRelicBonus("relic_chalice");
+            const relicChaliceDmg = 0;
             const quizCombo = gameState.combo || 0;
             const comboDmgPct = Math.min(150, quizCombo * 5); // 콤보당 +5% (최대 +150%)
             const totalQuizDmgBonus = relicChaliceDmg + comboDmgPct;
@@ -8155,7 +8168,7 @@
             const doReload = () => {
                 showToast("✨ 영웅의 영혼이 안식처로 떠납니다...");
                 gameState.name = "방문자"; // 새로고침 시 beforeunload가 데이터를 부활시키는 것 방지
-                setTimeout(() => { location.reload(); }, 1500);
+                setTimeout(() => { try { window.close(); } catch(e) {} setTimeout(() => location.reload(), 100); }, 1500);
             };
 
             if (!window._fbDb || !window._fbDoc || !window._fbDeleteDoc || gameState.name === "방문자") {
@@ -10564,3 +10577,4 @@
     </div>
 </body>
 </html>
+

@@ -2190,7 +2190,7 @@
                 const petLevel = gameState.petLevels[petKey] || 0;
                 const isActive = petLevel > 0;
                 const isMax = petLevel >= MAX_PET_LEVEL;
-                const cost = isMax ? 0 : Math.floor(info.cost * Math.pow(1.10, petLevel));
+                const cost = isMax ? 0 : Math.floor(info.cost * Math.pow(1.12, petLevel));
                 const evolvedName = getPetEvolutionName(petKey, petLevel);
 
                 html += `
@@ -2247,7 +2247,7 @@
             }
 
             const isTutorialPet = (!gameState.tutorialCompleted && tutorialStep === 5 && petKey === 'dragon');
-            const cost = isTutorialPet ? 0 : Math.floor(info.cost * Math.pow(1.10, currentLvl));
+            const cost = isTutorialPet ? 0 : Math.floor(info.cost * Math.pow(1.12, currentLvl));
 
             if (!isTutorialPet && gameState.gold < cost) {
                 showToast(`🪙 골드가 부족합니다! ${info.name} 소환/진화에는 ${cost.toLocaleString()} Gold가 필요합니다.`);
@@ -7324,13 +7324,46 @@
             }
 
             showConfirm(
-                `총 ${wordsArray.length}개의 단어를 서버에 추가하시겠습니까?`,
-                function() {
-                    showToast("⏳ 단어 서버 전송 중...");
-                    console.log("uploadWordsBatch requires Firebase rewrite if needed");
+                `총 ${wordsArray.length}개의 단어를 파이어베이스 클라우드 단어장(game_data/words)에 일괄 저장하시겠습니까?`,
+                async function() {
+                    showToast("⏳ 파이어베이스 단어 클라우드 업데이트 중...");
+                    if (window._fbReady && window._fbDb && window._fbGetDoc && window._fbSetDoc) {
+                        try {
+                            const wordsDocRef = window._fbDoc(window._fbDb, "game_data", "words");
+                            const docSnap = await window._fbGetDoc(wordsDocRef);
+                            let dbData = docSnap.exists() ? docSnap.data() : {};
+
+                            let addedCount = 0;
+                            wordsArray.forEach(row => {
+                                const g = parseInt(row[0]) || 5;
+                                const w = row[1].trim();
+                                const m = row[2].trim();
+                                if (w && m) {
+                                    const key = `grade_${g}`;
+                                    if (!dbData[key]) dbData[key] = [];
+                                    const existingIdx = dbData[key].findIndex(item => item.word.toLowerCase() === w.toLowerCase());
+                                    if (existingIdx >= 0) {
+                                        dbData[key][existingIdx] = { word: w, meaning: m };
+                                    } else {
+                                        dbData[key].push({ word: w, meaning: m });
+                                    }
+                                    addedCount++;
+                                }
+                            });
+
+                            await window._fbSetDoc(wordsDocRef, dbData, { merge: true });
+                            showToast(`✅ ${addedCount}개 단어가 파이어베이스에 업로드되었습니다!`);
+                            fetchWordsFromSpreadsheet();
+                        } catch(err) {
+                            console.error("Firebase CSV upload error:", err);
+                            showToast(`❌ 파이어베이스 단어 저장 실패: ${err.message}`);
+                        }
+                    } else {
+                        showToast("⚠️ 파이어베이스가 연결되어 있지 않습니다. 온라인 상태에서 시도해주세요.");
+                    }
                 },
                 null,
-                { icon: "📚", title: "단어 업로드 확인", yesLabel: "추가", noLabel: "취소" }
+                { icon: "📚", title: "파이어베이스 단어 등록", yesLabel: "일괄 등록", noLabel: "취소" }
             );
         }
 

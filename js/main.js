@@ -121,13 +121,13 @@
             },
             dragon: {
                 name: "드래곤",
-                cost: 350,
+                cost: 100,
                 dps: 10,           // 레벨당 자동 공격 DPS +10 (100렙시 +1,000 DPS)
                 desc: "⚔️ 매초 자동으로 몬스터를 공격하는 DPS가 증가합니다!"
             },
             fairy: {
                 name: "요정",
-                cost: 800,
+                cost: 100,
                 forgeBonus: 0.3,   // 레벨당 대장간 강화 성공률 +0.3% (100렙시 +30% 합연산)
                 desc: "🔨 대장간 장비 강화 성공 확률을 올려줍니다!"
             }
@@ -2190,7 +2190,7 @@
                 const petLevel = gameState.petLevels[petKey] || 0;
                 const isActive = petLevel > 0;
                 const isMax = petLevel >= MAX_PET_LEVEL;
-                const cost = isMax ? 0 : Math.floor(info.cost * Math.pow(1.10, petLevel));
+                const cost = isMax ? 0 : Math.floor(info.cost * Math.pow(1.11, petLevel));
                 const evolvedName = getPetEvolutionName(petKey, petLevel);
 
                 html += `
@@ -2247,7 +2247,7 @@
             }
 
             const isTutorialPet = (!gameState.tutorialCompleted && tutorialStep === 5 && petKey === 'dragon');
-            const cost = isTutorialPet ? 0 : Math.floor(info.cost * Math.pow(1.10, currentLvl));
+            const cost = isTutorialPet ? 0 : Math.floor(info.cost * Math.pow(1.11, currentLvl));
 
             if (!isTutorialPet && gameState.gold < cost) {
                 showToast(`🪙 골드가 부족합니다! ${info.name} 소환/진화에는 ${cost.toLocaleString()} Gold가 필요합니다.`);

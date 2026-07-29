@@ -1,11 +1,13 @@
 ﻿// VOCA HERO! Service Worker - Edge Request & Cache Optimization
-const CACHE_NAME = 'vocahero-v10';
+const CACHE_NAME = 'vocahero-v11';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/male.txt',
-  '/female.txt'
+  '/female.txt',
+  '/js/config.js',
+  '/js/main.js'
 ];
 
 // Install: pre-cache static assets
@@ -85,3 +87,4 @@ self.addEventListener('fetch', event => {
     );
   }
 });
+

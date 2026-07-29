@@ -5668,8 +5668,8 @@
             const grade = gameState.grade;
             const curWeek = getCurrentWeekNum();
             Promise.all([
-                window._fbGetDocs ? window._fbGetDocs(window._fbQuery(window._fbCollection(window._fbDb, "users"), window._fbWhere("grade", "==", grade))) : null,
-                window._fbGetDoc ? window._fbGetDoc(window._fbDoc(window._fbDb, "world_bosses", `grade_${grade}_week_${curWeek}`)) : null
+                window._fbGetDocs ? window._fbGetDocs(window._fbCollection(window._fbDb, "users")) : null,
+                window._fbGetDoc ? window._fbGetDoc(window._fbDoc(window._fbDb, "world_bosses", `global_week_${curWeek}`)) : null
             ]).then(([snapshot, bossSnap]) => {
                 if (!snapshot) {
                     ['hofStageList','hofBossList','hofGoldList'].forEach(id => {
@@ -5704,7 +5704,7 @@
                 document.getElementById("hofStageList").innerHTML = stageTop5.length > 0
                     ? stageTop5.map((item, idx) => {
                         const medal = ["🥇","🥈","🥉"][idx] || `${idx+1}.`;
-                        return `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs"><span class="text-white font-medium flex items-center gap-1">${medal} <span class="text-gray-400 text-[10px] mr-1">[${(item.schoolName || '무소속').replace(/(초|중|고)등학교$/, '$1')}]</span> ${getTitleBadgeHtml(item)}${item.name}</span><span class="text-sky-400 font-bold ">Stage ${item.stage||1}-${(item.progress||0)+1}</span></div>`;
+                        return `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs"><span class="text-white font-medium flex items-center gap-1">${medal} <span class="text-gray-400 text-[10px] mr-1">[${(item.schoolName || '하주초').replace(/(초|중|고)등학교$/, '$1')} ${item.grade || 5}학년]</span> ${getTitleBadgeHtml(item)}${item.name}</span><span class="text-sky-400 font-bold ">Stage ${item.stage||1}-${(item.progress||0)+1}</span></div>`;
                     }).join('')
                     : '<p class="text-gray-500 text-center py-4">기록 없음</p>';
 
@@ -5720,7 +5720,7 @@
                 document.getElementById("hofBossList").innerHTML = bossTop5.length > 0
                     ? bossTop5.map((item, idx) => {
                         const medal = ["🥇","🥈","🥉"][idx] || `${idx+1}.`;
-                        return `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs"><span class="text-white font-medium flex items-center gap-1">${medal} <span class="text-gray-400 text-[10px] mr-1">[${(item.schoolName || '무소속').replace(/(초|중|고)등학교$/, '$1')}]</span> ${getTitleBadgeHtml(item)}${item.name}</span><span class="text-red-400 font-bold ">${(item.wbBestDamage||0).toLocaleString()} DMG</span></div>`;
+                        return `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs"><span class="text-white font-medium flex items-center gap-1">${medal} <span class="text-gray-400 text-[10px] mr-1">[${(item.schoolName || '하주초').replace(/(초|중|고)등학교$/, '$1')} ${item.grade || 5}학년]</span> ${getTitleBadgeHtml(item)}${item.name}</span><span class="text-red-400 font-bold ">${(item.wbBestDamage||0).toLocaleString()} DMG</span></div>`;
                     }).join('')
                     : '<p class="text-gray-500 text-center py-4">기록 없음</p>';
 
@@ -5732,7 +5732,7 @@
                 document.getElementById("hofGoldList").innerHTML = goldTop5.length > 0
                     ? goldTop5.map((item, idx) => {
                         const medal = ["🥇","🥈","🥉"][idx] || `${idx+1}.`;
-                        return `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs"><span class="text-white font-medium flex items-center gap-1">${medal} <span class="text-gray-400 text-[10px] mr-1">[${(item.schoolName || '무소속').replace(/(초|중|고)등학교$/, '$1')}]</span> ${getTitleBadgeHtml(item)}${item.name}</span><span class="text-yellow-400 font-bold ">${(item.accGold||item.gold||0).toLocaleString()} G</span></div>`;
+                        return `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs"><span class="text-white font-medium flex items-center gap-1">${medal} <span class="text-gray-400 text-[10px] mr-1">[${(item.schoolName || '하주초').replace(/(초|중|고)등학교$/, '$1')} ${item.grade || 5}학년]</span> ${getTitleBadgeHtml(item)}${item.name}</span><span class="text-yellow-400 font-bold ">${(item.accGold||item.gold||0).toLocaleString()} G</span></div>`;
                     }).join('')
                     : '<p class="text-gray-500 text-center py-4">기록 없음</p>';
 
@@ -5980,7 +5980,7 @@
             document.getElementById("wbBossName").innerText = bossInfo.name;
             document.getElementById("wbBossDesc").innerText = `"${bossInfo.desc}"`;
             document.getElementById("wbWeekBadge").innerText = getFormattedMonthWeekString();
-            document.getElementById("wbGradeTitle").innerText = `${gameState.grade}학년 전용 공유 체력`;
+            document.getElementById("wbGradeTitle").innerText = "전 학년 공유 체력";
             document.getElementById("playerMaxHpDisplay").innerText = `💖 ${wbPlayerMaxHp} HP (무구 강화 수치에 비례)`;
             const dpsDisplay = document.getElementById("wbDpsPreviewText");
             if (dpsDisplay) dpsDisplay.innerText = calculatePlayerCP().toLocaleString();
@@ -6179,7 +6179,7 @@
 
             // 서버에서 최신 데이터 가져오기 (백그라운드 업데이트)
             if (window._fbReady) {
-                const bossDocRef = window._fbDoc(window._fbDb, "world_bosses", `grade_${gameState.grade}_week_${getCurrentWeekNum()}`);
+                const bossDocRef = window._fbDoc(window._fbDb, "world_bosses", `global_week_${getCurrentWeekNum()}`);
                 window._fbGetDoc(bossDocRef).then(docSnap => {
                     let curHp = wbMaxBossHp;
                     let maxHp = wbMaxBossHp;
@@ -7065,7 +7065,7 @@
             const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
             
             if (window._fbReady) {
-                const bossDocRef = window._fbDoc(window._fbDb, "world_bosses", `grade_${gameState.grade}_week_${getCurrentWeekNum()}`);
+                const bossDocRef = window._fbDoc(window._fbDb, "world_bosses", `global_week_${getCurrentWeekNum()}`);
                 window._fbRunTransaction(window._fbDb, async (transaction) => {
                     const docSnap = await transaction.get(bossDocRef);
                     if (!docSnap.exists()) {

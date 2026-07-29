@@ -4541,7 +4541,13 @@
             if (profileCp) profileCp.innerText = combatPower.toLocaleString();
 
             // 유물 장착 상태 요약 (실제 유물 이미지 표시, 이름 앞 🏺 아이콘 제거)
-            if (gameState.equippedRelicId) {
+            const isRelicUnlocked = (gameState.stage || 1) >= 35;
+            if (!isRelicUnlocked) {
+                if (profileRelicName) profileRelicName.innerText = "🔒 미해금 (35스테이지)";
+                if (profileRelicEffect) profileRelicEffect.innerText = "35스테이지 정복 시 유물 해금";
+                const profileRelicImg = document.getElementById("profileEquippedRelicImg");
+                if (profileRelicImg) profileRelicImg.classList.add("hidden");
+            } else if (gameState.equippedRelicId) {
                 const eqR = RELIC_DEFINITIONS.find(item => item.id === gameState.equippedRelicId);
                 const acR = (gameState.acquiredRelics || []).find(item => item.id === gameState.equippedRelicId);
                 if (eqR) {
@@ -5937,30 +5943,30 @@
                 id: "fafnir",
                 name: "심연의 흑룡 파브니르",
                 img: "media/worldbose/worldbose_borndragon.webp",
-                desc: "불꽃으로 가려진 위험한 정답을 조준 타격하거나 5연속 정답으로 비늘을 깨뜨려라!",
+                desc: "고대 영단어 스펠의 마력을 머금고 부활한 흑룡! 불꽃으로 가려진 위험한 정답을 조준 타격하여 비늘을 깨뜨려라!",
                 debuffName: "🔥 심연의 화염 (보기 가림)",
                 weaknessName: "⚡ 비늘 파괴 (화염 정답 조준 / 5연속 정답)",
-                weaknessEffect: "10초간 스턴 & 딜량 2.5배 폭딜!",
+                weaknessEffect: "10초간 흑룡 스턴 & 플레이어 전체 딜량 2.5배 폭딜! (약점 종료 후 5초간 용의 비늘 회복 타임)",
                 counterSkillName: "🔥 멸망의 흑염 브레스"
             },
             {
                 id: "golem",
                 name: "대지의 파멸 골렘",
                 img: "media/worldbose/worldbose_golem.webp",
-                desc: "단단한 암석 외피로 60% 피해를 감쇄하는 괴수. 철자 조합(Unscramble) 정답으로 외피를 조각내라!",
+                desc: "대지를 뒤흔드는 고대 암석 결계 괴수! 알파벳 타일 조립(Unscramble) 정답으로 60% 암석 장갑을 산산조각 내어라!",
                 debuffName: "🛡️ 암석 외피 (기본 피해 60% 감쇄)",
-                weaknessName: "💥 외피 붕괴 (철자 조합 정답 / 6글자+ / 4연속 정답)",
-                weaknessEffect: "12초간 외피 완전 해제 & 딜량 3.0배 초폭딜!",
+                weaknessName: "💥 외피 붕괴 (철자조합 / 6글자+ / 4연속 정답)",
+                weaknessEffect: "12초간 암석 피해 감쇄 완전 해제 & 딜량 3.0배 초폭딜! (약점 종료 후 5초간 암석 장갑 재가동)",
                 counterSkillName: "🗿 대지 강진 지진"
             },
             {
                 id: "rich",
                 name: "불멸의 흑마법 리치",
                 img: "media/worldbose/worldbose_rich.webp",
-                desc: "금단의 스펠을 교란하는 저주받은 마왕. 마법 비기 스킬을 2회 연사하여 성수 폭발을 일으켜라!",
-                debuffName: "🔮 사령의 저주 (스펠 교란 & 흡혈)",
+                desc: "금단의 영단어 스펠을 교란하는 저주받은 마왕! 장착 마법 비기 스킬 2회를 연사하여 저주를 정화하고 성수 폭발을 일으켜라!",
+                debuffName: "🔮 사령의 저주 (스펠 교란 & HP 흡혈)",
                 weaknessName: "✨ 성수 폭발 (마법 스킬 2회 시전 / 4연속 정답)",
-                weaknessEffect: "15초간 저주 완벽 정화 & 스킬 피해 +150%!",
+                weaknessEffect: "15초간 저주 완벽 정화 & 모든 마법 스킬 피해 +150% 뻥튀기! (약점 종료 후 5초간 사령 저주 재가동)",
                 counterSkillName: "🔮 사령 사멸 주문"
             }
         ];
@@ -6029,18 +6035,18 @@
             if (debuffNameEl) debuffNameEl.innerText = bossInfo.debuffName;
             const debuffDescEl = document.getElementById("wbGuideDebuffDesc");
             if (debuffDescEl) {
-                debuffDescEl.innerText = (bossInfo.id === 'fafnir') ? "10초마다 40% 확률로 보기 1개를 가립니다. (화염 정답 타격 시 비늘 파괴!)" :
-                                         (bossInfo.id === 'golem') ? "기본 타격 피해 60% 감쇄 (철자 조합/장문 정답으로 암석 장갑 붕괴!)" :
-                                         "10초마다 스펠 교란 (오답 작성 시 보스가 플레이어 HP 10% 흡수 회복)";
+                debuffDescEl.innerHTML = (bossInfo.id === 'fafnir') ? "10초마다 40% 확률로 4개 보기 중 1개를 불꽃으로 가립니다.<br><span class='text-yellow-300 font-bold'>👉 (위험을 무릅쓰고 불꽃으로 가려진 정답을 타격하면 비늘이 깨집니다!)</span>" :
+                                         (bossInfo.id === 'golem') ? "단단한 암석 외피로 평시 타격 피해를 60% 감쇄(0.4배)합니다.<br><span class='text-yellow-300 font-bold'>👉 (철자 조립 퀴즈나 6글자+ 장문 단어 정답으로 장갑을 깰 수 있습니다!)</span>" :
+                                         "10초마다 플레이어 스펠을 교란합니다.<br><span class='text-red-400 font-bold'>👉 (오답 작성 시 리치가 플레이어 HP 10%를 흡수하여 체력을 회복합니다!)</span>";
             }
             const weakNameEl = document.getElementById("wbGuideWeaknessName");
             if (weakNameEl) weakNameEl.innerText = bossInfo.weaknessName;
             const weakEffEl = document.getElementById("wbGuideWeaknessEffect");
-            if (weakEffEl) weakEffEl.innerText = bossInfo.weaknessEffect;
+            if (weakEffEl) weakEffEl.innerHTML = bossInfo.weaknessEffect;
             const counterNameEl = document.getElementById("wbGuideCounterName");
             if (counterNameEl) counterNameEl.innerText = bossInfo.counterSkillName;
             const counterDescEl = document.getElementById("wbGuideCounterDesc");
-            if (counterDescEl) counterDescEl.innerText = "45초 주기 20초 카운터 이벤트 발동! 작성 성공 시 필살기 저지 & 3.0배 카운터 폭딜!";
+            if (counterDescEl) counterDescEl.innerHTML = "약 45초 주기마다 20초 카운터 영단어 이벤트가 발동합니다.<br><span class='text-yellow-300 font-bold'>⚡ 작성 성공 시 필살기 완벽 저지 & 3.0배 카운터 폭딜! (레이드 타이머 ⏸️ 일시중지)</span>";
             const dpsDisplay = document.getElementById("wbDpsPreviewText");
             if (dpsDisplay) dpsDisplay.innerText = calculatePlayerCP().toLocaleString();
 
@@ -6126,21 +6132,33 @@
                 let eqR = gameState.equippedRelicId ? RELIC_DEFINITIONS.find(item => item.id === gameState.equippedRelicId) : null;
                 let acR = gameState.equippedRelicId ? (gameState.acquiredRelics || []).find(item => item.id === gameState.equippedRelicId) : null;
                 
-                let relicCardHtml = eqR ? `
-                    <div class="bg-[#0d0d0d] p-1.5 border border-yellow-500/50 flex flex-col justify-center rounded-none-forced min-w-0">
-                        <div class="flex items-center justify-center gap-1.5 mb-1">
-                            <img src="${eqR.img}" alt="${eqR.name}" class="w-6 h-6 object-contain shrink-0 filter drop-shadow-[0_0_6px_rgba(234,179,8,0.7)]">
-                            <span class="text-[9px] text-yellow-300 font-extrabold leading-tight">${eqR.name}</span>
+                const isRelicUnlocked = (gameState.stage || 1) >= 35;
+                let relicCardHtml = "";
+                if (!isRelicUnlocked) {
+                    relicCardHtml = `
+                        <div class="bg-[#0d0d0d] p-1.5 border border-dashed border-[#3c3c3c] flex items-center justify-center text-[9px] text-gray-500 font-bold rounded-none-forced min-h-[50px]">
+                            🔒 미해금 (35스테이지)
                         </div>
-                        <div class="text-center">
-                            <span class="text-[9px] text-yellow-200  font-bold leading-tight break-words">${getRelicEffectString(eqR, acR)}</span>
+                    `;
+                } else if (eqR) {
+                    relicCardHtml = `
+                        <div class="bg-[#0d0d0d] p-1.5 border border-yellow-500/50 flex flex-col justify-center rounded-none-forced min-w-0">
+                            <div class="flex items-center justify-center gap-1.5 mb-1">
+                                <img src="${eqR.img}" alt="${eqR.name}" class="w-6 h-6 object-contain shrink-0 filter drop-shadow-[0_0_6px_rgba(234,179,8,0.7)]">
+                                <span class="text-[9px] text-yellow-300 font-extrabold leading-tight">${eqR.name}</span>
+                            </div>
+                            <div class="text-center">
+                                <span class="text-[9px] text-yellow-200 font-bold leading-tight break-words">${getRelicEffectString(eqR, acR)}</span>
+                            </div>
                         </div>
-                    </div>
-                ` : `
-                    <div class="bg-[#0d0d0d] p-1.5 border border-dashed border-[#3c3c3c] flex items-center justify-center text-[9px] text-gray-500 font-bold">
-                        🏺 장착된 유물 없음
-                    </div>
-                `;
+                    `;
+                } else {
+                    relicCardHtml = `
+                        <div class="bg-[#0d0d0d] p-1.5 border border-dashed border-yellow-500/30 flex items-center justify-center text-[9px] text-yellow-400/70 font-bold rounded-none-forced min-h-[50px]">
+                            🏺 장착된 유물 없음
+                        </div>
+                    `;
+                }
 
                 const getAccHtml = (key, name, lvl, img, effectClass, unlockStage) => {
                     const isUnlocked = (gameState.stage || 1) >= unlockStage;

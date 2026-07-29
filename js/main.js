@@ -6007,6 +6007,23 @@
             document.getElementById("wbWeekBadge").innerText = getFormattedMonthWeekString();
             document.getElementById("wbGradeTitle").innerText = "전 학년 공유 체력";
             document.getElementById("playerMaxHpDisplay").innerText = `💖 ${wbPlayerMaxHp} HP (무구 강화 수치에 비례)`;
+
+            const tagEl = document.getElementById("wbGuideBossTag");
+            if (tagEl) tagEl.innerText = bossInfo.name;
+            const debuffNameEl = document.getElementById("wbGuideDebuffName");
+            if (debuffNameEl) debuffNameEl.innerText = bossInfo.debuffName;
+            const debuffDescEl = document.getElementById("wbGuideDebuffDesc");
+            if (debuffDescEl) {
+                debuffDescEl.innerText = (bossInfo.id === 'fafnir') ? "10초마다 40% 확률로 4개 보기 중 1개를 불꽃으로 가립니다. (화염으로 가려진 정답을 타격하면 비늘이 깨집니다!)" :
+                                         (bossInfo.id === 'golem') ? "암석 외피로 기본 타격 피해 60%를 감쇄합니다. (철자 조립/장문 정답으로 장갑을 산산조각 내세요!)" :
+                                         "10초마다 스펠을 교란합니다. 오답을 작성하면 보스가 플레이어 HP 10%를 흡수하여 회복합니다.";
+            }
+            const weakNameEl = document.getElementById("wbGuideWeaknessName");
+            if (weakNameEl) weakNameEl.innerText = bossInfo.weaknessName;
+            const weakEffEl = document.getElementById("wbGuideWeaknessEffect");
+            if (weakEffEl) weakEffEl.innerText = bossInfo.weaknessEffect;
+            const counterNameEl = document.getElementById("wbGuideCounterName");
+            if (counterNameEl) counterNameEl.innerText = bossInfo.counterSkillName;
             const dpsDisplay = document.getElementById("wbDpsPreviewText");
             if (dpsDisplay) dpsDisplay.innerText = calculatePlayerCP().toLocaleString();
 

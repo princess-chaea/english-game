@@ -1,11 +1,10 @@
-﻿// VOCA HERO! Service Worker - Edge Request & Cache Optimization
-const CACHE_NAME = 'vocahero-v12';
+// VOCA HERO! Service Worker - Edge Request & Cache Optimization
+const CACHE_NAME = 'vocahero-v19';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/male.txt',
-  '/female.txt',
+  '/media/logo_v2.webp',
   '/js/config.js',
   '/js/main.js'
 ];
@@ -33,7 +32,7 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch: Network-First for index.html, Cache-First for others
+// Fetch: Stale-While-Revalidate for JS/CSS/Assets, Network-First for HTML/Manifest
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
@@ -51,8 +50,8 @@ self.addEventListener('fetch', event => {
   }
 
   if (url.origin === self.location.origin) {
-    // index.html, js, css, manifest.json 은 항상 네트워크 우선
-    if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/manifest.json' || url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+    // index.html 및 manifest.json 은 네트워크 우선 (업데이트 반영)
+    if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/manifest.json') {
       event.respondWith(
         fetch(event.request).then(networkResp => {
           if (networkResp && networkResp.status === 200) {
@@ -65,6 +64,7 @@ self.addEventListener('fetch', event => {
       return;
     }
 
+    // JS, CSS, WebP, Font 등 정적 자산은 캐시 우선 (Cache-First) 후 백그라운드 갱신
     event.respondWith(
       caches.match(event.request).then(cached => {
         if (cached) {
@@ -87,4 +87,3 @@ self.addEventListener('fetch', event => {
     );
   }
 });
-

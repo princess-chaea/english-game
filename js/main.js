@@ -1,4 +1,4 @@
-﻿
+
         // Secret trigger for Teacher Settings
         let teacherClickCount = 0;
         function handleTeacherSecretClick() {
@@ -4528,20 +4528,32 @@
             if (bossTokenText) bossTokenText.innerText = Math.floor(gameState.bossTokens || 0).toLocaleString();
 
             // 장신구 연마 레벨 및 효과 수치 실시간 갱신
-            const nLvl = document.getElementById("profileNecklaceLvl");
-            const bLvl = document.getElementById("profileBraceletLvl");
-            const rLvl = document.getElementById("profileRingLvl");
-            const nVal = document.getElementById("profileNecklaceVal");
-            const bVal = document.getElementById("profileBraceletVal");
-            const rVal = document.getElementById("profileRingVal");
-
-            if (nLvl) nLvl.innerText = `${gameState.necklaceLvl || 0}강`;
-            if (bLvl) bLvl.innerText = `${gameState.braceletLvl || 0}강`;
-            if (rLvl) rLvl.innerText = `${gameState.ringLvl || 0}강`;
-
-            if (nVal) nVal.innerHTML = getAccessoryEffectSummary('necklace', gameState.necklaceLvl);
-            if (bVal) bVal.innerHTML = getAccessoryEffectSummary('bracelet', gameState.braceletLvl);
-            if (rVal) rVal.innerHTML = getAccessoryEffectSummary('ring', gameState.ringLvl);
+            const applyAccProfileUI = (containerId, key, name, lvl, img, effectClass, unlockStage) => {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                const isUnlocked = (gameState.stage || 1) >= unlockStage;
+                if (!isUnlocked) {
+                    container.className = "bg-black/50 border border-gray-800/40 p-1.5 rounded flex flex-col items-center justify-center min-w-0 opacity-50 grayscale";
+                    container.innerHTML = `
+                        <div class="flex items-center justify-center gap-1 mb-1">
+                            <span class="text-gray-500 font-extrabold text-[9px] whitespace-nowrap">🔒 미해금 (${unlockStage}스테이지)</span>
+                        </div>
+                    `;
+                } else {
+                    container.className = `bg-${effectClass}-950/40 border border-${effectClass}-800/40 p-1.5 rounded flex flex-col items-center justify-center min-w-0`;
+                    container.innerHTML = `
+                        <div class="flex items-center justify-center gap-1 mb-1">
+                            <img src="${img}" class="w-5 h-5 object-contain shrink-0" onerror="this.style.display='none'">
+                            <span class="text-${effectClass}-300 font-extrabold text-[9px] whitespace-nowrap">${name} <b class="text-white">${lvl || 0}강</b></span>
+                        </div>
+                        <span class="text-[8.5px] text-${effectClass}-200 font-bold block leading-tight break-words">${getAccessoryEffectSummary(key, lvl)}</span>
+                    `;
+                }
+            };
+            
+            applyAccProfileUI('profileNecklaceContainer', 'necklace', '목걸이', gameState.necklaceLvl, 'media/accessories/necklace.png', 'purple', 31);
+            applyAccProfileUI('profileBraceletContainer', 'bracelet', '팔찌', gameState.braceletLvl, 'media/accessories/bracelet.png', 'sky', 61);
+            applyAccProfileUI('profileRingContainer', 'ring', '반지', gameState.ringLvl, 'media/accessories/ring.png', 'amber', 101);
 
             // ⚠️ 약점 오답 노트 전체 렌더링 (스크롤 기능 추가)
             const weakContainer = document.getElementById("weakWordsContainer");
@@ -5993,7 +6005,7 @@
                 petHtml += `
                     <div class="col-span-3 mt-1 bg-yellow-950/40 border border-yellow-700/40 px-2 py-1 text-[9px] text-yellow-300 font-bold flex items-center gap-1">
                         🧚 소환수 힌트 찬스: 이번 레이드 <b class="text-yellow-200">${maxHints}회</b> 사용 가능
-                        <span class="text-gray-500 font-normal ml-1">(펫 레벨합 ${totalPetLvlForHint} → 기본 2 + ${Math.floor(totalPetLvlForHint / 15)})</span>
+                        <span class="text-gray-500 font-normal ml-1">(펫 레벨합 ${totalPetLvlForHint} → 15레벨당 1회 추가 = 기본 2 + ${Math.floor(totalPetLvlForHint / 15)})</span>
                     </div>
                 `;
                 petContainer.innerHTML = petHtml;
@@ -6014,10 +6026,10 @@
                             skillHtml += `
                                 <div class="p-1.5 border-2 ${gradeInfo.colorClass} flex flex-col justify-between min-h-[56px] min-w-0">
                                     <div class="flex justify-between items-center text-[8px]">
-                                        <span class="font-bold uppercase tracking-wider">${gradeInfo.name} 티어${s.tier || 1}</span>
+                                        <span class="font-bold uppercase tracking-wider text-left">${gradeInfo.name} 티어${s.tier || 1}</span>
                                         <span class="text-yellow-300 font-bold text-[8px]">${starsHtml}</span>
                                     </div>
-                                    <span class="text-[9px] sm:text-[10px] font-bold  text-white tracking-tighter truncate block">${capitalizeFirstLetter(s.word)}</span>
+                                    <span class="text-[9px] sm:text-[10px] font-bold text-white tracking-tighter truncate block text-center">${capitalizeFirstLetter(s.word)}</span>
                                     <span class="text-[9px] font-bold text-pink-300">⚡ ×${previewMult}배</span>
                                 </div>
                             `;
@@ -6053,35 +6065,35 @@
                     </div>
                 `;
 
+                const getAccHtml = (key, name, lvl, img, effectClass, unlockStage) => {
+                    const isUnlocked = (gameState.stage || 1) >= unlockStage;
+                    if (!isUnlocked) {
+                        return `
+                            <div class="bg-black/50 p-1 border border-gray-800 flex flex-col justify-center min-w-0 opacity-50 grayscale">
+                                <div class="flex items-center justify-center gap-1 mb-1">
+                                    <span class="text-[9px] text-gray-500 font-bold">🔒 미해금 (${unlockStage}스테이지)</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    return `
+                        <div class="bg-black/70 p-1 border border-${effectClass}-900/60 flex flex-col justify-center min-w-0">
+                            <div class="flex items-center justify-center gap-1 mb-1">
+                                <img src="${img}" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'">
+                                <span class="text-[9px] text-${effectClass}-300 font-bold">${name} ${lvl || 0}강</span>
+                            </div>
+                            <div class="text-center">
+                                <span class="text-[9px] text-${effectClass}-200  font-extrabold leading-tight break-words">${getAccessoryEffectSummary(key, lvl)}</span>
+                            </div>
+                        </div>
+                    `;
+                };
+
                 let accCardHtml = `
                     <div class="bg-[#0d0d0d] p-1.5 border border-purple-500/40 grid grid-cols-3 gap-1 rounded-none-forced">
-                        <div class="bg-black/70 p-1 border border-purple-900/60 flex flex-col justify-center min-w-0">
-                            <div class="flex items-center justify-center gap-1 mb-1">
-                                <img src="media/accessories/necklace.png" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'">
-                                <span class="text-[9px] text-purple-300 font-bold">목걸이 ${gameState.necklaceLvl || 0}강</span>
-                            </div>
-                            <div class="text-center">
-                                <span class="text-[9px] text-purple-200  font-extrabold leading-tight break-words">${getAccessoryEffectSummary('necklace', gameState.necklaceLvl)}</span>
-                            </div>
-                        </div>
-                        <div class="bg-black/70 p-1 border border-sky-900/60 flex flex-col justify-center min-w-0">
-                            <div class="flex items-center justify-center gap-1 mb-1">
-                                <img src="media/accessories/bracelet.png" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'">
-                                <span class="text-[9px] text-sky-300 font-bold">팔찌 ${gameState.braceletLvl || 0}강</span>
-                            </div>
-                            <div class="text-center">
-                                <span class="text-[9px] text-sky-200  font-extrabold leading-tight break-words">${getAccessoryEffectSummary('bracelet', gameState.braceletLvl)}</span>
-                            </div>
-                        </div>
-                        <div class="bg-black/70 p-1 border border-amber-900/60 flex flex-col justify-center min-w-0">
-                            <div class="flex items-center justify-center gap-1 mb-1">
-                                <img src="media/accessories/ring.png" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'">
-                                <span class="text-[9px] text-amber-300 font-bold">반지 ${gameState.ringLvl || 0}강</span>
-                            </div>
-                            <div class="text-center">
-                                <span class="text-[9px] text-amber-200  font-extrabold leading-tight break-words">${getAccessoryEffectSummary('ring', gameState.ringLvl)}</span>
-                            </div>
-                        </div>
+                        ${getAccHtml('necklace', '목걸이', gameState.necklaceLvl, 'media/accessories/necklace.png', 'purple', 31)}
+                        ${getAccHtml('bracelet', '팔찌', gameState.braceletLvl, 'media/accessories/bracelet.png', 'sky', 61)}
+                        ${getAccHtml('ring', '반지', gameState.ringLvl, 'media/accessories/ring.png', 'amber', 101)}
                     </div>
                 `;
 
@@ -7760,6 +7772,7 @@
                     .catch(err => console.warn('[SW] Registration failed:', err));
             });
         }
+
 
 
 

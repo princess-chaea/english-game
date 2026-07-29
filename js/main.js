@@ -5347,26 +5347,23 @@
             const exitNow = () => {
                 if (fromBackButton && /android/i.test(navigator.userAgent)) return; // 이미 홈으로 나간 경우
                 
-                let closeAttempted = false;
+                // 1. 즉시 창 닫기 시도 (PC 웹 브라우저 등에서 사용자 제스처로 인정받으려면 동기적으로 실행해야 함)
+                try { window.close(); } catch(e) {}
+                
+                // 2. 안드로이드 환경: 홈 화면으로 즉시 이동 (일반 앱처럼 꺼짐)
                 if (/android/i.test(navigator.userAgent)) {
-                    // 안드로이드 폰/태블릿: 홈 화면으로 즉시 이동 (일반 앱처럼 꺼짐)
                     try { 
                         window.location.href = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end"; 
-                        closeAttempted = true;
                     } catch(e) {}
                 }
                 
+                // 3. 최후의 수단: window.close()가 무시되는 환경(웹 브라우저 팝업 차단, PWA 등)을 위한 풀스크린 안내
                 setTimeout(() => {
-                    try { window.close(); } catch(e) {}
-                    
-                    // 최후의 수단: window.close()가 무시되는 환경(웹 브라우저, PWA)을 위한 풀스크린 안내
-                    setTimeout(() => {
-                        let msg = /android|iphone|ipad|ipod/i.test(navigator.userAgent) 
-                            ? "(뒤로가기를 두 번 누르거나 폰의 홈 버튼을 눌러주세요)" 
-                            : "(열려있는 브라우저 탭을 직접 닫아주세요)";
-                        document.body.innerHTML = `<div style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#000;color:#fff;font-size:24px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.5;">영웅의 영혼석에 기록이<br>안전하게 각인되었습니다!<br><br>이제 게임을 종료하셔도 됩니다.<br><br><span style="font-size:14px;color:#888;">${msg}</span></div>`;
-                    }, 500);
-                }, 400);
+                    let msg = /android|iphone|ipad|ipod/i.test(navigator.userAgent) 
+                        ? "(뒤로가기를 두 번 누르거나 폰의 홈 버튼을 눌러주세요)" 
+                        : "(열려있는 브라우저 탭을 직접 닫아주세요)";
+                    document.body.innerHTML = `<div style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#000;color:#fff;font-size:24px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.5;">영웅의 영혼석에 기록이<br>안전하게 각인되었습니다!<br><br>이제 게임을 종료하셔도 됩니다.<br><br><span style="font-size:14px;color:#888;">${msg}</span></div>`;
+                }, 500);
             };
 
             const doExit = () => {

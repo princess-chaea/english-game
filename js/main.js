@@ -117,19 +117,19 @@
                 name: "슬라임",
                 cost: 100,
                 goldBonus: 0.10,   // 레벨당 퀴즈 골드 획득 +10%
-                desc: "🪙 골드 생산 특화 — 레벨당 퀴즈 수당 +10% & 초당 자동 골드 생산(+stage×5G/lv)"
+                desc: "🪙 퀴즈 정답 골드 획득량 UP & 매초 자동 골드 획득!"
             },
             dragon: {
                 name: "드래곤",
                 cost: 350,
                 dps: 10,           // 레벨당 자동 공격 DPS +10 (100렙시 +1,000 DPS)
-                desc: "⚔️ 화염 특화 — 레벨당 초당 자동 DPS +10"
+                desc: "⚔️ 매초 자동으로 몬스터를 공격하는 DPS 증가!"
             },
             fairy: {
                 name: "요정",
                 cost: 800,
                 forgeBonus: 0.3,   // 레벨당 대장간 강화 성공률 +0.3% (100렙시 +30% 합연산)
-                desc: "🔨 강화 축복 — 레벨당 대장간 강화 성공률 +0.3% (100렙시 +30%)"
+                desc: "🔨 대장간 장비 강화 성공 확률을 올려줍니다!"
             }
         };
 
@@ -1486,7 +1486,7 @@
             let slimeAutoGold = 0;
             if (gameState.petLevels && gameState.petLevels['slime']) {
                 const slimeLvl = gameState.petLevels['slime'];
-                slimeAutoGold = slimeLvl * (stage * 5); // 슬라임 펫 레벨당 초당 자동 골드 생산
+                slimeAutoGold = Math.floor(slimeLvl * (stage * 0.5)); // 슬라임 펫 레벨당 초당 자동 골드 획득 보너스
             }
             return Math.floor((stageBase + slimeAutoGold) * relicGoldBonus * potentialGold);
         }
@@ -2182,7 +2182,7 @@
                         <div class="mt-4 flex flex-col gap-1">
                             <div class="flex justify-between text-[9px] text-[#bbbbbb]">
                                 ${petKey === 'slime'
-                                    ? `<span>🪙 골드: +${Math.round((info.goldBonus || 0) * Math.max(1, petLevel) * 100)}% (자동 +${petLevel * (gameState.stage||1) * 5}G/s)</span>`
+                                    ? `<span>🪙 골드: +${Math.round((info.goldBonus || 0) * Math.max(1, petLevel) * 100)}% (자동 +${Math.floor(petLevel * (gameState.stage||1) * 0.5)}G/s)</span>`
                                     : petKey === 'dragon'
                                     ? `<span>⚔️ 자동 DPS: +${(info.dps || 0) * Math.max(1, petLevel)}</span>`
                                     : `<span>🔨 강화 성공률: +${((info.forgeBonus || 0) * Math.max(1, petLevel)).toFixed(1)}%</span>`

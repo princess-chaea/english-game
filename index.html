@@ -54,8 +54,66 @@
             doLogout();
         }
 
-                        async function checkWorldBossVictoryOnStartup() {
+                        async function migrateLegacyWorldBossDocs() {
+            if (!window._fbReady || !window._fbDb || !window._fbGetDoc || !window._fbSetDoc) return;
+            try {
+                const curWeek = getCurrentWeekNum();
+                const weeksToMigrate = [curWeek, curWeek - 1];
+
+                for (const w of weeksToMigrate) {
+                    const globalRef = window._fbDoc(window._fbDb, "world_bosses", `global_week_${w}`);
+                    const globalSnap = await window._fbGetDoc(globalRef);
+
+                    let mergedDamages = {};
+                    let foundLegacy = false;
+
+                    for (let g = 1; g <= 6; g++) {
+                        const gradeRef = window._fbDoc(window._fbDb, "world_bosses", `grade_${g}_week_${w}`);
+                        const gradeSnap = await window._fbGetDoc(gradeRef);
+                        if (gradeSnap && gradeSnap.exists()) {
+                            foundLegacy = true;
+                            const dData = gradeSnap.data();
+                            const dMap = dData.damages || {};
+                            for (const [stKey, dmg] of Object.entries(dMap)) {
+                                if (typeof dmg === 'number' && dmg > 0) {
+                                    mergedDamages[stKey] = Math.max(mergedDamages[stKey] || 0, dmg);
+                                }
+                            }
+                        }
+                    }
+
+                    if (foundLegacy) {
+                        if (globalSnap && globalSnap.exists()) {
+                            const gData = globalSnap.data();
+                            const gMap = gData.damages || {};
+                            for (const [stKey, dmg] of Object.entries(gMap)) {
+                                if (typeof dmg === 'number' && dmg > 0) {
+                                    mergedDamages[stKey] = Math.max(mergedDamages[stKey] || 0, dmg);
+                                }
+                            }
+                        }
+
+                        const totalDmgSum = Object.values(mergedDamages).reduce((a, b) => a + b, 0);
+                        const maxHp = 10000000000;
+                        const curHp = Math.max(0, maxHp - totalDmgSum);
+
+                        await window._fbSetDoc(globalRef, {
+                            maxHp: maxHp,
+                            curHp: curHp,
+                            damages: mergedDamages
+                        }, { merge: true });
+
+                        console.log(`[VocaHero Migration] Successfully merged week ${w} legacy grade docs into global_week_${w}!`);
+                    }
+                }
+            } catch(err) {
+                console.warn("[VocaHero Migration] WB migration info:", err);
+            }
+        }
+
+        async function checkWorldBossVictoryOnStartup() {
             if (!gameState.grade || !gameState.name || gameState.name === "방문자" || !window._fbReady) return;
+            await migrateLegacyWorldBossDocs();
             const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
             
             const currentWeek = getCurrentWeekNum();

@@ -1483,7 +1483,12 @@
             const potentialGold = 1.0 + (getPotentialStatBonus('goldBonus') / 100);
             const stage = gameState.stage || 1;
             const stageBase = stage * 25; // 1스테이지 25G 시작 (선형 증가)
-            return Math.floor(stageBase * relicGoldBonus * potentialGold);
+            let slimeAutoGold = 0;
+            if (gameState.petLevels && gameState.petLevels['slime']) {
+                const slimeLvl = gameState.petLevels['slime'];
+                slimeAutoGold = Math.floor(slimeLvl * (stage * 0.5)); // 슬라임 펫 레벨당 초당 자동 골드 획득 보너스 (1/10 튜닝)
+            }
+            return Math.floor((stageBase + slimeAutoGold) * relicGoldBonus * potentialGold);
         }
 
         function calculateDPSPower() {
@@ -2177,7 +2182,7 @@
                         <div class="mt-4 flex flex-col gap-1">
                             <div class="flex justify-between text-[9px] text-[#bbbbbb]">
                                 ${petKey === 'slime'
-                                    ? `<span>🪙 퀴즈 골드 수당: +${Math.round((info.goldBonus || 0) * Math.max(1, petLevel) * 100)}%</span>`
+                                    ? `<span>🪙 골드: +${Math.round((info.goldBonus || 0) * Math.max(1, petLevel) * 100)}% (자동 +${Math.floor(petLevel * (gameState.stage||1) * 0.5).toLocaleString()}G/초)</span>`
                                     : petKey === 'dragon'
                                     ? `<span>⚔️ 자동 DPS: +${(info.dps || 0) * Math.max(1, petLevel)}</span>`
                                     : `<span>🔨 강화 성공률: +${((info.forgeBonus || 0) * Math.max(1, petLevel)).toFixed(1)}%</span>`

@@ -5934,19 +5934,34 @@
 
         const WORLD_BOSS_SEASONS = [
             {
+                id: "fafnir",
                 name: "심연의 흑룡 파브니르",
                 img: "media/worldbose/worldbose_borndragon.webp",
-                desc: "고대 영단어 스펠의 마력을 머금고 부활한 흑룡. 전 학년 용사들이 힘을 합쳐 약점 단어를 타격해야 물리칠 수 있다!"
+                desc: "불꽃으로 가려진 위험한 정답을 조준 타격하거나 5연속 정답으로 비늘을 깨뜨려라!",
+                debuffName: "🔥 심연의 화염 (보기 가림)",
+                weaknessName: "⚡ 비늘 파괴 (화염 정답 조준 / 5연속 정답)",
+                weaknessEffect: "10초간 스턴 & 딜량 2.5배 폭딜!",
+                counterSkillName: "🔥 멸망의 흑염 브레스"
             },
             {
+                id: "golem",
                 name: "대지의 파멸 골렘",
                 img: "media/worldbose/worldbose_golem.webp",
-                desc: "대지를 뒤흔드는 고대 암석 결계 괴수. 용사들의 연합 단어 정답 폭딜로 단단한 외피를 깨뜨려라!"
+                desc: "단단한 암석 외피로 60% 피해를 감쇄하는 괴수. 철자 조합(Unscramble) 정답으로 외피를 조각내라!",
+                debuffName: "🛡️ 암석 외피 (기본 피해 60% 감쇄)",
+                weaknessName: "💥 외피 붕괴 (철자 조합 정답 / 6글자+ / 4연속 정답)",
+                weaknessEffect: "12초간 외피 완전 해제 & 딜량 3.0배 초폭딜!",
+                counterSkillName: "🗿 대지 강진 지진"
             },
             {
+                id: "rich",
                 name: "불멸의 흑마법 리치",
                 img: "media/worldbose/worldbose_rich.webp",
-                desc: "금단의 영단어 스펠을 해독하는 저주받은 군주. 정답 단어 주문을 지속해서 외워 파멸 마법을 저지하라!"
+                desc: "금단의 스펠을 교란하는 저주받은 마왕. 마법 비기 스킬을 2회 연사하여 성수 폭발을 일으켜라!",
+                debuffName: "🔮 사령의 저주 (스펠 교란 & 흡혈)",
+                weaknessName: "✨ 성수 폭발 (마법 스킬 2회 시전 / 4연속 정답)",
+                weaknessEffect: "15초간 저주 완벽 정화 & 스킬 피해 +150%!",
+                counterSkillName: "🔮 사령 사멸 주문"
             }
         ];
 
@@ -6090,7 +6105,7 @@
                                         <span class="text-yellow-300 font-bold text-[8px]">${starsHtml}</span>
                                     </div>
                                     <span class="text-[9px] sm:text-[10px] font-bold text-white tracking-tighter truncate block text-center">${capitalizeFirstLetter(s.word)}</span>
-                                    <span class="text-[9px] font-bold text-pink-300">⚡ ×${previewMult}배</span>
+                                    <span class="text-[9px] font-bold text-pink-300 block text-center w-full">⚡ ×${previewMult}배</span>
                                 </div>
                             `;
                         } else {

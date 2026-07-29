@@ -5661,7 +5661,7 @@
                     else if (titleDef.tier === "희귀") badgeClass = "text-sky-300 bg-sky-950/90 border-sky-600";
                     else badgeClass = "text-gray-300 bg-gray-900 border-gray-700";
                 }
-                return `<span class="text-[9px] font-bold px-1 py-0.5 border mr-1 rounded-none-forced ${badgeClass}">[${titleName}]</span>`;
+                return `<span class="text-[8.5px] font-bold px-1 py-0.2 border shrink-0 mr-0.5 whitespace-nowrap rounded-none-forced ${badgeClass}">[${titleName}]</span>`;
             };
 
             // Firestore에서 학년 내 전체 유저 데이터 조회 + 월드보스 데미지 병합
@@ -5704,7 +5704,7 @@
                 document.getElementById("hofStageList").innerHTML = stageTop5.length > 0
                     ? stageTop5.map((item, idx) => {
                         const medal = ["🥇","🥈","🥉"][idx] || `${idx+1}.`;
-                        return `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs"><span class="text-white font-medium flex items-center gap-1">${medal} <span class="text-gray-400 text-[10px] mr-1">[${(item.schoolName || '하주초').replace(/(초|중|고)등학교$/, '$1')} ${item.grade || 5}학년]</span> ${getTitleBadgeHtml(item)}${item.name}</span><span class="text-sky-400 font-bold ">Stage ${item.stage||1}-${(item.progress||0)+1}</span></div>`;
+                        return `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs min-w-0 gap-1"><div class="flex items-center min-w-0 truncate gap-0.5 text-[10.5px]"><span class="shrink-0 mr-0.5 font-bold">${medal}</span><span class="text-gray-400 text-[9px] shrink-0 mr-0.5 whitespace-nowrap">[${(item.schoolName || '하주초').replace(/(초|중|고)등학교$/, '$1')} ${item.grade || 5}학년]</span>${getTitleBadgeHtml(item)}<span class="text-white font-bold truncate shrink">${item.name}</span></div><span class="text-sky-400 font-extrabold shrink-0 whitespace-nowrap ml-1 text-right text-[10.5px]">Stage ${item.stage||1}-${(item.progress||0)+1}</span></div>`;
                     }).join('')
                     : '<p class="text-gray-500 text-center py-4">기록 없음</p>';
 
@@ -5720,7 +5720,7 @@
                 document.getElementById("hofBossList").innerHTML = bossTop5.length > 0
                     ? bossTop5.map((item, idx) => {
                         const medal = ["🥇","🥈","🥉"][idx] || `${idx+1}.`;
-                        return `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs"><span class="text-white font-medium flex items-center gap-1">${medal} <span class="text-gray-400 text-[10px] mr-1">[${(item.schoolName || '하주초').replace(/(초|중|고)등학교$/, '$1')} ${item.grade || 5}학년]</span> ${getTitleBadgeHtml(item)}${item.name}</span><span class="text-red-400 font-bold ">${(item.wbBestDamage||0).toLocaleString()} DMG</span></div>`;
+                        return `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs min-w-0 gap-1"><div class="flex items-center min-w-0 truncate gap-0.5 text-[10.5px]"><span class="shrink-0 mr-0.5 font-bold">${medal}</span><span class="text-gray-400 text-[9px] shrink-0 mr-0.5 whitespace-nowrap">[${(item.schoolName || '하주초').replace(/(초|중|고)등학교$/, '$1')} ${item.grade || 5}학년]</span>${getTitleBadgeHtml(item)}<span class="text-white font-bold truncate shrink">${item.name}</span></div><span class="text-red-400 font-extrabold shrink-0 whitespace-nowrap ml-1 text-right text-[10.5px]">${(item.wbBestDamage||0).toLocaleString()} DMG</span></div>`;
                     }).join('')
                     : '<p class="text-gray-500 text-center py-4">기록 없음</p>';
 
@@ -5732,7 +5732,7 @@
                 document.getElementById("hofGoldList").innerHTML = goldTop5.length > 0
                     ? goldTop5.map((item, idx) => {
                         const medal = ["🥇","🥈","🥉"][idx] || `${idx+1}.`;
-                        return `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs"><span class="text-white font-medium flex items-center gap-1">${medal} <span class="text-gray-400 text-[10px] mr-1">[${(item.schoolName || '하주초').replace(/(초|중|고)등학교$/, '$1')} ${item.grade || 5}학년]</span> ${getTitleBadgeHtml(item)}${item.name}</span><span class="text-yellow-400 font-bold ">${(item.accGold||item.gold||0).toLocaleString()} G</span></div>`;
+                        return `<div class="flex justify-between items-center py-1 border-b border-[#1c1c1c] text-xs min-w-0 gap-1"><div class="flex items-center min-w-0 truncate gap-0.5 text-[10.5px]"><span class="shrink-0 mr-0.5 font-bold">${medal}</span><span class="text-gray-400 text-[9px] shrink-0 mr-0.5 whitespace-nowrap">[${(item.schoolName || '하주초').replace(/(초|중|고)등학교$/, '$1')} ${item.grade || 5}학년]</span>${getTitleBadgeHtml(item)}<span class="text-white font-bold truncate shrink">${item.name}</span></div><span class="text-yellow-400 font-extrabold shrink-0 whitespace-nowrap ml-1 text-right text-[10.5px]">${(item.accGold||item.gold||0).toLocaleString()} G</span></div>`;
                     }).join('')
                     : '<p class="text-gray-500 text-center py-4">기록 없음</p>';
 

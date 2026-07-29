@@ -39,7 +39,7 @@
                 localStorage.removeItem("vocahero_active_session");
                 sessionStorage.removeItem("vocahero_active_session");
                 showToast("로그아웃 되었습니다. 잠시 후 초기 화면으로 이동합니다.");
-                setTimeout(() => { try { window.close(); } catch(e) {} setTimeout(() => location.reload(), 100); }, 1500);
+                setTimeout(() => { location.reload(); }, 1500);
             };
             
             if (window._fbDb && window._fbDoc && window._fbSetDoc && gameState.name !== "방문자") {
@@ -241,7 +241,7 @@
                     await window._fbDeleteDoc(window._fbDoc(window._fbDb, "users", uid));
                     showToast("영웅의 데이터가 완전히 삭제되었습니다.");
                     localStorage.removeItem("vocahero_active_session");
-                    setTimeout(() => { try { window.close(); } catch(e) {} setTimeout(() => location.reload(), 100); }, 1500);
+                    setTimeout(() => { location.reload(); }, 1500);
                 }
             } catch(e) {
                 console.error(e);
@@ -2869,6 +2869,7 @@
     </div>
 </body>
 </html>
+
 
 
 

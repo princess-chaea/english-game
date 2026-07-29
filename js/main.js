@@ -117,13 +117,13 @@
                 name: "슬라임",
                 cost: 100,
                 goldBonus: 0.10,   // 레벨당 퀴즈 골드 획득 +10%
-                desc: "🪙 퀴즈 정답 골드 획득량 UP & 매초 자동 골드 획득!"
+                desc: "🪙 퀴즈 정답 시 획득하는 골드를 늘려줍니다! (레벨당 +10%)"
             },
             dragon: {
                 name: "드래곤",
                 cost: 350,
                 dps: 10,           // 레벨당 자동 공격 DPS +10 (100렙시 +1,000 DPS)
-                desc: "⚔️ 매초 자동으로 몬스터를 공격하는 DPS 증가!"
+                desc: "⚔️ 매초 자동으로 몬스터를 공격하는 DPS가 증가합니다!"
             },
             fairy: {
                 name: "요정",
@@ -1483,12 +1483,7 @@
             const potentialGold = 1.0 + (getPotentialStatBonus('goldBonus') / 100);
             const stage = gameState.stage || 1;
             const stageBase = stage * 25; // 1스테이지 25G 시작 (선형 증가)
-            let slimeAutoGold = 0;
-            if (gameState.petLevels && gameState.petLevels['slime']) {
-                const slimeLvl = gameState.petLevels['slime'];
-                slimeAutoGold = Math.floor(slimeLvl * (stage * 0.5)); // 슬라임 펫 레벨당 초당 자동 골드 획득 보너스
-            }
-            return Math.floor((stageBase + slimeAutoGold) * relicGoldBonus * potentialGold);
+            return Math.floor(stageBase * relicGoldBonus * potentialGold);
         }
 
         function calculateDPSPower() {
@@ -2165,7 +2160,7 @@
                 const petLevel = gameState.petLevels[petKey] || 0;
                 const isActive = petLevel > 0;
                 const isMax = petLevel >= MAX_PET_LEVEL;
-                const cost = isMax ? 0 : Math.floor(info.cost * Math.pow(1.08, petLevel));
+                const cost = isMax ? 0 : Math.floor(info.cost * Math.pow(1.13, petLevel));
                 const evolvedName = getPetEvolutionName(petKey, petLevel);
 
                 html += `
@@ -2182,7 +2177,7 @@
                         <div class="mt-4 flex flex-col gap-1">
                             <div class="flex justify-between text-[9px] text-[#bbbbbb]">
                                 ${petKey === 'slime'
-                                    ? `<span>🪙 골드: +${Math.round((info.goldBonus || 0) * Math.max(1, petLevel) * 100)}% (자동 +${Math.floor(petLevel * (gameState.stage||1) * 0.5)}G/s)</span>`
+                                    ? `<span>🪙 퀴즈 골드 수당: +${Math.round((info.goldBonus || 0) * Math.max(1, petLevel) * 100)}%</span>`
                                     : petKey === 'dragon'
                                     ? `<span>⚔️ 자동 DPS: +${(info.dps || 0) * Math.max(1, petLevel)}</span>`
                                     : `<span>🔨 강화 성공률: +${((info.forgeBonus || 0) * Math.max(1, petLevel)).toFixed(1)}%</span>`
@@ -2222,7 +2217,7 @@
             }
 
             const isTutorialPet = (!gameState.tutorialCompleted && tutorialStep === 5 && petKey === 'dragon');
-            const cost = isTutorialPet ? 0 : Math.floor(info.cost * Math.pow(1.08, currentLvl));
+            const cost = isTutorialPet ? 0 : Math.floor(info.cost * Math.pow(1.13, currentLvl));
 
             if (!isTutorialPet && gameState.gold < cost) {
                 showToast(`🪙 골드가 부족합니다! ${info.name} 소환/진화에는 ${cost.toLocaleString()} Gold가 필요합니다.`);

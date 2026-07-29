@@ -6029,9 +6029,9 @@
             if (debuffNameEl) debuffNameEl.innerText = bossInfo.debuffName;
             const debuffDescEl = document.getElementById("wbGuideDebuffDesc");
             if (debuffDescEl) {
-                debuffDescEl.innerText = (bossInfo.id === 'fafnir') ? "10초마다 40% 확률로 4개 보기 중 1개를 불꽃으로 가립니다. (화염으로 가려진 정답을 타격하면 비늘이 깨집니다!)" :
-                                         (bossInfo.id === 'golem') ? "암석 외피로 기본 타격 피해 60%를 감쇄합니다. (철자 조립/장문 정답으로 장갑을 산산조각 내세요!)" :
-                                         "10초마다 스펠을 교란합니다. 오답을 작성하면 보스가 플레이어 HP 10%를 흡수하여 회복합니다.";
+                debuffDescEl.innerText = (bossInfo.id === 'fafnir') ? "10초마다 40% 확률로 보기 1개를 가립니다. (화염 정답 타격 시 비늘 파괴!)" :
+                                         (bossInfo.id === 'golem') ? "기본 타격 피해 60% 감쇄 (철자 조합/장문 정답으로 암석 장갑 붕괴!)" :
+                                         "10초마다 스펠 교란 (오답 작성 시 보스가 플레이어 HP 10% 흡수 회복)";
             }
             const weakNameEl = document.getElementById("wbGuideWeaknessName");
             if (weakNameEl) weakNameEl.innerText = bossInfo.weaknessName;
@@ -6039,6 +6039,8 @@
             if (weakEffEl) weakEffEl.innerText = bossInfo.weaknessEffect;
             const counterNameEl = document.getElementById("wbGuideCounterName");
             if (counterNameEl) counterNameEl.innerText = bossInfo.counterSkillName;
+            const counterDescEl = document.getElementById("wbGuideCounterDesc");
+            if (counterDescEl) counterDescEl.innerText = "45초 주기 20초 카운터 이벤트 발동! 작성 성공 시 필살기 저지 & 3.0배 카운터 폭딜!";
             const dpsDisplay = document.getElementById("wbDpsPreviewText");
             if (dpsDisplay) dpsDisplay.innerText = calculatePlayerCP().toLocaleString();
 

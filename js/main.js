@@ -81,11 +81,11 @@
         const MAX_GEAR_LEVEL = 50; // 40스테이지 한계돌파 50강 확장
         const MAX_PET_LEVEL = 100;
 
-        // 💍 장신구 3종 설정 (50/60/70스테이지 해금 & 50강)
+        // 💍 장신구 3종 설정 (45/55/65스테이지 해금 & 50강)
         const ACCESSORY_PARAMS = {
-            necklace: { name: "지혜의 목걸이", unlockStage: 50, baseCost: 1000, key: "necklaceLvl", img: "media/accessories/necklace.png", desc: "🪄 스킬 마법 피해 & 쿨타임 감소 특화" },
-            bracelet: { name: "투지의 팔찌", unlockStage: 60, baseCost: 5000, key: "braceletLvl", img: "media/accessories/bracelet.png", desc: "⚔️ 클릭 타격력 & 크리티컬 확률 특화" },
-            ring: { name: "영웅의 반지", unlockStage: 70, baseCost: 20000, key: "ringLvl", img: "media/accessories/ring.png", desc: "👑 전체 자동 DPS & 보스 타격 피해 특화" }
+            necklace: { name: "지혜의 목걸이", unlockStage: 45, baseCost: 1000, key: "necklaceLvl", img: "media/accessories/necklace.png", desc: "🪄 스킬 마법 피해 & 쿨타임 감소 특화" },
+            bracelet: { name: "투지의 팔찌", unlockStage: 55, baseCost: 5000, key: "braceletLvl", img: "media/accessories/bracelet.png", desc: "⚔️ 클릭 타격력 & 크리티컬 확률 특화" },
+            ring: { name: "영웅의 반지", unlockStage: 65, baseCost: 20000, key: "ringLvl", img: "media/accessories/ring.png", desc: "👑 전체 자동 DPS & 보스 타격 피해 특화" }
         };
 
         // 🏺 10종 고대 유물 세부 정의 (1개 전용 장착 시스템)
@@ -117,7 +117,7 @@
                 name: "슬라임",
                 cost: 100,
                 goldBonus: 0.10,   // 레벨당 퀴즈 골드 획득 +10%
-                desc: "🪙 골드 획득 특화 — 레벨당 퀴즈 골드 수당 +10%"
+                desc: "🪙 골드 생산 특화 — 레벨당 퀴즈 수당 +10% & 초당 자동 골드 생산(+stage×5G/lv)"
             },
             dragon: {
                 name: "드래곤",
@@ -1483,7 +1483,12 @@
             const potentialGold = 1.0 + (getPotentialStatBonus('goldBonus') / 100);
             const stage = gameState.stage || 1;
             const stageBase = stage * 25; // 1스테이지 25G 시작 (선형 증가)
-            return Math.floor(stageBase * relicGoldBonus * potentialGold);
+            let slimeAutoGold = 0;
+            if (gameState.petLevels && gameState.petLevels['slime']) {
+                const slimeLvl = gameState.petLevels['slime'];
+                slimeAutoGold = slimeLvl * (stage * 5); // 슬라임 펫 레벨당 초당 자동 골드 생산
+            }
+            return Math.floor((stageBase + slimeAutoGold) * relicGoldBonus * potentialGold);
         }
 
         function calculateDPSPower() {
@@ -2160,7 +2165,7 @@
                 const petLevel = gameState.petLevels[petKey] || 0;
                 const isActive = petLevel > 0;
                 const isMax = petLevel >= MAX_PET_LEVEL;
-                const cost = isMax ? 0 : Math.floor(info.cost * Math.pow(1.12, petLevel));
+                const cost = isMax ? 0 : Math.floor(info.cost * Math.pow(1.08, petLevel));
                 const evolvedName = getPetEvolutionName(petKey, petLevel);
 
                 html += `
@@ -2177,7 +2182,7 @@
                         <div class="mt-4 flex flex-col gap-1">
                             <div class="flex justify-between text-[9px] text-[#bbbbbb]">
                                 ${petKey === 'slime'
-                                    ? `<span>🪙 골드 배율: +${Math.round((info.goldBonus || 0) * Math.max(1, petLevel) * 100)}%</span>`
+                                    ? `<span>🪙 골드: +${Math.round((info.goldBonus || 0) * Math.max(1, petLevel) * 100)}% (자동 +${petLevel * (gameState.stage||1) * 5}G/s)</span>`
                                     : petKey === 'dragon'
                                     ? `<span>⚔️ 자동 DPS: +${(info.dps || 0) * Math.max(1, petLevel)}</span>`
                                     : `<span>🔨 강화 성공률: +${((info.forgeBonus || 0) * Math.max(1, petLevel)).toFixed(1)}%</span>`
@@ -2217,7 +2222,7 @@
             }
 
             const isTutorialPet = (!gameState.tutorialCompleted && tutorialStep === 5 && petKey === 'dragon');
-            const cost = isTutorialPet ? 0 : Math.floor(info.cost * Math.pow(1.12, currentLvl));
+            const cost = isTutorialPet ? 0 : Math.floor(info.cost * Math.pow(1.08, currentLvl));
 
             if (!isTutorialPet && gameState.gold < cost) {
                 showToast(`🪙 골드가 부족합니다! ${info.name} 소환/진화에는 ${cost.toLocaleString()} Gold가 필요합니다.`);
@@ -2339,8 +2344,8 @@
 
         function unlockPotentialLab() {
             const stage = gameState.stage || 1;
-            if (stage < 40) {
-                showToast("⚠️ 무구 잠재력 연구소 개설은 40스테이지 달성 시 해금됩니다!");
+            if (stage < 20) {
+                showToast("⚠️ 무구 잠재력 연구소 개설은 20스테이지 달성 시 해금됩니다!");
                 return;
             }
 
@@ -2403,13 +2408,26 @@
                     <div class="col-span-2 sm:col-span-3 border border-yellow-700/60 bg-black/90 p-4 text-center flex flex-col items-center justify-center rounded-none-forced py-6">
                         <span class="text-2xl mb-1">⚡</span>
                         <h4 class="font-extrabold text-xs text-yellow-300">무구 잠재력 연구소 미개설</h4>
-                        <p class="text-[10px] text-gray-400 mt-1 mb-3">${stage >= 40 ? '40스테이지에 도달했습니다! 골드를 지불하여 잠재력 연구소를 개설하세요.' : '🔒 40스테이지 달성 시 연구소 개설이 해금됩니다.'}</p>
-                        <button onclick="unlockPotentialLab()" ${stage < 40 ? 'disabled' : ''} class="px-5 py-2 ${stage >= 40 ? 'bg-yellow-500 hover:bg-yellow-400 text-black shadow-lg cursor-pointer' : 'bg-gray-800 text-gray-500 cursor-not-allowed'} font-extrabold text-xs rounded-none-forced transition">
-                            ${stage >= 40 ? '🔓 100,000 Gold 지불하고 연구소 개설' : '🔒 40스테이지 달성 필요'}
+                        <p class="text-[10px] text-gray-400 mt-1 mb-3">${stage >= 20 ? '20스테이지에 도달했습니다! 골드를 지불하여 잠재력 연구소를 개설하세요.' : '🔒 20스테이지 달성 시 연구소 개설이 해금됩니다.'}</p>
+                        <button onclick="unlockPotentialLab()" ${stage < 20 ? 'disabled' : ''} class="px-5 py-2 ${stage >= 20 ? 'bg-yellow-500 hover:bg-yellow-400 text-black shadow-lg cursor-pointer' : 'bg-gray-800 text-gray-500 cursor-not-allowed'} font-extrabold text-xs rounded-none-forced transition">
+                            ${stage >= 20 ? '🔓 100,000 Gold 지불하고 연구소 개설' : '🔒 20스테이지 달성 필요'}
                         </button>
                     </div>
                 `;
+                const rerollBtn = document.getElementById("rerollPotentialBtn");
+                if (rerollBtn) {
+                    rerollBtn.disabled = true;
+                    rerollBtn.className = "px-4 py-1.5 bg-gray-800 text-gray-500 font-extrabold text-xs transition rounded-none-forced shadow-none cursor-not-allowed border border-gray-700 opacity-60";
+                    rerollBtn.innerText = "🔒 미해금";
+                }
                 return;
+            } else {
+                const rerollBtn = document.getElementById("rerollPotentialBtn");
+                if (rerollBtn) {
+                    rerollBtn.disabled = false;
+                    rerollBtn.className = "px-4 py-1.5 bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold text-xs transition rounded-none-forced shadow-md cursor-pointer";
+                    rerollBtn.innerText = "🎲 잠재력 재설정";
+                }
             }
 
             const gearKeys = ["helmet", "armor", "weapon", "shield", "shoes"];
@@ -2594,8 +2612,8 @@
 
         function rerollGearPotentials() {
             const stage = gameState.stage || 1;
-            if (stage < 40) {
-                showToast("⚠️ 무구 잠재력 연구소는 40스테이지 정복 시 해금됩니다!");
+            if (stage < 20) {
+                showToast("⚠️ 무구 잠재력 연구소는 20스테이지 정복 시 해금됩니다!");
                 return;
             }
 
@@ -4551,9 +4569,9 @@
                 }
             };
             
-            applyAccProfileUI('profileNecklaceContainer', 'necklace', '목걸이', gameState.necklaceLvl, 'media/accessories/necklace.png', 'purple', 31);
-            applyAccProfileUI('profileBraceletContainer', 'bracelet', '팔찌', gameState.braceletLvl, 'media/accessories/bracelet.png', 'sky', 61);
-            applyAccProfileUI('profileRingContainer', 'ring', '반지', gameState.ringLvl, 'media/accessories/ring.png', 'amber', 101);
+            applyAccProfileUI('profileNecklaceContainer', 'necklace', '목걸이', gameState.necklaceLvl, 'media/accessories/necklace.png', 'purple', 45);
+            applyAccProfileUI('profileBraceletContainer', 'bracelet', '팔찌', gameState.braceletLvl, 'media/accessories/bracelet.png', 'sky', 55);
+            applyAccProfileUI('profileRingContainer', 'ring', '반지', gameState.ringLvl, 'media/accessories/ring.png', 'amber', 65);
 
             // ⚠️ 약점 오답 노트 전체 렌더링 (스크롤 기능 추가)
             const weakContainer = document.getElementById("weakWordsContainer");
@@ -6091,9 +6109,9 @@
 
                 let accCardHtml = `
                     <div class="bg-[#0d0d0d] p-1.5 border border-purple-500/40 grid grid-cols-3 gap-1 rounded-none-forced">
-                        ${getAccHtml('necklace', '목걸이', gameState.necklaceLvl, 'media/accessories/necklace.png', 'purple', 31)}
-                        ${getAccHtml('bracelet', '팔찌', gameState.braceletLvl, 'media/accessories/bracelet.png', 'sky', 61)}
-                        ${getAccHtml('ring', '반지', gameState.ringLvl, 'media/accessories/ring.png', 'amber', 101)}
+                        ${getAccHtml('necklace', '목걸이', gameState.necklaceLvl, 'media/accessories/necklace.png', 'purple', 45)}
+                        ${getAccHtml('bracelet', '팔찌', gameState.braceletLvl, 'media/accessories/bracelet.png', 'sky', 55)}
+                        ${getAccHtml('ring', '반지', gameState.ringLvl, 'media/accessories/ring.png', 'amber', 65)}
                     </div>
                 `;
 

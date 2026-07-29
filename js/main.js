@@ -1,4 +1,4 @@
-﻿
+
         // Secret trigger for Teacher Settings
         let teacherClickCount = 0;
         function handleTeacherSecretClick() {
@@ -4106,7 +4106,7 @@
             const statSkillDmg = Math.floor(baseSkillDmg * totalSkillMult);
 
             // 🎯 후반 스테이지/보스 HP 폭발 시 퀴즈 정답 딜과의 역전 방지 & mult(등급/티어/별) 보장 보정
-            const chaliceMult = 1.0;
+            const chaliceMult = 1.0 + (getEquippedRelicBonus("relic_chalice") / 100);
             const bossBonus = isBossBattleActive 
                 ? (1.0 + (getEquippedRelicBonus("relic_feather") + getPotentialStatBonus('bossDmg')) / 100)
                 : 1.0;
@@ -4224,7 +4224,7 @@
                 const arena = document.getElementById("battleArena");
                 
                 // 단어 정답 시 약점 타격 (스탯 기반 데미지가 최소 안전선 3.5%를 넘어서면 강화/펫/유물 효과로 상한선 자유롭게 돌파!)
-                const chaliceMult = 1.0;
+                const chaliceMult = 1.0 + (getEquippedRelicBonus("relic_chalice") / 100);
                 const bossBonus = isBossBattleActive 
                     ? (1.0 + (getEquippedRelicBonus("relic_feather") + getPotentialStatBonus('bossDmg')) / 100)
                     : 1.0;
@@ -4478,7 +4478,7 @@
 
             // 📖 퀴즈 단어 정답 타격 피해 수치 & 증폭률
             const baseQuizStatDmg = (calculateClickAttackPower() * 8) + Math.floor(calculateDPSPower() * 1.5);
-            const relicChaliceDmg = 0;
+            const relicChaliceDmg = getEquippedRelicBonus("relic_chalice");
             const quizCombo = gameState.combo || 0;
             const comboDmgPct = Math.min(150, quizCombo * 5); // 콤보당 +5% (최대 +150%)
             const totalQuizDmgBonus = relicChaliceDmg + comboDmgPct;

@@ -6273,18 +6273,21 @@
             if (window._fbReady) {
                 const bossDocRef = window._fbDoc(window._fbDb, "world_bosses", `global_week_${getCurrentWeekNum()}`);
                 window._fbGetDoc(bossDocRef).then(docSnap => {
-                    let curHp = wbMaxBossHp;
-                    let maxHp = wbMaxBossHp;
+                    const expectedMaxHp = getWbExpectedMaxHp();
+                    let curHp = expectedMaxHp;
+                    let maxHp = expectedMaxHp;
                     let damages = {};
                     let canAttack = true;
                     
                     if (docSnap.exists()) {
                         const data = docSnap.data();
-                        const dbMaxHp = data.maxHp || wbMaxBossHp;
-                        const dbCurHp = typeof data.curHp !== 'undefined' ? data.curHp : dbMaxHp;
-                        const dbTotalDmg = Math.max(0, dbMaxHp - dbCurHp);
                         
-                        maxHp = wbMaxBossHp;
+                        let dbTotalDmg = 0;
+                        if (data.damages) {
+                            dbTotalDmg = Object.values(data.damages).reduce((a, b) => a + b, 0);
+                        }
+                        
+                        maxHp = expectedMaxHp;
                         curHp = Math.max(0, maxHp - dbTotalDmg);
                         damages = data.damages || {};
                         const lastPlayedDates = data.lastPlayedDates || {};
@@ -7542,28 +7545,33 @@
                 window._fbRunTransaction(window._fbDb, async (transaction) => {
                     const docSnap = await transaction.get(bossDocRef);
                     if (!docSnap.exists()) {
+                        const expectedMaxHp = getWbExpectedMaxHp();
                         transaction.set(bossDocRef, {
-                            maxHp: wbMaxBossHp,
-                            curHp: Math.max(0, wbMaxBossHp - wbTotalDamageDealt),
+                            maxHp: expectedMaxHp,
+                            curHp: Math.max(0, expectedMaxHp - wbTotalDamageDealt),
                             damages: { [studentKey]: wbTotalDamageDealt },
                             lastPlayedDates: { [studentKey]: todayStr }
                         });
                     } else {
                         const data = docSnap.data();
-                        const dbMaxHp = data.maxHp || wbMaxBossHp;
-                        const dbCurHp = typeof data.curHp !== 'undefined' ? data.curHp : dbMaxHp;
-                        const dbTotalDmg = Math.max(0, dbMaxHp - dbCurHp);
                         
-                        const curHp = Math.max(0, wbMaxBossHp - dbTotalDmg);
-                        const newHp = Math.max(0, curHp - wbTotalDamageDealt);
+                        const expectedMaxHp = getWbExpectedMaxHp();
+                        
                         const damages = data.damages || {};
                         const oldDamage = damages[studentKey] || 0;
                         damages[studentKey] = oldDamage + wbTotalDamageDealt;
                         
+                        let dbTotalDmg = 0;
+                        if (data.damages) {
+                            dbTotalDmg = Object.values(damages).reduce((a, b) => a + b, 0);
+                        }
+                        
+                        const newHp = Math.max(0, expectedMaxHp - dbTotalDmg);
+                        
                         const lastPlayedDates = data.lastPlayedDates || {};
                         lastPlayedDates[studentKey] = todayStr;
                         
-                        transaction.update(bossDocRef, { maxHp: wbMaxBossHp, curHp: newHp, damages, lastPlayedDates });
+                        transaction.update(bossDocRef, { maxHp: expectedMaxHp, curHp: newHp, damages, lastPlayedDates });
                     }
                 }).then(() => {
                     showToast("✨ 서버에 월드보스 누적 피해 기록이 반영되었습니다!");

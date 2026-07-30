@@ -6218,13 +6218,20 @@
                     badge.className = "text-[9px] bg-gray-800 text-gray-400 border border-gray-600 px-3 py-1 rounded-none-forced font-bold uppercase tracking-wider";
                 }
             } else {
+                let isResume = false;
+                try {
+                    const inProgressKey = `vocahero_wb_progress_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+                    const savedJson = localStorage.getItem(inProgressKey);
+                    if (savedJson && JSON.parse(savedJson).date === todayStr) isResume = true;
+                } catch(e) {}
+
                 if (btn) {
                     btn.disabled = false;
                     btn.className = "w-full py-3.5 bg-gradient-to-r from-red-700 via-pink-700 to-red-600 hover:from-red-600 hover:to-pink-600 text-white font-black text-sm tracking-wider uppercase transition shadow-xl flex items-center justify-center gap-2 cursor-pointer";
-                    btn.innerText = "⚔️ 월드보스 토벌전 참전하기 (1일 1회)";
+                    btn.innerText = isResume ? "⚔️ 전투 이어하기 (이탈 기록 발견)" : "⚔️ 월드보스 토벌전 참전하기 (1일 1회)";
                 }
                 if (badge) {
-                    badge.innerText = "1일 1회 도전 가능";
+                    badge.innerText = isResume ? "진행 중" : "1일 1회 도전 가능";
                     badge.className = "text-[9px] bg-red-950 text-red-400 border border-red-600 px-3 py-1 rounded-none-forced font-bold uppercase tracking-wider animate-pulse";
                 }
             }
@@ -6483,6 +6490,25 @@
             wbPlayerMaxHp = calculatePlayerRaidMaxHp();
             wbPlayerHp = wbPlayerMaxHp;
 
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const inProgressKey = `vocahero_wb_progress_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+            try {
+                const savedJson = localStorage.getItem(inProgressKey);
+                if (savedJson) {
+                    const saved = JSON.parse(savedJson);
+                    if (saved.date === todayStr) {
+                        wbTimerRemaining = saved.wbTimerRemaining ?? 180.0;
+                        wbTotalDamageDealt = saved.wbTotalDamageDealt ?? 0;
+                        wbPlayerHp = saved.wbPlayerHp ?? wbPlayerMaxHp;
+                        wbSkillCooldowns = saved.wbSkillCooldowns || {};
+                        wbNextUltimateTime = Math.floor(wbTimerRemaining / 45) * 45 - 5;
+                        if (wbNextUltimateTime < 0) wbNextUltimateTime = 135.0;
+                    } else {
+                        localStorage.removeItem(inProgressKey);
+                    }
+                }
+            } catch(e) { localStorage.removeItem(inProgressKey); }
+
             const timerText = document.getElementById("wbTimerText");
             if (timerText) timerText.innerText = "180.0초";
             const hpText = document.getElementById("wbPlayerHpText");
@@ -6590,6 +6616,21 @@
                 }
                 updateWorldBossSkillCooldownsUI();
                 updateWorldBossHudUI();
+
+                // 1초 단위로 중간 저장 (이탈 대비)
+                if (Math.floor(wbTimerRemaining * 10) % 10 === 0) {
+                    try {
+                        const todayStr = new Date().toISOString().slice(0, 10);
+                        const inProgressKey = `vocahero_wb_progress_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+                        localStorage.setItem(inProgressKey, JSON.stringify({
+                            date: todayStr,
+                            wbTimerRemaining,
+                            wbTotalDamageDealt,
+                            wbPlayerHp,
+                            wbSkillCooldowns
+                        }));
+                    } catch(e) {}
+                }
 
                 if (wbTimerRemaining <= 0) {
                     endWorldBossRaid("⏱️ 180초 제한시간이 초과되어 토벌전이 완료되었습니다!");
@@ -7467,6 +7508,11 @@
             const todayStr = new Date().toISOString().slice(0, 10);
             const wbRaidKey = `vocahero_wb_raid_date_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
             localStorage.setItem(wbRaidKey, todayStr);
+            
+            try {
+                const inProgressKey = `vocahero_wb_progress_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+                localStorage.removeItem(inProgressKey);
+            } catch(e) {}
 
             playSoundEffect('levelup');
             refreshStateVisuals();

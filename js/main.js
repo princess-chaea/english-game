@@ -6596,9 +6596,13 @@
             const nameTag = document.getElementById("wbActiveBossNameTag");
             if (nameTag) nameTag.innerText = bossInfo.name;
 
+            const totalPetLvlForHint = Object.values(gameState.petLevels || {}).reduce((a, b) => a + b, 0);
+            wbPetHintMaxCount = 2 + Math.floor(totalPetLvlForHint / 15);
             wbPetHintRemaining = wbPetHintMaxCount;
             updatePetHintBtnUI();
             updateWorldBossHudUI();
+            
+            renderWorldBossPetStage();
 
             generateWorldBossQuiz();
             renderWorldBossRaidSkills();

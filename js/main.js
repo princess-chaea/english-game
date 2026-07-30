@@ -5088,7 +5088,7 @@
                 showToast("구글 연동 계정으로 로그인되었습니다.");
             } catch (error) {
                 console.error("구글 로그인 에러:", error);
-                alert("구글 로그인 중 오류가 발생했습니다.");
+                showAlert("구글 로그인이 취소되었거나 오류가 발생했습니다.", "⚠️", "구글 로그인 에러");
             }
         };
 
@@ -5959,7 +5959,7 @@
                 desc: "대지를 뒤흔드는 고대 암석 결계 괴수! 알파벳 타일 조립(Unscramble) 정답으로 60% 암석 장갑을 산산조각 내어라!",
                 debuffName: "🛡️ 암석 외피 (기본 피해 60% 감쇄)",
                 weaknessName: "💥 외피 붕괴 (철자조합 / 6글자+ / 4연속 정답)",
-                weaknessEffect: "12초간 암석 피해 감쇄 완전 해제 & 딜량 3.0배 초폭딜! (약점 종료 후 5초간 암석 장갑 재가동)",
+                weaknessEffect: "약점 타격 즉시 장갑 파괴 및 5.0배 단일 강력 폭딜 타격! (조건 만족 시 항시 발동)",
                 counterSkillName: "🗿 대지 강진 지진"
             },
             {
@@ -5969,7 +5969,7 @@
                 desc: "금단의 영단어 스펠을 교란하는 저주받은 마왕! 장착 마법 비기 스킬 2회를 연사하여 저주를 정화하고 성수 폭발을 일으켜라!",
                 debuffName: "🔮 사령의 저주 (스펠 교란 & HP 흡혈)",
                 weaknessName: "✨ 성수 폭발 (마법 스킬 2회 시전 / 4연속 정답)",
-                weaknessEffect: "15초간 저주 완벽 정화 & 모든 마법 스킬 피해 +150% 뻥튀기! (약점 종료 후 5초간 사령 저주 재가동)",
+                weaknessEffect: "사령의 저주 완벽 정화 및 모든 스킬 쿨타임 즉시 초기화! (약점 종료 후 5초간 사령 저주 재가동)",
                 counterSkillName: "🔮 사령 사멸 주문"
             }
         ];
@@ -6038,9 +6038,9 @@
             if (debuffNameEl) debuffNameEl.innerText = bossInfo.debuffName;
             const debuffDescEl = document.getElementById("wbGuideDebuffDesc");
             if (debuffDescEl) {
-                debuffDescEl.innerHTML = (bossInfo.id === 'fafnir') ? "10초마다 40% 확률로 4개 보기 중 1개를 불꽃으로 가립니다.<br><span class='text-yellow-300 font-bold'>👉 (위험을 무릅쓰고 불꽃으로 가려진 정답을 타격하면 비늘이 깨집니다!)</span>" :
-                                         (bossInfo.id === 'golem') ? "단단한 암석 외피로 평시 타격 피해를 60% 감쇄(0.4배)합니다.<br><span class='text-yellow-300 font-bold'>👉 (철자 조립 퀴즈나 6글자+ 장문 단어 정답으로 장갑을 깰 수 있습니다!)</span>" :
-                                         "10초마다 플레이어 스펠을 교란합니다.<br><span class='text-red-400 font-bold'>👉 (오답 작성 시 리치가 플레이어 HP 10%를 흡수하여 체력을 회복합니다!)</span>";
+                debuffDescEl.innerHTML = (bossInfo.id === 'fafnir') ? "선다형 보기나 순서맞추기 단어칸에 불꽃이 일렁여 시야를 방해합니다.<br><span class='text-yellow-300 font-bold'>👉 (불꽃이 일렁이는 정답을 타격하면 비늘이 깨집니다!)</span>" :
+                                         (bossInfo.id === 'golem') ? "단단한 암석 피부로 일반 타격 데미지를 60% 감소(0.4배)합니다.<br><span class='text-yellow-300 font-bold'>👉 (철자 조합 문제나 6글자 이상 단어 정답 시 장갑이 파괴됩니다!)</span>" :
+                                         "10초마다 플레이어를 중독시켜 스펠을 교란합니다.<br><span class='text-red-400 font-bold'>👉 (마법 속성 오답 공격 시 플레이어 HP 10%를 소모하여 체력을 회복합니다!)</span>";
             }
             const weakNameEl = document.getElementById("wbGuideWeaknessName");
             if (weakNameEl) weakNameEl.innerText = bossInfo.weaknessName;

@@ -3081,36 +3081,93 @@
             saveLocalCache();
         }
 
+        window.revealHiddenRelic = function(el, colorClass) {
+            const overlay = el.querySelector('.hidden-overlay');
+            const content = el.querySelector('.relic-actual-content');
+            if (overlay && !overlay.classList.contains('pointer-events-none')) {
+                overlay.classList.add('opacity-0', 'pointer-events-none');
+                content.classList.remove('opacity-0');
+                el.className = `border ${colorClass} p-2 text-center flex flex-col justify-between min-h-[120px] rounded-none-forced transition-all duration-700`;
+                
+                playSoundEffect('success');
+                
+                window.wbRelicsToReveal--;
+                const btn = document.getElementById("relicDrawResultConfirmBtn");
+                if (btn && window.wbRelicsToReveal <= 0) {
+                    btn.disabled = false;
+                    btn.classList.remove("opacity-50", "cursor-not-allowed");
+                    btn.innerText = "✨ 확인 및 유물함 보관";
+                } else if (btn) {
+                    btn.innerText = `✨ 모든 유물 확인 대기중 (${window.wbRelicsToReveal}개 남음)`;
+                }
+            }
+        };
+
         function showRelicDrawResultModal(results) {
             const grid = document.getElementById("relicDrawResultGrid");
             if (!grid) return;
 
             let html = "";
+            let hiddenCount = 0;
             results.forEach(res => {
                 const gradeInfo = SKILL_GRADES[res.grade] || SKILL_GRADES.normal;
+                const isHighGrade = (res.grade === 'legendary' || res.grade === 'mythic');
                 const starsHtml = res.stars > 0 ? "⭐".repeat(res.stars) : "0성";
-                html += `
-                    <div class="border ${gradeInfo.colorClass} p-2 text-center flex flex-col justify-between min-h-[120px] rounded-none-forced">
-                        <div class="flex justify-between items-center text-[7px] text-gray-300 font-bold mb-1">
+                const innerHtml = `
+                        <div class="flex justify-between items-center text-[7px] text-gray-300 font-bold mb-1 w-full">
                             <span>${gradeInfo.name}</span>
                             <span class="text-yellow-400">${starsHtml}</span>
                         </div>
                         <div class="w-10 h-10 mx-auto my-1 flex items-center justify-center bg-black/50 border border-gray-800 p-1">
                             <img src="${res.def.img}" class="w-full h-full object-contain filter drop-shadow-[0_0_8px_#fbbf24]">
                         </div>
-                        <h5 class="text-[9px] font-black text-white whitespace-nowrap overflow-hidden text-ellipsis px-1 tracking-tighter">${res.def.name}</h5>
-                        <p class="text-[8px] font-bold text-yellow-300 mt-0.5 leading-[1.2] tracking-tighter">${getRelicEffectString(res.def, {grade: res.grade, stars: res.stars})}</p>
-                    </div>
+                        <h5 class="text-[9px] font-black text-white whitespace-nowrap overflow-hidden text-ellipsis px-1 tracking-tighter w-full">${res.def.name}</h5>
+                        <p class="text-[8px] font-bold text-yellow-300 mt-0.5 leading-[1.2] tracking-tighter w-full">${getRelicEffectString(res.def, {grade: res.grade, stars: res.stars})}</p>
                 `;
+
+                if (isHighGrade) {
+                    hiddenCount++;
+                    html += `
+                    <div class="border border-yellow-500/50 p-2 text-center flex flex-col justify-between min-h-[120px] rounded-none-forced relative cursor-pointer group" onclick="revealHiddenRelic(this, '${gradeInfo.colorClass}')">
+                        <div class="hidden-overlay absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 flex flex-col items-center justify-center z-10 transition-opacity duration-500 group-hover:brightness-125">
+                            <span class="text-2xl animate-bounce">✨</span>
+                            <span class="text-[8px] text-yellow-400 font-bold mt-1">클릭하여 확인!</span>
+                        </div>
+                        <div class="relic-actual-content opacity-0 transition-opacity duration-1000 w-full h-full flex flex-col justify-between items-center">
+                            ${innerHtml}
+                        </div>
+                    </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="border ${gradeInfo.colorClass} p-2 text-center flex flex-col justify-between min-h-[120px] rounded-none-forced items-center">
+                            ${innerHtml}
+                        </div>
+                    `;
+                }
             });
 
             grid.innerHTML = html;
+            window.wbRelicsToReveal = hiddenCount;
+            const btn = document.getElementById("relicDrawResultConfirmBtn");
+            if (btn) {
+                if (hiddenCount > 0) {
+                    btn.disabled = true;
+                    btn.classList.add("opacity-50", "cursor-not-allowed");
+                    btn.innerText = `✨ 모든 유물 확인 대기중 (${hiddenCount}개 남음)`;
+                } else {
+                    btn.disabled = false;
+                    btn.classList.remove("opacity-50", "cursor-not-allowed");
+                    btn.innerText = "✨ 확인 및 유물함 보관";
+                }
+            }
+
             const modal = document.getElementById("relicDrawResultModal");
             if (modal) {
-                  modal.classList.remove("hidden");
-                  modal.classList.add("flex");
-              }
-          }
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+            }
+        }
   
           function closeSkillAcquireModal() {
               document.getElementById('skillAcquireModal').classList.remove('flex');
@@ -5973,13 +6030,13 @@
                 img: "media/worldbose/worldbose_rich.webp",
                 desc: "금단의 영단어 스펠을 교란하는 저주받은 마왕! 장착 마법 비기 스킬 2회를 연사하여 저주를 정화하고 성수 폭발을 일으켜라!",
                 debuffName: "🔮 사령의 저주 (스펠 교란 & HP 흡혈)",
-                weaknessName: "✨ 성수 폭발 (마법 스킬 2회 시전 / 10연속 정답)",
+                weaknessName: "✨ 성수 폭발 (마법 스킬 4회 시전 / 10연속 정답)",
                 weaknessEffect: "사령의 저주 완벽 정화 및 모든 스킬 쿨타임 즉시 초기화! (약점 종료 후 20초간 사령 저주 재가동)",
                 counterSkillName: "🔮 사령 사멸 주문"
             }
         ];
 
-                function getCurrentWeekNum() {
+        function getCurrentWeekNum() {
             const EPOCH_MONDAY = new Date("2024-07-01T00:00:00Z");
             const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
             const kstMidnight = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), kstNow.getUTCDate()));
@@ -5990,15 +6047,9 @@
             return Math.floor((thisMonday.getTime() - EPOCH_MONDAY.getTime()) / oneWeek);
         }
 
-                function getCurrentWeekNum() {
-            const EPOCH_MONDAY = new Date("2024-07-01T00:00:00Z");
-            const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
-            const kstMidnight = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), kstNow.getUTCDate()));
-            const dayOfWeek = kstMidnight.getUTCDay();
-            const daysSinceMonday = (dayOfWeek + 6) % 7;
-            const thisMonday = new Date(kstMidnight.getTime() - daysSinceMonday * 24 * 60 * 60 * 1000);
-            const oneWeek = 1000 * 60 * 60 * 24 * 7;
-            return Math.floor((thisMonday.getTime() - EPOCH_MONDAY.getTime()) / oneWeek);
+        function getWbExpectedMaxHp() {
+            const weekNum = getCurrentWeekNum();
+            return Math.min(500000000000, 100000000000 + (weekNum * 50000000000));
         }
 
         function getFormattedMonthWeekString() {
@@ -6450,7 +6501,7 @@
                 } else if (wbBossState === "weakness_shattered") {
                     stateBadge.className = "bg-yellow-950 text-yellow-300 border border-yellow-400 text-[10px] px-2 py-0.5 font-black uppercase tracking-wider animate-pulse shadow-md";
                     stateBadge.innerText = (bossInfo.id === 'fafnir') ? `⚡ [비늘 파괴] 딜량 2.5배 (${wbWeaknessTimer.toFixed(1)}초)` :
-                                           (bossInfo.id === 'golem') ? `💥 [외피 붕괴] 3배 초폭딜 (${wbWeaknessTimer.toFixed(1)}초)` :
+                                           (bossInfo.id === 'golem') ? `💥 [외피 붕괴] 10배 초폭딜 (${wbWeaknessTimer.toFixed(1)}초)` :
                                            `✨ [성수 정화] 스킬+150% (${wbWeaknessTimer.toFixed(1)}초)`;
                 } else if (wbGracePeriodTimer > 0) {
                     stateBadge.className = "bg-gray-800 text-gray-400 border border-gray-600 text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider";
@@ -6473,7 +6524,7 @@
                 if (wbCurrentQuizType === 'english') mult = 1.2;
                 if (wbCurrentQuizType === 'unscramble') mult = 1.6;
                 if (wbUltimateEventActive) mult = 3.0;
-                if (wbBossState === 'weakness_shattered') mult *= (bossInfo.id === 'fafnir' ? 2.5 : 3.0);
+                if (wbBossState === 'weakness_shattered') mult *= (bossInfo.id === 'fafnir' ? 2.5 : bossInfo.id === 'golem' ? 10.0 : 3.0);
                 if (bossInfo.id === 'golem' && wbBossState === 'normal') mult *= 0.4;
                 
                 multBadge.innerText = `⚡ ${mult.toFixed(1)}x`;
@@ -7329,13 +7380,13 @@
                             isWeaknessTriggered = true;
                         }
                     } else if (bossInfo.id === 'golem') {
-                        // 파멸 골렘: 철자 조합(Unscramble) 정답 OR 6글자+ 장문 정답 OR 10연속 정답
-                        if (wbCurrentQuizType === 'unscramble' || wbCurrentWordObj.word.length >= 6 || wbComboCount >= 10) {
+                        // 파멸 골렘: 6글자 이상 철자 조합(Unscramble) 정답
+                        if (wbCurrentQuizType === 'unscramble' && wbCurrentWordObj.word.length >= 6) {
                             isWeaknessTriggered = true;
                         }
                     } else if (bossInfo.id === 'rich') {
-                        // 불멸의 리치: 10연속 정답
-                        if (wbComboCount >= 10) {
+                        // 불멸의 리치: 10연속 정답 OR 마법 4회 시전
+                        if (wbComboCount >= 10 || wbSkillCastCount >= 4) {
                             isWeaknessTriggered = true;
                         }
                     }

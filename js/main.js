@@ -6264,6 +6264,7 @@
             const btn = document.getElementById("startWorldBossBtn");
             const badge = document.getElementById("worldBossEntryBadge");
 
+            let isResume = false;
             if (isTodayDone) {
                 if (btn) {
                     btn.disabled = true;
@@ -6275,7 +6276,6 @@
                     badge.className = "text-[9px] bg-gray-800 text-gray-400 border border-gray-600 px-3 py-1 rounded-none-forced font-bold uppercase tracking-wider";
                 }
             } else {
-                let isResume = false;
                 try {
                     const inProgressKey = `vocahero_wb_progress_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
                     const savedJson = localStorage.getItem(inProgressKey);

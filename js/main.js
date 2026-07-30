@@ -848,6 +848,14 @@
                 gameState.equippedSkills = [];
                 gameState.wrongWordCounts = {};
                 gameState.lockedPotentialSlots = {};
+                gameState.lastSaved = Date.now();
+                gameState.tutorialCompleted = false;
+                gameState.necklaceLvl = 0;
+                gameState.braceletLvl = 0;
+                gameState.ringLvl = 0;
+                gameState.masteryPoints = 0;
+                gameState.gearPotentials = {};
+                gameState.acquiredRelics = [];
             }
 
             gameState.wordsPool = MOCK_WORDS[String(gameState.grade)] || MOCK_WORDS["3"];

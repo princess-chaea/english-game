@@ -2707,7 +2707,7 @@
                         <div id="criticalDefenseTimerBar" class="h-full bg-red-500 w-full" style="transition: width 0.1s linear;"></div>
                     </div>
                     <p id="criticalDefenseTimeText" class="text-xs text-red-400 font-bold tracking-widest uppercase text-left">제한시간: 30초</p>
-                    <input type="text" id="criticalDefenseInput" class="bmw-input w-full text-center text-xl  bg-black border-red-500/50 focus:border-red-500 text-white placeholder-[#3c3c3c]" placeholder="영어 단어 입력" style="ime-mode: inactive;" oninput="if(this.value.length > 0){ this.value = this.value.charAt(0).toUpperCase() + this.value.slice(1).toLowerCase(); }" onkeydown="if(event.key === 'Enter') submitCriticalDefense()">
+                    <input type="text" id="criticalDefenseInput" class="bmw-input w-full text-center text-xl  bg-black border-red-500/50 focus:border-red-500 text-white placeholder-[#3c3c3c]" placeholder="영어 단어 입력" style="ime-mode: inactive;" oninput="if(this.value.length > 0){ this.value = this.value.charAt(0).toUpperCase() + this.value.slice(1).toLowerCase(); }" onkeydown="if(event.key === 'Enter' && !event.isComposing) submitCriticalDefense()">
                     <p id="criticalDefenseError" class="text-xs text-red-500 font-bold hidden"></p>
                 </div>
             </div>
@@ -2797,7 +2797,7 @@
                         <div style="display:flex; gap:8px;">
                             <input id="offlineFIBInput" type="text" placeholder="spell it out..."
                                 style="flex:1; padding:10px 12px; font-size:14px;  font-weight:700; background:rgba(0,0,0,0.5); color:#e9d5ff; border:1px solid rgba(124,58,237,0.6); border-radius:4px; outline:none;"
-                                onkeydown="if(event.key==='Enter') offlineAnswerFIB()" />
+                                onkeydown="if(event.key==='Enter' && !event.isComposing) offlineAnswerFIB()" />
                             <button onclick="offlineAnswerFIB()" style="padding:10px 16px; font-size:13px; font-weight:900; background:linear-gradient(90deg,#6d28d9,#7c3aed); color:#fff; border:none; border-radius:4px; cursor:pointer;">확인</button>
                         </div>
                     </div>

@@ -6318,7 +6318,7 @@
                 }
             } else {
                 const hpTextEl = document.getElementById("worldBossHpText");
-                if (hpTextEl) hpTextEl.innerText = "🔄 서버 실시간 레이드 상태 수신 중...";
+                if (hpTextEl) hpTextEl.innerText = "🔄 실시간 레이드 상태 수신 중...";
             }
 
             // 서버에서 최신 데이터 가져오기 (백그라운드 업데이트)

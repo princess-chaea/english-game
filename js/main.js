@@ -1556,6 +1556,11 @@
         let _offlineQuizState = { questions: [], current: 0, allCorrect: true };
 
         function calculateOfflineGains() {
+            if (!gameState.lastSaved) {
+                gameState.lastSaved = Date.now();
+                saveLocalCache();
+                return;
+            }
             const now = Date.now();
             const deltaSeconds = Math.floor((now - gameState.lastSaved) / 1000);
             const autoGps = calculateAutoGoldPerSec();
@@ -7133,7 +7138,7 @@
                         <div class="flex gap-2 w-full">
                             <input type="text" id="wbShortAnswerInput" placeholder="카운터 영단어를 신속히 입력하세요..." autocomplete="off"
                                 class="flex-1 bg-black border-2 border-red-600 focus:border-yellow-400 px-4 py-2.5 font-black text-base text-yellow-300 outline-none rounded-none-forced animate-pulse"
-                                oninput="this.value = this.value.toLowerCase(); checkWbShortAnswerAutoSubmit(this)"
+                                oninput="checkWbShortAnswerAutoSubmit(this)"
                                 onkeypress="if(event.key==='Enter') submitWbShortAnswer()">
                             <button onclick="submitWbShortAnswer()" class="bg-red-700 hover:bg-red-600 text-white font-black text-xs px-6 py-2.5 border-2 border-yellow-400 rounded-none-forced transition shadow-xl animate-bounce">
                                 💥 카운터 타격!
@@ -8174,6 +8179,15 @@
             const popup = overlay.querySelector('.max-w-sm');
             if (popup) popup.classList.add('pointer-events-auto');
 
+            const mainTabsNav = document.getElementById("mainTabsNav");
+            if (mainTabsNav) {
+                if ([2, 4, 6, 8, 9, 10, 11].includes(tutorialStep)) {
+                    mainTabsNav.classList.add('!z-[10000]', 'relative');
+                } else {
+                    mainTabsNav.classList.remove('!z-[10000]', 'relative');
+                }
+            }
+
             const skipBtn = overlay.querySelector('button[onclick="skipTutorial()"]');
             if(skipBtn) skipBtn.style.display = "block";
 
@@ -8338,6 +8352,10 @@
             if(overlay) {
                 overlay.classList.add("hidden");
                 overlay.classList.remove("flex");
+            }
+            const mainTabsNav = document.getElementById("mainTabsNav");
+            if (mainTabsNav) {
+                mainTabsNav.classList.remove('!z-[10000]', 'relative');
             }
             
             document.querySelectorAll('.tutorial-highlight').forEach(el => {

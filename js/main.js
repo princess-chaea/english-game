@@ -6509,6 +6509,11 @@
                 }
             } catch(e) { localStorage.removeItem(inProgressKey); }
 
+            document.getElementById("worldBossReadyBox").classList.add("hidden");
+            const arena = document.getElementById("worldBossBattleArena");
+            arena.classList.remove("hidden");
+            arena.classList.add("flex");
+
             const timerText = document.getElementById("wbTimerText");
             if (timerText) timerText.innerText = "180.0초";
             const hpText = document.getElementById("wbPlayerHpText");

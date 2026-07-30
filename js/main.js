@@ -1210,6 +1210,11 @@
             `;
 
             svg.innerHTML = innerHtml;
+
+            const wbSvg = document.getElementById("wbHeroSvg");
+            if (wbSvg) {
+                wbSvg.innerHTML = innerHtml;
+            }
         }
 
         function drawPetCompanion() {
@@ -5958,7 +5963,7 @@
                 img: "media/worldbose/worldbose_golem.webp",
                 desc: "대지를 뒤흔드는 고대 암석 결계 괴수! 알파벳 타일 조립(Unscramble) 정답으로 60% 암석 장갑을 산산조각 내어라!",
                 debuffName: "🛡️ 암석 외피 (기본 피해 60% 감쇄)",
-                weaknessName: "💥 외피 붕괴 (철자조합 / 6글자+ / 4연속 정답)",
+                weaknessName: "💥 외피 붕괴 (철자조합 / 6글자+ / 10연속 정답)",
                 weaknessEffect: "약점 타격 즉시 장갑 파괴 및 5.0배 단일 강력 폭딜 타격! (조건 만족 시 항시 발동)",
                 counterSkillName: "🗿 대지 강진 지진"
             },
@@ -6605,7 +6610,7 @@
                         ultO.classList.remove("hidden");
                         ultO.classList.add("flex");
                     }
-                    playSoundEffect('incorrect');
+                    playSoundEffect('alert');
                     showWorldBossFxNotice(`🚨 [EMERGENCY] 보스 필살기 발동! 20초 내 카운터 스펠을 완성하세요! (타이머 ⏸️ 일시중지)`, "text-red-400 border-red-500 animate-pulse");
                     generateWorldBossQuiz();
                 }
@@ -6891,7 +6896,7 @@
                     for (let idx = 0; idx < letters.length; idx++) {
                         const tileId = `wbTile_${idx}`;
                         const btn = document.getElementById(tileId);
-                        if (btn && !btn.disabled && letters[idx] === char) {
+                        if (btn && !btn.disabled && btn.innerText.trim().toLowerCase() === char) {
                             clickWbUnscrambleTile(char, tileId);
                             break;
                         }
@@ -7102,13 +7107,11 @@
                 if (quizWordEl) quizWordEl.innerText = `[뜻 찾기] ${capitalizeFirstLetter(wbCurrentWordObj.word)}`;
                 let choices = [wbCurrentWordObj.meaning];
                 let meanings = [];
-                for (let g in MOCK_WORDS) {
-                    MOCK_WORDS[g].forEach(item => {
-                        if (item.meaning !== wbCurrentWordObj.meaning && !meanings.includes(item.meaning)) {
-                            meanings.push(item.meaning);
-                        }
-                    });
-                }
+                pool.forEach(item => {
+                    if (item.meaning !== wbCurrentWordObj.meaning && !meanings.includes(item.meaning)) {
+                        meanings.push(item.meaning);
+                    }
+                });
                 meanings.sort(() => 0.5 - Math.random());
                 for (let i = 0; i < Math.min(3, meanings.length); i++) choices.push(meanings[i]);
                 choices.sort(() => 0.5 - Math.random());
@@ -7133,13 +7136,11 @@
                 if (quizWordEl) quizWordEl.innerText = `[영어 찾기] ${wbCurrentWordObj.meaning}`;
                 let choices = [wbCurrentWordObj.word];
                 let words = [];
-                for (let g in MOCK_WORDS) {
-                    MOCK_WORDS[g].forEach(item => {
-                        if (item.word !== wbCurrentWordObj.word && !words.includes(item.word)) {
-                            words.push(item.word);
-                        }
-                    });
-                }
+                pool.forEach(item => {
+                    if (item.word !== wbCurrentWordObj.word && !words.includes(item.word)) {
+                        words.push(item.word);
+                    }
+                });
                 words.sort(() => 0.5 - Math.random());
                 for (let i = 0; i < Math.min(3, words.length); i++) choices.push(words[i]);
                 choices.sort(() => 0.5 - Math.random());
@@ -7293,11 +7294,13 @@
                     generateWorldBossQuiz();
                 } else {
                     playSoundEffect('incorrect');
-                    const ultDmg = Math.floor(wbPlayerMaxHp * 0.25);
+                    const ultDmg = Math.floor(wbPlayerMaxHp * 0.3);
                     wbPlayerHp -= ultDmg;
+                    wbTimerRemaining -= 10;
+                    if (wbTimerRemaining <= 0) wbTimerRemaining = 0.1;
                     const hpT = document.getElementById("wbPlayerHpText");
                     if (hpT) hpT.innerText = `${Math.max(0, wbPlayerHp)} / ${wbPlayerMaxHp} HP`;
-                    triggerWorldBossAttackAnim(`💔 카운터 실패! 보스 필살기 폭발 -${ultDmg} HP!`);
+                    triggerWorldBossAttackAnim(`💔 카운터 실패! 보스 필살기 폭발 -${ultDmg} HP 및 시간 10초 감소!`);
 
                     if (wbPlayerHp <= 0) {
                         endWorldBossRaid("💀 보스의 필살기 공격을 막아내지 못하고 사망하셨습니다!");
@@ -7317,19 +7320,19 @@
                 let isWeaknessTriggered = false;
                 if (wbBossState === "normal" && wbGracePeriodTimer <= 0) {
                     if (bossInfo.id === 'fafnir') {
-                        // 🐲 파브니르: 화염 가림 상태에서 정답 타격(선다형, 순서맞추기 포함) OR 5콤보 달성
+                        // 🐲 파브니르: 화염 가림 상태에서 정답 타격(선다형, 순서맞추기 포함) OR 10콤보 달성
                         const isFlameAnswerHit = (wbIsFlameActive === true);
-                        if (isFlameAnswerHit || wbComboCount >= 5) {
+                        if (isFlameAnswerHit || wbComboCount >= 10) {
                             isWeaknessTriggered = true;
                         }
                     } else if (bossInfo.id === 'golem') {
-                        // 파멸 골렘: 철자 조합(Unscramble) 정답 OR 6글자+ 장문 정답 OR 4연속 정답
-                        if (wbCurrentQuizType === 'unscramble' || wbCurrentWordObj.word.length >= 6 || wbComboCount >= 4) {
+                        // 파멸 골렘: 철자 조합(Unscramble) 정답 OR 6글자+ 장문 정답 OR 10연속 정답
+                        if (wbCurrentQuizType === 'unscramble' || wbCurrentWordObj.word.length >= 6 || wbComboCount >= 10) {
                             isWeaknessTriggered = true;
                         }
                     } else if (bossInfo.id === 'rich') {
-                        // 불멸의 리치: 4연속 정답
-                        if (wbComboCount >= 4) {
+                        // 불멸의 리치: 10연속 정답
+                        if (wbComboCount >= 10) {
                             isWeaknessTriggered = true;
                         }
                     }

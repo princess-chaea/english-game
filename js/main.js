@@ -8281,12 +8281,12 @@
                 let nextBtnId = "";
                 if(tutorialStep === 9) {
                     tabName = "월드보스";
-                    tabDesc = "주별로 같은 학년의 학생들과 협력하여 월드보스를 격퇴해보세요. 기여도에 따라 FP를 보상으로 받습니다!";
+                    tabDesc = "주별로 모든 학년의 학생들과 협력하여 월드보스를 격퇴해보세요. 기여도에 따라 FP를 보상으로 받습니다!";
                     nextTabName = "[명예의 전당] 탭을 클릭하세요"; nextBtnId = "hallOfFameTabBtn";
                 }
                 if(tutorialStep === 10) {
                     tabName = "명예의 전당";
-                    tabDesc = "같은 학년 랭킹을 확인하고, 업적을 해금하여 칭호를 장착해보세요!";
+                    tabDesc = "모든 학년 랭킹을 확인하고, 업적을 해금하여 칭호를 장착해보세요!";
                     nextTabName = "[내 영웅 정보] 탭을 클릭해보세요"; nextBtnId = "statsTabBtn";
                 }
                 if(tutorialStep === 11) {

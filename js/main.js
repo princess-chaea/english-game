@@ -4503,7 +4503,17 @@
         }
 
         function submitCriticalDefense() {
-            const inputVal = document.getElementById("criticalDefenseInput").value.trim().toLowerCase();
+            const inputEl = document.getElementById("criticalDefenseInput");
+            if (!inputEl) return;
+            const inputVal = inputEl.value.trim().toLowerCase();
+            
+            // 한글 입력 방지
+            if (/[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(inputVal)) {
+                showToast("⚠️ 영어로 입력해주세요!");
+                inputEl.value = "";
+                return;
+            }
+
             if (inputVal === currentCriticalWord) {
                 if (criticalTimerInterval) clearInterval(criticalTimerInterval);
                 playSoundEffect('correct');
@@ -7277,6 +7287,14 @@
         function checkWbShortAnswerAutoSubmit(inputEl) {
             if (!isWorldBossRaidActive || !wbCurrentWordObj || !inputEl) return;
             const val = inputEl.value.trim().toLowerCase();
+            
+            // 한글 입력 방지
+            if (/[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(val)) {
+                showToast("⚠️ 영어로 입력해주세요!");
+                inputEl.value = "";
+                return;
+            }
+
             const targetWord = wbCurrentWordObj.word.toLowerCase();
             if (val === targetWord) {
                 handleWorldBossAnswer(true);
@@ -7329,6 +7347,14 @@
             const input = document.getElementById("wbShortAnswerInput");
             if (!input) return;
             const val = input.value.trim().toLowerCase();
+            
+            // 한글 입력 방지
+            if (/[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(val)) {
+                showToast("⚠️ 영어로 입력해주세요!");
+                input.value = "";
+                return;
+            }
+
             const targetWord = wbCurrentWordObj ? wbCurrentWordObj.word.toLowerCase() : "";
             handleWorldBossAnswer(val === targetWord);
         }

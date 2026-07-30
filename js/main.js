@@ -6268,8 +6268,12 @@
                     
                     if (docSnap.exists()) {
                         const data = docSnap.data();
-                        maxHp = data.maxHp || wbMaxBossHp;
-                        curHp = typeof data.curHp !== 'undefined' ? data.curHp : maxHp;
+                        const dbMaxHp = data.maxHp || wbMaxBossHp;
+                        const dbCurHp = typeof data.curHp !== 'undefined' ? data.curHp : dbMaxHp;
+                        const dbTotalDmg = Math.max(0, dbMaxHp - dbCurHp);
+                        
+                        maxHp = wbMaxBossHp;
+                        curHp = Math.max(0, maxHp - dbTotalDmg);
                         damages = data.damages || {};
                     }
 
@@ -7487,7 +7491,11 @@
                         });
                     } else {
                         const data = docSnap.data();
-                        const curHp = typeof data.curHp !== 'undefined' ? data.curHp : data.maxHp;
+                        const dbMaxHp = data.maxHp || wbMaxBossHp;
+                        const dbCurHp = typeof data.curHp !== 'undefined' ? data.curHp : dbMaxHp;
+                        const dbTotalDmg = Math.max(0, dbMaxHp - dbCurHp);
+                        
+                        const curHp = Math.max(0, wbMaxBossHp - dbTotalDmg);
                         const newHp = Math.max(0, curHp - wbTotalDamageDealt);
                         const damages = data.damages || {};
                         const oldDamage = damages[studentKey] || 0;

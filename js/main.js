@@ -5938,7 +5938,8 @@
             return 50 + (sumGearLvl * 10);
         }
 
-        const wbMaxBossHp = 500000000000; // 월드보스 전 학년 공유 기본 최대 체력: 5,000억 (500B)
+        let wbMaxBossHp = 500000000000; // 월드보스 전 학년 공유 기본 최대 체력: 5,000억 (500B)
+        let wbCurBossHp = 500000000000;
 
         const WORLD_BOSS_SEASONS = [
             {
@@ -6372,8 +6373,7 @@
             }
         }
 
-        let wbCurBossHp = 10000000000;
-        let wbMaxBossHp = 10000000000;
+        // (Removed duplicate HP declarations)
 
         function updateWorldBossBattleHpBar() {
             const hpTextEl = document.getElementById("wbBattleBossHpText");

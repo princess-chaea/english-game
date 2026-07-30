@@ -6020,7 +6020,7 @@
                 img: "media/worldbose/worldbose_golem.webp",
                 desc: "대지를 뒤흔드는 고대 암석 결계 괴수! 6글자 이상의 알파벳 타일 조립(Unscramble) 정답으로 60% 암석 장갑을 산산조각 내어라!",
                 debuffName: "🛡️ 암석 외피 (기본 피해 60% 감쇄)",
-                weaknessName: "💥 외피 붕괴 (6글자 이상 철자조합)",
+                weaknessName: "💥 외피 붕괴 (6글자 이상 철자조합 / 10연속 정답)",
                 weaknessEffect: "약점 타격 즉시 장갑 파괴 및 10.0배 단일 강력 폭딜 타격! (조건 만족 시 항시 발동)",
                 counterSkillName: "🗿 대지 강진 지진"
             },
@@ -6049,7 +6049,8 @@
 
         function getWbExpectedMaxHp() {
             const weekNum = getCurrentWeekNum();
-            return Math.min(500000000000, 100000000000 + (weekNum * 50000000000));
+            const relativeWeek = Math.max(0, weekNum - 108); // 이번 주(108주차)부터 1000억으로 다시 시작
+            return Math.min(500000000000, 100000000000 + (relativeWeek * 50000000000));
         }
 
         function getFormattedMonthWeekString() {
@@ -7380,8 +7381,8 @@
                             isWeaknessTriggered = true;
                         }
                     } else if (bossInfo.id === 'golem') {
-                        // 파멸 골렘: 6글자 이상 철자 조합(Unscramble) 정답
-                        if (wbCurrentQuizType === 'unscramble' && wbCurrentWordObj.word.length >= 6) {
+                        // 파멸 골렘: 6글자 이상 철자 조합(Unscramble) 정답 OR 10연속 정답
+                        if ((wbCurrentQuizType === 'unscramble' && wbCurrentWordObj.word.length >= 6) || wbComboCount >= 10) {
                             isWeaknessTriggered = true;
                         }
                     } else if (bossInfo.id === 'rich') {

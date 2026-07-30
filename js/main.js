@@ -5958,7 +5958,7 @@
                 img: "media/worldbose/worldbose_golem.webp",
                 desc: "대지를 뒤흔드는 고대 암석 결계 괴수! 알파벳 타일 조립(Unscramble) 정답으로 60% 암석 장갑을 산산조각 내어라!",
                 debuffName: "🛡️ 암석 외피 (기본 피해 60% 감쇄)",
-                weaknessName: "💥 외피 붕괴 (철자조합 / 6글자+ / 10연속 정답)",
+                weaknessName: "💥 외피 붕괴 (철자조합 / 6글자+ / 4연속 정답)",
                 weaknessEffect: "약점 타격 즉시 장갑 파괴 및 5.0배 단일 강력 폭딜 타격! (조건 만족 시 항시 발동)",
                 counterSkillName: "🗿 대지 강진 지진"
             },
@@ -6049,7 +6049,7 @@
             const counterNameEl = document.getElementById("wbGuideCounterName");
             if (counterNameEl) counterNameEl.innerText = bossInfo.counterSkillName;
             const counterDescEl = document.getElementById("wbGuideCounterDesc");
-            if (counterDescEl) counterDescEl.innerHTML = "약 45초 주기마다 20초 카운터 영단어 이벤트가 발동합니다.<br><span class='text-yellow-300 font-bold'>⚡ 성공 시 필살기 완벽 저지 & 3.0배 폭딜!</span> <span class='text-red-400 font-bold'>⚠️ 실패 시 체력 30% 피해 및 10초 차감!</span> (타이머 ⏸️ 중지)";
+            if (counterDescEl) counterDescEl.innerHTML = "약 45초 주기마다 20초 카운터 영단어 이벤트가 발동합니다.<br><span class='text-yellow-300 font-bold'>⚡ 성공 시 필살기 완벽 저지 & 3.0배 폭딜!</span> <span class='text-red-400 font-bold'>⚠️ 실패 시 최대 체력 30% 피해 및 10초 감소!</span> (타이머 ⏸️ 중지)";
             const dpsDisplay = document.getElementById("wbDpsPreviewText");
             if (dpsDisplay) dpsDisplay.innerText = calculatePlayerCP().toLocaleString();
 
@@ -6585,10 +6585,9 @@
                         if (ultO) ultO.classList.add("hidden");
                         const ultDmg = Math.floor(wbPlayerMaxHp * 0.30);
                         wbPlayerHp -= ultDmg;
-                        wbTimerRemaining = Math.max(0, wbTimerRemaining - 10.0);
                         const hpT = document.getElementById("wbPlayerHpText");
                         if (hpT) hpT.innerText = `${Math.max(0, wbPlayerHp)} / ${wbPlayerMaxHp} HP`;
-                        triggerWorldBossAttackAnim(`💥 [저지 실패] 보스 필살기 강타! -${ultDmg} HP! (-10초)`);
+                        triggerWorldBossAttackAnim(`💥 [저지 실패] 보스 필살기 강타! -${ultDmg} HP!`);
                         playSoundEffect('incorrect');
                         generateWorldBossQuiz();
                         if (wbPlayerHp <= 0) {
@@ -6873,23 +6872,24 @@
             showWorldBossFxNotice(hintMsg, "text-yellow-300 border-yellow-400");
             showToast(`💡 소환수 ${bestPet}의 힌트: 철자 '${revealedSubstr}' 단계까지 공개되었습니다!`);
 
-            // 1. [단답식 필기] 문제인 경우: 입력창에 공�                    if (bossInfo.id === 'fafnir') {
-                        // 🐲 파브니르: 화염 가림 상태에서 정답 타격(선다형, 순서맞추기 포함) OR 10콤보 달성
-                        const isFlameAnswerHit = (wbIsFlameActive === true);
-                        if (isFlameAnswerHit || wbComboCount >= 10) {
-                            isWeaknessTriggered = true;
-                        }
-                    } else if (bossInfo.id === 'golem') {
-                        // 파멸 골렘: 철자 조합(Unscramble) 정답 OR 6글자+ 장문 정답 OR 10연속 정답
-                        if (wbCurrentQuizType === 'unscramble' || wbCurrentWordObj.word.length >= 6 || wbComboCount >= 10) {
-                            isWeaknessTriggered = true;
-                        }
-                    } else if (bossInfo.id === 'rich') {
-                        // 불멸 리치: 10연속 정답
-                        if (wbComboCount >= 10) {
-                            isWeaknessTriggered = true;
-                        }
-                    }const tileId = `wbTile_${idx}`;
+            // 1. [단답식 필기] 문제인 경우: 입력창에 공개된 글자까지 순차 기입
+            const shortInput = document.getElementById("wbShortAnswerInput");
+            if (shortInput) {
+                shortInput.value = word.slice(0, wbCurrentHintLetterIndex);
+                shortInput.focus();
+                checkWbShortAnswerAutoSubmit(shortInput);
+            }
+
+            // 2. [철자 조합] 문제인 경우: 공개된 순서대로 블록 자동 정렬 조립
+            if (wbCurrentQuizType === "unscramble") {
+                resetWbUnscramble();
+                const targetLetters = word.slice(0, wbCurrentHintLetterIndex).split("");
+                
+                targetLetters.forEach(char => {
+                    // 아직 클릭 안 한 타일 중 해당 글자 타일 찾아서 클릭 처리
+                    const letters = wbCurrentWordObj.word.toLowerCase().split("");
+                    for (let idx = 0; idx < letters.length; idx++) {
+                        const tileId = `wbTile_${idx}`;
                         const btn = document.getElementById(tileId);
                         if (btn && !btn.disabled && letters[idx] === char) {
                             clickWbUnscrambleTile(char, tileId);
@@ -7293,12 +7293,11 @@
                     generateWorldBossQuiz();
                 } else {
                     playSoundEffect('incorrect');
-                    const ultDmg = Math.floor(wbPlayerMaxHp * 0.30);
+                    const ultDmg = Math.floor(wbPlayerMaxHp * 0.25);
                     wbPlayerHp -= ultDmg;
-                    wbTimerRemaining = Math.max(0, wbTimerRemaining - 10.0);
                     const hpT = document.getElementById("wbPlayerHpText");
                     if (hpT) hpT.innerText = `${Math.max(0, wbPlayerHp)} / ${wbPlayerMaxHp} HP`;
-                    triggerWorldBossAttackAnim(`💔 카운터 실패! 보스 필살기 폭발 -${ultDmg} HP! (-10초)`);
+                    triggerWorldBossAttackAnim(`💔 카운터 실패! 보스 필살기 폭발 -${ultDmg} HP!`);
 
                     if (wbPlayerHp <= 0) {
                         endWorldBossRaid("💀 보스의 필살기 공격을 막아내지 못하고 사망하셨습니다!");

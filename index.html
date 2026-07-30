@@ -1458,6 +1458,20 @@
                                 <h4 id="wbBossName" class="text-xl font-black text-red-400 tracking-wider">심연의 흑룡 파브니르</h4>
                                 <p id="wbBossDesc" class="text-xs text-gray-300 mt-1.5 whitespace-nowrap truncate font-medium">"불꽃으로 보기 1개를 가리는 흑룡. 화염 정답을 조준 타격하여 비늘을 파괴하세요!"</p>
 
+                                <!-- Common Boss Rules -->
+                                <div class="mt-3 w-full bg-[#0a0a0c] border border-gray-700 p-2 flex flex-col gap-1 text-left relative rounded-none-forced shadow-sm">
+                                    <div class="flex items-center gap-1.5 border-b border-gray-800 pb-1 mb-0.5">
+                                        <span class="text-[10px] font-black text-gray-400 flex items-center gap-1 tracking-wider whitespace-nowrap">
+                                            📜 레이드 공통 규칙
+                                        </span>
+                                    </div>
+                                    <ul class="text-[9.5px] text-gray-400 font-medium leading-relaxed pl-3 list-disc space-y-0.5">
+                                        <li><span class="text-green-400 font-bold">연속 정답(콤보):</span> 정답 연속 성공 시 보스 약점 파훼 게이지가 누적됩니다.</li>
+                                        <li><span class="text-red-400 font-bold">오답 패널티:</span> 오답 시 플레이어 HP가 차감되며, 연속 오답 시 차감량이 점진적으로 증가합니다.</li>
+                                        <li><span class="text-yellow-400 font-bold">필살기 카운터:</span> 카운터 실패 시 플레이어 최대 체력의 30%에 달하는 즉사급 치명타 피해를 입습니다.</li>
+                                    </ul>
+                                </div>
+
                                 <!-- Boss Unique Traits & Weakness Guide Card -->
                                 <div id="wbBossGuideCard" class="mt-3 w-full bg-black/80 border-2 border-red-900/80 p-2.5 flex flex-col gap-1.5 text-left relative overflow-hidden rounded-none-forced shadow-inner">
                                     <div class="flex items-center justify-between border-b border-red-900/60 pb-1">

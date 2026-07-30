@@ -5949,7 +5949,7 @@
                 desc: "고대 영단어 스펠의 마력을 머금고 부활한 흑룡! 불꽃으로 가려진 위험한 정답을 조준 타격하여 비늘을 깨뜨려라!",
                 debuffName: "🔥 심연의 화염 (보기 가림)",
                 weaknessName: "⚡ 비늘 파괴 (화염 정답 조준 / 5연속 정답)",
-                weaknessEffect: "10초간 흑룡 스턴 & 플레이어 전체 타격 딜량 2.5배 폭딜! (약점 종료 후 5초간 용의 비늘 회복 타임)",
+                weaknessEffect: "10초간 흑룡 스턴 & 플레이어 전체 타격 딜량 2.5배 폭딜! (약점 종료 후 20초간 용의 비늘 회복 타임)",
                 counterSkillName: "🔥 멸망의 흑염 브레스"
             },
             {
@@ -5969,7 +5969,7 @@
                 desc: "금단의 영단어 스펠을 교란하는 저주받은 마왕! 장착 마법 비기 스킬 2회를 연사하여 저주를 정화하고 성수 폭발을 일으켜라!",
                 debuffName: "🔮 사령의 저주 (스펠 교란 & HP 흡혈)",
                 weaknessName: "✨ 성수 폭발 (마법 스킬 2회 시전 / 4연속 정답)",
-                weaknessEffect: "사령의 저주 완벽 정화 및 모든 스킬 쿨타임 즉시 초기화! (약점 종료 후 5초간 사령 저주 재가동)",
+                weaknessEffect: "사령의 저주 완벽 정화 및 모든 스킬 쿨타임 즉시 초기화! (약점 종료 후 20초간 사령 저주 재가동)",
                 counterSkillName: "🔮 사령 사멸 주문"
             }
         ];
@@ -6049,7 +6049,7 @@
             const counterNameEl = document.getElementById("wbGuideCounterName");
             if (counterNameEl) counterNameEl.innerText = bossInfo.counterSkillName;
             const counterDescEl = document.getElementById("wbGuideCounterDesc");
-            if (counterDescEl) counterDescEl.innerHTML = "약 45초 주기마다 20초 카운터 영단어 이벤트가 발동합니다.<br><span class='text-yellow-300 font-bold'>⚡ 작성 성공 시 필살기 완벽 저지 & 3.0배 카운터 폭딜! (레이드 타이머 ⏸️ 일시중지)</span>";
+            if (counterDescEl) counterDescEl.innerHTML = "약 45초 주기마다 20초 카운터 영단어 이벤트가 발동합니다.<br><span class='text-yellow-300 font-bold'>⚡ 성공 시 필살기 완벽 저지 & 3.0배 폭딜!</span> <span class='text-red-400 font-bold'>⚠️ 실패 시 최대 체력의 30% 피해!</span> (타이머 ⏸️ 중지)";
             const dpsDisplay = document.getElementById("wbDpsPreviewText");
             if (dpsDisplay) dpsDisplay.innerText = calculatePlayerCP().toLocaleString();
 
@@ -6414,7 +6414,7 @@
         let wbBossState = "normal"; // "normal", "weakness_shattered"
         let wbWeaknessTimer = 0;
         let wbGracePeriodTimer = 0;
-        let wbBlindOptionIndex = -1;
+        let wbIsFlameActive = false;
         let wbUltimateEventActive = false;
         let wbUltimateTimer = 0;
         let wbNextUltimateTime = 135.0;
@@ -6480,7 +6480,7 @@
             wbBossState = "normal";
             wbWeaknessTimer = 0;
             wbGracePeriodTimer = 0;
-            wbBlindOptionIndex = -1;
+            wbIsFlameActive = false;
             wbUltimateEventActive = false;
             wbUltimateTimer = 0;
             wbNextUltimateTime = 135.0;
@@ -7057,7 +7057,7 @@
             const seasonIdx = getWeeklyBossIndex();
             const bossInfo = WORLD_BOSS_SEASONS[seasonIdx] || WORLD_BOSS_SEASONS[0];
 
-            wbBlindOptionIndex = -1;
+            wbIsFlameActive = false;
 
             if (wbUltimateEventActive) {
                 // 필살기 카운터 저지 이벤트: 단답식 입력창 팝업!
@@ -7089,10 +7089,10 @@
             const quizTypes = ["meaning", "english", "unscramble"];
             wbCurrentQuizType = quizTypes[Math.floor(Math.random() * quizTypes.length)];
 
-            // 흑룡 파브니르 디버프: 40% 확률로 1개 보기 화염 오버레이 처리
-            if (bossInfo.id === 'fafnir' && (wbCurrentQuizType === 'meaning' || wbCurrentQuizType === 'english')) {
+            // 🐲 심연의 흑룡 파브니르 패턴: 40% 확률로 모든 보기/타일 화염 가림 처리
+            if (bossInfo.id === 'fafnir' && (wbCurrentQuizType === 'meaning' || wbCurrentQuizType === 'english' || wbCurrentQuizType === 'unscramble')) {
                 if (Math.random() < 0.4) {
-                    wbBlindOptionIndex = Math.floor(Math.random() * 4);
+                    wbIsFlameActive = true;
                 }
             }
 
@@ -7116,7 +7116,7 @@
                 let html = "";
                 choices.forEach((m, idx) => {
                     const isCorrect = (m === wbCurrentWordObj.meaning);
-                    const isBlind = (idx === wbBlindOptionIndex);
+                    const isBlind = wbIsFlameActive;
                     const blindClass = isBlind ? "flame-blind-overlay" : "";
                     html += `
                         <button onclick="handleWorldBossAnswer(${isCorrect}, ${idx})" class="p-3.5 ${themeClass} hover:brightness-125 border text-white font-bold text-xs rounded-none-forced transition active:scale-95 shadow-sm relative overflow-hidden ${blindClass}">
@@ -7147,7 +7147,7 @@
                 let html = "";
                 choices.forEach((w, idx) => {
                     const isCorrect = (w === wbCurrentWordObj.word);
-                    const isBlind = (idx === wbBlindOptionIndex);
+                    const isBlind = wbIsFlameActive;
                     const blindClass = isBlind ? "flame-blind-overlay" : "";
                     html += `
                         <button onclick="handleWorldBossAnswer(${isCorrect}, ${idx})" class="p-3.5 ${themeClass} hover:brightness-125 border text-yellow-300 font-bold text-xs rounded-none-forced transition active:scale-95 shadow-sm relative overflow-hidden ${blindClass}">
@@ -7174,7 +7174,7 @@
 
                 let letterButtonsHtml = letters.map((char, idx) => `
                     <button id="wbTile_${idx}" onclick="clickWbUnscrambleTile('${char}', 'wbTile_${idx}')"
-                        class="w-10 h-10 ${themeClass} hover:brightness-125 border text-yellow-300 font-black text-base rounded-none-forced transition shadow-md">
+                        class="w-10 h-10 ${themeClass} hover:brightness-125 border text-yellow-300 font-black text-base rounded-none-forced transition shadow-md relative overflow-hidden ${wbIsFlameActive ? 'flame-blind-overlay' : ''}">
                         ${char}
                     </button>
                 `).join("");
@@ -7317,8 +7317,8 @@
                 let isWeaknessTriggered = false;
                 if (wbBossState === "normal" && wbGracePeriodTimer <= 0) {
                     if (bossInfo.id === 'fafnir') {
-                        // 흑룡 파브니르: 화염으로 가려진 정답을 맞춘 경우 OR 5연속 정답
-                        const isFlameAnswerHit = (wbBlindOptionIndex >= 0 && typeof clickedIndex !== 'undefined' && clickedIndex === wbBlindOptionIndex);
+                        // 🐲 파브니르: 화염 가림 상태에서 정답 타격(선다형, 순서맞추기 포함) OR 5콤보 달성
+                        const isFlameAnswerHit = (wbIsFlameActive === true);
                         if (isFlameAnswerHit || wbComboCount >= 5) {
                             isWeaknessTriggered = true;
                         }

@@ -6293,9 +6293,9 @@
                 }
             }
 
-            // ✅ 캐시 데이터 즉시 반영 (탭 전환 시 서버 응답 전에 마지막 알려진 상태 바로 표시)
+            // ✅ 캐시 데이터 즉시 반영 (이어하기 기록이 있을 때만)
             const cachedWb = JSON.parse(localStorage.getItem(wbCacheKey) || "null");
-            if (cachedWb) {
+            if (cachedWb && isResume) {
                 const cachedPct = Math.max(0, Math.min(100, (cachedWb.curHp / cachedWb.maxHp) * 100));
                 document.getElementById("worldBossHpBar").style.width = `${cachedPct}%`;
                 document.getElementById("worldBossHpText").innerText = `${cachedWb.curHp.toLocaleString()} / ${cachedWb.maxHp.toLocaleString()} HP (${cachedPct.toFixed(1)}%) [캐시]`;

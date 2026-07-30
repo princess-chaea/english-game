@@ -5938,6 +5938,8 @@
             return 50 + (sumGearLvl * 10);
         }
 
+        const wbMaxBossHp = 500000000000; // 월드보스 전 학년 공유 기본 최대 체력: 5,000억 (500B)
+
         const WORLD_BOSS_SEASONS = [
             {
                 id: "fafnir",
@@ -6448,7 +6450,7 @@
                 if (wbCurrentQuizType === 'english') mult = 1.2;
                 if (wbCurrentQuizType === 'unscramble') mult = 1.6;
                 if (wbUltimateEventActive) mult = 3.0;
-                if (wbBossState === 'weakness_shattered') mult *= (bossInfo.id === 'golem' ? 3.0 : 2.5);
+                if (wbBossState === 'weakness_shattered') mult *= (bossInfo.id === 'fafnir' ? 2.5 : 3.0);
                 if (bossInfo.id === 'golem' && wbBossState === 'normal') mult *= 0.4;
                 
                 multBadge.innerText = `⚡ ${mult.toFixed(1)}x`;
@@ -6482,6 +6484,7 @@
             if (defOverlay) defOverlay.classList.add("hidden");
             const ultOverlay = document.getElementById("wbUltimateWarningOverlay");
             if (ultOverlay) ultOverlay.classList.add("hidden");
+            
             const shOverlay = document.getElementById("wbWeaknessShatterOverlay");
             if (shOverlay) shOverlay.classList.add("hidden");
 
@@ -6525,8 +6528,11 @@
                     wbWeaknessTimer -= 0.1;
                     if (wbWeaknessTimer <= 0) {
                         wbBossState = "normal";
-                        wbGracePeriodTimer = 5.0; // 약점 해제 후 5초간 회복 재발동 쿨타임 (상시 무력화 방지)
-                        showWorldBossFxNotice(`🛡️ 보스의 약점 무력화 상태가 종료되어 외피/저주를 재가동합니다. (5초 재정비)`, "text-gray-400 border-gray-600");
+                        updateCurrentWbQuizOptionTheme();
+                        const sIdx = getWeeklyBossIndex();
+                        const bInfo = WORLD_BOSS_SEASONS[sIdx] || WORLD_BOSS_SEASONS[0];
+                        wbGracePeriodTimer = (bInfo.id === 'golem' ? 0.0 : 20.0); // 파브니르/리치는 20초 쿨타임, 골렘은 항시
+                        showWorldBossFxNotice(`🛡️ 보스의 약점 무력화 상태가 종료되어 외피/저주를 재가동합니다. (${bInfo.id === 'golem' ? '즉시 재시도 가능' : '20초 재정비'})`, "text-gray-400 border-gray-600");
                     }
                 }
 
@@ -6855,8 +6861,11 @@
                     wbSkillCastCount = (wbSkillCastCount || 0) + 1;
                     if (wbSkillCastCount >= 2) {
                         wbBossState = "weakness_shattered";
+                        updateCurrentWbQuizOptionTheme();
                         wbWeaknessTimer = 15.0;
                         wbSkillCastCount = 0;
+                        wbSkillCooldowns = {};
+                        updateWorldBossSkillCooldownsUI();
                         const shatterOverlay = document.getElementById("wbWeaknessShatterOverlay");
                         if (shatterOverlay) {
                             shatterOverlay.classList.remove("hidden");
@@ -6867,7 +6876,7 @@
                             }, 1800);
                         }
                         playSoundEffect('skill');
-                        showWorldBossFxNotice("✨ [성수 폭발!] 리치의 저주를 완벽히 정화했습니다! 스킬 피해 +150%!", "text-purple-300 border-purple-500 animate-bounce");
+                        showWorldBossFxNotice("✨ [결계 정화!] 리치의 저주 파쇄 & 모든 스킬 쿨타임 즉시 초기화! (스킬 피해 +150%)", "text-purple-300 border-purple-500 animate-bounce");
                     }
                 }
             }
@@ -6895,6 +6904,8 @@
                 }
             }
 
+
+
             const gradeInfo = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
             const mult = getSkillMultiplier(skill);
 
@@ -6904,13 +6915,25 @@
             const relicSkillBonus = getEquippedRelicBonus("relic_scroll");
             const totalSkillMult = 1 + (necklaceSkillBonus + potentialSkillBonus + relicSkillBonus) / 100;
 
+            // 월드보스 상태 배율 계산
+            let bossStateSkillMult = 1.0;
+            if (isWorldBossRaidActive) {
+                const sIdx = getWeeklyBossIndex();
+                const bInfo = WORLD_BOSS_SEASONS[sIdx] || WORLD_BOSS_SEASONS[0];
+                if (wbBossState === "weakness_shattered") {
+                    bossStateSkillMult = (bInfo.id === 'fafnir' ? 2.5 : bInfo.id === 'golem' ? 3.0 : 2.5);
+                } else if (bInfo.id === 'golem' && wbBossState === "normal") {
+                    bossStateSkillMult = 0.4;
+                }
+            }
+
             // 월드보스는 "내 전투력" 수치를 기반으로 데미지가 결정됨
             // 기본 타격 = 전투력 * 2
             const baseDmg = calculatePlayerCP() * 2;
-            const statSkillDmg = Math.floor(baseDmg * mult * totalSkillMult);
+            const statSkillDmg = Math.floor(baseDmg * mult * totalSkillMult * bossStateSkillMult);
 
             // 최소 보장 데미지 로직 (기본 타격력 반영)
-            const wbQuizDmgFloor = Math.floor(calculatePlayerCP() * (mult / 2));
+            const wbQuizDmgFloor = Math.floor(calculatePlayerCP() * (mult / 2) * bossStateSkillMult);
             const skillDmg = Math.max(statSkillDmg, wbQuizDmgFloor);
 
             wbTotalDamageDealt += skillDmg;
@@ -6946,6 +6969,30 @@
 
         let wbCurrentQuizType = "meaning"; // "meaning", "english", "short_answer", "unscramble"
         let wbUnscrambleCurrentTiles = [];
+
+        function getWbOptionThemeClass() {
+            if (wbBossState === "weakness_shattered") {
+                return "wb-shattered-bg";
+            }
+            const seasonIdx = getWeeklyBossIndex();
+            const bossInfo = WORLD_BOSS_SEASONS[seasonIdx] || WORLD_BOSS_SEASONS[0];
+            if (bossInfo.id === 'fafnir') return "wb-boss-fafnir-bg";
+            if (bossInfo.id === 'golem') return "wb-boss-golem-bg";
+            if (bossInfo.id === 'rich') return "wb-boss-rich-bg";
+            return "wb-boss-fafnir-bg";
+        }
+
+        function updateCurrentWbQuizOptionTheme() {
+            const container = document.getElementById("wbChoiceContainer");
+            if (!container) return;
+            const newClass = getWbOptionThemeClass();
+            const allThemeClasses = ["wb-boss-fafnir-bg", "wb-boss-golem-bg", "wb-boss-rich-bg", "wb-shattered-bg"];
+            
+            container.querySelectorAll("button, div").forEach(el => {
+                allThemeClasses.forEach(c => el.classList.remove(c));
+                el.classList.add(newClass);
+            });
+        }
 
         function generateWorldBossQuiz() {
             let pool = gameState.wordsPool && gameState.wordsPool.length > 0 ? gameState.wordsPool : MOCK_WORDS["4"];
@@ -6995,6 +7042,8 @@
                 }
             }
 
+            const themeClass = getWbOptionThemeClass();
+
             if (wbCurrentQuizType === "meaning") {
                 if (quizWordEl) quizWordEl.innerText = `[뜻 찾기] ${capitalizeFirstLetter(wbCurrentWordObj.word)}`;
                 let choices = [wbCurrentWordObj.meaning];
@@ -7016,7 +7065,7 @@
                     const isBlind = (idx === wbBlindOptionIndex);
                     const blindClass = isBlind ? "flame-blind-overlay" : "";
                     html += `
-                        <button onclick="handleWorldBossAnswer(${isCorrect}, ${idx})" class="p-3.5 bg-[#0d0d0d] hover:bg-[#1f1919] border border-red-900 hover:border-yellow-400 text-white font-bold text-xs rounded-none-forced transition active:scale-95 shadow-sm relative overflow-hidden ${blindClass}">
+                        <button onclick="handleWorldBossAnswer(${isCorrect}, ${idx})" class="p-3.5 ${themeClass} hover:brightness-125 border text-white font-bold text-xs rounded-none-forced transition active:scale-95 shadow-sm relative overflow-hidden ${blindClass}">
                             ${m}
                         </button>
                     `;
@@ -7047,7 +7096,7 @@
                     const isBlind = (idx === wbBlindOptionIndex);
                     const blindClass = isBlind ? "flame-blind-overlay" : "";
                     html += `
-                        <button onclick="handleWorldBossAnswer(${isCorrect}, ${idx})" class="p-3.5 bg-[#0d0d0d] hover:bg-[#1f1919] border border-red-900 hover:border-yellow-400 text-yellow-300 font-bold text-xs rounded-none-forced transition active:scale-95 shadow-sm relative overflow-hidden ${blindClass}">
+                        <button onclick="handleWorldBossAnswer(${isCorrect}, ${idx})" class="p-3.5 ${themeClass} hover:brightness-125 border text-yellow-300 font-bold text-xs rounded-none-forced transition active:scale-95 shadow-sm relative overflow-hidden ${blindClass}">
                             ${capitalizeFirstLetter(w)}
                         </button>
                     `;
@@ -7058,6 +7107,12 @@
                 }
 
             } else if (wbCurrentQuizType === "unscramble") {
+                if (bossInfo.id === 'golem') {
+                    const longWords = pool.filter(item => item.word && item.word.length >= 6);
+                    if (longWords.length > 0) {
+                        wbCurrentWordObj = longWords[Math.floor(Math.random() * longWords.length)];
+                    }
+                }
                 if (quizWordEl) quizWordEl.innerText = `[철자 조합] ${wbCurrentWordObj.meaning}`;
                 const letters = wbCurrentWordObj.word.toLowerCase().split("");
                 letters.sort(() => 0.5 - Math.random());
@@ -7065,7 +7120,7 @@
 
                 let letterButtonsHtml = letters.map((char, idx) => `
                     <button id="wbTile_${idx}" onclick="clickWbUnscrambleTile('${char}', 'wbTile_${idx}')"
-                        class="w-10 h-10 bg-red-950 hover:bg-red-800 border border-yellow-500 text-yellow-300 font-black text-base rounded-none-forced transition shadow-md">
+                        class="w-10 h-10 ${themeClass} hover:brightness-125 border text-yellow-300 font-black text-base rounded-none-forced transition shadow-md">
                         ${char}
                     </button>
                 `).join("");
@@ -7074,7 +7129,7 @@
                     choiceContainer.className = "flex flex-col gap-2 z-10 w-full col-span-2";
                     choiceContainer.innerHTML = `
                         <div class="bg-black border border-red-900 p-2 flex flex-col items-center gap-2">
-                            <div id="wbUnscrambleAnswerDisplay" class="h-10 min-w-[200px] bg-[#0d0d0d] border border-yellow-500/80 px-4 flex items-center justify-center font-black text-lg text-yellow-300 tracking-widest">
+                            <div id="wbUnscrambleAnswerDisplay" class="h-10 min-w-[200px] ${themeClass} border border-yellow-500/80 px-4 flex items-center justify-center font-black text-lg text-yellow-300 tracking-widest">
                                 _ _ _ _
                             </div>
                             <div class="flex flex-wrap justify-center gap-1.5 my-1">
@@ -7228,8 +7283,14 @@
 
                 if (isWeaknessTriggered && wbBossState !== "weakness_shattered") {
                     wbBossState = "weakness_shattered";
-                    wbWeaknessTimer = (bossInfo.id === 'rich' ? 15.0 : 12.0);
+                    updateCurrentWbQuizOptionTheme();
+                    wbWeaknessTimer = (bossInfo.id === 'rich' ? 15.0 : bossInfo.id === 'fafnir' ? 10.0 : 12.0);
                     wbComboCount = 0; // 약점 해제 후 콤보 리셋
+                    if (bossInfo.id === 'rich') {
+                        wbSkillCooldowns = {};
+                        updateWorldBossSkillCooldownsUI();
+                        showWorldBossFxNotice("✨ [결계 정화!] 리치의 저주 파쇄 & 모든 스킬 쿨타임 즉시 초기화! (스킬 피해 +150%)", "text-purple-300 border-purple-500 animate-bounce");
+                    }
                     
                     const shatterOverlay = document.getElementById("wbWeaknessShatterOverlay");
                     if (shatterOverlay) {
@@ -7255,8 +7316,14 @@
                 if (wbCurrentQuizType === "unscramble") typeMultiplier = 1.6;
 
                 // 약점 상태 및 보스별 방어력 반영
+                let isGolemShatterStrike = false;
                 if (wbBossState === "weakness_shattered") {
-                    typeMultiplier *= (bossInfo.id === 'fafnir' ? 2.5 : 3.0);
+                    if (bossInfo.id === 'golem') {
+                        typeMultiplier *= 5.0; // 🪨 파멸 골렘: 5.0배 단일 대형 충격파 극딜!
+                        isGolemShatterStrike = true;
+                    } else {
+                        typeMultiplier *= 2.5; // 파브니르 / 리치 2.5배
+                    }
                 } else if (bossInfo.id === 'golem') {
                     typeMultiplier *= 0.4; // 암석 외피 60% 감쇄
                 }
@@ -7291,6 +7358,13 @@
                     spawnWbDamageParticle(`✨ -${totalPetDmg.toLocaleString()}`, true);
                 }
 
+                if (isGolemShatterStrike) {
+                    wbBossState = "normal";
+                    wbGracePeriodTimer = 0.0; // 골렘은 항시 재시도 가능!
+                    updateCurrentWbQuizOptionTheme();
+                    petNoticeText = `💥 [5배 단일 충격파!] 골렘 파쇄 타격 -${totalComboDmg.toLocaleString()}! (외피 즉시 재가동)`;
+                }
+
                 wbTotalDamageDealt += totalComboDmg;
                 updateWorldBossBattleHpBar();
 
@@ -7308,11 +7382,23 @@
                 if (isShieldBlocked) {
                     triggerWorldBossAttackAnim(`🛡️ 대지의 수호 방패 발동! 오답 반격 완전 방어! (${shieldRate}%)`);
                 } else {
-                    const bossDmg = 15 + (wbWrongCount * 15);
+                    let bossDmg = 15 + (wbWrongCount * 15);
+                    let extraNotice = "";
+
+                    // 🔮 불멸의 리치 고유 디버프: 내 HP 10% 흡혈 + 보스 체력 회복 (내 1회 정답 공격량인 전투력*300 복구)
+                    if (bossInfo.id === 'rich') {
+                        const vampDmg = Math.max(bossDmg, Math.floor(wbPlayerMaxHp * 0.10));
+                        bossDmg = vampDmg;
+                        const healAmount = Math.floor(calculatePlayerCP() * 300);
+                        wbTotalDamageDealt = Math.max(0, wbTotalDamageDealt - healAmount);
+                        updateWorldBossBattleHpBar();
+                        extraNotice = ` (🔮 HP 10% 흡혈 & +${healAmount.toLocaleString()} HP 회복!)`;
+                    }
+
                     wbPlayerHp -= bossDmg;
                     const hpT = document.getElementById("wbPlayerHpText");
                     if (hpT) hpT.innerText = `${Math.max(0, wbPlayerHp)} / ${wbPlayerMaxHp} HP`;
-                    triggerWorldBossAttackAnim(`💔 오답 ${wbWrongCount}회! 보스 반격 -${bossDmg} HP (콤보 리셋)`);
+                    triggerWorldBossAttackAnim(`💔 오답 ${wbWrongCount}회! 보스 반격 -${bossDmg} HP${extraNotice}`);
                 }
 
                 if (wbPlayerHp <= 0) {
@@ -7320,6 +7406,34 @@
                 } else {
                     generateWorldBossQuiz();
                 }
+            }
+        }
+
+        function showWorldBossResultModal(damage, reasonMessage, rewardGold, rewardTokens) {
+            const modal = document.getElementById("wbRaidResultModal");
+            if (!modal) return;
+
+            const reasonEl = document.getElementById("wbResultReasonText");
+            if (reasonEl) reasonEl.innerText = reasonMessage;
+
+            const dmgEl = document.getElementById("wbResultDamageVal");
+            if (dmgEl) dmgEl.innerText = damage.toLocaleString();
+
+            const goldEl = document.getElementById("wbResultGoldVal");
+            if (goldEl) goldEl.innerText = `+${rewardGold.toLocaleString()}G`;
+
+            const tokensEl = document.getElementById("wbResultTokensVal");
+            if (tokensEl) tokensEl.innerText = `+${rewardTokens}개`;
+
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        }
+
+        function closeWorldBossRaidResultModal() {
+            const modal = document.getElementById("wbRaidResultModal");
+            if (modal) {
+                modal.classList.remove("flex");
+                modal.classList.add("hidden");
             }
         }
 
@@ -7351,6 +7465,7 @@
             saveLocalCache();
 
             updateWorldBossUI();
+            showWorldBossResultModal(wbTotalDamageDealt, reasonMessage, rewardGold, rewardTokens);
             showToast(`${reasonMessage} 🪙 골드: +${rewardGold.toLocaleString()}G / 🏺 증표: +${rewardTokens}개 획득!`);
 
             // 서버 전송 전 즉시 로컬 데이터 가상 반영

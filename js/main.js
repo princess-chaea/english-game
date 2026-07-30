@@ -7133,7 +7133,7 @@
                         <div class="flex gap-2 w-full">
                             <input type="text" id="wbShortAnswerInput" placeholder="카운터 영단어를 신속히 입력하세요..." autocomplete="off"
                                 class="flex-1 bg-black border-2 border-red-600 focus:border-yellow-400 px-4 py-2.5 font-black text-base text-yellow-300 outline-none rounded-none-forced animate-pulse"
-                                oninput="checkWbShortAnswerAutoSubmit(this)"
+                                oninput="this.value = this.value.toLowerCase(); checkWbShortAnswerAutoSubmit(this)"
                                 onkeypress="if(event.key==='Enter') submitWbShortAnswer()">
                             <button onclick="submitWbShortAnswer()" class="bg-red-700 hover:bg-red-600 text-white font-black text-xs px-6 py-2.5 border-2 border-yellow-400 rounded-none-forced transition shadow-xl animate-bounce">
                                 💥 카운터 타격!

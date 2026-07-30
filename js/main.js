@@ -6275,6 +6275,10 @@
                         maxHp = wbMaxBossHp;
                         curHp = Math.max(0, maxHp - dbTotalDmg);
                         damages = data.damages || {};
+                        const lastPlayedDates = data.lastPlayedDates || {};
+                        if (lastPlayedDates[studentKey] === todayStr) {
+                            canAttack = false;
+                        }
                     }
 
                     wbCurBossHp = curHp;
@@ -7487,7 +7491,8 @@
                         transaction.set(bossDocRef, {
                             maxHp: wbMaxBossHp,
                             curHp: Math.max(0, wbMaxBossHp - wbTotalDamageDealt),
-                            damages: { [studentKey]: wbTotalDamageDealt }
+                            damages: { [studentKey]: wbTotalDamageDealt },
+                            lastPlayedDates: { [studentKey]: todayStr }
                         });
                     } else {
                         const data = docSnap.data();
@@ -7500,7 +7505,11 @@
                         const damages = data.damages || {};
                         const oldDamage = damages[studentKey] || 0;
                         damages[studentKey] = oldDamage + wbTotalDamageDealt;
-                        transaction.update(bossDocRef, { maxHp: wbMaxBossHp, curHp: newHp, damages });
+                        
+                        const lastPlayedDates = data.lastPlayedDates || {};
+                        lastPlayedDates[studentKey] = todayStr;
+                        
+                        transaction.update(bossDocRef, { maxHp: wbMaxBossHp, curHp: newHp, damages, lastPlayedDates });
                     }
                 }).then(() => {
                     showToast("✨ 서버에 월드보스 누적 피해 기록이 반영되었습니다!");

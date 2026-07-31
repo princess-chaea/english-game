@@ -1284,7 +1284,14 @@
                                     </tr>
                                 </tbody>
                             </table>
-                            <p class="text-[8px] text-gray-500 mt-1.5">※ ⭐ 한계돌파: 동일 유물 중복 획득 시 성급↑ & 스탯 최대 +20% 추가 상승 | 1회 소환 = 보스 증표 50개</p>
+                            <div class="text-[8px] text-gray-400 mt-2 space-y-1">
+                                <p>※ <strong class="text-yellow-400">⭐ 유물 한계돌파(승급) 절차:</strong> 1회 소환 = 보스 증표 50개</p>
+                                <ul class="list-disc list-inside text-gray-500 ml-1 leading-relaxed">
+                                    <li>동일 등급 유물 획득 시 즉시 <span class="text-white">+1성</span> 상승 (최대 6성)</li>
+                                    <li>하위 등급 유물 획득 시 등급에 비례한 <span class="text-pink-300">EXP 누적</span>, 게이지가 다 차면 <span class="text-white">+1성</span> 상승 (일반 1, 희귀 3, 영웅 9, 전설 27, 신화 81 EXP 기준)</li>
+                                    <li>상위 등급 유물 획득 시 즉시 <span class="text-yellow-400">해당 등급으로 승급</span>, 보유 EXP 100% 보존 후 별 개수 재계산</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1384,23 +1391,23 @@
                     <div class="grid grid-cols-5 gap-2 text-center text-[10px]">
                         <div class="bg-black/90 p-2.5 border border-[#3c3c3c]">
                             <span class="text-[#bbbbbb] font-extrabold block text-[11px]">일반 (75%)</span>
-                            <span class="text-white  font-bold">기본 ×5배</span>
+                            <span class="text-white  font-bold text-[9px] whitespace-nowrap">×5배 ~ ×6배</span>
                         </div>
                         <div class="bg-black/90 p-2.5 border border-[#0066b1]">
                             <span class="text-[#0066b1] font-extrabold block text-[11px]">희귀 (18%)</span>
-                            <span class="text-white  font-bold">기본 ×10배</span>
+                            <span class="text-white  font-bold text-[9px] whitespace-nowrap">×10배 ~ ×12배</span>
                         </div>
                         <div class="bg-black/90 p-2.5 border border-[#1c69d4]">
                             <span class="text-[#1c69d4] font-extrabold block text-[11px]">영웅 (5%)</span>
-                            <span class="text-white  font-bold">기본 ×20배</span>
+                            <span class="text-white  font-bold text-[9px] whitespace-nowrap">×20배 ~ ×24배</span>
                         </div>
                         <div class="bg-black/90 p-2.5 border border-[#e22718]">
                             <span class="text-[#e22718] font-extrabold block text-[11px]">전설 (1.95%)</span>
-                            <span class="text-white  font-bold">기본 ×40배</span>
+                            <span class="text-white  font-bold text-[9px] whitespace-nowrap">×40배 ~ ×48배</span>
                         </div>
                         <div class="bg-black/90 p-2.5 border border-pink-500 animate-pulse">
                             <span class="text-pink-400 font-extrabold block text-[11px]">신화 (0.05%)</span>
-                            <span class="text-white  font-bold">기본 ×70배</span>
+                            <span class="text-white  font-bold text-[9px] whitespace-nowrap">×70배 ~ ×84배</span>
                         </div>
                     </div>
 
@@ -1603,8 +1610,8 @@
                                         <span class="font-bold text-yellow-400 text-xs tracking-wider">월드보스 참전 및 주간 보상 안내</span>
                                     </div>
                                     <ul class="text-[10px] text-gray-400 flex flex-col gap-1 list-disc list-inside">
-                                        <li><strong class="text-gray-200">일일 참전 보상:</strong> 누적 타격량 비례 즉시 <span class="text-yellow-400 font-bold">골드</span> 및 <span class="text-pink-300 font-bold">고대 증표(유물)</span> 획득</li>
-                                        <li><strong class="text-gray-200">주간 결산 보상:</strong> 매주 월요일 자정 결산 시 기여도 비례하여 최대 <span class="text-pink-400 font-bold">100,000 FP</span> 분배 (보스 미처치 시 1/2 지급)</li>
+                                        <li><strong class="text-gray-200">일일 참전 보상:</strong> 기본 200 증표 + 천만 데미지 당 20 합산 최대 <span class="text-pink-300 font-bold">500 증표</span> 및 <span class="text-yellow-400 font-bold">골드</span> 획득</li>
+                                        <li><strong class="text-gray-200">주간 결산 보상:</strong> 매주 월요일 자정 결산 시 기여도 비례하여 최대 <span class="text-pink-400 font-bold">1,000,000 FP</span> 분배 (보스 미처치 시 1/2 지급)</li>
                                         <li><strong class="text-gray-200">최우수 용사:</strong> 보스 토벌 성공 시 누적 딜량 1위 유저에게 영구 <span class="text-purple-400 font-bold">[수호신] 칭호</span> 부여</li>
                                     </ul>
                                 </div>
@@ -2946,16 +2953,17 @@
             content: "🔥 🔥 🔥";
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, rgba(239,68,68,0.95), rgba(249,115,22,0.95));
-            color: #fef08a;
+            background: linear-gradient(135deg, rgba(239,68,68,0.85), rgba(249,115,22,0.85));
+            color: rgba(254,240,138,0.9);
             font-weight: 900;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 13px;
             letter-spacing: 2px;
-            box-shadow: inset 0 0 15px #dc2626;
-            animation: pulse 0.6s infinite alternate;
+            box-shadow: inset 0 0 15px rgba(220,38,38,0.8);
+            animation: pulse 1.5s infinite alternate;
+            pointer-events: none;
         }
 
         @keyframes wbSparkFloat {

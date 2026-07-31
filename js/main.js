@@ -2013,7 +2013,7 @@
             const fairyLvl = (gameState.petLevels && gameState.petLevels['fairy']) || 0;
             const fairyBonus = fairyLvl * PET_PARAMS['fairy'].forgeBonus;
             return {
-                success: Math.max(5, Math.min(95, success + fairyBonus)),
+                success: Number((Math.max(5, Math.min(95, success + fairyBonus))).toFixed(1)),
                 dropChance: dropChance
             };
         }
@@ -2929,12 +2929,19 @@
                     ? "border-2 border-yellow-400 bg-yellow-950/60 shadow-[0_0_15px_rgba(250,204,21,0.7)]" 
                     : (isAcquired ? gradeInfo.colorClass : 'border-gray-900 bg-black/60 opacity-40');
 
+                const expMap = { normal: 1, rare: 3, hero: 9, legendary: 27, mythic: 81 };
+                const reqExp = isAcquired ? expMap[acquired.grade] || 1 : 1;
+                const expHtml = (isAcquired && starsCount < 6) ? `<span class="text-[7px] text-gray-400 font-normal mr-1">(${acquired.exp || 0}/${reqExp})</span>` : "";
+
                 html += `
                     <div class="border ${cardBorder} p-2 text-center flex flex-col justify-between min-h-[145px] rounded-none-forced relative group transition">
                         <div>
                             <div class="flex justify-between items-center text-[8px] text-gray-300 font-bold mb-1">
                                 <span class="${isAcquired ? 'text-yellow-300 font-black' : 'text-gray-500'}">${isAcquired ? gradeInfo.name : '미해금'}</span>
-                                <span class="text-yellow-400 ">${starsHtml}</span>
+                                <div class="flex items-center">
+                                    ${expHtml}
+                                    <span class="text-yellow-400 ">${starsHtml}</span>
+                                </div>
                             </div>
                             
                             <!-- 🏺 유물 고유 이미지 포함 -->
@@ -3027,6 +3034,10 @@
                 else if (roll < 0.25) rolledGrade = "rare";        // 18.00% (7.00%~25.00%)
 
                 let existing = gameState.acquiredRelics.find(item => item.id === pickedRelicDef.id);
+                
+                const expMap = { normal: 1, rare: 3, hero: 9, legendary: 27, mythic: 81 };
+                const rolledExp = expMap[rolledGrade] || 1;
+
                 if (existing) {
                     if ((existing.stars || 0) >= 6) {
                         const rewardMap = { "normal": 1, "rare": 2, "hero": 3, "legendary": 4, "mythic": 5 };
@@ -3035,20 +3046,38 @@
                         refundCount += reward;
                         drawnResults.push({ def: pickedRelicDef, grade: rolledGrade, stars: 6, isEssenceRefund: true, refundAmount: reward });
                     } else {
-                        existing.stars = Math.min(6, (existing.stars || 0) + 1);
+                        if (typeof existing.exp === 'undefined') existing.exp = 0;
+                        
                         const oldRank = (SKILL_GRADES[existing.grade] || SKILL_GRADES.normal).rank;
                         const newRank = (SKILL_GRADES[rolledGrade] || SKILL_GRADES.normal).rank;
-                        if (newRank > oldRank) existing.grade = rolledGrade;
-                        drawnResults.push({ def: pickedRelicDef, grade: rolledGrade, stars: existing.stars });
+                        const oldReqExp = expMap[existing.grade] || 1;
+                        
+                        let totalExp = (existing.stars || 0) * oldReqExp + (existing.exp || 0) + rolledExp;
+                        
+                        if (newRank > oldRank) {
+                            existing.grade = rolledGrade;
+                        }
+                        
+                        const currentReqExp = expMap[existing.grade] || 1;
+                        existing.stars = Math.floor(totalExp / currentReqExp);
+                        existing.exp = totalExp % currentReqExp;
+                        
+                        if (existing.stars >= 6) {
+                            existing.stars = 6;
+                            existing.exp = 0;
+                        }
+                        
+                        drawnResults.push({ def: pickedRelicDef, grade: rolledGrade, stars: existing.stars, currentExp: existing.exp, reqExp: currentReqExp });
                     }
                 } else {
                     existing = {
                         id: pickedRelicDef.id,
                         grade: rolledGrade,
-                        stars: 0
+                        stars: 0,
+                        exp: 0
                     };
                     gameState.acquiredRelics.push(existing);
-                    drawnResults.push({ def: pickedRelicDef, grade: rolledGrade, stars: existing.stars });
+                    drawnResults.push({ def: pickedRelicDef, grade: rolledGrade, stars: existing.stars, currentExp: existing.exp, reqExp: expMap[rolledGrade] });
                 }
             }
 
@@ -3136,7 +3165,10 @@
                 const innerHtml = `
                         <div class="flex justify-between items-center text-[7px] text-gray-300 font-bold mb-1 w-full">
                             <span>${gradeInfo.name}</span>
-                            <span class="text-yellow-400">${starsHtml}</span>
+                            <div class="flex items-center">
+                                ${res.stars < 6 && res.currentExp !== undefined ? `<span class="text-[6px] text-gray-400 font-normal mr-1">(${res.currentExp}/${res.reqExp})</span>` : ""}
+                                <span class="text-yellow-400">${starsHtml}</span>
+                            </div>
                         </div>
                         <div class="w-10 h-10 mx-auto my-1 flex items-center justify-center bg-black/50 border border-gray-800 p-1">
                             <img src="${res.def.img}" class="w-full h-full object-contain filter drop-shadow-[0_0_8px_#fbbf24]">
@@ -3280,8 +3312,8 @@
         }
 
         function getRequiredExpForStar(grade) {
-            // 등급별 별 1개 완성에 필요한 경험치(중복 카드 획득 수)
-            const expMap = { normal: 1, rare: 2, hero: 3, legendary: 4, mythic: 5 };
+            // 등급별 1별 달성에 필요한 경험치 가치 (1장 = 1EXP, 희귀 3, 영웅 9, 전설 27, 신화 81)
+            const expMap = { normal: 1, rare: 3, hero: 9, legendary: 27, mythic: 81 };
             return expMap[grade] || 1;
         }
 
@@ -3304,47 +3336,48 @@
                 const rolledGradeRank = (SKILL_GRADES[rolledGrade] || SKILL_GRADES.normal).rank;
                 const oldTier = existingSkill.tier || 1;
 
+                const rolledReqExp = getRequiredExpForStar(rolledGrade);
+                const oldGradeReqExp = getRequiredExpForStar(existingSkill.grade);
+                let totalOldCardExp = ((existingSkill.stars || 0) * oldGradeReqExp) + (existingSkill.exp || 0);
+
                 if (rolledGradeRank > existingGradeRank) {
                     // 🎉 상위 등급 카드가 뽑힌 경우: 
-                    const oldGradeReqExp = getRequiredExpForStar(existingSkill.grade);
-                    const totalOldCardExp = ((existingSkill.stars || 0) * oldGradeReqExp) + (existingSkill.exp || 0);
-
                     existingSkill.grade = rolledGrade;
-                    const newGradeReqExp = getRequiredExpForStar(rolledGrade);
-                    existingSkill.maxExp = newGradeReqExp;
+                    existingSkill.maxExp = getRequiredExpForStar(rolledGrade);
 
-                    const convertedExp = Math.floor(totalOldCardExp * 0.5);
-                    const newStars = Math.min(6, Math.floor(convertedExp / newGradeReqExp));
-                    const newExp = convertedExp % newGradeReqExp;
-
-                    existingSkill.stars = newStars;
-                    existingSkill.exp = newExp;
                     if (rolledTier > oldTier) existingSkill.tier = rolledTier;
+
+                    const newTotalExp = totalOldCardExp + rolledReqExp;
+                    existingSkill.stars = Math.floor(newTotalExp / existingSkill.maxExp);
+                    existingSkill.exp = newTotalExp % existingSkill.maxExp;
+
+                    if (existingSkill.stars >= 6) {
+                        existingSkill.stars = 6;
+                        existingSkill.exp = 0;
+                    }
 
                     if (!suppressModal) showToast(`🔥 [${capitalizeFirstLetter(word)}] 대각성! [${gradeInfo.name}] (Tier ${existingSkill.tier}) 등급으로 상위 승급!`);
                 } else {
-                    // 👑 1. 동일/이하 등급 카드라도 새로 뽑은 티어가 더 높으면 상위 티어로 덮어씌움 (Tier Overwrite)!
+                    // 👑 동일/이하 등급 카드 획득
                     let tierUpMsg = "";
                     if (rolledGradeRank === existingGradeRank && rolledTier > oldTier) {
                         existingSkill.tier = rolledTier;
-                        tierUpMsg = ` 👑 (Tier ${oldTier} ➔ Tier ${rolledTier} 상위 티어 덮어씌우기!)`;
+                        tierUpMsg = ` 👑 (Tier ${oldTier} ➔ Tier ${rolledTier} 덮어씌우기!)`;
                     }
 
-                    // 2. 중복 카드 경험치(EXP) & 별(⭐) 한계돌파
-                    if (typeof existingSkill.stars === 'undefined') existingSkill.stars = 0;
-                    if (typeof existingSkill.exp === 'undefined') existingSkill.exp = 0;
+                    existingSkill.maxExp = getRequiredExpForStar(existingSkill.grade);
 
-                    const reqExp = getRequiredExpForStar(existingSkill.grade);
-                    existingSkill.maxExp = reqExp;
-
-                    if (existingSkill.stars < 6) {
-                        existingSkill.exp += 1;
-                        if (existingSkill.exp >= reqExp) {
+                    if ((existingSkill.stars || 0) < 6) {
+                        const newTotalExp = totalOldCardExp + rolledReqExp;
+                        existingSkill.stars = Math.floor(newTotalExp / existingSkill.maxExp);
+                        existingSkill.exp = newTotalExp % existingSkill.maxExp;
+                        
+                        if (existingSkill.stars >= 6) {
+                            existingSkill.stars = 6;
                             existingSkill.exp = 0;
-                            existingSkill.stars += 1;
-                            if (!suppressModal) showToast(`⭐ [${capitalizeFirstLetter(word)}] 경험치 충전 완료! 별 ⭐${existingSkill.stars}개 한계돌파!${tierUpMsg}`);
+                            if (!suppressModal) showToast(`⭐ [${capitalizeFirstLetter(word)}] 경험치 초과 충전! 최고 6성 도달!${tierUpMsg}`);
                         } else {
-                            if (!suppressModal) showToast(`✨ [${capitalizeFirstLetter(word)}] 중복 카드가 흡수되었습니다! (${existingSkill.exp}/${reqExp})${tierUpMsg}`);
+                            if (!suppressModal) showToast(`✨ [${capitalizeFirstLetter(word)}] 카드 경험치 흡수! (${existingSkill.exp}/${existingSkill.maxExp})${tierUpMsg}`);
                         }
                     } else {
                         if (!suppressModal) showToast(`⭐ [${capitalizeFirstLetter(word)}] 최고 6성 한계돌파 카드 (Tier ${existingSkill.tier})${tierUpMsg}`);
@@ -6323,6 +6356,12 @@
                 }
             }
 
+            const wbDaysLeftEl = document.getElementById("worldBossDaysLeft");
+            if (wbDaysLeftEl) {
+                const dLeft = (7 - new Date().getDay()) % 7;
+                wbDaysLeftEl.innerText = dLeft === 0 ? "오늘 종료" : `${dLeft}일 남음`;
+            }
+
             // ✅ 캐시 데이터 즉시 반영 (이어하기 기록이 있을 때만)
             const cachedWb = JSON.parse(localStorage.getItem(wbCacheKey) || "null");
             if (cachedWb && isResume) {
@@ -6331,7 +6370,7 @@
                 document.getElementById("worldBossHpText").innerText = `${cachedWb.curHp.toLocaleString()} / ${cachedWb.maxHp.toLocaleString()} HP (${cachedPct.toFixed(1)}%) [캐시]`;
                 document.getElementById("myWorldBossDmgDisplay").innerText = cachedWb.myDamage.toLocaleString();
                 document.getElementById("myWorldBossShareDisplay").innerText = `${cachedWb.sharePct}%`;
-                const expectedTokensCache = Math.min(200, 20 + Math.floor(cachedWb.myDamage / 10000000) * 20);
+                const expectedTokensCache = Math.min(500, 200 + Math.floor(cachedWb.myDamage / 10000000) * 20);
                 const expectedFpCache = Math.round(parseFloat(cachedWb.sharePct) * 1000);
                 document.getElementById("myWorldBossRewardDisplay").innerHTML = `처치: <span style="color:white">+${expectedFpCache.toLocaleString()} FP</span> | 미처치: <span style="color:#9ca3af">+${Math.floor(expectedFpCache / 2).toLocaleString()} FP</span>`;
 
@@ -6392,7 +6431,7 @@
                     document.getElementById("myWorldBossDmgDisplay").innerText = myDamage.toLocaleString();
                     document.getElementById("myWorldBossShareDisplay").innerText = `${cappedShare}%`;
                     
-                    const expectedTokens = Math.min(200, 20 + Math.floor(myDamage / 10000000) * 20);
+                    const expectedTokens = Math.min(500, 200 + Math.floor(myDamage / 10000000) * 20);
                     const expectedFp = Math.round(parseFloat(cappedShare) * 1000);
                     document.getElementById("myWorldBossRewardDisplay").innerHTML = `처치: <span style="color:white">+${expectedFp.toLocaleString()} FP</span> | 미처치: <span style="color:#9ca3af">+${Math.floor(expectedFp / 2).toLocaleString()} FP</span>`;
 
@@ -7611,7 +7650,7 @@
 
             // ✅ 참전 즉시 보상: 피해량 비례 골드 및 고대 보스 증표(유물 재화) 적립
             const rewardGold = Math.max(500, Math.floor(wbTotalDamageDealt / 500));
-            const rewardTokens = Math.min(200, 20 + Math.floor(wbTotalDamageDealt / 50000) * 20);
+            const rewardTokens = Math.min(500, 200 + Math.floor(wbTotalDamageDealt / 10000000) * 20);
 
             gameState.gold = (gameState.gold || 0) + rewardGold; 
             gameState.accGold = (gameState.accGold || gameState.gold || 0) + rewardGold;

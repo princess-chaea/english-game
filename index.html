@@ -161,7 +161,7 @@
             
             const currentWeek = getCurrentWeekNum();
             const prevWeek = currentWeek - 1;
-            const victoryRewardKey = `vocahero_wb_reward_claimed_${studentKey}_week_${prevWeek}`;
+            const victoryRewardKey = `vocahero_wb_reward_claimed_v2_${studentKey}_week_${prevWeek}`;
             
             if (localStorage.getItem(victoryRewardKey)) return;
 
@@ -193,9 +193,10 @@
                             let sortedDmg = Object.values(damages).sort((a,b)=>b-a);
                             if(sortedDmg.length > 0) myRank = sortedDmg.indexOf(myDamage) + 1;
                             
-                            const baseFp = Math.floor(myDamage / 1000);
-                            const shareFp = Math.round(100000 * sharePct);
-                            const totalFp = baseFp + shareFp;
+                            let totalFp = Math.round(1000000 * sharePct);
+                            if (!isVictory) {
+                                totalFp = Math.floor(totalFp / 2);
+                            }
                             const getsTitle = isVictory && myRank === 1;
 
                             // UI 업데이트
@@ -205,6 +206,17 @@
                                 document.getElementById("wbVictoryNoticeModal").querySelector('p').innerText = "지난 주 월드보스 전투 결과가 집계되었습니다!";
                                 document.getElementById("wbModalMyDamage").innerText = myDamage.toLocaleString() + " HP";
                                 document.getElementById("wbModalMyShare").innerText = (sharePct * 100).toFixed(1) + "%";
+                                
+                                const statusSpan = document.getElementById("wbModalClearStatus");
+                                if (statusSpan) {
+                                    if (isVictory) {
+                                        statusSpan.innerText = "완전 승리 ✅";
+                                        statusSpan.style.color = "#4ade80";
+                                    } else {
+                                        statusSpan.innerText = "토벌 실패 (부분 보상) ❌";
+                                        statusSpan.style.color = "#f87171";
+                                    }
+                                }
                                 
                                 let titleBadge = getsTitle ? " / [수호신]" : "";
                                 document.getElementById("wbModalRewardSummary").innerText = `+${totalFp.toLocaleString()} FP${titleBadge}`;
@@ -217,6 +229,7 @@
                                     }
                                     localStorage.setItem(victoryRewardKey, "true");
                                     saveLocalCache();
+                                    if (typeof saveSessionToCloud === 'function') saveSessionToCloud();
                                     refreshStateVisuals();
                                     closeModal("wbVictoryNoticeModal");
                                     showToast("월드보스 주간 보상을 수령했습니다!");
@@ -232,6 +245,7 @@
                                 }
                                 localStorage.setItem(victoryRewardKey, "true");
                                 saveLocalCache();
+                                if (typeof saveSessionToCloud === 'function') saveSessionToCloud();
                             }
                         } else {
                             // 참여하지 않은 경우에도 플래그 저장
@@ -1463,7 +1477,7 @@
 
                             <div class="z-10 w-full">
                                 <h4 id="wbBossName" class="text-xl font-black text-red-400 tracking-wider">심연의 흑룡 파브니르</h4>
-                                <p id="wbBossDesc" class="text-xs text-gray-300 mt-1.5 whitespace-nowrap truncate font-medium">"불꽃으로 보기 1개를 가리는 흑룡. 화염 정답을 조준 타격하여 비늘을 파괴하세요!"</p>
+                                <p id="wbBossDesc" class="text-xs text-gray-300 mt-1.5 font-medium leading-relaxed">"불꽃으로 보기 1개를 가리는 흑룡. 화염 정답을 조준 타격하여 비늘을 파괴하세요!"</p>
 
                                 <!-- Common Boss Rules -->
                                 <div class="mt-3 w-full bg-[#0a0a0c] border border-gray-700 p-2 flex flex-col gap-1 text-left relative rounded-none-forced shadow-sm">
@@ -2886,7 +2900,7 @@
                             padding:16px;margin-bottom:20px;text-align:left;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                         <span style="color:#9ca3af;font-size:12px;font-weight:700;">토벌 상태</span>
-                        <span style="color:#4ade80;font-size:13px;font-weight:900;">완전 승리 ✅</span>
+                        <span id="wbModalClearStatus" style="color:#4ade80;font-size:13px;font-weight:900;">완전 승리 ✅</span>
                     </div>
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                         <span style="color:#9ca3af;font-size:12px;font-weight:700;">내 총 누적 타격 피해</span>

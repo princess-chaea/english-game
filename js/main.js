@@ -5266,7 +5266,26 @@
 
         window.changePinCode = function() {
             const currentUid = window._getTempUid();
+            const exitNow = (fromBackButton) => {
+                if (fromBackButton && /android/i.test(navigator.userAgent)) return;
+                
+                try { window.close(); } catch(e) {}
+                
+                if (/android/i.test(navigator.userAgent)) {
+                    try { 
+                        window.location.href = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end"; 
+                    } catch(e) {}
+                }
+                
+                if (/android|iphone|ipad|ipod/i.test(navigator.userAgent)) {
+                    setTimeout(() => {
+                        let msg = "(뒤로가기를 두 번 누르거나 폰의 홈 버튼을 눌러주세요)";
+                        document.body.insertAdjacentHTML('beforeend', `<div style="position:fixed;inset:0;z-index:999999;display:flex;justify-content:center;align-items:center;background-color:#000;color:#fff;font-size:24px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.5;">영웅의 영혼석에 기록이<br>안전하게 각인되었습니다!<br><br>이제 게임을 종료하셔도 됩니다.<br><br><span style="font-size:14px;color:#888;">${msg}</span></div>`);
+                    }, 800);
+                }
+            };
             if (!currentUid) return;
+
             showInputModal({
                 icon: "🔑",
                 title: "PIN 암호 변경",
@@ -5543,13 +5562,13 @@
                     } catch(e) {}
                 }
                 
-                // 3. 최후의 수단: window.close()가 무시되는 환경(웹 브라우저 팝업 차단, PWA 등)을 위한 풀스크린 안내
-                setTimeout(() => {
-                    let msg = /android|iphone|ipad|ipod/i.test(navigator.userAgent) 
-                        ? "(뒤로가기를 두 번 누르거나 폰의 홈 버튼을 눌러주세요)" 
-                        : "(열려있는 브라우저 탭을 직접 닫아주세요)";
-                    document.body.innerHTML = `<div style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#000;color:#fff;font-size:24px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.5;">영웅의 영혼석에 기록이<br>안전하게 각인되었습니다!<br><br>이제 게임을 종료하셔도 됩니다.<br><br><span style="font-size:14px;color:#888;">${msg}</span></div>`;
-                }, 500);
+                // 3. 최후의 수단: 모바일 환경에서만 풀스크린 안내 표시 (PC는 불필요한 검은 화면 생략)
+                if (/android|iphone|ipad|ipod/i.test(navigator.userAgent)) {
+                    setTimeout(() => {
+                        let msg = "(뒤로가기를 두 번 누르거나 폰의 홈 버튼을 눌러주세요)";
+                        document.body.insertAdjacentHTML('beforeend', `<div style="position:fixed;inset:0;z-index:999999;display:flex;justify-content:center;align-items:center;background-color:#000;color:#fff;font-size:24px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.5;">영웅의 영혼석에 기록이<br>안전하게 각인되었습니다!<br><br>이제 게임을 종료하셔도 됩니다.<br><br><span style="font-size:14px;color:#888;">${msg}</span></div>`);
+                    }, 800);
+                }
             };
 
             const doExit = () => {

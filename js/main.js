@@ -5562,13 +5562,13 @@
                     } catch(e) {}
                 }
                 
-                // 3. 최후의 수단: 모바일 환경에서만 풀스크린 안내 표시 (PC는 불필요한 검은 화면 생략)
-                if (/android|iphone|ipad|ipod/i.test(navigator.userAgent)) {
-                    setTimeout(() => {
-                        let msg = "(뒤로가기를 두 번 누르거나 폰의 홈 버튼을 눌러주세요)";
-                        document.body.insertAdjacentHTML('beforeend', `<div style="position:fixed;inset:0;z-index:999999;display:flex;justify-content:center;align-items:center;background-color:#000;color:#fff;font-size:24px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.5;">영웅의 영혼석에 기록이<br>안전하게 각인되었습니다!<br><br>이제 게임을 종료하셔도 됩니다.<br><br><span style="font-size:14px;color:#888;">${msg}</span></div>`);
-                    }, 800);
-                }
+                // 3. 최후의 수단: 창 닫기가 무시되는 환경을 위한 풀스크린 안내 (PC 포함 모든 기기)
+                setTimeout(() => {
+                    let msg = /android|iphone|ipad|ipod/i.test(navigator.userAgent) 
+                        ? "(뒤로가기를 두 번 누르거나 폰의 홈 버튼을 눌러주세요)" 
+                        : "(열려있는 브라우저 탭을 직접 닫아주세요)";
+                    document.body.insertAdjacentHTML('beforeend', `<div style="position:fixed;inset:0;z-index:999999;display:flex;justify-content:center;align-items:center;background-color:#000;color:#fff;font-size:24px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.5;">영웅의 영혼석에 기록이<br>안전하게 각인되었습니다!<br><br>이제 게임을 종료하셔도 됩니다.<br><br><span style="font-size:14px;color:#888;">${msg}</span></div>`);
+                }, 500);
             };
 
             const doExit = () => {

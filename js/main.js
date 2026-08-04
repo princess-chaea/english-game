@@ -6640,6 +6640,7 @@
 
             const todayStr = new Date().toISOString().slice(0, 10);
             const inProgressKey = `vocahero_wb_progress_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+            let loadedHintRemaining = null;
             try {
                 const savedJson = localStorage.getItem(inProgressKey);
                 if (savedJson) {
@@ -6649,6 +6650,9 @@
                         wbTotalDamageDealt = saved.wbTotalDamageDealt ?? 0;
                         wbPlayerHp = saved.wbPlayerHp ?? wbPlayerMaxHp;
                         wbSkillCooldowns = saved.wbSkillCooldowns || {};
+                        if (typeof saved.wbPetHintRemaining === 'number') {
+                            loadedHintRemaining = saved.wbPetHintRemaining;
+                        }
                         wbNextUltimateTime = Math.floor(wbTimerRemaining / 45) * 45 - 5;
                         if (wbNextUltimateTime < 0) wbNextUltimateTime = 135.0;
                     } else {
@@ -6686,7 +6690,11 @@
 
             const totalPetLvlForHint = Object.values(gameState.petLevels || {}).reduce((a, b) => a + b, 0);
             wbPetHintMaxCount = 2 + Math.floor(totalPetLvlForHint / 15);
-            wbPetHintRemaining = wbPetHintMaxCount;
+            if (loadedHintRemaining !== null) {
+                wbPetHintRemaining = loadedHintRemaining;
+            } else {
+                wbPetHintRemaining = wbPetHintMaxCount;
+            }
             updatePetHintBtnUI();
             updateWorldBossHudUI();
             
@@ -6784,7 +6792,8 @@
                             wbTimerRemaining,
                             wbTotalDamageDealt,
                             wbPlayerHp,
-                            wbSkillCooldowns
+                            wbSkillCooldowns,
+                            wbPetHintRemaining
                         }));
                     } catch(e) {}
                 }

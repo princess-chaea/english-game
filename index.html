@@ -184,10 +184,15 @@
                         // ⚠️ 이 myDamage는 이전 주(prevWeek) 데이터 → 현재 주 랭킹 필드에 덮어쓰면 안 됨!
                         
                         if (myDamage > 0) {
-                            const curHp = typeof data.curHp !== 'undefined' ? data.curHp : 0;
+                            let totalDmg = 0;
+                            if (data.damages) {
+                                totalDmg = Object.values(data.damages).reduce((a, b) => a + b, 0);
+                            }
+                            const maxHp = data.maxHp || 1000000000;
+                            const curHp = typeof data.curHp !== 'undefined' ? data.curHp : Math.max(0, maxHp - totalDmg);
                             const isVictory = curHp <= 0;
                             
-                            const sharePct = (data.maxHp && data.maxHp > 0) ? (myDamage / data.maxHp) : 0;
+                            const sharePct = (data.maxHp && data.maxHp > 0) ? (myDamage / data.maxHp) : (myDamage / maxHp);
                             
                             let myRank = 1;
                             let sortedDmg = Object.values(damages).sort((a,b)=>b-a);
@@ -222,7 +227,7 @@
                                 document.getElementById("wbModalRewardSummary").innerText = `+${totalFp.toLocaleString()} FP${titleBadge}`;
                                 
                                 document.getElementById("wbVictoryNoticeClaimBtn").onclick = () => {
-                                    gameState.fp = (gameState.fp || 0) + totalFp;
+                                    gameState.masteryPoints = (gameState.masteryPoints || 0) + totalFp;
                                     if (getsTitle) {
                                         if (!gameState.unlockedTitles) gameState.unlockedTitles = [];
                                         if (!gameState.unlockedTitles.includes("수호신")) gameState.unlockedTitles.push("수호신");
@@ -238,7 +243,7 @@
                                 playSoundEffect('levelup');
                             } else {
                                 // 모달이 없는 경우 자동 수령
-                                gameState.fp = (gameState.fp || 0) + totalFp;
+                                gameState.masteryPoints = (gameState.masteryPoints || 0) + totalFp;
                                 if (getsTitle) {
                                     if (!gameState.unlockedTitles) gameState.unlockedTitles = [];
                                     if (!gameState.unlockedTitles.includes("수호신")) gameState.unlockedTitles.push("수호신");

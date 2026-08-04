@@ -162,7 +162,7 @@
             
             const currentWeek = getCurrentWeekNum();
             const prevWeek = currentWeek - 1;
-            const victoryRewardKey = `vocahero_wb_reward_claimed_v5_${studentKey}_week_${prevWeek}`;
+            const victoryRewardKey = `vocahero_wb_reward_claimed_v6_${studentKey}_week_${prevWeek}`;
             
             if (localStorage.getItem(victoryRewardKey)) return;
 
@@ -191,7 +191,7 @@
                             }
                             
                             // 기존 DB에 curHp가 0으로 잘못 저장되어 있는 경우가 있으므로, 순수 누적 데미지로만 승패 판정
-                            const maxHp = data.maxHp || 1000000000;
+                            const maxHp = data.maxHp || 10000000000;
                             const isVictory = totalDmg >= maxHp;
                             
                             const sharePct = (data.maxHp && data.maxHp > 0) ? (myDamage / data.maxHp) : (myDamage / maxHp);

@@ -6131,8 +6131,8 @@
 
         function getWbExpectedMaxHp() {
             const weekNum = getCurrentWeekNum();
-            const relativeWeek = Math.max(0, weekNum - 108); // 이번 주(108주차)부터 1000억으로 다시 시작
-            return Math.min(500000000000, 100000000000 + (relativeWeek * 50000000000));
+            const relativeWeek = Math.max(0, weekNum - 108); // 이번 주(108주차)부터 100억으로 다시 시작
+            return Math.min(100000000000, 10000000000 + (relativeWeek * 1000000000));
         }
 
         function getFormattedMonthWeekString() {

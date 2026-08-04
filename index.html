@@ -98,6 +98,7 @@
         }
 
                         async function migrateLegacyWorldBossDocs() {
+            return; // 마이그레이션이 이미 완료되었고, 계속 실행되면 maxHp가 100억으로 덮어씌워지는 버그가 있어 비활성화
             if (!window._fbReady || !window._fbDb || !window._fbGetDoc || !window._fbSetDoc) return;
             try {
                 const curWeek = getCurrentWeekNum();

@@ -913,7 +913,19 @@
             gameState.totalQuizTries = data.totalQuizTries || 0;
             gameState.totalQuizCorrect = data.totalQuizCorrect || 0;
             gameState.masteredWords = extra.masteredWords || data.masteredWords || [];
-            gameState.lastSaved = data.lastSaved;
+            
+            // Firebase Server Timestamp를 이용해 lastSaved 보정
+            if (data.lastSavedServerTime) {
+                if (typeof data.lastSavedServerTime.toMillis === 'function') {
+                    gameState.lastSaved = data.lastSavedServerTime.toMillis();
+                } else if (data.lastSavedServerTime.seconds) {
+                    gameState.lastSaved = data.lastSavedServerTime.seconds * 1000;
+                } else {
+                    gameState.lastSaved = data.lastSavedServerTime;
+                }
+            } else {
+                gameState.lastSaved = data.lastSaved;
+            }
 
             gameState.skillsInventory = data.skillsInventory || [];
             gameState.equippedSkills = data.equippedSkills || [];
@@ -953,7 +965,14 @@
             };
             gameState.tutorialCompleted = typeof extra.tutorialCompleted !== 'undefined' ? extra.tutorialCompleted : (data.tutorialCompleted || false);
 
+            window._syncedFromServerThisSession = true;
+
             fetchWordsFromSpreadsheet();
+            
+            // 데이터 동기화 완료 후 오프라인 보상 계산 1회 실행
+            if (typeof calculateOfflineGains === 'function') {
+                setTimeout(calculateOfflineGains, 500); // 렌더링 및 UI 안정화 후 계산
+            }
         }
 
 
@@ -1038,6 +1057,8 @@
             if (!saveData.linkedGoogleUid) {
                 delete saveData.linkedGoogleUid;
             }
+            // 오프라인 보상 계산을 위한 서버 타임스탬프 기록
+            saveData.lastSavedServerTime = window._fbServerTimestamp();
 
             window._fbSetDoc(window._fbDoc(window._fbDb, "users", uid), saveData, { merge: true }).then(() => {
                 showToast("⚔️ 진행 상황이 영웅의 영혼에 각인되었습니다.");
@@ -1401,7 +1422,12 @@
             respawnActiveMonster();
             renderAccessoriesAndRelicsUI();
 
-            calculateOfflineGains();
+            // calculateOfflineGains() 호출 보류: 
+            // 서버 스펙 동기화 전이라 보상액이 크게 누락되는 현상 방지
+            // 대신 로그인 유저는 syncStateFromServer가 끝나고 실행되고, 방문자만 여기서 실행
+            if (!gameState.name || gameState.name === "방문자") {
+                calculateOfflineGains();
+            }
 
             // Core tick loop 100ms
             if (gameLoopInterval) clearInterval(gameLoopInterval);
@@ -1563,7 +1589,16 @@
         let _offlineGoldPending = 0;
         let _offlineQuizState = { questions: [], current: 0, allCorrect: true };
 
+        let _offlineCalculatedOnce = false;
+
         function calculateOfflineGains() {
+            if (_offlineCalculatedOnce) return;
+            // 서버 연동 유저인데 아직 동기화가 안 끝났다면 계산 보류
+            if (gameState.name && gameState.name !== "방문자" && window._fbReady && !window._syncedFromServerThisSession) {
+                return;
+            }
+            _offlineCalculatedOnce = true;
+
             if (!gameState.lastSaved) {
                 gameState.lastSaved = Date.now();
                 saveLocalCache();

@@ -17,6 +17,8 @@ export default async function handler(req, res) {
         rank: index + 1,
         isMe: doc.id === user.uid,
         nickname: data.nickname,
+        guildName: typeof data.guildName === 'string' ? data.guildName : null,
+        titleName: typeof data.titleName === 'string' ? data.titleName : null,
         score: safeInt(data.score, 0, 0),
         stage: safeInt(data.stage, 1, 1),
         progress: safeInt(data.progress, 0, 0, 100),

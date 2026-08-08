@@ -1409,6 +1409,34 @@
             }
         }
 
+        function refreshHeroIdentity() {
+            const root = document.getElementById("displayStudentName");
+            if (!root) return;
+            root.replaceChildren();
+            const addSeparator = () => root.append(document.createTextNode(" / "));
+            const guildName = typeof gameState.activeGuildName === "string" ? gameState.activeGuildName.trim() : "";
+            const activeTitle = gameState.equippedTitle || gameState.wbTitle || "";
+            const titleDef = typeof AVAILABLE_TITLES !== "undefined" ? AVAILABLE_TITLES.find(t => t.id === activeTitle || t.name === activeTitle) : null;
+            if (guildName) {
+                const guild = document.createElement("span");
+                guild.className = "inline-block max-w-[110px] truncate border border-sky-400 bg-sky-950/60 px-1 py-0.5 text-[10px] text-sky-200 shadow-[0_0_7px_rgba(56,189,248,.65)]";
+                guild.textContent = guildName;
+                root.append(guild);
+            }
+            if (activeTitle) {
+                if (root.childNodes.length) addSeparator();
+                const title = document.createElement("span");
+                title.className = "text-yellow-300";
+                title.textContent = `[${titleDef?.name || activeTitle}]`;
+                root.append(title);
+            }
+            if (root.childNodes.length) addSeparator();
+            const nickname = document.createElement("span");
+            nickname.className = "text-white";
+            nickname.textContent = gameState.name || "새 용사";
+            root.append(nickname);
+        }
+        window.refreshHeroIdentity = refreshHeroIdentity;
         function initGameEngine() {
             // 로그인 완료 후 숨겨두었던 게임 UI 노출
             const antiFlash = document.getElementById("antiFlashStyle");
@@ -1416,20 +1444,8 @@
 
             const _userInfoDisplay = document.getElementById("userInfoDisplay");
             if (_userInfoDisplay) _userInfoDisplay.classList.remove("hidden");
-            let shortSchoolName = gameState.schoolName || "";
-                if (shortSchoolName.endsWith("등학교")) {
-                    shortSchoolName = shortSchoolName.replace("등학교", "");
-                } else if (shortSchoolName.endsWith("학교")) {
-                    shortSchoolName = shortSchoolName.replace("학교", "");
-                }
-                const schoolPrefix = shortSchoolName ? `${shortSchoolName} ` : "";
             const _nameEl = document.getElementById("displayStudentName");
-            const safeGrade = Number(gameState.grade) || 4;
-            const hasLegacyClassInfo = Boolean(gameState.schoolName) && Number.isFinite(Number(gameState.classNum)) && Number(gameState.classNum) > 0 && Number.isFinite(Number(gameState.studentNum)) && Number(gameState.studentNum) > 0;
-            if (_nameEl) _nameEl.innerText = gameState.isAnonymousStudent || !hasLegacyClassInfo
-                ? `${safeGrade}학년 용사 · ${gameState.name || '새 용사'}`
-                : `${schoolPrefix}${safeGrade}학년 ${gameState.classNum}반 ${gameState.studentNum}번 · ${gameState.name || '새 용사'}`;
-            const _badgeEl = document.getElementById("gradeLevelBadge");
+            if (_nameEl) refreshHeroIdentity();            const _badgeEl = document.getElementById("gradeLevelBadge");
             if (_badgeEl) _badgeEl.innerText = `교과 영단어 ${gameState.grade}학년`;
 
             if (typeof gameState.skillsInventory === 'string') {
@@ -5096,20 +5112,11 @@
 
             const applyTitleStyle = (el, isHeader = false) => {
                 if (!el) return;
-                let prefix = "";
                 if (isHeader) {
-                    let shortSchoolName = gameState.schoolName || "";
-                if (shortSchoolName.endsWith("등학교")) {
-                    shortSchoolName = shortSchoolName.replace("등학교", "");
-                } else if (shortSchoolName.endsWith("학교")) {
-                    shortSchoolName = shortSchoolName.replace("학교", "");
+                    refreshHeroIdentity();
+                } else {
+                    el.innerText = `${titleStr}${gameState.name}`;
                 }
-                const schoolPrefix = shortSchoolName ? `${shortSchoolName} ` : "";
-                    const hasLegacyClassInfo = Boolean(gameState.schoolName) && Number.isFinite(Number(gameState.classNum)) && Number(gameState.classNum) > 0 && Number.isFinite(Number(gameState.studentNum)) && Number(gameState.studentNum) > 0;
-                    prefix = gameState.isAnonymousStudent || !hasLegacyClassInfo ? `${Number(gameState.grade) || 4}학년 용사 · ` : `${schoolPrefix}${gameState.grade}학년 ${gameState.classNum}반 ${gameState.studentNum}번 · `;
-                }
-                el.innerText = `${prefix}${titleStr}${gameState.name}`;
-
                 if (titleDef) {
                     if (titleDef.tier === "신화") {
                         el.style.color = "#fef08a"; // yellow-200

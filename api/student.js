@@ -6,9 +6,9 @@ const leaderboard = adminDb.collection('leaderboard');
 const invites = adminDb.collection('classInvites');
 const legacyUsers = adminDb.collection('users');
 const REVIEW_PACK_ID = 'elementary-800-missing-review';
+const ASSIGNABLE_WORD_PACK_IDS = new Set(['grade-3-current','grade-4-current','grade-5-current','grade-6-current','curriculum-2022-grade-3','curriculum-2022-grade-4','curriculum-2022-grade-5','curriculum-2022-grade-6',REVIEW_PACK_ID]);
 const defaultWordPack = (grade) => `grade-${grade}-current`;
-const curriculumWordPack = (grade) => `curriculum-2022-grade-${grade}`;
-function classPack(grade, wordPackId) { return wordPackId === REVIEW_PACK_ID || wordPackId === defaultWordPack(grade) || wordPackId === curriculumWordPack(grade) ? wordPackId : defaultWordPack(grade); }
+function classPack(grade, wordPackId) { return ASSIGNABLE_WORD_PACK_IDS.has(wordPackId) ? wordPackId : defaultWordPack(grade); }
 const fields = new Set(['avatarType','gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petType','petLvl','petLevels','stage','progress','totalQuizTries','totalQuizCorrect','masteredWords','currentQuizIndex','skillsInventory','equippedSkills','activeSkillDeck','skillEssence','lockedPotentialSlots','wrongWordCounts','masteryPoints','necklaceLvl','braceletLvl','ringLvl','acquiredRelics','equippedRelicId','gearPotentials','isPotentialUnlocked','equippedTitle','wbTitle','unlockedTitles','bossTokens','relicEssence','soundSettings','tutorialCompleted','lastSaved']);
 
 function defaultState() { return { avatarType:'male', gold:0, accGold:0, helmetLvl:1, armorLvl:1, weaponLvl:1, shieldLvl:1, shoesLvl:1, stage:1, progress:0, totalQuizTries:0, totalQuizCorrect:0, masteredWords:[], skillsInventory:[], equippedSkills:[], activeSkillDeck:[], skillEssence:0, wrongWordCounts:{}, masteryPoints:0, tutorialCompleted:false }; }
@@ -23,11 +23,12 @@ function cleanState(input) {
   return state;
 }
 function score(state) { return safeInt(state.totalQuizCorrect,0,0)*1000 + (Array.isArray(state.masteredWords)?state.masteredWords.length:0)*10 + Math.min(safeInt(state.stage,1,1),999); }
-function publicAccount(data) { return { nickname:data.nickname, learningGrade:data.learningGrade, state:{...defaultState(),...(data.state||{})}, freeNicknameChangeUsed:Boolean(data.freeNicknameChangeUsed), renameCount:safeInt(data.renameCount,0,0), leaderboardOptIn:Boolean(data.leaderboardOptIn), classIds:Array.isArray(data.classIds)?data.classIds:[], legacyGoogleLinked:Boolean(data.legacyGoogleLinked) }; }
+function publicAccount(data) { return { nickname:data.nickname, learningGrade:data.learningGrade, state:{...defaultState(),...(data.state||{})}, freeNicknameChangeUsed:Boolean(data.freeNicknameChangeUsed), renameCount:safeInt(data.renameCount,0,0), leaderboardOptIn:Boolean(data.leaderboardOptIn), classIds:Array.isArray(data.classIds)?data.classIds:[], activeGuildName:text(data.activeGuildName,40)||null, legacyGoogleLinked:Boolean(data.legacyGoogleLinked) }; }
 function legacyLearningGrade(data, fallback=4) { return safeInt(data?.grade, safeInt(data?.learningGrade, fallback, 3, 6), 3, 6); }
 async function loadAccount(uid) {
   const ref=accounts.doc(uid),snap=await ref.get();if(!snap.exists)return null;
   let data=snap.data();
+  if(!data.activeGuildName&&data.activeClassId){const assignment=await assignedWordPack(uid);if(assignment.classLabel){const update={activeGuildName:assignment.classLabel,updatedAt:FieldValue.serverTimestamp()};await ref.update(update);data={...data,...update};}}
   if(!data.legacyMigratedAt&&!data.legacyGoogleMigratedAt)return publicAccount(data);
   const matches=await legacyUsers.where('migratedTo','==',uid).limit(2).get();
   if(matches.size!==1)return publicAccount(data);
@@ -51,7 +52,7 @@ async function assignedWordPack(uid) {
     if (!classSnap.exists) continue;
     const classroom = classSnap.data();
     if (!classIds.includes(classId)) continue;
-    return { classId, classLabel: classroom.classLabel || 'Class', wordPackId: classPack(classroom.grade, classroom.wordPackId) };
+    return { classId, classLabel: classroom.guildName || classroom.classLabel || '길드', wordPackId: classPack(classroom.grade, classroom.wordPackId) };
   }
   return { wordPackId: null };
 }
@@ -60,6 +61,8 @@ async function publish(uid, data) {
   const state=data.state||defaultState();
   return leaderboard.doc(uid).set({
     nickname:data.nickname,
+    guildName:text(data.activeGuildName,40)||null,
+    titleName:text(state.equippedTitle||state.wbTitle,80)||null,
     score:score(state),
     stage:safeInt(state.stage,1,1),
     progress:safeInt(state.progress,0,0,100),
@@ -90,7 +93,7 @@ async function syncWorldBossVisibility(uid, accountData) {
   const ref=adminDb.collection('world_bosses').doc(`global_week_${currentBossWeek()}`).collection('contributions').doc(uid);
   const snap=await ref.get();if(!snap.exists)return;
   const visible=Boolean(account.leaderboardOptIn);
-  await ref.update({publicLeaderboard:visible,publicNickname:visible?account.nickname:null,updatedAt:FieldValue.serverTimestamp()});
+  await ref.update({publicLeaderboard:visible,publicNickname:visible?account.nickname:null,publicGuildName:visible?(text(account.activeGuildName,40)||null):null,publicTitleName:visible?(text(account.state?.equippedTitle||account.state?.wbTitle,80)||null):null,updatedAt:FieldValue.serverTimestamp()});
 }async function save(uid, body) {
   const requested=cleanState(body.state); const optIn=typeof body.leaderboardOptIn==='boolean'?body.leaderboardOptIn:null; const ref=accounts.doc(uid);
   const data=await adminDb.runTransaction(async tx=>{const snap=await tx.get(ref);if(!snap.exists)throw apiError(404,'PROFILE_NOT_FOUND','먼저 용사를 만들어 주세요.');const current=snap.data();const state=guardProgress(current.state||defaultState(),requested,current.updatedAt);const update={state,updatedAt:FieldValue.serverTimestamp()};if(optIn!==null)update.leaderboardOptIn=optIn;tx.update(ref,update);return {...current,...update,state};});
@@ -105,7 +108,8 @@ async function rename(uid, body) {
 async function joinClass(uid, body) {
   const code=text(body.code,32).toUpperCase().replace(/[^A-Z0-9]/g,'');if(code.length<6)throw apiError(400,'INVALID_INVITE','학급 코드를 확인해 주세요.');
   const inviteRef=invites.doc(hash(code));const accountRef=accounts.doc(uid);
-  return adminDb.runTransaction(async tx=>{const [inviteSnap,accountSnap]=await Promise.all([tx.get(inviteRef),tx.get(accountRef)]);if(!inviteSnap.exists||inviteSnap.data().type!=='student'||isExpired(inviteSnap.data().expiresAt))throw apiError(404,'INVITE_NOT_FOUND','학급 코드가 올바르지 않거나 만료됐어요.');if(!accountSnap.exists)throw apiError(404,'PROFILE_NOT_FOUND','먼저 용사를 만들어 주세요.');const invite=inviteSnap.data(),account=accountSnap.data();tx.set(adminDb.collection('classes').doc(invite.classId).collection('members').doc(uid),{nickname:account.nickname,learningGrade:account.learningGrade,joinedAt:FieldValue.serverTimestamp()},{merge:true});tx.update(accountRef,{classIds:FieldValue.arrayUnion(invite.classId),activeClassId:invite.classId,updatedAt:FieldValue.serverTimestamp()});return {classId:invite.classId,classLabel:invite.classLabel||'Class'};});
+  const membership=await adminDb.runTransaction(async tx=>{const inviteSnap=await tx.get(inviteRef);if(!inviteSnap.exists||inviteSnap.data().type!=='student'||isExpired(inviteSnap.data().expiresAt))throw apiError(404,'INVITE_NOT_FOUND','학급 코드를 확인해 주세요.');const invite=inviteSnap.data(),classRef=adminDb.collection('classes').doc(invite.classId);const [accountSnap,classSnap]=await Promise.all([tx.get(accountRef),tx.get(classRef)]);if(!accountSnap.exists)throw apiError(404,'PROFILE_NOT_FOUND','먼저 용사를 만들어 주세요.');if(!classSnap.exists)throw apiError(404,'GUILD_NOT_FOUND','길드를 찾지 못했어요.');const account=accountSnap.data(),classLabel=text(classSnap.data().guildName||classSnap.data().classLabel||invite.classLabel,40)||'길드';tx.set(classRef.collection('members').doc(uid),{nickname:account.nickname,learningGrade:account.learningGrade,joinedAt:FieldValue.serverTimestamp()},{merge:true});tx.update(accountRef,{classIds:FieldValue.arrayUnion(invite.classId),activeClassId:invite.classId,activeGuildName:classLabel,updatedAt:FieldValue.serverTimestamp()});return {classId:invite.classId,classLabel};});
+  const updated=await accountRef.get();if(updated.exists)await Promise.all([publish(uid,updated.data()),syncWorldBossVisibility(uid,updated.data())]);return membership;
 }
 function legacyIds(c) { const school=text(c.schoolName,120), grade=safeInt(c.grade,0,3,6), room=safeInt(c.classNum,0,1,99), number=safeInt(c.studentNum,0,1,99), name=text(c.name,30);if(!school||!grade||!room||!number||!name)throw apiError(400,'INVALID_LEGACY_INFO','기존 계정 정보를 모두 입력해 주세요.');const suffix=`${grade}_${room}_${number}_${name}`;return [`${school}_${suffix}`,`Unknown_${suffix}`]; }
 const KST_OFFSET_MS=9*60*60*1000, WEEK_MS=7*24*60*60*1000, EPOCH_MONDAY_MS=Date.UTC(2024,6,1);

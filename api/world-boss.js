@@ -43,7 +43,7 @@ async function status(uid) {
   const totalDamage = Math.min(maxHp, legacyTotal(boss) + safeInt(boss.secureDamageTotal, 0, 0));
   const contribution = contributionSnap.data() || {};
   const publicDocs = topSnap.docs.filter((doc) => doc.data().publicLeaderboard).slice(0, 100);
-  const top = publicDocs.map((doc, index) => ({ rank: index + 1, nickname: doc.data().publicNickname, damage: safeInt(doc.data().damage, 0, 0) }));
+  const top = publicDocs.map((doc, index) => ({ rank: index + 1, nickname: doc.data().publicNickname, guildName: typeof doc.data().publicGuildName === 'string' ? doc.data().publicGuildName : null, titleName: typeof doc.data().publicTitleName === 'string' ? doc.data().publicTitleName : null, damage: safeInt(doc.data().damage, 0, 0) }));
   const myRankIndex = publicDocs.findIndex((doc) => doc.id === uid);
   return {
     week,
@@ -110,6 +110,8 @@ async function contribute(uid, body) {
       lastPlayedKstDay: day,
       publicLeaderboard: Boolean(account.leaderboardOptIn),
       publicNickname: account.leaderboardOptIn ? account.nickname : null,
+      publicGuildName: account.leaderboardOptIn ? (typeof account.activeGuildName === 'string' ? account.activeGuildName : null) : null,
+      publicTitleName: account.leaderboardOptIn ? (typeof account.state?.equippedTitle === 'string' ? account.state.equippedTitle : (typeof account.state?.wbTitle === 'string' ? account.state.wbTitle : null)) : null,
       updatedAt: FieldValue.serverTimestamp()
     }, { merge: true });
     tx.update(sessionRef(uid, week), { submitted: true, submittedAt: FieldValue.serverTimestamp() });

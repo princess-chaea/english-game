@@ -48,7 +48,7 @@ const BLOCKED = [
 ].map((v) => v.replace(/\\u([0-9a-f]{4})/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16))));
 export function normalizeNickname(value) {
   const nickname = text(value, 24).replace(/[\u200B-\u200D\uFEFF]/g, '');
-  if (!/^[\p{L}\p{N}_-]{2,12}$/u.test(nickname)) throw apiError(400, 'INVALID_NICKNAME', 'Nickname must be 2-12 letters, numbers, _ or -, without spaces.');
+  if (!/^[가-힣0-9]{2,12}$/.test(nickname)) throw apiError(400, 'INVALID_NICKNAME', '별명은 한글과 숫자만 사용해 2~12자로 입력해 주세요.');
   const lower = nickname.toLocaleLowerCase('en-US');
   if (BLOCKED.some((word) => lower.includes(word))) throw apiError(400, 'BLOCKED_NICKNAME', 'Please choose a safe nickname.');
   if (/\d{3}[-_]?\d{3,4}[-_]?\d{4}/.test(nickname) || /https?|www|@/.test(lower)) throw apiError(400, 'PERSONAL_INFO_NICKNAME', 'Personal contact details are not allowed in a nickname.');

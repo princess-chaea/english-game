@@ -3109,13 +3109,21 @@
                     const oldRank = (SKILL_GRADES[existing.grade] || SKILL_GRADES.normal).rank;
                     const newRank = (SKILL_GRADES[rolledGrade] || SKILL_GRADES.normal).rank;
 
-                    // 상위 등급은 6성 MAX 유물에도 반드시 반영합니다.
-                    // 기존 별을 지키므로 어렵게 만든 6성 유물이 낮은 등급에 고정되지 않습니다.
-                    if (newRank > oldRank && (existing.stars || 0) >= 6) {
+                    if (newRank > oldRank) {
+                        // 상위 등급 획득: 기존 경험치와 이번 획득 경험치를 모두 보존한 뒤
+                        // 새 등급의 요구 경험치로 별과 잔여 경험치를 다시 계산합니다.
+                        if (typeof existing.exp === 'undefined') existing.exp = 0;
+                        const oldReqExp = expMap[existing.grade] || 1;
+                        const totalExp = (existing.stars || 0) * oldReqExp + (existing.exp || 0) + rolledExp;
                         existing.grade = rolledGrade;
-                        existing.stars = 6;
-                        existing.exp = 0;
-                        drawnResults.push({ def: pickedRelicDef, grade: existing.grade, stars: existing.stars, currentExp: 0, reqExp: expMap[existing.grade], isGradePromotion: true });
+                        const currentReqExp = expMap[existing.grade] || 1;
+                        existing.stars = Math.floor(totalExp / currentReqExp);
+                        existing.exp = totalExp % currentReqExp;
+                        if (existing.stars >= 6) {
+                            existing.stars = 6;
+                            existing.exp = 0;
+                        }
+                        drawnResults.push({ def: pickedRelicDef, grade: existing.grade, stars: existing.stars, currentExp: existing.exp, reqExp: currentReqExp, isGradePromotion: true });
                     } else if ((existing.stars || 0) >= 6) {
                         const rewardMap = { "normal": 1, "rare": 2, "hero": 3, "legendary": 4, "mythic": 5 };
                         const reward = rewardMap[rolledGrade] || 1;
@@ -3124,24 +3132,16 @@
                         drawnResults.push({ def: pickedRelicDef, grade: rolledGrade, stars: 6, isEssenceRefund: true, refundAmount: reward });
                     } else {
                         if (typeof existing.exp === 'undefined') existing.exp = 0;
-
                         const oldReqExp = expMap[existing.grade] || 1;
                         const totalExp = (existing.stars || 0) * oldReqExp + (existing.exp || 0) + rolledExp;
-
-                        if (newRank > oldRank) {
-                            existing.grade = rolledGrade;
-                        }
-
                         const currentReqExp = expMap[existing.grade] || 1;
                         existing.stars = Math.floor(totalExp / currentReqExp);
                         existing.exp = totalExp % currentReqExp;
-
                         if (existing.stars >= 6) {
                             existing.stars = 6;
                             existing.exp = 0;
                         }
-
-                        drawnResults.push({ def: pickedRelicDef, grade: existing.grade, stars: existing.stars, currentExp: existing.exp, reqExp: currentReqExp, isGradePromotion: newRank > oldRank });
+                        drawnResults.push({ def: pickedRelicDef, grade: existing.grade, stars: existing.stars, currentExp: existing.exp, reqExp: currentReqExp });
                     }
                 } else {
                     existing = {

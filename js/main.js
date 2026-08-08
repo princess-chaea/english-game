@@ -3391,8 +3391,10 @@
                 const key = item.word.trim().toLowerCase();
                 if (!source.some(entry => entry.word.toLowerCase() === key)) source.push({ word: item.word.trim(), meaning: item.meaning || "" });
             };
-            (preferredPool || gameState.wordsPool || []).forEach(add);
-            Object.values(MOCK_WORDS).forEach(list => list.forEach(add));
+            const currentPool = Array.isArray(preferredPool) && preferredPool.length
+                ? preferredPool
+                : (Array.isArray(gameState.wordsPool) && gameState.wordsPool.length ? gameState.wordsPool : (MOCK_WORDS[String(gameState.grade)] || MOCK_WORDS["3"]));
+            currentPool.forEach(add);
             return source;
         }
 
@@ -3412,15 +3414,10 @@
         }
 
         function pickSkillReward(preferredPool = null) {
-            const deck = ensureActiveSkillDeck(preferredPool);
-            if (!deck.length) return { word: "magic", meaning: "magic" };
-            const owned = (gameState.skillsInventory || []).filter(skill => deck.some(item => item.word.toLowerCase() === String(skill.word || "").toLowerCase()));
-            // A 45% targeted repeat makes stars reachable even after a large word-bank expansion.
-            if (owned.length && Math.random() < 0.45) {
-                const target = owned[Math.floor(Math.random() * owned.length)];
-                return deck.find(item => item.word.toLowerCase() === target.word.toLowerCase()) || target;
-            }
-            return deck[Math.floor(Math.random() * deck.length)];
+            const source = getSkillSourcePool(preferredPool);
+            if (!source.length) return { word: "magic", meaning: "magic" };
+            // 학년(또는 교사가 배정한) 단어장 전체에서 매번 같은 확률로 무작위 추첨합니다.
+            return source[Math.floor(Math.random() * source.length)];
         }
 
         function grantUniversalAwakeningEssence(amount = 1) {
@@ -3593,25 +3590,14 @@
                     clearInterval(interval);
 
                     setTimeout(() => {
-                        let fullPool = [];
-                        if (gameState.wordsPool && gameState.wordsPool.length > 0) {
-                            fullPool = [...gameState.wordsPool];
-                        }
-                        for (let gKey in MOCK_WORDS) {
-                            MOCK_WORDS[gKey].forEach(w => {
-                                if (!fullPool.some(item => item.word.toLowerCase() === w.word.toLowerCase())) {
-                                    fullPool.push(w);
-                                }
-                            });
-                        }
-
+                        const fullPool = getSkillSourcePool();
                         modal.classList.remove("flex");
                         modal.classList.add("hidden");
 
                     if (drawCount === 100 || drawCount === 10) {
                         let acquiredList = [];
                         let modalGridHtml = "";
-
+                        let newCards = 0, duplicates = 0;
                         for (let i = 0; i < drawCount; i++) {
                             const picked = pickSkillReward(fullPool);
                             const roll = Math.random();
@@ -3625,7 +3611,9 @@
                                 rolledGrade = "rare";
                             }
 
+                            const alreadyOwned = (gameState.skillsInventory || []).some(skill => String(skill.word || "").toLowerCase() === String(picked.word || "").toLowerCase());
                             const resultSkill = addOrLevelUpSkill(picked.word, picked.meaning, rolledGrade, true);
+                            if (alreadyOwned) duplicates++; else newCards++;
                             const displaySkill = { ...resultSkill, grade: rolledGrade };
                             acquiredList.push(displaySkill);
 
@@ -3654,7 +3642,7 @@
                         }
 
                         if (drawCount === 100) {
-                            showSkillDraw100ResultModal(acquiredList);
+                            showSkillDraw100ResultModal(acquiredList,{newCards,duplicates,inventoryCount:(gameState.skillsInventory||[]).length,packSize:fullPool.length});
                         } else {
                             document.getElementById("gacha10xGrid").innerHTML = modalGridHtml;
                             document.getElementById("gacha10xResultModal").classList.remove("hidden");
@@ -3681,7 +3669,7 @@
             }, 250);
         }
 
-        function showSkillDraw100ResultModal(acquiredList) {
+        function showSkillDraw100ResultModal(acquiredList, drawSummary = {}) {
             const counts = { mythic: 0, legendary: 0, hero: 0, rare: 0, normal: 0 };
             acquiredList.forEach(s => {
                 if (counts[s.grade] !== undefined) counts[s.grade]++;
@@ -3709,11 +3697,14 @@
             const summaryEl = document.getElementById("gacha100SummaryText");
             if (summaryEl) {
                 summaryEl.innerHTML = `
+                    <span class="text-emerald-300 font-black">새 스킬 ${drawSummary.newCards || 0}장</span> |
+                    <span class="text-yellow-300 font-bold">중복 강화 ${drawSummary.duplicates || 0}회</span><br>
                     <span class="text-rose-400 font-black">신화 ${counts.mythic}개</span> | 
                     <span class="text-amber-300 font-bold">전설 ${counts.legendary}개</span> | 
                     <span class="text-purple-300 font-bold">영웅 ${counts.hero}개</span> | 
                     <span class="text-sky-300 font-bold">희귀 ${counts.rare}개</span> | 
-                    <span class="text-gray-400">일반 ${counts.normal}개</span>
+                    <span class="text-gray-400">일반 ${counts.normal}개</span><br>
+                    <span class="text-[10px] text-gray-500">모든 결과는 비기 연구소에 보관됩니다. 이 창은 상위 8장만 미리 보여 줍니다. (${drawSummary.inventoryCount || 0}/${drawSummary.packSize || 0}종 수집)</span>
                 `;
             }
             const gridEl = document.getElementById("gacha100TopGrid");
@@ -3738,18 +3729,7 @@
             gameState.masteryPoints -= cost;
             refreshStateVisuals();
 
-            let fullPool = [];
-            if (gameState.wordsPool && gameState.wordsPool.length > 0) {
-                fullPool = [...gameState.wordsPool];
-            }
-            for (let gKey in MOCK_WORDS) {
-                MOCK_WORDS[gKey].forEach(w => {
-                    if (!fullPool.some(item => item.word.toLowerCase() === w.word.toLowerCase())) {
-                        fullPool.push(w);
-                    }
-                });
-            }
-
+            const fullPool = getSkillSourcePool();
             let acquiredList = [];
             let modalGridHtml = "";
 

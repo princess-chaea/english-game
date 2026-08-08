@@ -59,6 +59,8 @@
 
             // Upgraded Advanced Skill Customization System
             skillsInventory: [], // Unlocked skills: { id, word, meaning, grade, cooldownRemaining, maxCooldown }
+            activeSkillDeck: [], // Small repeatable deck; the complete word bank stays in learning quizzes
+            skillEssence: 0, // Universal awakening material from a new skill card
             equippedSkills: [], // Array storing up to 4 skill ids currently placed in combat slots
 
             // ⚡ 무구 잠재력 잠금 슬롯 상태 (새로고침 후에도 유지)
@@ -1068,37 +1070,63 @@
             });
         }
 
+        let wordPoolLoadVersion = 0;
+
+        async function loadAssignedWordPack() {
+            const wordPackId = gameState.assignedWordPackId;
+            if (!wordPackId) return null;
+            const response = await fetch('data/word-packs.json', { cache: 'no-store' });
+            if (!response.ok) throw new Error(`Word pack file returned ${response.status}`);
+            const catalog = await response.json();
+            const pack = Array.isArray(catalog.packs) ? catalog.packs.find((item) => item.id === wordPackId) : null;
+            if (!pack || !Array.isArray(pack.words) || pack.words.length === 0) throw new Error('Assigned word pack is unavailable.');
+            return pack.words;
+        }
+
         async function fetchWordsFromSpreadsheet() {
+            const loadVersion = ++wordPoolLoadVersion;
+            const gradeStr = String(gameState.grade);
+            const finish = (words, source) => {
+                if (loadVersion !== wordPoolLoadVersion) return false;
+                gameState.wordsPool = words;
+                gameState.currentQuizIndex = gameState.progress % (gameState.wordsPool.length || 1);
+                console.log(`[WordsPool] source: ${source}, grade: ${gameState.grade}, words: ${gameState.wordsPool.length}`);
+                initGameEngine();
+                return true;
+            };
+
+            if (gameState.assignedWordPackId) {
+                try {
+                    const assignedWords = await loadAssignedWordPack();
+                    if (assignedWords && finish(assignedWords, gameState.assignedWordPackId)) return;
+                } catch (err) {
+                    console.warn('Assigned word pack load failed; using the grade list.', err);
+                }
+            }
+
             try {
                 if (!window._fbReady) {
-                    gameState.wordsPool = MOCK_WORDS[String(gameState.grade)] || MOCK_WORDS["4"];
-                    gameState.currentQuizIndex = gameState.progress % (gameState.wordsPool.length || 1);
-                    initGameEngine();
+                    finish(MOCK_WORDS[gradeStr] || MOCK_WORDS['4'], 'local fallback');
                     return;
                 }
-                const wordsDoc = await window._fbGetDoc(window._fbDoc(window._fbDb, "game_data", "words"));
+                const wordsDoc = await window._fbGetDoc(window._fbDoc(window._fbDb, 'game_data', 'words'));
                 if (wordsDoc.exists()) {
                     const data = wordsDoc.data();
-                    const gradeStr = String(gameState.grade);
-                    if (data["grade_" + gradeStr] && data["grade_" + gradeStr].length > 0) {
-                        gameState.wordsPool = data["grade_" + gradeStr];
+                    if (Array.isArray(data['grade_' + gradeStr]) && data['grade_' + gradeStr].length > 0) {
+                        finish(data['grade_' + gradeStr], `grade-${gradeStr}-current`);
                     } else {
-                        gameState.wordsPool = MOCK_WORDS[gradeStr] || MOCK_WORDS["4"];
-                        setTimeout(() => showToast(`⚠️ Firebase에 ${gradeStr}학년 단어(grade_${gradeStr})가 없어 임시 단어 10개만 반복됩니다.`), 2000);
+                        finish(MOCK_WORDS[gradeStr] || MOCK_WORDS['4'], 'local fallback');
+                        setTimeout(() => showToast(`No grade ${gradeStr} word list was found; using the temporary list.`), 2000);
                     }
                 } else {
-                    gameState.wordsPool = MOCK_WORDS[String(gameState.grade)] || MOCK_WORDS["4"];
-                    setTimeout(() => showToast(`⚠️ Firebase에 단어 문서(game_data/words)가 존재하지 않습니다.`), 2000);
+                    finish(MOCK_WORDS[gradeStr] || MOCK_WORDS['4'], 'local fallback');
+                    setTimeout(() => showToast('The shared word list is unavailable; using the temporary list.'), 2000);
                 }
             } catch (err) {
-                console.error("Firebase words fetch error:", err);
-                gameState.wordsPool = MOCK_WORDS[String(gameState.grade)] || MOCK_WORDS["4"];
-                setTimeout(() => showToast(`⚠️ 단어장 로드 에러: 권한 부족 또는 통신 실패 (${err.message})`), 2000);
+                console.error('Firebase words fetch error:', err);
+                finish(MOCK_WORDS[gradeStr] || MOCK_WORDS['4'], 'local fallback');
+                setTimeout(() => showToast('Word list loading failed; using the temporary list.'), 2000);
             }
-            
-            gameState.currentQuizIndex = gameState.progress % (gameState.wordsPool.length || 1);
-            console.log(`[WordsPool] 학년: ${gameState.grade}, 단어 수: ${gameState.wordsPool.length}, 적재: ${gameState.wordsPool.slice(0,3).map(w=>w.word).join(', ')}...`);
-            initGameEngine();
         }
 
         function drawHeroAvatar() {
@@ -1396,7 +1424,7 @@
                 }
                 const schoolPrefix = shortSchoolName ? `${shortSchoolName} ` : "";
             const _nameEl = document.getElementById("displayStudentName");
-            if (_nameEl) _nameEl.innerText = `${schoolPrefix}${gameState.grade}학년 ${gameState.classNum}반 ${gameState.studentNum}번 - [${gameState.name}]`;
+            if (_nameEl) _nameEl.innerText = gameState.isAnonymousStudent ? `[${gameState.name}]` : `${schoolPrefix}${gameState.grade}?? ${gameState.classNum}? ${gameState.studentNum}? - [${gameState.name}]`;
             const _badgeEl = document.getElementById("gradeLevelBadge");
             if (_badgeEl) _badgeEl.innerText = `교과 영단어 ${gameState.grade}학년`;
 
@@ -3352,6 +3380,59 @@
             return expMap[grade] || 1;
         }
 
+        function getSkillSourcePool(preferredPool = null) {
+            const source = [];
+            const add = (item) => {
+                if (!item || typeof item.word !== "string" || !item.word.trim()) return;
+                const key = item.word.trim().toLowerCase();
+                if (!source.some(entry => entry.word.toLowerCase() === key)) source.push({ word: item.word.trim(), meaning: item.meaning || "" });
+            };
+            (preferredPool || gameState.wordsPool || []).forEach(add);
+            Object.values(MOCK_WORDS).forEach(list => list.forEach(add));
+            return source;
+        }
+
+        function ensureActiveSkillDeck(preferredPool = null) {
+            const source = getSkillSourcePool(preferredPool);
+            if (!Array.isArray(gameState.activeSkillDeck)) gameState.activeSkillDeck = [];
+            const sourceKeys = new Set(source.map(item => item.word.toLowerCase()));
+            gameState.activeSkillDeck = gameState.activeSkillDeck.filter(item => item && sourceKeys.has(String(item.word || "").toLowerCase()));
+            const deckSize = Math.min(24, source.length);
+            const inDeck = new Set(gameState.activeSkillDeck.map(item => item.word.toLowerCase()));
+            const candidates = source.filter(item => !inDeck.has(item.word.toLowerCase()));
+            while (gameState.activeSkillDeck.length < deckSize && candidates.length) {
+                const index = Math.floor(Math.random() * candidates.length);
+                gameState.activeSkillDeck.push(candidates.splice(index, 1)[0]);
+            }
+            return gameState.activeSkillDeck;
+        }
+
+        function pickSkillReward(preferredPool = null) {
+            const deck = ensureActiveSkillDeck(preferredPool);
+            if (!deck.length) return { word: "magic", meaning: "magic" };
+            const owned = (gameState.skillsInventory || []).filter(skill => deck.some(item => item.word.toLowerCase() === String(skill.word || "").toLowerCase()));
+            // A 45% targeted repeat makes stars reachable even after a large word-bank expansion.
+            if (owned.length && Math.random() < 0.45) {
+                const target = owned[Math.floor(Math.random() * owned.length)];
+                return deck.find(item => item.word.toLowerCase() === target.word.toLowerCase()) || target;
+            }
+            return deck[Math.floor(Math.random() * deck.length)];
+        }
+
+        function grantUniversalAwakeningEssence(amount = 1) {
+            gameState.skillEssence = Math.max(0, (gameState.skillEssence || 0) + amount);
+            const targetId = (gameState.equippedSkills || [])[0];
+            const target = targetId && (gameState.skillsInventory || []).find(skill => skill.id === targetId);
+            if (!target || (target.stars || 0) >= 6 || gameState.skillEssence <= 0) return;
+            target.maxExp = getRequiredExpForStar(target.grade);
+            target.exp = (target.exp || 0) + 1;
+            gameState.skillEssence -= 1;
+            if (target.exp >= target.maxExp) {
+                target.stars = Math.min(6, (target.stars || 0) + 1);
+                target.exp = target.stars >= 6 ? 0 : target.exp - target.maxExp;
+            }
+        }
+
         function addOrLevelUpSkill(word, meaning, rolledGrade, suppressModal = false, rolledTier = null) {
             if (!gameState.skillsInventory) gameState.skillsInventory = [];
 
@@ -3440,6 +3521,7 @@
                 };
 
                 gameState.skillsInventory.push(newSkill);
+                grantUniversalAwakeningEssence(1);
                 if (!suppressModal) showSkillModal(newSkill, gradeInfo);
 
                 buildSkillTabUI();
@@ -3527,7 +3609,7 @@
                         let modalGridHtml = "";
 
                         for (let i = 0; i < drawCount; i++) {
-                            const picked = fullPool[Math.floor(Math.random() * fullPool.length)];
+                            const picked = pickSkillReward(fullPool);
                             const roll = Math.random();
                             let rolledGrade = "normal";
                             if (roll < 0.0005) rolledGrade = "mythic";        // 0.05%
@@ -3576,7 +3658,7 @@
                         }
                         playSoundEffect('levelup');
                     } else {
-                        const picked = fullPool[Math.floor(Math.random() * fullPool.length)];
+                        const picked = pickSkillReward(fullPool);
                         if (typeof isTutorialSkill !== 'undefined' && isTutorialSkill) {
                             addOrLevelUpSkill(picked.word, picked.meaning, "hero", false);
                         } else {
@@ -3668,7 +3750,7 @@
             let modalGridHtml = "";
 
             for (let i = 0; i < 10; i++) {
-                const picked = fullPool[Math.floor(Math.random() * fullPool.length)];
+                const picked = pickSkillReward(fullPool);
                 const roll = Math.random();
                 let rolledGrade = "normal";
                 if (roll < 0.0005) rolledGrade = "mythic";        // 0.05%
@@ -3980,7 +4062,7 @@
                 selectedCombineSkillIds = [];
 
                 let pool = gameState.wordsPool && gameState.wordsPool.length > 0 ? gameState.wordsPool : MOCK_WORDS["4"];
-                const randomWordObj = pool[Math.floor(Math.random() * pool.length)];
+                const randomWordObj = pickSkillReward(pool);
 
                 addOrLevelUpSkill(randomWordObj.word, randomWordObj.meaning, resultGrade);
                 const resGradeInfo = SKILL_GRADES[resultGrade];
@@ -4049,6 +4131,11 @@
         }
 
         function buildSkillTabUI() {
+            const deckInfo = document.getElementById("skillDeckInfo");
+            if (deckInfo) {
+                const deck = ensureActiveSkillDeck();
+                deckInfo.textContent = `Active skill deck: ${deck.length} words | Universal essence: ${gameState.skillEssence || 0} | New cards add 1 essence to the first equipped skill.`;
+            }
             const eqGrid = document.getElementById("equippedSkillsGrid");
             let eqHtml = "";
 
@@ -4251,7 +4338,7 @@
             });
         }
 
-        function spawnDamageFloatingText(x, y, text, isSkill = false) {
+        function spawnSkillDamageFloatingText(x, y, text, isSkill = false) {
             const arena = document.getElementById("battleArena");
             if (!arena) return;
 
@@ -5354,14 +5441,17 @@
         window.changeHeroName = function() {
             const currentUid = window._getTempUid();
             if (!currentUid) return;
-            if ((gameState.masteryPoints || 0) < 500) {
+            const isFirstNicknameChange = !gameState.freeNicknameChangeUsed;
+            const nicknameChangeCost = isFirstNicknameChange ? 0 : 500;
+            if ((gameState.masteryPoints || 0) < nicknameChangeCost) {
                 showAlert("단어 정복 포인트(FP)가 부족합니다.<br>닉네임 변경에는 <b>500 FP</b>가 필요합니다.<br><span class='text-yellow-400 font-bold'>현재 FP: " + (gameState.masteryPoints || 0) + "</span>", "💰", "FP 부족");
                 return;
             }
             showInputModal({
                 icon: "✏️",
                 title: "영웅 닉네임 변경",
-                message: "새로운 <b>영웅 닉네임</b>을 입력하세요.<br><span class='text-red-400 text-[10px]'>⚠️ 기존 이름으로 재접속 불가</span><br><span class='text-yellow-400 text-[10px]'>비용: 500 FP 소모</span>",
+                // 자동 생성된 첫 별명은 학생이 원하는 닉네임으로 무료 교체할 수 있습니다.
+                message: "새로운 <b>영웅 닉네임</b>을 입력하세요.<br><span class='text-red-400 text-[10px]'>⚠️ 기존 이름으로 재접속 불가</span><br><span class='text-yellow-400 text-[10px]'>" + (isFirstNicknameChange ? "첫 변경 무료" : "비용: 500 FP 소모") + "</span>",
                 inputType: "text",
                 inputPlaceholder: "새 닉네임 입력",
                 confirmLabel: "✏️ 변경하기",
@@ -5371,7 +5461,7 @@
                     if (newName.trim() === tempCredentials.name) { showAlert("현재 이름과 동일합니다.", "⚠️", "변경 불필요"); return; }
                     if (newName.trim() === "방문자" || newName.includes(" ")) { showAlert("사용할 수 없는 닉네임입니다.<br>(공백 포함 불가)", "⚠️", "사용 불가"); return; }
                     showConfirm(
-                        "[" + newName.trim() + "] 으로 변경하시겠습니까?<br><span class='text-red-400'>500 FP 소모 후 게임이 재시작됩니다.</span>",
+                        "[" + newName.trim() + "] 으로 변경하시겠습니까?<br><span class='text-red-400'>" + (isFirstNicknameChange ? "첫 닉네임 변경은 무료입니다." : "500 FP 소모 후 게임이 재시작됩니다.") + "</span>",
                         async () => {
                             try {
                                 const oldUid = currentUid;
@@ -5383,7 +5473,9 @@
                                 const oldData = oldDocSnap.data();
                                 oldData.name = newName.trim();
                                 oldData.uid = newUid;
-                                oldData.masteryPoints = Math.max(0, (oldData.masteryPoints || 0) - 500);
+                                oldData.masteryPoints = Math.max(0, (oldData.masteryPoints || 0) - nicknameChangeCost);
+                                oldData.freeNicknameChangeUsed = true;
+                                oldData.nicknameChangeCount = (oldData.nicknameChangeCount || 0) + 1;
                                 await window._fbSetDoc(window._fbDoc(window._fbDb, "users", newUid), oldData, { merge: true });
                                 await window._fbDeleteDoc(window._fbDoc(window._fbDb, "users", oldUid));
                                 sessionStorage.removeItem("vocahero_active_session");
@@ -5843,6 +5935,10 @@
         // HALL OF FAME RANKING SYSTEM (명예의 전장)
         // ==========================================
         function fetchHallOfFameUI() {
+            if (window._secureHallOfFame) {
+                window._secureHallOfFame();
+                return;
+            }
             const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
 
             // UI 로딩 상태
@@ -6447,6 +6543,12 @@
                 if (hpTextEl) hpTextEl.innerText = "🔄 실시간 레이드 상태 수신 중...";
             }
 
+            // Secure accounts receive aggregate-only boss data from the server.
+            if (window._secureWorldBossStatus) {
+                window._secureWorldBossStatus().catch((err) => console.error('World boss status error:', err));
+                return;
+            }
+
             // 서버에서 최신 데이터 가져오기 (백그라운드 업데이트)
             if (window._fbReady) {
                 const bossDocRef = window._fbDoc(window._fbDb, "world_bosses", `global_week_${getCurrentWeekNum()}`);
@@ -6574,6 +6676,49 @@
             }
         }
 
+        function applySecureWorldBossStatus(boss) {
+            if (!boss) return;
+            wbCurBossHp = Math.max(0, Number(boss.curHp) || 0);
+            wbMaxBossHp = Math.max(1, Number(boss.maxHp) || 1);
+            const myDamage = Math.max(0, Number(boss.myDamage) || 0);
+            const sharePct = Math.min(100, (myDamage / wbMaxBossHp) * 100).toFixed(2);
+            const pct = Math.max(0, Math.min(100, (wbCurBossHp / wbMaxBossHp) * 100));
+            const hpBar = document.getElementById("worldBossHpBar");
+            const hpText = document.getElementById("worldBossHpText");
+            const damage = document.getElementById("myWorldBossDmgDisplay");
+            const share = document.getElementById("myWorldBossShareDisplay");
+            const reward = document.getElementById("myWorldBossRewardDisplay");
+            if (hpBar) hpBar.style.width = `${pct}%`;
+            if (hpText) hpText.innerText = `${wbCurBossHp.toLocaleString()} / ${wbMaxBossHp.toLocaleString()} HP (${pct.toFixed(1)}%)`;
+            if (damage) damage.innerText = myDamage.toLocaleString();
+            if (share) share.innerText = `${sharePct}%`;
+            if (reward) {
+                const fp = Math.round(Number(sharePct) * 1000);
+                reward.innerHTML = `Defeat: <span style="color:white">+${fp.toLocaleString()} FP</span> | Otherwise: <span style="color:#9ca3af">+${Math.floor(fp / 2).toLocaleString()} FP</span>`;
+            }
+            const raidKey = `vocahero_wb_raid_date_${gameState.uid || gameState.name}`;
+            if (boss.canAttack) localStorage.removeItem(raidKey);
+            else localStorage.setItem(raidKey, boss.day);
+            localStorage.setItem(`vocahero_wb_cache_${gameState.uid || gameState.name}`, JSON.stringify({ curHp: wbCurBossHp, maxHp: wbMaxBossHp, myDamage, sharePct, canAttack: Boolean(boss.canAttack), cachedAt: Date.now() }));
+            const btn = document.getElementById("startWorldBossBtn");
+            const badge = document.getElementById("worldBossEntryBadge");
+            const defeated = wbCurBossHp <= 0;
+            if (btn && (!boss.canAttack || defeated)) {
+                btn.disabled = true;
+                btn.className = "w-full py-3.5 bg-[#262626] text-[#7e7e7e] font-bold text-sm tracking-wider uppercase rounded-none-forced cursor-not-allowed border border-red-950";
+                btn.innerText = defeated ? "World boss defeated" : "Today's raid is complete";
+            }
+            if (badge && (!boss.canAttack || defeated)) {
+                badge.innerText = defeated ? "Boss defeated" : "Today's raid complete";
+                badge.className = "text-[9px] bg-yellow-950 text-yellow-400 border border-yellow-600 px-3 py-1 rounded-none-forced font-bold uppercase tracking-wider";
+            }
+            const overlay = document.getElementById("wbDefeatedOverlay");
+            if (overlay) overlay.classList.toggle("hidden", !defeated);
+            if (overlay && defeated) overlay.classList.add("flex");
+            if (overlay && !defeated) overlay.classList.remove("flex");
+        }
+        window._applySecureWorldBossStatus = applySecureWorldBossStatus;
+
         // (Removed duplicate HP declarations)
 
         function updateWorldBossBattleHpBar() {
@@ -6658,7 +6803,11 @@
             }
         }
 
-        function startWorldBossRaid() {
+        async function startWorldBossRaid() {
+            if (window._secureWorldBossStart) {
+                const started = await window._secureWorldBossStart();
+                if (!started) return;
+            }
             isWorldBossRaidActive = true;
             wbTimerRemaining = 180.0;
             wbWrongCount = 0;
@@ -7747,6 +7896,21 @@
             // ✅ 서버에 피해량 전송 → 완료 후 즉시 클리어 보상 체크 (격파자 포함 통합 처리)
             const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
             
+            if (window._secureWorldBossContribute) {
+                window._secureWorldBossContribute(wbTotalDamageDealt).then((result) => {
+                    const currentWeek = getCurrentWeekNum();
+                    gameState.wbBestDamage = result.damage;
+                    gameState.wbBestDamageWeek = currentWeek;
+                    saveSessionToCloud(true);
+                    updateWorldBossUI();
+                    showToast(`Server recorded ${result.applied.toLocaleString()} world-boss damage.`);
+                }).catch((err) => {
+                    console.error("World boss submission failed:", err);
+                    showToast("World-boss damage was not recorded. Start a new raid.");
+                });
+                return;
+            }
+
             if (window._fbReady) {
                 const bossDocRef = window._fbDoc(window._fbDb, "world_bosses", `global_week_${getCurrentWeekNum()}`);
                 window._fbRunTransaction(window._fbDb, async (transaction) => {

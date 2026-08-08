@@ -1,0 +1,13 @@
+{
+  "name": "voca-hero",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "dependencies": { "firebase-admin": "^13.0.2" },
+  "scripts": {
+    "build:curriculum-review": "node scripts/build-curriculum-review.mjs",
+    "build:curriculum-packs": "node scripts/build-curriculum-elementary-packs.mjs",
+    "check:release": "node scripts/release-readiness.mjs",
+    "check": "node --check api/_firebase-admin.js && node --check api/_http.js && node --check api/student.js && node --check api/teacher.js && node --check api/leaderboard.js && node --check api/world-boss.js && node --check api/cleanup-legacy.js && node --check js/main.js && node --check js/secure-account.js"
+  }
+}

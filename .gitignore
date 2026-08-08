@@ -3,3 +3,10 @@ firebase-debug.log
 *.log
 dataconnect/
 web-app/
+.env
+.env.*
+!.env.example
+
+*-firebase-adminsdk-*.json
+*.pdf
+desktop.ini

@@ -5490,7 +5490,7 @@
         };
 
 
-        function showInputModal({ icon, title, message, inputType, inputPlaceholder, inputMaxLength, confirmLabel, cancelLabel, onConfirm }) {
+        function showInputModal({ icon, title, message, inputType, inputPlaceholder, inputMaxLength, confirmLabel, cancelLabel, confirmFirst = false, onConfirm }) {
             const existingOverlay = document.getElementById('inputModalOverlay');
             if (existingOverlay) existingOverlay.remove();
 
@@ -5514,6 +5514,7 @@
                 </div>
             `;
             document.body.appendChild(overlay);
+            if (confirmFirst) { const cancel = document.getElementById('inputModalCancel'), confirm = document.getElementById('inputModalConfirm'); if (cancel && confirm) cancel.parentElement.insertBefore(confirm, cancel); }
             setTimeout(() => { const el = document.getElementById('inputModalValue'); if (el) el.focus(); }, 100);
 
             document.getElementById('inputModalCancel').onclick = () => overlay.remove();

@@ -85,16 +85,22 @@ async function create(uid, body) {
   const data={schemaVersion:2,role:'student',nickname:normalizeNickname(body.nickname),learningGrade:safeInt(body.learningGrade,4,3,6),state:defaultState(),freeNicknameChangeUsed:false,renameCount:0,leaderboardOptIn:Boolean(body.leaderboardOptIn),consentVersion:'student-v1',consentAt:FieldValue.serverTimestamp(),classIds:[],createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()};
   await ref.create(data); await publish(uid,data); return publicAccount(data);
 }
-async function save(uid, body) {
+async function syncWorldBossVisibility(uid, accountData) {
+  const account=accountData||((await accounts.doc(uid).get()).data()||null);if(!account)return;
+  const ref=adminDb.collection('world_bosses').doc(`global_week_${currentBossWeek()}`).collection('contributions').doc(uid);
+  const snap=await ref.get();if(!snap.exists)return;
+  const visible=Boolean(account.leaderboardOptIn);
+  await ref.update({publicLeaderboard:visible,publicNickname:visible?account.nickname:null,updatedAt:FieldValue.serverTimestamp()});
+}async function save(uid, body) {
   const requested=cleanState(body.state); const optIn=typeof body.leaderboardOptIn==='boolean'?body.leaderboardOptIn:null; const ref=accounts.doc(uid);
   const data=await adminDb.runTransaction(async tx=>{const snap=await tx.get(ref);if(!snap.exists)throw apiError(404,'PROFILE_NOT_FOUND','먼저 용사를 만들어 주세요.');const current=snap.data();const state=guardProgress(current.state||defaultState(),requested,current.updatedAt);const update={state,updatedAt:FieldValue.serverTimestamp()};if(optIn!==null)update.leaderboardOptIn=optIn;tx.update(ref,update);return {...current,...update,state};});
-  await publish(uid,data);return publicAccount(data);
+  await Promise.all([publish(uid,data),syncWorldBossVisibility(uid,data)]);return publicAccount(data);
 }
 async function rename(uid, body) {
   const nickname=normalizeNickname(body.nickname);const ref=accounts.doc(uid);
   const data=await adminDb.runTransaction(async tx=>{const snap=await tx.get(ref);if(!snap.exists)throw apiError(404,'PROFILE_NOT_FOUND','먼저 용사를 만들어 주세요.');const current=snap.data();const first=!current.freeNicknameChangeUsed;const cost=first?0:500;const state={...defaultState(),...(current.state||{})};if(safeInt(state.masteryPoints,0,0)<cost)throw apiError(409,'NOT_ENOUGH_FP',`You need ${cost} FP to rename.`);state.masteryPoints-=cost;const update={nickname,state,freeNicknameChangeUsed:true,renameCount:safeInt(current.renameCount,0,0)+1,updatedAt:FieldValue.serverTimestamp()};tx.update(ref,update);return {...current,...update};});
   await Promise.all((data.classIds||[]).slice(0,100).map(id=>adminDb.collection('classes').doc(id).collection('members').doc(uid).set({nickname:data.nickname},{merge:true})));
-  await publish(uid,data);return {account:publicAccount(data),cost:data.renameCount===1?0:500};
+  await Promise.all([publish(uid,data),syncWorldBossVisibility(uid,data)]);return {account:publicAccount(data),cost:data.renameCount===1?0:500};
 }
 async function joinClass(uid, body) {
   const code=text(body.code,32).toUpperCase().replace(/[^A-Z0-9]/g,'');if(code.length<6)throw apiError(400,'INVALID_INVITE','학급 코드를 확인해 주세요.');

@@ -1,12 +1,10 @@
 // VOCA HERO! Service Worker - Edge Request & Cache Optimization
-const CACHE_NAME = 'vocahero-v24';
+const CACHE_NAME = 'vocahero-v25';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/media/logo_v2.webp',
-  '/js/config.js',
-  '/js/main.js'
+  '/media/logo_v2.webp'
 ];
 
 // Install: pre-cache static assets
@@ -64,7 +62,18 @@ self.addEventListener('fetch', event => {
       return;
     }
 
-    // JS, CSS, WebP, Font 등 정적 자산은 캐시 우선 (Cache-First) 후 백그라운드 갱신
+    // 게임 로직은 항상 네트워크 우선으로 가져와 배포 뒤 이전 인증·보안 코드가 남지 않게 합니다.
+    if (url.pathname.startsWith('/js/')) {
+      event.respondWith(
+        fetch(event.request).then(networkResp => {
+          if (networkResp && networkResp.status === 200) caches.open(CACHE_NAME).then(cache => cache.put(event.request, networkResp.clone()));
+          return networkResp;
+        }).catch(() => caches.match(event.request))
+      );
+      return;
+    }
+
+    // 이미지·폰트 등 정적 자산은 캐시 우선 후 백그라운드 갱신
     event.respondWith(
       caches.match(event.request).then(cached => {
         if (cached) {

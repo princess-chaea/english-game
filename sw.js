@@ -1,5 +1,5 @@
 // VOCA HERO! Service Worker - Edge Request & Cache Optimization
-const CACHE_NAME = 'vocahero-v27';
+const CACHE_NAME = 'vocahero-v29';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

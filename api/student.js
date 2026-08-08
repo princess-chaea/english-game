@@ -2,6 +2,7 @@ import { adminAuth, adminDb, FieldValue } from './_firebase-admin.js';
 import { apiError, handleApiError, hash, isExpired, normalizeNickname, readBody, requireMethod, requireUser, safeInt, sendJson, text } from './_http.js';
 
 const accounts = adminDb.collection('accounts');
+const classes = adminDb.collection('classes');
 const leaderboard = adminDb.collection('leaderboard');
 const invites = adminDb.collection('classInvites');
 const legacyUsers = adminDb.collection('users');
@@ -56,6 +57,145 @@ async function assignedWordPack(uid) {
   }
   return { wordPackId: null };
 }
+function normalizedTrialAnswer(value) { return text(value, 160).normalize('NFKC').trim().toLowerCase().replace(/[.!?,'’\-]/g, '').replace(/\s+/g, ' '); }
+async function loadGuildTrial(uid) {
+  const assignment = await assignedWordPack(uid);
+  if (!assignment.classId) return { guildName: null, wordPackId: null, guildCoins: 0, trial: null };
+  const classRef = adminDb.collection('classes').doc(assignment.classId);
+  const memberRef = classRef.collection('members').doc(uid);
+  const [classSnap, memberSnap] = await Promise.all([classRef.get(), memberRef.get()]);
+  if (!classSnap.exists || !memberSnap.exists) return { guildName: assignment.classLabel || null, wordPackId: assignment.wordPackId || null, guildCoins: 0, trial: null };
+  const guildCoins = safeInt(memberSnap.data()?.guildCoins, 0, 0, 1000000000);
+  const trialId = text(classSnap.data()?.activeTrialId, 128);
+  if (!trialId) return { guildName: assignment.classLabel, wordPackId: assignment.wordPackId, guildCoins, trial: null };
+  const trialRef = classRef.collection('trials').doc(trialId);
+  const [trialSnap, completionSnap, progressSnap] = await Promise.all([trialRef.get(), trialRef.collection('completions').doc(uid).get(), trialRef.collection('progress').doc(uid).get()]);
+  if (!trialSnap.exists || completionSnap.exists) return { guildName: assignment.classLabel, wordPackId: assignment.wordPackId, guildCoins, trial: null };
+  const trial = trialSnap.data();
+  if (trial.status !== 'active' || isExpired(trial.expiresAt) || !Array.isArray(trial.words)) return { guildName: assignment.classLabel, wordPackId: assignment.wordPackId, guildCoins, trial: null };
+  return {
+    guildName: assignment.classLabel,
+    wordPackId: assignment.wordPackId,
+    guildCoins,
+    trial: {
+      id: trialId,
+      words: trial.words.slice(0, 20).map((entry) => ({ word: text(entry?.word, 80), meaning: text(entry?.meaning, 160), type: text(entry?.type, 32) })).filter((entry) => entry.word && entry.meaning),
+      maxHints: safeInt(trial.maxHints, Math.max(1, Math.ceil(trial.words.length / 5)), 1, 20),
+      hintsUsed: safeInt(progressSnap.data()?.hintsUsed, 0, 0, 20),
+      attemptCount: safeInt(progressSnap.data()?.attemptCount, 0, 0, 10000),
+      retryCount: safeInt(progressSnap.data()?.retryCount, 0, 0, 10000),
+      rewardGuildCoins: safeInt(trial.rewardGuildCoins, 0, 0, 1000),
+      expiresAt: trial.expiresAt?.toDate?.().toISOString?.() || null
+    }
+  };
+}
+async function guildTrialEvent(uid, body) {
+  const trialId = text(body.trialId, 128);
+  const event = text(body.event, 24);
+  const attemptId = text(body.attemptId, 128);
+  if (!trialId || !['start', 'attempt', 'hint'].includes(event) || (event === 'attempt' && attemptId.length < 8)) throw apiError(400, 'INVALID_TRIAL_EVENT', '시련 진행 정보를 확인해 주세요.');
+  const assignment = await assignedWordPack(uid);
+  if (!assignment.classId) throw apiError(403, 'GUILD_REQUIRED', '참여 중인 길드가 없어요.');
+  const classRef = classes.doc(assignment.classId);
+  const trialRef = classRef.collection('trials').doc(trialId);
+  const memberRef = classRef.collection('members').doc(uid);
+  const progressRef = trialRef.collection('progress').doc(uid);
+  const completionRef = trialRef.collection('completions').doc(uid);
+  return adminDb.runTransaction(async (tx) => {
+    const [classSnap, trialSnap, memberSnap, progressSnap, completionSnap] = await Promise.all([tx.get(classRef), tx.get(trialRef), tx.get(memberRef), tx.get(progressRef), tx.get(completionRef)]);
+    if (!classSnap.exists || !memberSnap.exists) throw apiError(403, 'GUILD_REQUIRED', '참여 중인 길드를 확인해 주세요.');
+    if (text(classSnap.data()?.activeTrialId, 128) !== trialId || !trialSnap.exists) throw apiError(409, 'TRIAL_REPLACED', '선생님이 새 시련을 보냈어요. 새 문제를 불러와 주세요.');
+    const trial = trialSnap.data();
+    if (trial.status !== 'active' || isExpired(trial.expiresAt)) throw apiError(409, 'TRIAL_EXPIRED', '이 시련의 도전 기간이 끝났어요.');
+    const current = progressSnap.data() || {};
+    if (completionSnap.exists) return { completed: true, attemptCount: safeInt(current.attemptCount, 0, 0), retryCount: safeInt(current.retryCount, 0, 0), hintsUsed: safeInt(current.hintsUsed, 0, 0), hintsRemaining: 0 };
+    const update = { updatedAt: FieldValue.serverTimestamp() };
+    if (!progressSnap.exists) update.startedAt = FieldValue.serverTimestamp();
+    let attemptCount = safeInt(current.attemptCount, 0, 0, 10000);
+    let retryCount = safeInt(current.retryCount, 0, 0, 10000);
+    let hintsUsed = safeInt(current.hintsUsed, 0, 0, 10000);
+    const maxHints = safeInt(trial.maxHints, Math.max(1, Math.ceil((trial.words?.length || 5) / 5)), 1, 20);
+    if (event === 'attempt') {
+      if (attemptId === text(current.lastAttemptId, 128)) return { completed: false, attemptCount, retryCount, hintsUsed, hintsRemaining: Math.max(0, maxHints - hintsUsed) };
+      if (attemptCount > 0) retryCount += 1;
+      attemptCount += 1;
+      update.attemptCount = attemptCount;
+      update.retryCount = retryCount;
+      update.lastAttemptId = attemptId;
+      update.lastWrongCount = safeInt(body.wrongCount, 0, 0, 20);
+      update.lastAttemptAt = FieldValue.serverTimestamp();
+    } else if (event === 'hint') {
+      if (hintsUsed >= maxHints) throw apiError(409, 'NO_TRIAL_HINTS', '이번 시련에서 사용할 수 있는 힌트를 모두 사용했어요.');
+      hintsUsed += 1;
+      update.hintsUsed = hintsUsed;
+      update.lastHintAt = FieldValue.serverTimestamp();
+    }
+    tx.set(progressRef, update, { merge: true });
+    return { completed: false, attemptCount, retryCount, hintsUsed, hintsRemaining: Math.max(0, maxHints - hintsUsed) };
+  });
+}
+async function syncGuildMemberProgress(uid, data) {
+  const classIds = Array.isArray(data?.classIds) ? data.classIds.slice(0, 20) : [];
+  const state = data?.state || {};
+  await Promise.all(classIds.map((classId) => classes.doc(classId).collection('members').doc(uid).set({
+    nickname: data.nickname,
+    learningGrade: data.learningGrade,
+    totalCorrect: safeInt(state.totalQuizCorrect, 0, 0),
+    masteredCount: Array.isArray(state.masteredWords) ? state.masteredWords.length : 0,
+    stage: safeInt(state.stage, 1, 1, 9999),
+    lastActiveAt: FieldValue.serverTimestamp()
+  }, { merge: true })));
+}
+let guildRankCache = { expiresAt: 0, rows: [] };
+async function guildLeaderboard() {
+  if (guildRankCache.expiresAt > Date.now()) return guildRankCache.rows;
+  const classSnaps = await classes.limit(50).get();
+  const rows = await Promise.all(classSnaps.docs.map(async (classSnap) => {
+    const memberQuery = classSnap.ref.collection('members');
+    const [members, memberCountSnap] = await Promise.all([
+      memberQuery.select('totalCorrect', 'masteredCount').limit(100).get(),
+      memberQuery.count().get()
+    ]);
+    let totalCorrect = 0; let masteredCount = 0;
+    members.docs.forEach((member) => {
+      totalCorrect += safeInt(member.data()?.totalCorrect, 0, 0);
+      masteredCount += safeInt(member.data()?.masteredCount, 0, 0);
+    });
+    return { id: classSnap.id, guildName: text(classSnap.data()?.guildName || classSnap.data()?.classLabel, 40) || '이름 없는 길드', memberCount: safeInt(memberCountSnap.data()?.count, members.size, 0), totalCorrect, masteredCount };
+  }));
+  const ranked = rows.filter((row) => row.memberCount > 0).sort((a, b) => b.totalCorrect - a.totalCorrect || b.masteredCount - a.masteredCount || a.guildName.localeCompare(b.guildName)).slice(0, 50).map((row, index) => ({ ...row, rank: index + 1 }));
+  guildRankCache = { expiresAt: Date.now() + 60_000, rows: ranked };
+  return ranked;
+}
+async function completeGuildTrial(uid, body) {
+  const trialId = text(body.trialId, 128);
+  const answers = Array.isArray(body.answers) ? body.answers.slice(0, 20) : [];
+  if (!trialId || !answers.length) throw apiError(400, 'INVALID_TRIAL_ANSWERS', '시련 답안을 확인해 주세요.');
+  const assignment = await assignedWordPack(uid);
+  if (!assignment.classId) throw apiError(403, 'GUILD_REQUIRED', '참여 중인 길드가 없어요.');
+  const classRef = adminDb.collection('classes').doc(assignment.classId);
+  const trialRef = classRef.collection('trials').doc(trialId);
+  const memberRef = classRef.collection('members').doc(uid);
+  const completionRef = trialRef.collection('completions').doc(uid);
+  const answerMap = new Map(answers.map((entry) => [text(entry?.word, 80).toLowerCase(), normalizedTrialAnswer(entry?.answer)]));
+  return adminDb.runTransaction(async (tx) => {
+    const [classSnap, trialSnap, memberSnap, completionSnap] = await Promise.all([tx.get(classRef), tx.get(trialRef), tx.get(memberRef), tx.get(completionRef)]);
+    if (!classSnap.exists || !memberSnap.exists) throw apiError(403, 'GUILD_REQUIRED', '참여 중인 길드를 확인해 주세요.');
+    if (text(classSnap.data()?.activeTrialId, 128) !== trialId || !trialSnap.exists) throw apiError(409, 'TRIAL_REPLACED', '선생님이 새 시련을 보냈어요. 새 문제를 불러와 주세요.');
+    const trial = trialSnap.data();
+    if (trial.status !== 'active' || isExpired(trial.expiresAt)) throw apiError(409, 'TRIAL_EXPIRED', '이 시련의 도전 기간이 끝났어요.');
+    const words = Array.isArray(trial.words) ? trial.words.slice(0, 20) : [];
+    const allCorrect = words.length >= 5 && words.every((entry) => answerMap.get(text(entry?.word, 80).toLowerCase()) === normalizedTrialAnswer(entry?.meaning));
+    if (!allCorrect) throw apiError(409, 'TRIAL_NOT_MASTERED', '아직 정복하지 못한 단어가 있어요. 다시 도전해 주세요.');
+    const currentCoins = safeInt(memberSnap.data()?.guildCoins, 0, 0, 1000000000);
+    if (completionSnap.exists) return { alreadyCompleted: true, rewardGuildCoins: 0, guildCoins: currentCoins };
+    const rewardGuildCoins = safeInt(trial.rewardGuildCoins, words.length * 5, 0, 1000);
+    const guildCoins = currentCoins + rewardGuildCoins;
+    tx.set(completionRef, { uid, correctCount: words.length, rewardGuildCoins, completedAt: FieldValue.serverTimestamp() });
+    tx.set(memberRef, { guildCoins, lastTrialCompletedAt: FieldValue.serverTimestamp() }, { merge: true });
+    return { alreadyCompleted: false, rewardGuildCoins, guildCoins };
+  });
+}
 async function publish(uid, data) {
   if (!data.leaderboardOptIn) return leaderboard.doc(uid).delete();
   const state=data.state||defaultState();
@@ -74,7 +214,7 @@ async function publish(uid, data) {
 function guardProgress(previous,next,updatedAt) {
   const oldCorrect=safeInt(previous?.totalQuizCorrect,0,0); const correct=safeInt(next.totalQuizCorrect,0,0);
   const minutes=Math.max(0,(Date.now()-(updatedAt?.toMillis?.()||Date.now()))/60000);
-  if (correct>oldCorrect+Math.floor(minutes*120)+30) throw apiError(409,'PROGRESS_RATE_LIMIT','Progress changed too quickly. Please save again later.');
+  if (correct>oldCorrect+Math.floor(minutes*120)+30) throw apiError(409,'PROGRESS_RATE_LIMIT','학습 기록이 너무 빠르게 증가해 저장을 잠시 멈췄어요. 잠시 후 다시 저장해 주세요.');
   if (correct<oldCorrect) next.totalQuizCorrect=oldCorrect;
   if (safeInt(next.totalQuizTries,0,0)<next.totalQuizCorrect) next.totalQuizTries=next.totalQuizCorrect;
   const maxStage=Math.max(safeInt(previous?.stage,1,1),Math.floor(next.totalQuizCorrect/10)+2);
@@ -97,18 +237,18 @@ async function syncWorldBossVisibility(uid, accountData) {
 }async function save(uid, body) {
   const requested=cleanState(body.state); const optIn=typeof body.leaderboardOptIn==='boolean'?body.leaderboardOptIn:null; const ref=accounts.doc(uid);
   const data=await adminDb.runTransaction(async tx=>{const snap=await tx.get(ref);if(!snap.exists)throw apiError(404,'PROFILE_NOT_FOUND','먼저 용사를 만들어 주세요.');const current=snap.data();const state=guardProgress(current.state||defaultState(),requested,current.updatedAt);const update={state,updatedAt:FieldValue.serverTimestamp()};if(optIn!==null)update.leaderboardOptIn=optIn;tx.update(ref,update);return {...current,...update,state};});
-  await Promise.all([publish(uid,data),syncWorldBossVisibility(uid,data)]);return publicAccount(data);
+  await Promise.all([publish(uid,data),syncWorldBossVisibility(uid,data),syncGuildMemberProgress(uid,data)]);return publicAccount(data);
 }
 async function rename(uid, body) {
   const nickname=normalizeNickname(body.nickname);const ref=accounts.doc(uid);
-  const data=await adminDb.runTransaction(async tx=>{const snap=await tx.get(ref);if(!snap.exists)throw apiError(404,'PROFILE_NOT_FOUND','먼저 용사를 만들어 주세요.');const current=snap.data();const first=!current.freeNicknameChangeUsed;const cost=first?0:500;const state={...defaultState(),...(current.state||{})};if(safeInt(state.masteryPoints,0,0)<cost)throw apiError(409,'NOT_ENOUGH_FP',`You need ${cost} FP to rename.`);state.masteryPoints-=cost;const update={nickname,state,freeNicknameChangeUsed:true,renameCount:safeInt(current.renameCount,0,0)+1,updatedAt:FieldValue.serverTimestamp()};tx.update(ref,update);return {...current,...update};});
+  const data=await adminDb.runTransaction(async tx=>{const snap=await tx.get(ref);if(!snap.exists)throw apiError(404,'PROFILE_NOT_FOUND','먼저 용사를 만들어 주세요.');const current=snap.data();const first=!current.freeNicknameChangeUsed;const cost=first?0:500;const state={...defaultState(),...(current.state||{})};if(safeInt(state.masteryPoints,0,0)<cost)throw apiError(409,'NOT_ENOUGH_FP',`${cost} FP가 있어야 닉네임을 변경할 수 있어요.`);state.masteryPoints-=cost;const update={nickname,state,freeNicknameChangeUsed:true,renameCount:safeInt(current.renameCount,0,0)+1,updatedAt:FieldValue.serverTimestamp()};tx.update(ref,update);return {...current,...update};});
   await Promise.all((data.classIds||[]).slice(0,100).map(id=>adminDb.collection('classes').doc(id).collection('members').doc(uid).set({nickname:data.nickname},{merge:true})));
   await Promise.all([publish(uid,data),syncWorldBossVisibility(uid,data)]);return {account:publicAccount(data),cost:data.renameCount===1?0:500};
 }
 async function joinClass(uid, body) {
   const code=text(body.code,32).toUpperCase().replace(/[^A-Z0-9]/g,'');if(code.length<6)throw apiError(400,'INVALID_INVITE','학급 코드를 확인해 주세요.');
   const inviteRef=invites.doc(hash(code));const accountRef=accounts.doc(uid);
-  const membership=await adminDb.runTransaction(async tx=>{const inviteSnap=await tx.get(inviteRef);if(!inviteSnap.exists||inviteSnap.data().type!=='student'||isExpired(inviteSnap.data().expiresAt))throw apiError(404,'INVITE_NOT_FOUND','학급 코드를 확인해 주세요.');const invite=inviteSnap.data(),classRef=adminDb.collection('classes').doc(invite.classId);const [accountSnap,classSnap]=await Promise.all([tx.get(accountRef),tx.get(classRef)]);if(!accountSnap.exists)throw apiError(404,'PROFILE_NOT_FOUND','먼저 용사를 만들어 주세요.');if(!classSnap.exists)throw apiError(404,'GUILD_NOT_FOUND','길드를 찾지 못했어요.');const account=accountSnap.data(),classLabel=text(classSnap.data().guildName||classSnap.data().classLabel||invite.classLabel,40)||'길드';tx.set(classRef.collection('members').doc(uid),{nickname:account.nickname,learningGrade:account.learningGrade,joinedAt:FieldValue.serverTimestamp()},{merge:true});tx.update(accountRef,{classIds:FieldValue.arrayUnion(invite.classId),activeClassId:invite.classId,activeGuildName:classLabel,updatedAt:FieldValue.serverTimestamp()});return {classId:invite.classId,classLabel};});
+  const membership=await adminDb.runTransaction(async tx=>{const inviteSnap=await tx.get(inviteRef);if(!inviteSnap.exists||inviteSnap.data().type!=='student'||isExpired(inviteSnap.data().expiresAt))throw apiError(404,'INVITE_NOT_FOUND','학급 코드를 확인해 주세요.');const invite=inviteSnap.data(),classRef=adminDb.collection('classes').doc(invite.classId);const [accountSnap,classSnap]=await Promise.all([tx.get(accountRef),tx.get(classRef)]);if(!accountSnap.exists)throw apiError(404,'PROFILE_NOT_FOUND','먼저 용사를 만들어 주세요.');if(!classSnap.exists)throw apiError(404,'GUILD_NOT_FOUND','길드를 찾지 못했어요.');const account=accountSnap.data(),classLabel=text(classSnap.data().guildName||classSnap.data().classLabel||invite.classLabel,40)||'길드';tx.set(classRef.collection('members').doc(uid),{nickname:account.nickname,learningGrade:account.learningGrade,totalCorrect:safeInt(account.state?.totalQuizCorrect,0,0),masteredCount:Array.isArray(account.state?.masteredWords)?account.state.masteredWords.length:0,stage:safeInt(account.state?.stage,1,1,9999),joinedAt:FieldValue.serverTimestamp(),lastActiveAt:FieldValue.serverTimestamp()},{merge:true});tx.update(accountRef,{classIds:FieldValue.arrayUnion(invite.classId),activeClassId:invite.classId,activeGuildName:classLabel,updatedAt:FieldValue.serverTimestamp()});return {classId:invite.classId,classLabel};});
   const updated=await accountRef.get();if(updated.exists)await Promise.all([publish(uid,updated.data()),syncWorldBossVisibility(uid,updated.data())]);return membership;
 }
 function legacyIds(c) { const school=text(c.schoolName,120), grade=safeInt(c.grade,0,3,6), room=safeInt(c.classNum,0,1,99), number=safeInt(c.studentNum,0,1,99), name=text(c.name,30);if(!school||!grade||!room||!number||!name)throw apiError(400,'INVALID_LEGACY_INFO','기존 계정 정보를 모두 입력해 주세요.');const suffix=`${grade}_${room}_${number}_${name}`;return [`${school}_${suffix}`,`Unknown_${suffix}`]; }
@@ -127,7 +267,7 @@ async function migrateGoogleLegacy(uid, body) {
 async function migrate(uid, body) {
   const pin=text(body.pin,12);if(!/^\d{4}$/.test(pin))throw apiError(400,'INVALID_PIN','기존 4자리 PIN 번호를 입력해 주세요.');
   const credentials=body.credentials||{},ids=legacyIds(credentials),nickname=normalizeNickname(body.nickname),requestedGrade=safeInt(body.learningGrade,4,3,6),ref=accounts.doc(uid);
-  const data=await adminDb.runTransaction(async tx=>{const now=await tx.get(ref);if(now.data()?.legacyMigratedAt)throw apiError(409,'ALREADY_MIGRATED','이 새 계정은 이미 기존 기록을 가져왔어요.');let legacyRef,legacySnap;for(const id of ids){const candidate=legacyUsers.doc(id),snap=await tx.get(candidate);if(snap.exists){legacyRef=candidate;legacySnap=snap;break;}}if(!legacySnap)throw apiError(404,'LEGACY_NOT_FOUND','기존 게임 기록을 찾지 못했어요.');const old=legacySnap.data(),grade=legacyLearningGrade(old,safeInt(credentials.grade,requestedGrade,3,6));if(String(old.password||'')!==pin)throw apiError(401,'LEGACY_PIN_MISMATCH','기존 PIN 번호가 일치하지 않아요.');if(old.migratedTo&&old.migratedTo!==uid)throw apiError(409,'LEGACY_ALREADY_MOVED','이 기존 기록은 이미 새 계정으로 옮겨졌어요. “이전한 계정 접속 복구”를 이용해 주세요.');const next={schemaVersion:2,role:'student',nickname,learningGrade:grade,state:legacyState(old),freeNicknameChangeUsed:false,renameCount:0,leaderboardOptIn:Boolean(body.leaderboardOptIn),classIds:[],legacyGoogleLinked:Boolean(old.linkedGoogleUid),legacyMigratedAt:FieldValue.serverTimestamp(),createdAt:now.data()?.createdAt||FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()};tx.set(ref,next,{merge:true});tx.update(legacyRef,{migratedTo:uid,migratedAt:FieldValue.serverTimestamp()});return next;});
+  const data=await adminDb.runTransaction(async tx=>{const now=await tx.get(ref);if(now.data()?.legacyMigratedAt)throw apiError(409,'ALREADY_MIGRATED','이 새 계정은 이미 기존 기록을 가져왔어요.');let legacyRef,legacySnap;for(const id of ids){const candidate=legacyUsers.doc(id),snap=await tx.get(candidate);if(snap.exists){legacyRef=candidate;legacySnap=snap;break;}}if(!legacySnap)throw apiError(404,'LEGACY_NOT_FOUND','기존 게임 기록을 찾지 못했어요.');const old=legacySnap.data(),grade=legacyLearningGrade(old,safeInt(credentials.grade,requestedGrade,3,6));if(String(old.password||'')!==pin)throw apiError(401,'LEGACY_PIN_MISMATCH','기존 PIN 번호가 일치하지 않아요.');if(old.migratedTo&&old.migratedTo!==uid)throw apiError(409,'LEGACY_ALREADY_MOVED','이 기존 기록은 이미 새 계정으로 옮겨졌어요. “이전 계정 로그인(구글 연동 오류로 다시 접속)”을 이용해 주세요.');const next={schemaVersion:2,role:'student',nickname,learningGrade:grade,state:legacyState(old),freeNicknameChangeUsed:false,renameCount:0,leaderboardOptIn:Boolean(body.leaderboardOptIn),classIds:[],legacyGoogleLinked:Boolean(old.linkedGoogleUid),legacyMigratedAt:FieldValue.serverTimestamp(),createdAt:now.data()?.createdAt||FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()};tx.set(ref,next,{merge:true});tx.update(legacyRef,{migratedTo:uid,migratedAt:FieldValue.serverTimestamp()});return next;});
   await Promise.all([publish(uid,data),transferCurrentBossRecord({toUid:uid,credentials,nickname:data.nickname,publicLeaderboard:data.leaderboardOptIn})]);return publicAccount(data);
 }async function recoverMigratedLegacy(uid, body) {
   const pin=text(body.pin,12);if(!/^\d{4}$/.test(pin))throw apiError(400,'INVALID_PIN','기존 4자리 PIN 번호를 입력해 주세요.');
@@ -151,4 +291,4 @@ async function claimGoogleLink(targetUid, body) {
   return publicAccount(data);
 }
 async function erase(uid) { const snap=await accounts.doc(uid).get();if(!snap.exists)return;await Promise.all((snap.data().classIds||[]).slice(0,100).map(id=>adminDb.collection('classes').doc(id).collection('members').doc(uid).delete()));await Promise.all([accounts.doc(uid).delete(),leaderboard.doc(uid).delete()]); }
-export default async function handler(req,res){try{requireMethod(req,['POST']);const user=await requireUser(req);const body=await readBody(req);let response;if(body.action==='load')response={account:await loadAccount(user.uid)};else if(body.action==='loadAssignedWordPack')response={assignment:await assignedWordPack(user.uid)};else if(body.action==='create')response={account:await create(user.uid,body)};else if(body.action==='save')response={account:await save(user.uid,body)};else if(body.action==='rename')response=await rename(user.uid,body);else if(body.action==='joinClass')response={membership:await joinClass(user.uid,body)};else if(body.action==='migrateLegacy')response={account:await migrate(user.uid,body)};else if(body.action==='recoverMigratedLegacy')response={account:await recoverMigratedLegacy(user.uid,body)};else if(body.action==='migrateLegacyGoogle'){if(user.firebase?.sign_in_provider!=='google.com')throw apiError(403,'GOOGLE_REQUIRED','이전에 연결한 Google 계정으로 먼저 로그인해 주세요.');response={account:await migrateGoogleLegacy(user.uid,body)};}else if(body.action==='claimGoogleLink'){if(user.firebase?.sign_in_provider!=='google.com')throw apiError(403,'GOOGLE_REQUIRED','Google 계정으로 본인 확인 후 연결해 주세요.');response={account:await claimGoogleLink(user.uid,body)};}else if(body.action==='delete'){await erase(user.uid);response={deleted:true};}else throw apiError(400,'UNKNOWN_ACTION','알 수 없는 요청입니다.');sendJson(res,200,{ok:true,...response});}catch(error){handleApiError(res,error);}}
+export default async function handler(req,res){try{requireMethod(req,['POST']);const user=await requireUser(req);const body=await readBody(req);let response;if(body.action==='load')response={account:await loadAccount(user.uid)};else if(body.action==='loadAssignedWordPack')response={assignment:await assignedWordPack(user.uid)};else if(body.action==='create')response={account:await create(user.uid,body)};else if(body.action==='save')response={account:await save(user.uid,body)};else if(body.action==='rename')response=await rename(user.uid,body);else if(body.action==='joinClass')response={membership:await joinClass(user.uid,body)};else if(body.action==='loadGuildTrial')response={guild:await loadGuildTrial(user.uid)};else if(body.action==='loadGuildOverview')response={guild:await loadGuildTrial(user.uid),rankings:await guildLeaderboard()};else if(body.action==='guildTrialEvent')response={progress:await guildTrialEvent(user.uid,body)};else if(body.action==='completeGuildTrial')response={completion:await completeGuildTrial(user.uid,body)};else if(body.action==='migrateLegacy')response={account:await migrate(user.uid,body)};else if(body.action==='recoverMigratedLegacy')response={account:await recoverMigratedLegacy(user.uid,body)};else if(body.action==='migrateLegacyGoogle'){if(user.firebase?.sign_in_provider!=='google.com')throw apiError(403,'GOOGLE_REQUIRED','이전에 연결한 Google 계정으로 먼저 로그인해 주세요.');response={account:await migrateGoogleLegacy(user.uid,body)};}else if(body.action==='claimGoogleLink'){if(user.firebase?.sign_in_provider!=='google.com')throw apiError(403,'GOOGLE_REQUIRED','Google 계정으로 본인 확인 후 연결해 주세요.');response={account:await claimGoogleLink(user.uid,body)};}else if(body.action==='delete'){await erase(user.uid);response={deleted:true};}else throw apiError(400,'UNKNOWN_ACTION','알 수 없는 요청입니다.');sendJson(res,200,{ok:true,...response});}catch(error){handleApiError(res,error);}}

@@ -2,7 +2,7 @@
 
 - `elementary-800.json` contains 799 faithfully extracted word/meaning pairs. The source PDF skips serial number 697, so no invented word was added.
 - `curriculum-3000.json` contains 3,024 unique headwords extracted from the curriculum PDF. Its source has no Korean meanings, so it is a review/reference list only and must not be sent to quiz pools before meanings and age suitability are reviewed.
-- Keep each grade quiz pool at its teacher-reviewed 200-300 items. The active skill deck is deliberately separate and capped at 24 words.
+- Keep each grade quiz pool at its teacher-reviewed 200-300 items. Skill acquisition samples randomly from the entire active grade or guild pack; duplicate draws add EXP to that same word skill.
 
 - `grade-pack-audit.json` is an evidence file for the current Firestore grade-list snapshot. It records duplicate words, words outside the elementary-800 source, and the 444 elementary-800 words absent from every current list.
 - `word-packs.json` is the public, static classroom pack catalog used by the app. It contains the current Grade 3-6 packs plus an `elementary-800-missing-review` pack. The review pack is not automatically mixed into a grade list because the source does not specify a grade-level sequence.
@@ -15,6 +15,8 @@
 ## Classroom pack policy
 
 - A new Grade 3-6 class defaults to its matching `grade-{n}-current` pack.
-- A class manager may choose only that grade's core pack or the 444-word teacher-review pack.
+- A guild manager may choose any registered Grade 3-6 core/draft pack or the 444-word teacher-review pack after checking its difficulty and meaning quality.
 - Students receive only the pack assigned to a class they joined with a student QR/code. If no assignment is available, the game keeps the existing grade-list fallback.
 - Do not use the 3,000-word reference file as a quiz or skill-reward source until Korean meanings, age suitability, licensing, and a grade sequence have been reviewed.
+
+- Grade 1-2 English is not represented as an official curriculum pack. Future remedial content should be labeled Intro A/B and educator-reviewed before assignment.

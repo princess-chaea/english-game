@@ -1116,7 +1116,7 @@
                         finish(data['grade_' + gradeStr], `grade-${gradeStr}-current`);
                     } else {
                         finish(MOCK_WORDS[gradeStr] || MOCK_WORDS['4'], 'local fallback');
-                        setTimeout(() => showToast(`No grade ${gradeStr} word list was found; using the temporary list.`), 2000);
+                        setTimeout(() => showToast(`${gradeStr}학년 단어 목록을 찾지 못해 임시 목록을 사용합니다.`), 2000);
                     }
                 } else {
                     finish(MOCK_WORDS[gradeStr] || MOCK_WORDS['4'], 'local fallback');
@@ -1409,14 +1409,13 @@
             }
         }
 
-        function refreshHeroIdentity() {
-            const root = document.getElementById("displayStudentName");
+        function renderHeroIdentity(root) {
             if (!root) return;
             root.replaceChildren();
             const addSeparator = () => root.append(document.createTextNode(" / "));
             const guildName = typeof gameState.activeGuildName === "string" ? gameState.activeGuildName.trim() : "";
             const activeTitle = gameState.equippedTitle || gameState.wbTitle || "";
-            const titleDef = typeof AVAILABLE_TITLES !== "undefined" ? AVAILABLE_TITLES.find(t => t.id === activeTitle || t.name === activeTitle) : null;
+            const titlePresentation = getTitlePresentation(activeTitle);
             if (guildName) {
                 const guild = document.createElement("span");
                 guild.className = "inline-block max-w-[110px] truncate border border-sky-400 bg-sky-950/60 px-1 py-0.5 text-[10px] text-sky-200 shadow-[0_0_7px_rgba(56,189,248,.65)]";
@@ -1426,8 +1425,8 @@
             if (activeTitle) {
                 if (root.childNodes.length) addSeparator();
                 const title = document.createElement("span");
-                title.className = "text-yellow-300";
-                title.textContent = `[${titleDef?.name || activeTitle}]`;
+                title.className = `inline-block border px-1 py-0.5 text-[10px] ${titlePresentation.style}`;
+                title.textContent = `[${titlePresentation.name}]`;
                 root.append(title);
             }
             if (root.childNodes.length) addSeparator();
@@ -1435,6 +1434,10 @@
             nickname.className = "text-white";
             nickname.textContent = gameState.name || "새 용사";
             root.append(nickname);
+        }
+        function refreshHeroIdentity() {
+            renderHeroIdentity(document.getElementById("displayStudentName"));
+            renderHeroIdentity(document.getElementById("heroNameTag"));
         }
         window.refreshHeroIdentity = refreshHeroIdentity;
         function initGameEngine() {
@@ -1860,6 +1863,7 @@
                 modal.classList.remove('flex');
             }
             refreshStateVisuals();
+            setTimeout(() => window.openPendingGuildTrial?.(), 0);
         }
 
         function calculatePlayerCP() {
@@ -3545,7 +3549,7 @@
                 };
 
                 gameState.skillsInventory.push(newSkill);
-                grantUniversalAwakeningEssence(1);
+
                 if (!suppressModal) showSkillModal(newSkill, gradeInfo);
 
                 buildSkillTabUI();
@@ -4140,8 +4144,8 @@
         function buildSkillTabUI() {
             const deckInfo = document.getElementById("skillDeckInfo");
             if (deckInfo) {
-                const deck = ensureActiveSkillDeck();
-                deckInfo.textContent = `Active skill deck: ${deck.length} words | Universal essence: ${gameState.skillEssence || 0} | New cards add 1 essence to the first equipped skill.`;
+
+                deckInfo.textContent = `현재 학년 또는 길드 단어팩 전체에서 영단어와 등급이 매번 무작위로 결정됩니다. (추첨 대상 ${getSkillSourcePool().length}개)`;
             }
             const eqGrid = document.getElementById("equippedSkillsGrid");
             let eqHtml = "";
@@ -4236,7 +4240,7 @@
                             </div>
 
                             <button onclick="event.stopPropagation(); ${isEquipped ? `unequipSkill('${skill.id}')` : `equipSkill('${skill.id}')`}" class="w-full text-[9px] font-extrabold py-1 rounded-none-forced transition shadow-sm ${isEquipped ? 'bg-[#e22718] text-white hover:bg-red-700' : 'bg-white text-black hover:bg-gray-200'}">
-                                ${isEquipped ? '해제 (UNEQUIP)' : '장착 (EQUIP)'}
+                                ${isEquipped ? '장착 해제' : '장착하기'}
                             </button>
                         </div>
                     </div>
@@ -5112,11 +5116,8 @@
 
             const applyTitleStyle = (el, isHeader = false) => {
                 if (!el) return;
-                if (isHeader) {
-                    refreshHeroIdentity();
-                } else {
-                    el.innerText = `${titleStr}${gameState.name}`;
-                }
+                refreshHeroIdentity();
+
                 if (titleDef) {
                     if (titleDef.tier === "신화") {
                         el.style.color = "#fef08a"; // yellow-200
@@ -6132,6 +6133,17 @@
             { id: "유물 입문자", name: "유물 입문자", tier: "일반", desc: "고대 유물 1개 이상 수집", condition: (gs) => (gs.acquiredRelics || []).length >= 1, style: "border-[#4b5563] bg-[#111827] text-gray-300" }
         ];
 
+        function getTitlePresentation(titleName) {
+            const normalized = String(titleName || "").trim();
+            const definition = AVAILABLE_TITLES.find(title => title.id === normalized || title.name === normalized);
+            return {
+                name: definition?.name || normalized,
+                tier: definition?.tier || "",
+                style: definition?.style || "border-[#d97706] bg-[#1a1a1a] text-yellow-300 shadow-[0_0_8px_rgba(251,191,36,0.6)]"
+            };
+        }
+        window.getHeroTitlePresentation = getTitlePresentation;
+
         let cachedHofData = null;
 
         function renderTitleInventoryUI() {
@@ -6140,7 +6152,11 @@
             if (!container) return;
 
             if (equippedText) {
-                equippedText.innerText = gameState.equippedTitle ? `[${gameState.equippedTitle}]` : "[칭호 미장착]";
+                const currentTitle = getTitlePresentation(gameState.equippedTitle);
+                equippedText.innerText = gameState.equippedTitle ? `[${currentTitle.name}]` : "[칭호 미장착]";
+                equippedText.className = gameState.equippedTitle
+                    ? `inline-block border px-1.5 py-0.5 text-[10px] font-bold ${currentTitle.style}`
+                    : "inline-block border border-gray-700 bg-gray-950 px-1.5 py-0.5 text-[10px] font-bold text-gray-400";
             }
 
             if (!gameState.unlockedTitles) gameState.unlockedTitles = [];
@@ -6191,9 +6207,9 @@
             }
             refreshStateVisuals();
             renderTitleInventoryUI();
-            fetchHallOfFameUI();
             saveLocalCache();
-            saveSessionToCloud();
+            Promise.resolve(saveSessionToCloud())
+                .finally(() => fetchHallOfFameUI());
         }
 
         // ==========================================
@@ -6953,7 +6969,7 @@
                         ultO.classList.add("flex");
                     }
                     playSoundEffect('alert');
-                    showWorldBossFxNotice(`🚨 [EMERGENCY] 보스 필살기 발동! 20초 내 카운터 스펠을 완성하세요! (타이머 ⏸️ 일시중지)`, "text-red-400 border-red-500 animate-pulse");
+                    showWorldBossFxNotice(`🚨 [긴급] 보스 필살기 발동! 20초 내 카운터 스펠을 완성하세요! (타이머 ⏸️ 일시중지)`, "text-red-400 border-red-500 animate-pulse");
                     generateWorldBossQuiz();
                 }
 

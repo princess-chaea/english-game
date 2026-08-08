@@ -171,7 +171,7 @@
             const overlay = document.getElementById("gameLoadingOverlay");
             const text = document.getElementById("loadingStatusText");
             const bar = document.getElementById("loadingProgressBar");
-            if (text) text.innerText = "✨ 여정을 떠나는 중...";
+            if (text) text.innerText = msg;
             if (bar) bar.style.width = "15%";
 
             if (overlay) {

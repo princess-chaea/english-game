@@ -70,10 +70,10 @@ async function start(uid) {
       tx.get(bossRef(week).collection('contributions').doc(uid)),
       tx.get(ref)
     ]);
-    if (contributionSnap.data()?.lastPlayedKstDay === day) throw apiError(409, 'RAID_ALREADY_COMPLETED', "Today's raid is already complete.");
+    if (contributionSnap.data()?.lastPlayedKstDay === day) throw apiError(409, 'RAID_ALREADY_COMPLETED', "오늘의 월드보스 참전은 이미 완료했어요.");
     const existing = sessionSnap.data();
     if (existing?.day === day && existing?.expiresAt?.toMillis?.() > now && !existing.submitted) {
-      throw apiError(409, 'RAID_ALREADY_STARTED', 'Resume the raid on the same device, or wait 15 minutes to start again.');
+      throw apiError(409, 'RAID_ALREADY_STARTED', '같은 기기에서 이어하거나 15분 뒤에 다시 시작해 주세요.');
     }
     tx.set(ref, { uid, week, day, tokenHash, submitted: false, createdAt: FieldValue.serverTimestamp(), expiresAt });
   });
@@ -83,11 +83,11 @@ async function contribute(uid, body) {
   const week = currentWeek();
   const day = kstDay();
   const token = typeof body.raidToken === 'string' ? body.raidToken : '';
-  if (token.length < 20) throw apiError(400, 'INVALID_RAID_TOKEN', 'Start a raid before submitting damage.');
+  if (token.length < 20) throw apiError(400, 'INVALID_RAID_TOKEN', '먼저 월드보스 참전을 시작해 주세요.');
   const requested = safeInt(body.damage, 0, 0, Math.floor(maxHpForWeek(week) * 0.05));
-  if (!requested) throw apiError(400, 'INVALID_DAMAGE', 'Damage must be greater than zero.');
+  if (!requested) throw apiError(400, 'INVALID_DAMAGE', '피해량은 0보다 커야 해요.');
   const accountSnap = await accounts.doc(uid).get();
-  if (!accountSnap.exists) throw apiError(404, 'PROFILE_NOT_FOUND', 'Create a student profile first.');
+  if (!accountSnap.exists) throw apiError(404, 'PROFILE_NOT_FOUND', '먼저 용사를 만들어 주세요.');
   const account = accountSnap.data();
   const ref = bossRef(week);
   const contributionRef = ref.collection('contributions').doc(uid);
@@ -95,10 +95,10 @@ async function contribute(uid, body) {
     const [bossSnap, contributionSnap, sessionSnap] = await Promise.all([tx.get(ref), tx.get(contributionRef), tx.get(sessionRef(uid, week))]);
     const session = sessionSnap.data();
     if (!session || session.day !== day || session.submitted || session.expiresAt?.toMillis?.() <= Date.now() || session.tokenHash !== secretHash(token)) {
-      throw apiError(409, 'RAID_SESSION_INVALID', 'This raid session expired. Start a new raid.');
+      throw apiError(409, 'RAID_SESSION_INVALID', '월드보스 참전 시간이 끝났어요. 새로 시작해 주세요.');
     }
     const previous = contributionSnap.data() || {};
-    if (previous.lastPlayedKstDay === day) throw apiError(409, 'RAID_ALREADY_COMPLETED', "Today's raid is already complete.");
+    if (previous.lastPlayedKstDay === day) throw apiError(409, 'RAID_ALREADY_COMPLETED', "오늘의 월드보스 참전은 이미 완료했어요.");
     const maxHp = maxHpForWeek(week);
     const boss = bossSnap.data() || {};
     const currentTotal = legacyTotal(boss) + safeInt(boss.secureDamageTotal, 0, 0);
@@ -127,7 +127,7 @@ export default async function handler(req, res) {
     if (body.action === 'status') response = { boss: await status(user.uid) };
     else if (body.action === 'start') response = { raid: await start(user.uid) };
     else if (body.action === 'contribute') response = await contribute(user.uid, body);
-    else throw apiError(400, 'UNKNOWN_ACTION', 'Unknown request.');
+    else throw apiError(400, 'UNKNOWN_ACTION', '알 수 없는 요청입니다.');
     sendJson(res, 200, { ok: true, ...response });
   } catch (error) { handleApiError(res, error); }
 }

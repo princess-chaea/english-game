@@ -1424,7 +1424,11 @@
                 }
                 const schoolPrefix = shortSchoolName ? `${shortSchoolName} ` : "";
             const _nameEl = document.getElementById("displayStudentName");
-            if (_nameEl) _nameEl.innerText = gameState.isAnonymousStudent ? `[${gameState.name}]` : `${schoolPrefix}${gameState.grade}?? ${gameState.classNum}? ${gameState.studentNum}? - [${gameState.name}]`;
+            const safeGrade = Number(gameState.grade) || 4;
+            const hasLegacyClassInfo = Boolean(gameState.schoolName) && Number.isFinite(Number(gameState.classNum)) && Number(gameState.classNum) > 0 && Number.isFinite(Number(gameState.studentNum)) && Number(gameState.studentNum) > 0;
+            if (_nameEl) _nameEl.innerText = gameState.isAnonymousStudent || !hasLegacyClassInfo
+                ? `${safeGrade}학년 용사 · ${gameState.name || '새 용사'}`
+                : `${schoolPrefix}${safeGrade}학년 ${gameState.classNum}반 ${gameState.studentNum}번 · ${gameState.name || '새 용사'}`;
             const _badgeEl = document.getElementById("gradeLevelBadge");
             if (_badgeEl) _badgeEl.innerText = `교과 영단어 ${gameState.grade}학년`;
 
@@ -5114,7 +5118,8 @@
                     shortSchoolName = shortSchoolName.replace("학교", "");
                 }
                 const schoolPrefix = shortSchoolName ? `${shortSchoolName} ` : "";
-                    prefix = `${schoolPrefix}${gameState.grade}학년 ${gameState.classNum}반 ${gameState.studentNum}번 - `;
+                    const hasLegacyClassInfo = Boolean(gameState.schoolName) && Number.isFinite(Number(gameState.classNum)) && Number(gameState.classNum) > 0 && Number.isFinite(Number(gameState.studentNum)) && Number(gameState.studentNum) > 0;
+                    prefix = gameState.isAnonymousStudent || !hasLegacyClassInfo ? `${Number(gameState.grade) || 4}학년 용사 · ` : `${schoolPrefix}${gameState.grade}학년 ${gameState.classNum}반 ${gameState.studentNum}번 · `;
                 }
                 el.innerText = `${prefix}${titleStr}${gameState.name}`;
 

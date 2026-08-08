@@ -406,7 +406,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, runTransaction, onSnapshot, serverTimestamp, query, collection, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-        import { GoogleAuthProvider, browserLocalPersistence, browserPopupRedirectResolver, initializeAuth, linkWithPopup, onAuthStateChanged, reauthenticateWithPopup, signInAnonymously, signInWithPopup, signOut, unlink } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { GoogleAuthProvider, getAuth, linkWithPopup, onAuthStateChanged, reauthenticateWithPopup, signInAnonymously, signInWithPopup, signOut, unlink } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 
         const firebaseConfig = {
@@ -426,8 +426,8 @@
         // ── 전역 노출 (일반 script 블록에서도 접근 가능) ──
         window._fbDb = db;
         // Google 팝업 로그인에 필요한 resolver를 명시해 모바일·PWA에서도 같은 인증 객체를 사용합니다.
-        window._fbAuth = initializeAuth(app, { persistence: browserLocalPersistence, popupRedirectResolver: browserPopupRedirectResolver });
-        window._fbTeacherAuth = initializeAuth(teacherApp, { persistence: browserLocalPersistence, popupRedirectResolver: browserPopupRedirectResolver });
+        window._fbAuth = getAuth(app);
+        window._fbTeacherAuth = getAuth(teacherApp);
         window._fbGoogleProvider = new GoogleAuthProvider();
         window._fbStudentGoogleProvider = new GoogleAuthProvider();
         window._fbTeacherGoogleProvider = new GoogleAuthProvider();
@@ -3044,7 +3044,7 @@
         }
     </style>
 
-    <script src="js/config.js?v=20260809-2"></script><script src="js/main.js?v=20260809-2"></script><script src="js/secure-account.js?v=20260809-2"></script>
+    <script src="js/config.js?v=20260809-3"></script><script src="js/main.js?v=20260809-3"></script><script src="js/secure-account.js?v=20260809-3"></script>
 
     <!-- Damage Overlay (Scratch & Flash) -->
     <div id="damageOverlay" class="fixed inset-0 pointer-events-none hidden z-[100] flex-col items-center justify-center bg-red-900/60 transition-opacity duration-300">

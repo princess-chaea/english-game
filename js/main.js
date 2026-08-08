@@ -1412,26 +1412,24 @@
         function renderHeroIdentity(root) {
             if (!root) return;
             root.replaceChildren();
-            const addSeparator = () => root.append(document.createTextNode(" / "));
+            root.classList.add("inline-flex", "min-w-0", "max-w-full", "items-center", "gap-1", "align-middle");
             const guildName = typeof gameState.activeGuildName === "string" ? gameState.activeGuildName.trim() : "";
             const activeTitle = gameState.equippedTitle || gameState.wbTitle || "";
             const titlePresentation = getTitlePresentation(activeTitle);
             if (guildName) {
                 const guild = document.createElement("span");
-                guild.className = "inline-block max-w-[110px] truncate border border-sky-400 bg-sky-950/60 px-1 py-0.5 text-[10px] text-sky-200 shadow-[0_0_7px_rgba(56,189,248,.65)]";
+                guild.className = "inline-block max-w-[100px] shrink-0 truncate border border-sky-400 bg-sky-950/60 px-1.5 py-0.5 text-[10px] text-sky-200 shadow-[0_0_7px_rgba(56,189,248,.65)]";
                 guild.textContent = guildName;
                 root.append(guild);
             }
             if (activeTitle) {
-                if (root.childNodes.length) addSeparator();
                 const title = document.createElement("span");
-                title.className = `inline-block border px-1 py-0.5 text-[10px] ${titlePresentation.style}`;
+                title.className = `inline-block shrink-0 border px-1.5 py-0.5 text-[10px] ${titlePresentation.style}`;
                 title.textContent = `[${titlePresentation.name}]`;
                 root.append(title);
             }
-            if (root.childNodes.length) addSeparator();
             const nickname = document.createElement("span");
-            nickname.className = "text-white";
+            nickname.className = "min-w-0 truncate text-white";
             nickname.textContent = gameState.name || "새 용사";
             root.append(nickname);
         }

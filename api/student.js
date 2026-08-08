@@ -89,6 +89,40 @@ async function loadGuildTrial(uid) {
     }
   };
 }
+async function loadGuildOverview(uid) {
+  const guild = await loadGuildTrial(uid);
+  const assignment = await assignedWordPack(uid);
+  if (!assignment.classId) return { ...guild, memberCount: 0, guildTotalCorrect: 0, guildMasteredCount: 0, members: [] };
+  const classRef = classes.doc(assignment.classId);
+  const membersRef = classRef.collection('members');
+  const [classSnap, ownMemberSnap, membersSnap, memberCountSnap] = await Promise.all([
+    classRef.get(),
+    membersRef.doc(uid).get(),
+    membersRef.select('nickname', 'learningGrade', 'stage', 'totalCorrect', 'masteredCount', 'lastActiveAt').limit(200).get(),
+    membersRef.count().get()
+  ]);
+  if (!classSnap.exists || !ownMemberSnap.exists) return { ...guild, memberCount: 0, guildTotalCorrect: 0, guildMasteredCount: 0, members: [] };
+  const members = membersSnap.docs.map((member) => {
+    const data = member.data() || {};
+    return {
+      nickname: text(data.nickname, 30) || '이름 없는 용사',
+      learningGrade: safeInt(data.learningGrade, 4, 3, 6),
+      stage: safeInt(data.stage, 1, 1, 9999),
+      totalCorrect: safeInt(data.totalCorrect, 0, 0, 1000000000),
+      masteredCount: safeInt(data.masteredCount, 0, 0, 100000),
+      isMe: member.id === uid,
+      lastActiveAt: data.lastActiveAt?.toDate?.().toISOString?.() || null
+    };
+  }).sort((a, b) => b.totalCorrect - a.totalCorrect || b.masteredCount - a.masteredCount || a.nickname.localeCompare(b.nickname));
+  return {
+    ...guild,
+    guildName: text(classSnap.data()?.guildName || classSnap.data()?.classLabel, 40) || guild.guildName,
+    memberCount: safeInt(memberCountSnap.data()?.count, members.length, 0),
+    guildTotalCorrect: members.reduce((sum, member) => sum + member.totalCorrect, 0),
+    guildMasteredCount: members.reduce((sum, member) => sum + member.masteredCount, 0),
+    members
+  };
+}
 async function guildTrialEvent(uid, body) {
   const trialId = text(body.trialId, 128);
   const event = text(body.event, 24);
@@ -246,9 +280,9 @@ async function rename(uid, body) {
   await Promise.all([publish(uid,data),syncWorldBossVisibility(uid,data)]);return {account:publicAccount(data),cost:data.renameCount===1?0:500};
 }
 async function joinClass(uid, body) {
-  const code=text(body.code,32).toUpperCase().replace(/[^A-Z0-9]/g,'');if(code.length<6)throw apiError(400,'INVALID_INVITE','학급 코드를 확인해 주세요.');
+  const code=text(body.code,32).toUpperCase().replace(/[^A-Z0-9]/g,'');if(code.length<6)throw apiError(400,'INVALID_INVITE','길드 초대 코드를 확인해 주세요.');
   const inviteRef=invites.doc(hash(code));const accountRef=accounts.doc(uid);
-  const membership=await adminDb.runTransaction(async tx=>{const inviteSnap=await tx.get(inviteRef);if(!inviteSnap.exists||inviteSnap.data().type!=='student'||isExpired(inviteSnap.data().expiresAt))throw apiError(404,'INVITE_NOT_FOUND','학급 코드를 확인해 주세요.');const invite=inviteSnap.data(),classRef=adminDb.collection('classes').doc(invite.classId);const [accountSnap,classSnap]=await Promise.all([tx.get(accountRef),tx.get(classRef)]);if(!accountSnap.exists)throw apiError(404,'PROFILE_NOT_FOUND','먼저 용사를 만들어 주세요.');if(!classSnap.exists)throw apiError(404,'GUILD_NOT_FOUND','길드를 찾지 못했어요.');const account=accountSnap.data(),classLabel=text(classSnap.data().guildName||classSnap.data().classLabel||invite.classLabel,40)||'길드';tx.set(classRef.collection('members').doc(uid),{nickname:account.nickname,learningGrade:account.learningGrade,totalCorrect:safeInt(account.state?.totalQuizCorrect,0,0),masteredCount:Array.isArray(account.state?.masteredWords)?account.state.masteredWords.length:0,stage:safeInt(account.state?.stage,1,1,9999),joinedAt:FieldValue.serverTimestamp(),lastActiveAt:FieldValue.serverTimestamp()},{merge:true});tx.update(accountRef,{classIds:FieldValue.arrayUnion(invite.classId),activeClassId:invite.classId,activeGuildName:classLabel,updatedAt:FieldValue.serverTimestamp()});return {classId:invite.classId,classLabel};});
+  const membership=await adminDb.runTransaction(async tx=>{const inviteSnap=await tx.get(inviteRef);if(!inviteSnap.exists||inviteSnap.data().type!=='student'||isExpired(inviteSnap.data().expiresAt))throw apiError(404,'INVITE_NOT_FOUND','길드 초대 코드를 확인해 주세요.');const invite=inviteSnap.data(),classRef=adminDb.collection('classes').doc(invite.classId);const [accountSnap,classSnap]=await Promise.all([tx.get(accountRef),tx.get(classRef)]);if(!accountSnap.exists)throw apiError(404,'PROFILE_NOT_FOUND','먼저 용사를 만들어 주세요.');if(!classSnap.exists)throw apiError(404,'GUILD_NOT_FOUND','길드를 찾지 못했어요.');const account=accountSnap.data(),classLabel=text(classSnap.data().guildName||classSnap.data().classLabel||invite.classLabel,40)||'길드';tx.set(classRef.collection('members').doc(uid),{nickname:account.nickname,learningGrade:account.learningGrade,totalCorrect:safeInt(account.state?.totalQuizCorrect,0,0),masteredCount:Array.isArray(account.state?.masteredWords)?account.state.masteredWords.length:0,stage:safeInt(account.state?.stage,1,1,9999),joinedAt:FieldValue.serverTimestamp(),lastActiveAt:FieldValue.serverTimestamp()},{merge:true});tx.update(accountRef,{classIds:FieldValue.arrayUnion(invite.classId),activeClassId:invite.classId,activeGuildName:classLabel,updatedAt:FieldValue.serverTimestamp()});return {classId:invite.classId,classLabel};});
   const updated=await accountRef.get();if(updated.exists)await Promise.all([publish(uid,updated.data()),syncWorldBossVisibility(uid,updated.data())]);return membership;
 }
 function legacyIds(c) { const school=text(c.schoolName,120), grade=safeInt(c.grade,0,3,6), room=safeInt(c.classNum,0,1,99), number=safeInt(c.studentNum,0,1,99), name=text(c.name,30);if(!school||!grade||!room||!number||!name)throw apiError(400,'INVALID_LEGACY_INFO','기존 계정 정보를 모두 입력해 주세요.');const suffix=`${grade}_${room}_${number}_${name}`;return [`${school}_${suffix}`,`Unknown_${suffix}`]; }
@@ -291,4 +325,4 @@ async function claimGoogleLink(targetUid, body) {
   return publicAccount(data);
 }
 async function erase(uid) { const snap=await accounts.doc(uid).get();if(!snap.exists)return;await Promise.all((snap.data().classIds||[]).slice(0,100).map(id=>adminDb.collection('classes').doc(id).collection('members').doc(uid).delete()));await Promise.all([accounts.doc(uid).delete(),leaderboard.doc(uid).delete()]); }
-export default async function handler(req,res){try{requireMethod(req,['POST']);const user=await requireUser(req);const body=await readBody(req);let response;if(body.action==='load')response={account:await loadAccount(user.uid)};else if(body.action==='loadAssignedWordPack')response={assignment:await assignedWordPack(user.uid)};else if(body.action==='create')response={account:await create(user.uid,body)};else if(body.action==='save')response={account:await save(user.uid,body)};else if(body.action==='rename')response=await rename(user.uid,body);else if(body.action==='joinClass')response={membership:await joinClass(user.uid,body)};else if(body.action==='loadGuildTrial')response={guild:await loadGuildTrial(user.uid)};else if(body.action==='loadGuildOverview')response={guild:await loadGuildTrial(user.uid),rankings:await guildLeaderboard()};else if(body.action==='guildTrialEvent')response={progress:await guildTrialEvent(user.uid,body)};else if(body.action==='completeGuildTrial')response={completion:await completeGuildTrial(user.uid,body)};else if(body.action==='migrateLegacy')response={account:await migrate(user.uid,body)};else if(body.action==='recoverMigratedLegacy')response={account:await recoverMigratedLegacy(user.uid,body)};else if(body.action==='migrateLegacyGoogle'){if(user.firebase?.sign_in_provider!=='google.com')throw apiError(403,'GOOGLE_REQUIRED','이전에 연결한 Google 계정으로 먼저 로그인해 주세요.');response={account:await migrateGoogleLegacy(user.uid,body)};}else if(body.action==='claimGoogleLink'){if(user.firebase?.sign_in_provider!=='google.com')throw apiError(403,'GOOGLE_REQUIRED','Google 계정으로 본인 확인 후 연결해 주세요.');response={account:await claimGoogleLink(user.uid,body)};}else if(body.action==='delete'){await erase(user.uid);response={deleted:true};}else throw apiError(400,'UNKNOWN_ACTION','알 수 없는 요청입니다.');sendJson(res,200,{ok:true,...response});}catch(error){handleApiError(res,error);}}
+export default async function handler(req,res){try{requireMethod(req,['POST']);const user=await requireUser(req);const body=await readBody(req);let response;if(body.action==='load')response={account:await loadAccount(user.uid)};else if(body.action==='loadAssignedWordPack')response={assignment:await assignedWordPack(user.uid)};else if(body.action==='create')response={account:await create(user.uid,body)};else if(body.action==='save')response={account:await save(user.uid,body)};else if(body.action==='rename')response=await rename(user.uid,body);else if(body.action==='joinClass')response={membership:await joinClass(user.uid,body)};else if(body.action==='loadGuildTrial')response={guild:await loadGuildTrial(user.uid)};else if(body.action==='loadGuildOverview')response={guild:await loadGuildOverview(user.uid),rankings:await guildLeaderboard()};else if(body.action==='guildTrialEvent')response={progress:await guildTrialEvent(user.uid,body)};else if(body.action==='completeGuildTrial')response={completion:await completeGuildTrial(user.uid,body)};else if(body.action==='migrateLegacy')response={account:await migrate(user.uid,body)};else if(body.action==='recoverMigratedLegacy')response={account:await recoverMigratedLegacy(user.uid,body)};else if(body.action==='migrateLegacyGoogle'){if(user.firebase?.sign_in_provider!=='google.com')throw apiError(403,'GOOGLE_REQUIRED','이전에 연결한 Google 계정으로 먼저 로그인해 주세요.');response={account:await migrateGoogleLegacy(user.uid,body)};}else if(body.action==='claimGoogleLink'){if(user.firebase?.sign_in_provider!=='google.com')throw apiError(403,'GOOGLE_REQUIRED','Google 계정으로 본인 확인 후 연결해 주세요.');response={account:await claimGoogleLink(user.uid,body)};}else if(body.action==='delete'){await erase(user.uid);response={deleted:true};}else throw apiError(400,'UNKNOWN_ACTION','알 수 없는 요청입니다.');sendJson(res,200,{ok:true,...response});}catch(error){handleApiError(res,error);}}

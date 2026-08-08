@@ -85,6 +85,36 @@ async function listClasses(uid) {
   }
   return result;
 }
+async function listGuildMembers(uid, body) {
+  const classId = text(body.classId, 128);
+  const classSnap = await ownedClass(uid, classId);
+  const data = classSnap.data();
+  const membersSnap = await classSnap.ref.collection('members')
+    .select('nickname', 'learningGrade', 'stage', 'totalCorrect', 'masteredCount', 'guildCoins', 'lastActiveAt')
+    .limit(200).get();
+  const members = membersSnap.docs.map((member) => {
+    const value = member.data() || {};
+    return {
+      nickname: text(value.nickname, 30) || '이름 없는 용사',
+      learningGrade: safeInt(value.learningGrade, 4, 3, 6),
+      stage: safeInt(value.stage, 1, 1, 9999),
+      totalCorrect: safeInt(value.totalCorrect, 0, 0, 1000000000),
+      masteredCount: safeInt(value.masteredCount, 0, 0, 100000),
+      guildCoins: safeInt(value.guildCoins, 0, 0, 1000000000),
+      lastActiveAt: value.lastActiveAt?.toDate?.().toISOString?.() || null
+    };
+  }).sort((a, b) => b.totalCorrect - a.totalCorrect || b.masteredCount - a.masteredCount || a.nickname.localeCompare(b.nickname));
+  return {
+    guild: {
+      id: classSnap.id,
+      guildName: guildName(data),
+      grade: safeInt(data.grade, 4, 3, 6),
+      wordPackId: classPack(data.grade, data.wordPackId),
+      managerCount: Array.isArray(data.managerIds) ? data.managerIds.length : 0
+    },
+    members
+  };
+}
 async function setWordPack(uid, body) {
   const classId = text(body.classId, 128);
   const wordPackId = text(body.wordPackId, 80);
@@ -225,6 +255,7 @@ export default async function handler(req, res) {
     else if (body.action === 'createGuild' || body.action === 'createClass') response = { classroom: await createGuild(token.uid, body) };
     else if (body.action === 'listClasses') response = { classes: await listClasses(token.uid) };
     else if (body.action === 'listWordPacks') response = { wordPacks: WORD_PACKS };
+    else if (body.action === 'guildMembers') response = { details: await listGuildMembers(token.uid, body) };
     else if (body.action === 'setClassWordPack' || body.action === 'setWordPack') response = { assignment: await setWordPack(token.uid, body) };
     else if (body.action === 'guildWrongWords') response = { analysis: await wrongWordSummary(token.uid, body) };
     else if (body.action === 'createGuildTrial') response = { trial: await createGuildTrial(token.uid, body) };

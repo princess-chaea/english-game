@@ -47,7 +47,7 @@ const wordPackById = new Map((packCatalog.packs || []).map((pack) => [text(pack?
   kind: text(pack.kind, 40)
 }]));
 const defaultWordPack = (grade) => 'grade-' + safeInt(grade, 4, 3, 6) + '-mid';
-const LEARNING_QUESTION_TYPES = new Set(['meaning-choice', 'fill-blank', 'word-choice', 'listen-meaning']);
+const LEARNING_QUESTION_TYPES = new Set(['meaning-choice', 'fill-blank', 'word-choice', 'listen-meaning', 'word-order', 'short-answer']);
 const DEFAULT_QUESTION_TYPES = ['meaning-choice'];
 function normalizeWordPackIds(value, grade = 4) {
   const source = Array.isArray(value) ? value : value ? [value] : [];
@@ -57,7 +57,7 @@ function normalizeWordPackIds(value, grade = 4) {
 function normalizeQuestionTypes(value) {
   const source = Array.isArray(value) ? value : [];
   const types = [...new Set(source.map((item) => text(item, 32)).filter((item) => LEARNING_QUESTION_TYPES.has(item)))];
-  return types.length ? types : [...DEFAULT_QUESTION_TYPES];
+  return ['meaning-choice', ...types.filter((item) => item !== 'meaning-choice')];
 }
 const BLOCKED_GUILD_TERMS = ['admin', 'administrator', 'teacher', 'fuck', 'shit', 'sex', 'porn', '나치', '일베', '섹스', '성기', '자살', '살인', '테러'];
 function normalizeGuildName(value) {
@@ -70,7 +70,7 @@ const guildName = (data) => { try { return normalizeGuildName(data?.guildName ||
 function normalizeGuildSubtitle(value) {
   const subtitle = text(value, 48).replace(/\s+/g, ' ');
   if (!subtitle) return '';
-  if (!/^[가-힣A-Za-z0-9 ()\-]{1,32}$/u.test(subtitle)) throw apiError(400, 'INVALID_GUILD_SUBTITLE', '교사용 부제목은 한글·영문·숫자·공백·괄호·하이픈만 사용해 32자 이내로 입력해 주세요.');
+  if (!/^[가-힣A-Za-z0-9 ()\-]{1,32}$/u.test(subtitle)) throw apiError(400, 'INVALID_GUILD_SUBTITLE', '길드 태그는 한글·영문·숫자·공백·괄호·하이픈만 사용해 32자 이내로 입력해 주세요.');
   return subtitle;
 }
 function safeGuildLogoUrl(value) {
@@ -353,7 +353,7 @@ async function createGuild(uid, body) {
   const teacherSnap = await verifiedTeacher(uid);
   const teacher = teacherSnap.data();
   const name = normalizeGuildName(body.guildName || body.classLabel);
-  const guildSubtitle = normalizeGuildSubtitle(body.guildSubtitle);
+  const guildSubtitle = normalizeGuildSubtitle(body.guildTag ?? body.guildSubtitle);
   const grade = safeInt(body.grade, 0, 3, 6);
   if (name.length < 2 || !grade) throw apiError(400, 'INVALID_GUILD', '길드 이름과 기본 단어 수준을 확인해 주세요.');
   const ref = classes.doc();
@@ -363,10 +363,25 @@ async function createGuild(uid, body) {
   await teachers.doc(uid).set({ classIds: FieldValue.arrayUnion(ref.id), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
   return { id: ref.id, guildName: name, guildSubtitle, guildLogoUrl: null, grade, wordPackId: data.wordPackId, wordPackIds: data.wordPackIds, questionTypes: data.defaultQuestionTypes };
 }
+let teacherGuildRankCache = { expiresAt: 0, ranks: new Map() };
+async function teacherGuildRankMap() {
+  const now = Date.now();
+  if (teacherGuildRankCache.expiresAt > now) return teacherGuildRankCache.ranks;
+  const guildSnaps = await classes.limit(100).get();
+  const rows = await Promise.all(guildSnaps.docs.map(async (guildSnap) => {
+    const members = await guildSnap.ref.collection('members').select('guildPoints').limit(500).get();
+    const guildPoints = members.docs.reduce((sum, member) => sum + safeInt(member.data()?.guildPoints, 0, 0), 0);
+    return { id: guildSnap.id, memberCount: members.size, guildPoints, name: guildName(guildSnap.data()) };
+  }));
+  const ranked = rows.filter((row) => row.memberCount > 0).sort((a, b) => b.guildPoints - a.guildPoints || a.name.localeCompare(b.name));
+  const ranks = new Map(ranked.map((row, index) => [row.id, index + 1]));
+  teacherGuildRankCache = { expiresAt: now + 60_000, ranks };
+  return ranks;
+}
 async function listClasses(uid) {
   const teacher = await teachers.doc(uid).get();
   const ids = (teacher.data()?.classIds || []).slice(0, 100);
-  const snapshots = await Promise.all(ids.map((id) => classes.doc(id).get()));
+  const [snapshots, rankMap] = await Promise.all([Promise.all(ids.map((id) => classes.doc(id).get())), teacherGuildRankMap()]);
   const result = [];
   for (const snap of snapshots) {
     const data = snap.data();
@@ -375,7 +390,7 @@ async function listClasses(uid) {
     let totalCorrect = 0; let guildPoints = 0;
     let activeStudentCount = 0;
     members.docs.forEach((member) => { const correct = safeInt(member.data()?.totalCorrect, 0, 0); const points = safeInt(member.data()?.guildPoints, 0, 0); totalCorrect += correct; guildPoints += points; if (points > 0) activeStudentCount += 1; });
-    result.push({ id: snap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), managerCount: (data.managerIds || []).length, studentCount: members.size, activeStudentCount, totalCorrect, guildPoints, wordPackId: classPack(data.grade, data.wordPackId), wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade), questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes) });
+    result.push({ id: snap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), ownerId: text(data.ownerId, 128), isOwner: data.ownerId === uid, managerCount: (data.managerIds || []).length, studentCount: members.size, activeStudentCount, totalCorrect, guildPoints, guildRank: rankMap.get(snap.id) || null, wordPackId: classPack(data.grade, data.wordPackId), wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade), questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes) });
   }
   return result;
 }
@@ -424,7 +439,9 @@ function wordLearningRows(value) {
       lastSeenAt: safeInt(raw.u, 0, 0, 9999999999999)
     };
   }).filter(Boolean);
-}const ANALYTICS_DAY_MS = 24 * 60 * 60 * 1000;
+}
+
+const ANALYTICS_DAY_MS = 24 * 60 * 60 * 1000;
 function analyticsDayKey(daysAgo = 0) {
   return new Date(Date.now() + 9 * 60 * 60 * 1000 - daysAgo * ANALYTICS_DAY_MS).toISOString().slice(0, 10);
 }
@@ -546,7 +563,15 @@ async function updateGuildAppearance(uid, body) {
     await bucket.file(previousPath).delete({ ignoreNotFound: true }).catch(() => {});
   }
   return { classId, guildLogoUrl };
-}async function setWordPack(uid, body) {
+}
+async function updateGuildTag(uid, body) {
+  const classId = text(body.classId, 128);
+  const classSnap = await ownedClass(uid, classId);
+  const guildSubtitle = normalizeGuildSubtitle(body.guildTag ?? body.guildSubtitle);
+  await classSnap.ref.update({ guildSubtitle, updatedAt: FieldValue.serverTimestamp() });
+  return { classId, guildSubtitle, guildTag: guildSubtitle };
+}
+async function setWordPack(uid, body) {
   const classId = text(body.classId, 128);
   const classSnap = await ownedClass(uid, classId);
   const wordPackIds = normalizeWordPackIds(body.wordPackIds || body.wordPackId, classSnap.data().grade);
@@ -613,9 +638,9 @@ async function guildLearningReport(uid, body) {
   const neverStarted = members.filter((member) => member.totalQuizTries === 0).length;
   const inactive7Days = members.filter((member) => member.totalQuizTries > 0 && (!member.lastActiveAt || now - Date.parse(member.lastActiveAt) > 7 * ANALYTICS_DAY_MS)).length;
   const achievementGroups = {
-    needsSupport: members.filter((member) => member.totalQuizTries >= 10 && member.accuracy < 60).length,
-    developing: members.filter((member) => member.totalQuizTries >= 10 && member.accuracy >= 60 && member.accuracy < 80).length,
-    onTrack: members.filter((member) => member.totalQuizTries >= 10 && member.accuracy >= 80).length
+    needsSupport: members.filter((member) => member.totalQuizTries === 0 || (member.totalQuizTries >= 10 && member.accuracy < 70) || (member.totalQuizTries > 0 && (!member.lastActiveAt || now - Date.parse(member.lastActiveAt) > 7 * ANALYTICS_DAY_MS))).length,
+    developing: members.filter((member) => member.totalQuizTries > 0 && !(member.totalQuizTries >= 10 && member.accuracy >= 90) && !(!member.lastActiveAt || now - Date.parse(member.lastActiveAt) > 7 * ANALYTICS_DAY_MS) && !(member.totalQuizTries >= 10 && member.accuracy < 70)).length,
+    onTrack: members.filter((member) => member.totalQuizTries >= 10 && member.accuracy >= 90 && member.lastActiveAt && now - Date.parse(member.lastActiveAt) <= 7 * ANALYTICS_DAY_MS).length
   };
   const questionPriority = Object.entries(questionTypeStats)
     .map(([type, value]) => ({ type, tries: value.tries, accuracy: value.tries ? Math.round(value.correct / value.tries * 1000) / 10 : null }))
@@ -625,10 +650,10 @@ async function guildLearningReport(uid, body) {
   const enoughEvidence = totalTries >= Math.max(10, members.length * 5);
   const suggestedLevel = !enoughEvidence ? 'mid' : overallAccuracy < 65 ? 'low' : overallAccuracy >= 85 ? 'high' : 'mid';
   const supportMembers = members
-    .filter((member) => member.totalQuizTries === 0 || (member.totalQuizTries >= 10 && member.accuracy < 60) || (member.totalQuizTries > 0 && (!member.lastActiveAt || now - Date.parse(member.lastActiveAt) > 7 * ANALYTICS_DAY_MS)))
+    .filter((member) => member.totalQuizTries === 0 || (member.totalQuizTries >= 10 && member.accuracy < 70) || (member.totalQuizTries > 0 && (!member.lastActiveAt || now - Date.parse(member.lastActiveAt) > 7 * ANALYTICS_DAY_MS)))
     .sort((a, b) => a.accuracy - b.accuracy || a.totalQuizTries - b.totalQuizTries)
     .slice(0, 20)
-    .map((member) => ({ memberId: member.memberId, nickname: member.nickname, accuracy: member.accuracy, totalQuizTries: member.totalQuizTries, lastActiveAt: member.lastActiveAt, reason: member.totalQuizTries === 0 ? '학습 미시작' : member.totalQuizTries >= 10 && member.accuracy < 60 ? '정답률 보강 필요' : '7일 이상 미접속' }));
+    .map((member) => ({ memberId: member.memberId, nickname: member.nickname, accuracy: member.accuracy, totalQuizTries: member.totalQuizTries, lastActiveAt: member.lastActiveAt, reason: member.totalQuizTries === 0 ? '학습 미시작' : member.totalQuizTries >= 10 && member.accuracy < 70 ? '정답률 보강 필요' : '7일 이상 미접속' }));
   return {
     guild: details.guild,
     summary: {
@@ -648,6 +673,7 @@ async function guildLearningReport(uid, body) {
     questionTypeStats,
     dailySeries,
     achievementGroups,
+    achievementCriteria: { support: '학습 미시작, 7일 이상 미접속 또는 10회 이상 응시·정답률 70% 미만', developing: '학습 중이며 지원 필요·안정 기준 사이', stable: '최근 7일 참여, 10회 이상 응시·정답률 90% 이상' },
     recommendations: {
       focusWords: analysis.words.slice(0, 8),
       suggestedQuestionTypes: suggestedQuestionTypes.length ? suggestedQuestionTypes : ['meaning-choice'],
@@ -701,7 +727,7 @@ async function memberLearningReport(uid, body) {
     trialAttempts: safeInt(member.trialAttempts, 0, 0),
     trialRetries: safeInt(member.trialRetries, 0, 0),
     trialHintsUsed: safeInt(member.trialHintsUsed, 0, 0),
-    dailySeries: dailySeriesForMembers([{ dailyLearning: safeDailyLearning(member.dailyLearning) }], 14),
+    dailySeries: dailySeriesForMembers([{ dailyLearning: safeDailyLearning(member.dailyLearning) }], 120),
     assignedWordPackIds: normalizeWordPackIds(member.assignedWordPackIds || classSnap.data().wordPackIds || classSnap.data().wordPackId, member.learningGrade || classSnap.data().grade),
     questionTypes: normalizeQuestionTypes(member.questionTypes || classSnap.data().defaultQuestionTypes),
     questionTypeStats: safeQuestionTypeStats(state.questionTypeStats || member.questionTypeStats),
@@ -903,7 +929,56 @@ async function removeGuildManager(uid, body) {
   batch.set(teachers.doc(targetUid), { classIds: FieldValue.arrayRemove(classId), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
   await batch.commit();
   return { classId, targetUid, removed: true };
-}async function invite(uid, body) {
+}
+async function transferGuildOwnership(uid, body) {
+  const classId = text(body.classId, 128);
+  const targetUid = text(body.targetUid, 128);
+  if (!targetUid || targetUid === uid) throw apiError(400, 'INVALID_GUILD_MASTER', '위임할 공동 관리자를 선택해 주세요.');
+  const classRef = classes.doc(classId);
+  await adminDb.runTransaction(async (transaction) => {
+    const classSnap = await transaction.get(classRef);
+    if (!classSnap.exists || classSnap.data()?.ownerId !== uid) throw apiError(403, 'GUILD_OWNER_REQUIRED', '길드 마스터만 마스터 권한을 위임할 수 있어요.');
+    const data = classSnap.data();
+    if (!(data.managerIds || []).includes(targetUid)) throw apiError(404, 'MANAGER_NOT_FOUND', '위임할 공동 관리자를 찾지 못했어요.');
+    const targetTeacher = await transaction.get(teachers.doc(targetUid));
+    if (!targetTeacher.exists || targetTeacher.data()?.verificationStatus !== 'verified' || targetTeacher.data()?.schoolKey !== data.schoolKey) throw apiError(409, 'GUILD_MASTER_NOT_ELIGIBLE', '같은 학교의 인증된 공동 관리자에게만 위임할 수 있어요.');
+    transaction.update(classRef, { ownerId: targetUid, managerIds: FieldValue.arrayUnion(uid, targetUid), updatedAt: FieldValue.serverTimestamp() });
+  });
+  teacherGuildRankCache.expiresAt = 0;
+  return { classId, previousOwnerUid: uid, ownerId: targetUid, transferred: true };
+}
+async function deleteGuild(uid, body) {
+  const classId = text(body.classId, 128);
+  const classRef = classes.doc(classId);
+  const classSnap = await classRef.get();
+  if (!classSnap.exists || classSnap.data()?.ownerId !== uid) throw apiError(403, 'GUILD_OWNER_REQUIRED', '길드 마스터만 길드를 폐쇄할 수 있어요.');
+  const data = classSnap.data();
+  const name = guildName(data);
+  if (text(body.confirmGuildName, 40) !== name) throw apiError(400, 'GUILD_NAME_CONFIRMATION_REQUIRED', '폐쇄할 길드 이름을 정확히 입력해 주세요.');
+  const members = await classRef.collection('members').get();
+  const accountSnaps = members.size ? await adminDb.getAll(...members.docs.map((member) => accounts.doc(member.id))) : [];
+  const managerIds = [...new Set((data.managerIds || []).map((id) => text(id, 128)).filter(Boolean))];
+  const accountById = new Map(accountSnaps.map((snap) => [snap.id, snap.data() || {}]));
+  const writes = [];
+  members.docs.forEach((member) => {
+    const accountRef = accounts.doc(member.id);
+    const update = { classIds: FieldValue.arrayRemove(classId), updatedAt: FieldValue.serverTimestamp() };
+    if (accountById.get(member.id)?.activeClassId === classId) Object.assign(update, { activeClassId: FieldValue.delete(), activeGuildName: FieldValue.delete(), activeGuildLogoUrl: FieldValue.delete() });
+    writes.push({ ref: accountRef, update });
+  });
+  managerIds.forEach((managerId) => writes.push({ ref: teachers.doc(managerId), update: { classIds: FieldValue.arrayRemove(classId), updatedAt: FieldValue.serverTimestamp() } }));
+  for (let offset = 0; offset < writes.length; offset += 400) {
+    const batch = adminDb.batch();
+    writes.slice(offset, offset + 400).forEach((write) => batch.set(write.ref, write.update, { merge: true }));
+    await batch.commit();
+  }
+  await adminDb.recursiveDelete(classRef);
+  const logoPath = text(data.guildLogoPath, 500);
+  if (logoPath) await adminStorage.bucket().file(logoPath).delete({ ignoreNotFound: true }).catch(() => {});
+  teacherGuildRankCache.expiresAt = 0;
+  return { classId, guildName: name, deleted: true, removedMembers: members.size };
+}
+async function invite(uid, body) {
   const classId = text(body.classId, 128);
   const type = body.type === 'manager' ? 'manager' : body.type === 'student' ? 'student' : '';
   if (!type) throw apiError(400, 'INVALID_INVITE_TYPE', '초대 코드 종류를 확인해 주세요.');
@@ -1020,18 +1095,21 @@ export default async function handler(req, res) {
     else if (body.action === 'reviewSchoolGuildJoin') response = { review: await reviewSchoolGuildJoin(token.uid, body) };
     else if (body.action === 'createGuild' || body.action === 'createClass') response = { classroom: await createGuild(token.uid, body) };
     else if (body.action === 'listClasses') response = { classes: await listClasses(token.uid) };
-    else if (body.action === 'listWordPacks') response = { wordPacks: WORD_PACKS, questionTypes: [{ id: 'meaning-choice', label: '뜻 찾기 (4지선다)', default: true }, { id: 'fill-blank', label: '빈칸 넣기' }, { id: 'word-choice', label: '영어 단어 찾기 (4지선다)' }, { id: 'listen-meaning', label: '발음 듣고 뜻 찾기' }] };
+    else if (body.action === 'listWordPacks') response = { wordPacks: WORD_PACKS, questionTypes: [{ id: 'meaning-choice', label: '뜻 찾기 (4지선다)', default: true }, { id: 'fill-blank', label: '빈칸 넣기' }, { id: 'word-choice', label: '영어 단어 찾기 (4지선다)' }, { id: 'listen-meaning', label: '발음 듣고 뜻 찾기' }, { id: 'word-order', label: '철자 순서 맞추기' }, { id: 'short-answer', label: '영어 단답식' }] };
     else if (body.action === 'wordPackPreview') response = { wordPack: await wordPackPreview(body) };
     else if (body.action === 'guildMembers') response = { details: await listGuildMembers(token.uid, body) };
     else if (body.action === 'guildReport') response = { report: await guildLearningReport(token.uid, body) };
     else if (body.action === 'memberReport') response = { report: await memberLearningReport(token.uid, body) };
     else if (body.action === 'updateMemberLearningSettings') response = { assignment: await updateMemberLearningSettings(token.uid, body) };
     else if (body.action === 'updateGuildAppearance') response = { appearance: await updateGuildAppearance(token.uid, body) };
+    else if (body.action === 'updateGuildTag') response = { guild: await updateGuildTag(token.uid, body) };
     else if (body.action === 'setClassWordPack' || body.action === 'setWordPack') response = { assignment: await setWordPack(token.uid, body) };
     else if (body.action === 'guildWrongWords') response = { analysis: await wrongWordSummary(token.uid, body) };
     else if (body.action === 'createGuildTrial') response = { trial: await createGuildTrial(token.uid, body) };
     else if (body.action === 'listGuildManagers') response = { management: await listGuildManagers(token.uid, body) };
     else if (body.action === 'removeGuildManager') response = { management: await removeGuildManager(token.uid, body) };
+    else if (body.action === 'transferGuildOwnership') response = { management: await transferGuildOwnership(token.uid, body) };
+    else if (body.action === 'deleteGuild') response = { deletion: await deleteGuild(token.uid, body) };
     else if (body.action === 'createInvite') response = { invite: await invite(token.uid, body) };
     else if (body.action === 'joinAsManager') response = { membership: await joinManager(token.uid, body) };
     else if (body.action === 'deleteTeacherAccount') response = { deletion: await deleteTeacherAccount(token.uid) };

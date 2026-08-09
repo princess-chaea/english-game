@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { adminAuth, adminDb, FieldValue } from './_firebase-admin.js';
 import { apiError, handleApiError, hash, isExpired, normalizeNickname, readBody, requireMethod, requireUser, safeInt, sendJson, text } from './_http.js';
 
@@ -9,7 +10,9 @@ const legacyUsers = adminDb.collection('users');
 const REVIEW_PACK_ID = 'elementary-800-missing-review';
 const TIER_WORD_PACK_IDS = [3,4,5,6].flatMap((grade) => ['low','mid','high'].map((level) => 'grade-' + grade + '-' + level));
 const ASSIGNABLE_WORD_PACK_IDS = new Set(['grade-3-current','grade-4-current','grade-5-current','grade-6-current','curriculum-2022-grade-3','curriculum-2022-grade-4','curriculum-2022-grade-5','curriculum-2022-grade-6',...TIER_WORD_PACK_IDS,REVIEW_PACK_ID]);
-const LEARNING_QUESTION_TYPES = new Set(['meaning-choice','fill-blank','word-choice','listen-meaning']);
+const LEARNING_QUESTION_TYPES = new Set(['meaning-choice','fill-blank','word-choice','listen-meaning','word-order','short-answer']);
+const STUDENT_WORD_PACKS = JSON.parse(readFileSync(new URL('../data/word-packs.json', import.meta.url), 'utf8')).packs || [];
+const STUDENT_WORD_PACK_BY_ID = new Map(STUDENT_WORD_PACKS.map((pack) => [pack.id, pack]));
 const safeGuildLogoUrl = (value) => { const url=text(value,1200);return /^https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/[A-Za-z0-9._-]+\/o\//.test(url)?url:null; };
 const defaultWordPack = (grade) => 'grade-' + grade + '-mid';
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -28,7 +31,7 @@ function safeDailyLearning(value) {
       }]);
     });
   }
-  return Object.fromEntries(rows.sort(([a], [b]) => a.localeCompare(b)).slice(-35));
+  return Object.fromEntries(rows.sort(([a], [b]) => a.localeCompare(b)).slice(-120));
 }
 function safeWrongWordCounts(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
@@ -70,7 +73,8 @@ function wordMasterySummary(value, conqueredFallback = 0) {
   });
   return { stats, masteredCount, conqueredCount: safeInt(conqueredFallback, 0, 0, 100000) };
 }function normalizedPackIds(value, grade) { const source=Array.isArray(value)?value:(value?[value]:[]);const ids=[...new Set(source.map((item)=>text(item,80)).filter((id)=>ASSIGNABLE_WORD_PACK_IDS.has(id)))].slice(0,12);return ids.length?ids:[defaultWordPack(grade)]; }
-function normalizedQuestionTypes(value) { const types=[...new Set((Array.isArray(value)?value:[]).map((item)=>text(item,32)).filter((item)=>LEARNING_QUESTION_TYPES.has(item)))];return types.length?types:['meaning-choice']; }
+function normalizedQuestionTypes(value) { const types=[...new Set((Array.isArray(value)?value:[]).map((item)=>text(item,32)).filter((item)=>LEARNING_QUESTION_TYPES.has(item)))];return ['meaning-choice',...types.filter((item)=>item!=='meaning-choice')]; }
+function assignedPackMetadata(ids) { return (ids || []).map((id) => STUDENT_WORD_PACK_BY_ID.get(id)).filter(Boolean).map((pack) => ({ id: pack.id, label: text(pack.label, 120) || pack.id, wordCount: safeInt(pack.wordCount, Array.isArray(pack.words) ? pack.words.length : 0, 0, 5000) })); }
 function safeQuestionTypeStats(value) { const result={};LEARNING_QUESTION_TYPES.forEach((type)=>{const row=value&&typeof value==='object'&&!Array.isArray(value)?value[type]:null;result[type]={tries:safeInt(row?.tries,0,0,1000000000),correct:safeInt(row?.correct,0,0,1000000000)};});return result; }
 function classPack(grade, wordPackId) { return ASSIGNABLE_WORD_PACK_IDS.has(wordPackId) ? wordPackId : defaultWordPack(grade); }
 const fields = new Set(['avatarType','gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petType','petLvl','petLevels','stage','progress','totalQuizTries','totalQuizCorrect','masteredWords','currentQuizIndex','skillsInventory','equippedSkills','activeSkillDeck','skillEssence','lockedPotentialSlots','wrongWordCounts','wordLearningStats','questionTypeStats','combatPower','masteryPoints','necklaceLvl','braceletLvl','ringLvl','acquiredRelics','equippedRelicId','gearPotentials','isPotentialUnlocked','equippedTitle','wbTitle','unlockedTitles','bossTokens','relicEssence','soundSettings','tutorialCompleted','lastSaved']);
@@ -124,10 +128,10 @@ async function assignedWordPack(uid) {
     const grade = safeInt(member.learningGrade, safeInt(classroom.grade, account.learningGrade, 3, 6), 3, 6);
     const wordPackIds = normalizedPackIds(member.assignedWordPackIds || classroom.wordPackIds || classroom.wordPackId, grade);
     const questionTypes = normalizedQuestionTypes(member.questionTypes || classroom.defaultQuestionTypes);
-    return { classId, classLabel: classroom.guildName || classroom.classLabel || '길드', guildLogoUrl: safeGuildLogoUrl(classroom.guildLogoUrl), wordPackId: wordPackIds[0], wordPackIds, questionTypes };
+    return { classId, classLabel: classroom.guildName || classroom.classLabel || '길드', guildLogoUrl: safeGuildLogoUrl(classroom.guildLogoUrl), wordPackId: wordPackIds[0], wordPackIds, wordPacks: assignedPackMetadata(wordPackIds), questionTypes };
   }
   return { wordPackId: null, wordPackIds: [], questionTypes: ['meaning-choice'], guildLogoUrl: null };
-}function normalizedTrialAnswer(value) { return text(value, 160).normalize('NFKC').trim().toLowerCase().replace(/[.!?,'’\-]/g, '').replace(/\s+/g, ' '); }
+}function normalizedTrialAnswer(value) { return text(value, 160).normalize('NFKC').trim().toLowerCase().replace(/[^a-z0-9가-힣]/g, ''); }
 async function loadGuildTrial(uid) {
   const assignment = await assignedWordPack(uid);
   if (!assignment.classId) return { guildName: null, wordPackId: null, guildCoins: 0, trial: null };
@@ -205,6 +209,10 @@ async function loadGuildOverview(uid) {
     guildConqueredCount: members.reduce((sum, member) => sum + member.conqueredCount, 0),
     guildMasteredCount: members.reduce((sum, member) => sum + member.masteredCount, 0),
     guildPoints: members.reduce((sum, member) => sum + member.guildPoints, 0),
+    wordPackId: assignment.wordPackId,
+    wordPackIds: assignment.wordPackIds,
+    assignedWordPacks: assignment.wordPacks || [],
+    questionTypes: assignment.questionTypes,
     members
   };
 }
@@ -290,7 +298,7 @@ async function syncGuildMemberProgress(uid, data) {
         stageClears: currentDay.stageClears + stageGain
       };
       const prunedDailyLearning = Object.fromEntries(Object.entries(dailyLearning)
-        .filter(([key]) => Date.parse(`${key}T00:00:00+09:00`) >= Date.now() - 35 * DAY_MS)
+        .filter(([key]) => Date.parse(`${key}T00:00:00+09:00`) >= Date.now() - 120 * DAY_MS)
         .sort(([a], [b]) => a.localeCompare(b)));
       const conqueredCount = Array.isArray(state.masteredWords) ? state.masteredWords.length : 0;
       const mastery = wordMasterySummary(state.wordLearningStats, conqueredCount);
@@ -320,6 +328,20 @@ async function syncGuildMemberProgress(uid, data) {
   }));
 }
 let guildRankCache = { expiresAt: 0, rows: [] };
+async function guildWordPackPreview(uid, body) {
+  const assignment = await assignedWordPack(uid);
+  if (!assignment.classId) throw apiError(404, 'GUILD_NOT_JOINED', '가입한 길드를 찾지 못했어요.');
+  const wordPackId = text(body.wordPackId, 80);
+  if (!assignment.wordPackIds.includes(wordPackId)) throw apiError(403, 'WORD_PACK_NOT_ASSIGNED', '현재 배정된 단어팩만 확인할 수 있어요.');
+  const pack = STUDENT_WORD_PACK_BY_ID.get(wordPackId);
+  if (!pack) throw apiError(404, 'WORD_PACK_NOT_FOUND', '단어팩을 찾지 못했어요.');
+  return {
+    id: pack.id,
+    label: text(pack.label, 120) || pack.id,
+    wordCount: safeInt(pack.wordCount, Array.isArray(pack.words) ? pack.words.length : 0, 0, 5000),
+    words: (Array.isArray(pack.words) ? pack.words : []).slice(0, 500).map((entry) => ({ word: text(entry?.word, 80), meaning: text(entry?.meaning, 160) })).filter((entry) => entry.word && entry.meaning)
+  };
+}
 async function guildLeaderboard() {
   if (guildRankCache.expiresAt > Date.now()) return guildRankCache.rows;
   const classSnaps = await classes.limit(50).get();
@@ -424,6 +446,18 @@ async function rename(uid, body) {
   const data=await adminDb.runTransaction(async tx=>{const snap=await tx.get(ref);if(!snap.exists)throw apiError(404,'PROFILE_NOT_FOUND','먼저 용사를 만들어 주세요.');const current=snap.data();const first=!current.freeNicknameChangeUsed;const cost=first?0:500;const state={...defaultState(),...(current.state||{})};if(safeInt(state.masteryPoints,0,0)<cost)throw apiError(409,'NOT_ENOUGH_FP',`${cost} FP가 있어야 닉네임을 변경할 수 있어요.`);state.masteryPoints-=cost;const update={nickname,state,freeNicknameChangeUsed:true,renameCount:safeInt(current.renameCount,0,0)+1,updatedAt:FieldValue.serverTimestamp()};tx.update(ref,update);return {...current,...update};});
   await Promise.all((data.classIds||[]).slice(0,100).map(id=>adminDb.collection('classes').doc(id).collection('members').doc(uid).set({nickname:data.nickname},{merge:true})));
   await Promise.all([publish(uid,data),syncWorldBossVisibility(uid,data)]);return {account:publicAccount(data),cost:data.renameCount===1?0:500};
+}
+async function previewGuildInvite(uid, body) {
+  const code=text(body.code,32).toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(code.length<6)throw apiError(400,'INVALID_INVITE','길드 초대 코드를 확인해 주세요.');
+  const inviteSnap=await invites.doc(hash(code)).get();
+  if(!inviteSnap.exists||inviteSnap.data().type!=='student'||isExpired(inviteSnap.data().expiresAt))throw apiError(404,'INVITE_NOT_FOUND','길드 초대 코드를 확인해 주세요.');
+  const invite=inviteSnap.data(),classSnap=await classes.doc(invite.classId).get();
+  if(!classSnap.exists)throw apiError(404,'GUILD_NOT_FOUND','길드를 찾지 못했어요.');
+  const classroom=classSnap.data()||{},configuredCode=text(classroom.inviteCodes?.student?.code,32).toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(configuredCode&&configuredCode!==code)throw apiError(404,'INVITE_REPLACED','이전 초대 정보예요. 선생님에게 새 코드·QR·링크를 받아 주세요.');
+  const [memberSnap,countSnap]=await Promise.all([classSnap.ref.collection('members').doc(uid).get(),classSnap.ref.collection('members').count().get()]);
+  return {classId:classSnap.id,classLabel:text(classroom.guildName||classroom.classLabel||invite.classLabel,40)||'길드',guildLogoUrl:safeGuildLogoUrl(classroom.guildLogoUrl),memberCount:safeInt(countSnap.data()?.count,0,0,100000),alreadyMember:memberSnap.exists};
 }
 async function joinClass(uid, body) {
   const code=text(body.code,32).toUpperCase().replace(/[^A-Z0-9]/g,'');if(code.length<6)throw apiError(400,'INVALID_INVITE','길드 초대 코드를 확인해 주세요.');
@@ -566,4 +600,4 @@ async function erase(uid) {
     if (error?.code !== 'auth/user-not-found') throw error;
   }
 }
-export default async function handler(req,res){try{requireMethod(req,['POST']);const user=await requireUser(req);const body=await readBody(req);let response;if(body.action==='load')response={account:await loadAccount(user.uid)};else if(body.action==='loadAssignedWordPack')response={assignment:await assignedWordPack(user.uid)};else if(body.action==='create')response={account:await create(user.uid,body)};else if(body.action==='save')response={account:await save(user.uid,body)};else if(body.action==='rename')response=await rename(user.uid,body);else if(body.action==='joinClass')response={membership:await joinClass(user.uid,body)};else if(body.action==='leaveClass')response={account:await leaveClass(user.uid)};else if(body.action==='loadGuildTrial')response={guild:await loadGuildTrial(user.uid)};else if(body.action==='loadGuildOverview')response={guild:await loadGuildOverview(user.uid),rankings:await guildLeaderboard()};else if(body.action==='guildTrialEvent')response={progress:await guildTrialEvent(user.uid,body)};else if(body.action==='completeGuildTrial')response={completion:await completeGuildTrial(user.uid,body)};else if(body.action==='migrateLegacy')response={account:await migrate(user.uid,body)};else if(body.action==='recoverMigratedLegacy')response={account:await recoverMigratedLegacy(user.uid,body)};else if(body.action==='migrateLegacyGoogle'){if(user.firebase?.sign_in_provider!=='google.com')throw apiError(403,'GOOGLE_REQUIRED','이전에 연결한 Google 계정으로 먼저 로그인해 주세요.');response={account:await migrateGoogleLegacy(user.uid,body)};}else if(body.action==='claimGoogleLink'){if(user.firebase?.sign_in_provider!=='google.com')throw apiError(403,'GOOGLE_REQUIRED','Google 계정으로 본인 확인 후 연결해 주세요.');response={account:await claimGoogleLink(user.uid,body)};}else if(body.action==='delete'){await erase(user.uid);response={deleted:true};}else throw apiError(400,'UNKNOWN_ACTION','알 수 없는 요청입니다.');sendJson(res,200,{ok:true,...response});}catch(error){handleApiError(res,error);}}
+export default async function handler(req,res){try{requireMethod(req,['POST']);const user=await requireUser(req);const body=await readBody(req);let response;if(body.action==='load')response={account:await loadAccount(user.uid)};else if(body.action==='loadAssignedWordPack')response={assignment:await assignedWordPack(user.uid)};else if(body.action==='create')response={account:await create(user.uid,body)};else if(body.action==='save')response={account:await save(user.uid,body)};else if(body.action==='rename')response=await rename(user.uid,body);else if(body.action==='previewGuildInvite')response={guild:await previewGuildInvite(user.uid,body)};else if(body.action==='joinClass')response={membership:await joinClass(user.uid,body)};else if(body.action==='leaveClass')response={account:await leaveClass(user.uid)};else if(body.action==='loadGuildTrial')response={guild:await loadGuildTrial(user.uid)};else if(body.action==='loadGuildOverview')response={guild:await loadGuildOverview(user.uid),rankings:await guildLeaderboard()};else if(body.action==='guildWordPackPreview')response={wordPack:await guildWordPackPreview(user.uid,body)};else if(body.action==='guildTrialEvent')response={progress:await guildTrialEvent(user.uid,body)};else if(body.action==='completeGuildTrial')response={completion:await completeGuildTrial(user.uid,body)};else if(body.action==='migrateLegacy')response={account:await migrate(user.uid,body)};else if(body.action==='recoverMigratedLegacy')response={account:await recoverMigratedLegacy(user.uid,body)};else if(body.action==='migrateLegacyGoogle'){if(user.firebase?.sign_in_provider!=='google.com')throw apiError(403,'GOOGLE_REQUIRED','이전에 연결한 Google 계정으로 먼저 로그인해 주세요.');response={account:await migrateGoogleLegacy(user.uid,body)};}else if(body.action==='claimGoogleLink'){if(user.firebase?.sign_in_provider!=='google.com')throw apiError(403,'GOOGLE_REQUIRED','Google 계정으로 본인 확인 후 연결해 주세요.');response={account:await claimGoogleLink(user.uid,body)};}else if(body.action==='delete'){await erase(user.uid);response={deleted:true};}else throw apiError(400,'UNKNOWN_ACTION','알 수 없는 요청입니다.');sendJson(res,200,{ok:true,...response});}catch(error){handleApiError(res,error);}}

@@ -848,7 +848,6 @@
                 <!-- User Status Info -->
                 <div id="userInfoDisplay"
                     class="hidden bg-[#1a1a1a] border border-[#3c3c3c] px-4 py-1.5 rounded-none-forced text-xs font-bold flex items-center gap-1.5 text-[#e6e6e6] tracking-wider uppercase">
-                    <i data-lucide="user" class="w-4 h-4 text-white"></i>
                     <span id="displayStudentName">불러오는 중...</span>
                 </div>
                 <!-- ⚙️ 환경 설정 버튼 -->
@@ -1130,7 +1129,7 @@
                 </div>
 
                 <!-- Multiple Choice Response Grid (2x2 Grid Layout) -->
-                <div class="grid grid-cols-2 gap-2 mb-4">
+                <div id="quizChoiceGrid" class="grid grid-cols-2 gap-2 mb-4">
                     <button onclick="evaluateAnswer(0)"
                         class="choice-btn p-3 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group">
                         <span class="choice-text text-sm">선택지 1</span>
@@ -2768,7 +2767,7 @@
                         <div id="criticalDefenseTimerBar" class="h-full bg-red-500 w-full" style="transition: width 0.1s linear;"></div>
                     </div>
                     <p id="criticalDefenseTimeText" class="text-xs text-red-400 font-bold tracking-widest uppercase text-left">제한시간: 30초</p>
-                    <input type="text" id="criticalDefenseInput" class="bmw-input w-full text-center text-xl  bg-black border-red-500/50 focus:border-red-500 text-white placeholder-[#3c3c3c]" placeholder="영어 단어 입력" style="ime-mode: inactive;" oninput="if(this.value.length > 0){ this.value = this.value.charAt(0).toUpperCase() + this.value.slice(1).toLowerCase(); }" onkeydown="if(event.key === 'Enter' && !event.isComposing) submitCriticalDefense()">
+                    <input type="text" id="criticalDefenseInput" class="bmw-input w-full text-center text-xl  bg-black border-red-500/50 focus:border-red-500 text-white placeholder-[#3c3c3c]" placeholder="영어 단어 입력" style="ime-mode: inactive;" oninput="formatVocaEnglishInput(this)" onkeydown="if(event.key === 'Enter' && !event.isComposing) submitCriticalDefense()">
                     <p id="criticalDefenseError" class="text-xs text-red-500 font-bold hidden"></p>
                 </div>
             </div>
@@ -2856,7 +2855,7 @@
 
                     <div id="offlineFIBArea" class="hidden" style="margin-bottom:12px;">
                         <div style="display:flex; gap:8px;">
-                            <input id="offlineFIBInput" type="text" placeholder="spell it out..."
+                            <input id="offlineFIBInput" type="text" placeholder="영어 단어 입력" autocomplete="off" autocapitalize="sentences" spellcheck="false" oninput="formatVocaEnglishInput(this)"
                                 style="flex:1; padding:10px 12px; font-size:14px;  font-weight:700; background:rgba(0,0,0,0.5); color:#e9d5ff; border:1px solid rgba(124,58,237,0.6); border-radius:4px; outline:none;"
                                 onkeydown="if(event.key==='Enter' && !event.isComposing) offlineAnswerFIB()" />
                             <button onclick="offlineAnswerFIB()" style="padding:10px 16px; font-size:13px; font-weight:900; background:linear-gradient(90deg,#6d28d9,#7c3aed); color:#fff; border:none; border-radius:4px; cursor:pointer;">확인</button>
@@ -2906,9 +2905,9 @@
                     padding: 0;">
 
             <!-- 상단 황금 배너 -->
-            <div style="background: linear-gradient(90deg, #92400e, #d97706, #fbbf24, #d97706, #92400e);
-                        padding: 10px 24px; letter-spacing: 0.25em; font-size: 11px; font-weight: 900; color: #000; ">
-                ★ 월드보스 격퇴 완료 ★ &nbsp;·&nbsp; 전 학년 연합 토벌 달성
+            <div id="wbModalBanner" style="background: linear-gradient(90deg, #92400e, #d97706, #fbbf24, #d97706, #92400e);
+                        padding: 10px 24px; letter-spacing: 0.12em; font-size: 11px; font-weight: 900; color: #000; ">
+                월드보스 주간 결산 · 전 학년 연합 레이드
             </div>
 
             <div style="padding: 28px 32px 24px;">
@@ -2921,7 +2920,7 @@
                                 box-shadow: 0 0 30px #fbbf24, 0 0 60px rgba(251,191,36,0.4);
                                 display:flex;align-items:center;justify-content:center;
                                 animation: wbCrownPulse 2s ease-in-out infinite;">
-                        <span style="font-size:52px;filter:drop-shadow(0 0 12px #fff);"></span>
+                        <span style="font-size:52px;filter:drop-shadow(0 0 12px #fff);">🏆</span>
                     </div>
                 </div>
 
@@ -2931,7 +2930,7 @@
                             margin-bottom:6px;">
                     🎉 월드보스 격퇴 성공!
                 </h2>
-                <p style="color:#d1d5db;font-size:13px;margin-bottom:22px;">
+                <p id="wbModalDescription" style="color:#d1d5db;font-size:13px;margin-bottom:22px;">
                     전 학년 용사들의 위대한 연합으로 보스를 완벽히 정복했습니다!
                 </p>
 
@@ -2947,8 +2946,12 @@
                         <span id="wbModalMyDamage" style="color:#fbbf24;font-size:14px;font-weight:900;">0 HP</span>
                     </div>
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-                        <span style="color:#9ca3af;font-size:12px;font-weight:700;">내 기여 지분율</span>
+                        <span style="color:#9ca3af;font-size:12px;font-weight:700;">전 학년 전체 피해 중 내 기여율</span>
                         <span id="wbModalMyShare" style="color:#f472b6;font-size:14px;font-weight:900;">0.00%</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                        <span style="color:#9ca3af;font-size:12px;font-weight:700;">내 기여 순위</span>
+                        <span id="wbModalMyRank" style="color:#7dd3fc;font-size:14px;font-weight:900;">-</span>
                     </div>
                     <!-- 보상 하이라이트 -->
                     <div style="background:linear-gradient(90deg,rgba(251,191,36,0.15),rgba(251,191,36,0.05));
@@ -2970,7 +2973,7 @@
                                transition: all 0.2s ease;"
                         onmouseover="this.style.boxShadow='0 0 40px rgba(251,191,36,0.9)'"
                         onmouseout="this.style.boxShadow='0 0 20px rgba(251,191,36,0.6)'">
-                    ✨ 보상 영접 완료! 전설이 되다
+                    ✨ 주간 결산 보상 확인
                 </button>
             </div>
         </div>
@@ -3054,7 +3057,7 @@
         }
     </style>
 
-    <script src="js/config.js?v=20260809-29"></script><script src="js/main.js?v=20260809-30"></script><script src="js/secure-account.js?v=20260809-30"></script>
+    <script src="js/config.js?v=20260809-29"></script><script src="js/main.js?v=20260810-1"></script><script src="js/secure-account.js?v=20260810-2"></script>
 
     <!-- Damage Overlay (Scratch & Flash) -->
     <div id="damageOverlay" class="fixed inset-0 pointer-events-none hidden z-[100] flex-col items-center justify-center bg-red-900/60 transition-opacity duration-300">

@@ -67,6 +67,8 @@ async function claimWeeklyReward(uid) {
   const ref = bossRef(week);
   const contributionRef = ref.collection('contributions').doc(uid);
   const claimRef = ref.collection('rewardClaims').doc(uid);
+  const existingClaim = await claimRef.get();
+  if (existingClaim.exists) return { week, participated: true, alreadyClaimed: true, rewardFp: 0, gotTitle: false };
   const [bossSnap, contributionSnap, winnerSnap] = await Promise.all([
     ref.get(),
     contributionRef.get(),
@@ -80,6 +82,15 @@ async function claimWeeklyReward(uid) {
   const myDamage = safeInt(contributionSnap.data()?.damage, 0, 0);
   if (!myDamage) return { week, participated: false, alreadyClaimed: false, rewardFp: 0, gotTitle: false };
   const rewardFp = Math.max(0, Math.round(1000000 * Math.min(1, myDamage / maxHp) * (defeated ? 1 : 0.5)));
+  const contributionQuery = ref.collection('contributions');
+  const [participantAggregate, higherDamageAggregate] = await Promise.all([
+    contributionQuery.count().get(),
+    contributionQuery.where('damage', '>', myDamage).count().get()
+  ]);
+  const participantCount = safeInt(participantAggregate.data()?.count, 0, 0);
+  const myRank = safeInt(higherDamageAggregate.data()?.count, 0, 0) + 1;
+  const teamContributionRate = totalDamage > 0 ? myDamage / totalDamage : 0;
+  const rewardContributionRate = Math.min(1, myDamage / maxHp);
   const gotTitle = defeated && winnerSnap.docs[0]?.id === uid;
   const result = await adminDb.runTransaction(async (tx) => {
     const [claimSnap, accountSnap] = await Promise.all([tx.get(claimRef), tx.get(accounts.doc(uid))]);
@@ -91,7 +102,21 @@ async function claimWeeklyReward(uid) {
     tx.update(accounts.doc(uid), accountUpdate);
     return { alreadyClaimed: false };
   });
-  return { week, participated: true, defeated, alreadyClaimed: result.alreadyClaimed, rewardFp: result.alreadyClaimed ? 0 : rewardFp, gotTitle: result.alreadyClaimed ? false : gotTitle };
+  return {
+    week,
+    participated: true,
+    defeated,
+    alreadyClaimed: result.alreadyClaimed,
+    rewardFp: result.alreadyClaimed ? 0 : rewardFp,
+    gotTitle: result.alreadyClaimed ? false : gotTitle,
+    myDamage,
+    totalDamage,
+    maxHp,
+    myRank,
+    participantCount,
+    teamContributionRate,
+    rewardContributionRate
+  };
 }
 async function start(uid) {
   const week = currentWeek();

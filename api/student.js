@@ -134,21 +134,22 @@ async function assignedWordPack(uid) {
 }function normalizedTrialAnswer(value) { return text(value, 160).normalize('NFKC').trim().toLowerCase().replace(/[^a-z0-9가-힣]/g, ''); }
 async function loadGuildTrial(uid) {
   const assignment = await assignedWordPack(uid);
-  if (!assignment.classId) return { guildName: null, wordPackId: null, guildCoins: 0, trial: null };
+  if (!assignment.classId) return { guildName: null, guildLogoUrl: null, wordPackId: null, guildCoins: 0, trial: null };
   const classRef = adminDb.collection('classes').doc(assignment.classId);
   const memberRef = classRef.collection('members').doc(uid);
   const [classSnap, memberSnap] = await Promise.all([classRef.get(), memberRef.get()]);
-  if (!classSnap.exists || !memberSnap.exists) return { guildName: assignment.classLabel || null, wordPackId: assignment.wordPackId || null, guildCoins: 0, trial: null };
+  if (!classSnap.exists || !memberSnap.exists) return { guildName: assignment.classLabel || null, guildLogoUrl: assignment.guildLogoUrl || null, wordPackId: assignment.wordPackId || null, guildCoins: 0, trial: null };
   const guildCoins = safeInt(memberSnap.data()?.guildCoins, 0, 0, 1000000000);
   const trialId = text(classSnap.data()?.activeTrialId, 128);
-  if (!trialId) return { guildName: assignment.classLabel, wordPackId: assignment.wordPackId, guildCoins, trial: null };
+  if (!trialId) return { guildName: assignment.classLabel, guildLogoUrl: assignment.guildLogoUrl || null, wordPackId: assignment.wordPackId, guildCoins, trial: null };
   const trialRef = classRef.collection('trials').doc(trialId);
   const [trialSnap, completionSnap, progressSnap] = await Promise.all([trialRef.get(), trialRef.collection('completions').doc(uid).get(), trialRef.collection('progress').doc(uid).get()]);
-  if (!trialSnap.exists || completionSnap.exists) return { guildName: assignment.classLabel, wordPackId: assignment.wordPackId, guildCoins, trial: null };
+  if (!trialSnap.exists || completionSnap.exists) return { guildName: assignment.classLabel, guildLogoUrl: assignment.guildLogoUrl || null, wordPackId: assignment.wordPackId, guildCoins, trial: null };
   const trial = trialSnap.data();
-  if (trial.status !== 'active' || isExpired(trial.expiresAt) || !Array.isArray(trial.words)) return { guildName: assignment.classLabel, wordPackId: assignment.wordPackId, guildCoins, trial: null };
+  if (trial.status !== 'active' || isExpired(trial.expiresAt) || !Array.isArray(trial.words)) return { guildName: assignment.classLabel, guildLogoUrl: assignment.guildLogoUrl || null, wordPackId: assignment.wordPackId, guildCoins, trial: null };
   return {
     guildName: assignment.classLabel,
+    guildLogoUrl: assignment.guildLogoUrl || null,
     wordPackId: assignment.wordPackId,
     guildCoins,
     trial: {

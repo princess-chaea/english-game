@@ -182,11 +182,14 @@ function openSignup(){hide('secureWelcomeModal');const main=$('secureStudentMain
     }
   }
   function updateGuildOverviewUI(guild){
-    guildOverviewCache=guild||guildOverviewCache;
+    const incomingGuild=guild&&typeof guild==='object'?guild:null;
+    guildOverviewCache=incomingGuild?{...(guildOverviewCache||{}),...incomingGuild}:guildOverviewCache;
     if(!guildOverviewCache)return;
     if(guildOverviewCache.guildName){
       account.activeGuildName=guildOverviewCache.guildName;
-      account.activeGuildLogoUrl=guildOverviewCache.guildLogoUrl||null;
+      const includesLogo=incomingGuild&&Object.prototype.hasOwnProperty.call(incomingGuild,'guildLogoUrl');
+      account.activeGuildLogoUrl=includesLogo?(incomingGuild.guildLogoUrl||null):(account.activeGuildLogoUrl||gameState.activeGuildLogoUrl||null);
+      guildOverviewCache.guildLogoUrl=account.activeGuildLogoUrl;
       gameState.activeGuildName=account.activeGuildName;
       gameState.activeGuildLogoUrl=account.activeGuildLogoUrl;
       window.refreshHeroIdentity?.();

@@ -30,13 +30,9 @@ Reference: [Firebase Anonymous Auth](https://firebase.google.com/docs/auth/web/a
 
 ## 2. Teacher access gate
 
-Set `TEACHER_ALLOWED_DOMAINS` in Vercel Production to a comma-separated list of actual school Google-email domains, without `@`, for example:
+Any verified Google account, including a personal Gmail account, may open the teacher portal and submit a verification request. Google login by itself never grants guild-management access.
 
-```text
-TEACHER_ALLOWED_DOMAINS=school.example.kr,office.example.kr
-```
-
-When it is set, a verified Google account outside these exact domains cannot use the teacher API. During a tightly controlled pilot it may be empty, but do not leave it empty for broad school/public release. Personal Gmail accounts need a separate administrator approval workflow; Google ownership alone is not employment verification.
+Guild creation, school guild discovery, member data, trials, and manager participation remain server-locked until the employment-certificate workflow sets the teacher document to `verificationStatus=verified`. Keep `TEACHER_REVIEWER_EMAILS` limited to the administrator accounts that may review ambiguous certificates.
 
 ## 3. Firebase Admin credentials
 
@@ -70,7 +66,6 @@ Reference: [Firestore Security Rules deployment](https://firebase.google.com/doc
    - `FIREBASE_PRIVATE_KEY`
    - `CRON_SECRET`
    - `LEGACY_MIGRATION_RETENTION_DAYS=60`
-   - `TEACHER_ALLOWED_DOMAINS` (recommended for production)
 3. Use a separate Firebase project for Preview if preview deployments will be externally reachable. Do not point unprotected experiments at production student data.
 4. Deploy. `vercel.json` supplies the security headers and daily `/api/cleanup-legacy` cron schedule.
 5. Confirm the Cron Jobs screen lists the cleanup job. Vercel automatically sends `Authorization: Bearer <CRON_SECRET>` when `CRON_SECRET` is configured.

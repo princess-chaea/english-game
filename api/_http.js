@@ -32,8 +32,8 @@ export async function requireTeacher(req) {
   const token = await requireUser(req, { googleOnly: true });
   const email = text(token.email, 320).toLocaleLowerCase('en-US');
   if (!token.email_verified || !email.includes('@')) throw apiError(403, 'VERIFIED_EMAIL_REQUIRED', '교사 기능은 인증된 Google 이메일이 필요해요.');
-  const domains = (process.env.TEACHER_ALLOWED_DOMAINS || '').split(',').map((value) => value.trim().toLocaleLowerCase('en-US').replace(/^@/, '')).filter(Boolean);
-  if (domains.length && !domains.includes(email.split('@').pop())) throw apiError(403, 'TEACHER_DOMAIN_NOT_ALLOWED', '이 Google 이메일 도메인은 교사 접근이 허용되지 않았어요.');
+  // 학교·개인 Gmail 여부로 로그인 자체를 막지 않습니다. 실제 길드 관리 권한은
+  // 재직증명서 검증을 통과한 교사 문서(verificationStatus=verified)에서만 부여합니다.
   return token;
 }
 export function text(value, max = 80) { return typeof value === 'string' ? value.normalize('NFKC').trim().slice(0, max) : ''; }

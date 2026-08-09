@@ -1,4 +1,7 @@
 import { readFileSync } from 'node:fs';
+import * as Canvas from '@napi-rs/canvas';
+import korData from '@tesseract.js-data/kor';
+import { createWorker } from 'tesseract.js';
 import { adminDb, adminStorage, FieldValue, Timestamp } from './_firebase-admin.js';
 import { apiError, handleApiError, hash, isExpired, randomCode, readBody, requireMethod, requireTeacher, safeInt, sendJson, text } from './_http.js';
 
@@ -110,6 +113,111 @@ function proofFile(body) {
   if ((match[1] === 'image/jpeg' && !jpeg) || (match[1] === 'image/png' && !png) || (match[1] === 'application/pdf' && !pdf)) throw apiError(400, 'PROOF_FILE_MISMATCH', '파일 형식과 실제 내용이 일치하지 않아요.');
   return { bytes, contentType: match[1] };
 }
+function normalizedProofText(value) {
+  return text(value, 20000).toLocaleLowerCase('ko-KR').replace(/[^0-9a-z가-힣]/g, '');
+}
+function seoulDateOnly() {
+  const shifted = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  return new Date(Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate()));
+}
+function oneCalendarMonthBefore(date) {
+  const result = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() - 1, 1));
+  const lastDay = new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0)).getUTCDate();
+  result.setUTCDate(Math.min(date.getUTCDate(), lastDay));
+  return result;
+}
+function proofDateCandidates(value) {
+  const source = text(value, 20000);
+  const found = [];
+  const pattern = /(20\d{2})\s*(?:년|[.\/-])\s*(\d{1,2})\s*(?:월|[.\/-])\s*(\d{1,2})\s*(?:일)?/g;
+  for (const match of source.matchAll(pattern)) {
+    const year = Number(match[1]), month = Number(match[2]), day = Number(match[3]);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) found.push(date);
+  }
+  return found.sort((a, b) => b.getTime() - a.getTime());
+}
+async function extractPdfProofText(bytes) {
+  let document;
+  try {
+    globalThis.DOMMatrix ||= Canvas.DOMMatrix;
+    globalThis.ImageData ||= Canvas.ImageData;
+    globalThis.Path2D ||= Canvas.Path2D;
+    const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    document = await getDocument({ data: new Uint8Array(bytes), disableFontFace: true, isEvalSupported: false, useWorkerFetch: false }).promise;
+    const page = await document.getPage(1);
+    const content = await page.getTextContent();
+    const embeddedText = text(content.items.map((item) => typeof item?.str === 'string' ? item.str : '').join(' '), 20000);
+    if (embeddedText.length >= 8) return { rawDocumentText: embeddedText, confidence: 100, source: 'pdf_text' };
+    const baseViewport = page.getViewport({ scale: 1 });
+    let renderScale = Math.min(2, 1800 / baseViewport.width, 2400 / baseViewport.height);
+    renderScale = Math.max(0.05, renderScale);
+    let viewport = page.getViewport({ scale: renderScale });
+    const maxPixels = 4_500_000;
+    if (viewport.width * viewport.height > maxPixels) {
+      renderScale *= Math.sqrt(maxPixels / (viewport.width * viewport.height));
+      viewport = page.getViewport({ scale: renderScale });
+    }
+    const canvas = Canvas.createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    const worker = await createWorker('kor', 1, { langPath: korData.langPath, gzip: true, cacheMethod: 'none' });
+    try {
+      const result = await worker.recognize(canvas.toBuffer('image/png'));
+      return { rawDocumentText: text(result.data.text, 20000), confidence: safeInt(result.data.confidence, 0, 0, 100), source: 'pdf_ocr' };
+    } finally {
+      await worker.terminate();
+    }
+  } catch (error) {
+    console.warn('[TeacherProof] PDF OCR failed:', error?.message || error);
+    return { rawDocumentText: '', confidence: 0, source: 'failed' };
+  } finally {
+    if (document) await document.destroy().catch(() => {});
+  }
+}
+async function screenTeacherProof(bytes, teacherName, schoolName, contentType) {
+  const extraction = contentType === 'application/pdf' ? await extractPdfProofText(bytes) : { rawDocumentText: '', confidence: 0, source: 'manual_image' };
+  const { rawDocumentText, confidence, source } = extraction;
+  const documentText = normalizedProofText(rawDocumentText);
+  const normalizedName = normalizedProofText(teacherName);
+  const normalizedSchool = normalizedProofText(schoolName);
+  const nameMatched = Boolean(normalizedName && documentText.includes(normalizedName));
+  const schoolMatched = Boolean(normalizedSchool && documentText.includes(normalizedSchool));
+  const documentMatched = documentText.includes('재직증명서') && (documentText.includes('교사') || documentText.includes('재직'));
+  const templateMatched = documentText.includes('발급번호') && documentText.includes('재직함을증명');
+  const today = seoulDateOnly();
+  const futureLimit = new Date(today);
+  futureLimit.setUTCDate(futureLimit.getUTCDate() + 1);
+  const issueDate = proofDateCandidates(rawDocumentText).find((date) => date <= futureLimit) || null;
+  const cutoff = oneCalendarMonthBefore(today);
+  const dateFresh = Boolean(issueDate && issueDate >= cutoff && issueDate <= futureLimit);
+  const dateExpired = Boolean(issueDate && issueDate < cutoff);
+  const checks = { nameMatched, schoolMatched, documentMatched, templateMatched, dateFresh };
+  let outcome = 'needs_review';
+  let reason = contentType === 'application/pdf' ? '표준 PDF의 이름·학교명·발급일 중 일부를 확인하지 못했어요.' : '이미지 문서는 관리자가 확인해야 해요.';
+  const exactIdentityAndTemplate = nameMatched && schoolMatched && documentMatched && templateMatched;
+  const isStandardScannedPdf = contentType === 'application/pdf' && source === 'pdf_ocr' && confidence >= 50;
+  if (isStandardScannedPdf && exactIdentityAndTemplate && dateExpired) {
+    outcome = 'auto_rejected';
+    reason = '발급일이 현재 날짜 기준 1개월을 초과했어요.';
+  } else if (isStandardScannedPdf && rawDocumentText.length >= 8 && Object.values(checks).every(Boolean)) {
+    outcome = 'auto_approved';
+    reason = '표준 양식·이름·학교·재직증명서·최근 발급일이 자동 확인됐어요.';
+  } else {
+    const missing = [];
+    if (!nameMatched) missing.push('이름');
+    if (!schoolMatched) missing.push('학교명');
+    if (!documentMatched) missing.push('문서 종류');
+    if (!templateMatched) missing.push('표준 양식');
+    if (!dateFresh) missing.push('최근 1개월 발급일');
+    if (contentType === 'application/pdf' && missing.length) reason = missing.join('·') + ' 확인이 필요해요.';
+  }
+  return { outcome, reason, confidence, source, checks, issueDate: issueDate?.toISOString().slice(0, 10) || null };
+}
+async function applyVerifiedSchoolToOwnedGuilds(uid, schoolKey, schoolName) {
+  const teacher = await teachers.doc(uid).get();
+  const classSnaps = await Promise.all((teacher.data()?.classIds || []).slice(0, 100).map((id) => classes.doc(id).get()));
+  await Promise.all(classSnaps.filter((snap) => snap.exists && !snap.data()?.schoolKey && snap.data()?.managerIds?.[0] === uid).map((snap) => snap.ref.set({ schoolKey, schoolName, updatedAt: FieldValue.serverTimestamp() }, { merge: true })));
+}
 async function submitTeacherVerification(uid, token, body) {
   if (body.redactionConfirmed !== true) throw apiError(400, 'REDACTION_CONFIRMATION_REQUIRED', '주민등록번호·주소·전화번호를 가렸다는 확인이 필요해요.');
   const teacherName = normalizeTeacherName(body.teacherName);
@@ -118,24 +226,50 @@ async function submitTeacherVerification(uid, token, body) {
   const teacherRef = teachers.doc(uid);
   const teacherSnap = await teacherRef.get();
   if (teacherSnap.data()?.verificationStatus === 'verified') throw apiError(409, 'ALREADY_VERIFIED', '이미 교사 인증이 완료됐어요.');
+  const previousAttempt = teacherSnap.data()?.verificationSubmittedAt?.toMillis?.() || 0;
+  if (Date.now() - previousAttempt < 60 * 1000) throw apiError(429, 'VERIFICATION_RATE_LIMIT', '재직증명서 확인은 1분 뒤 다시 시도해 주세요.');
+  await teacherRef.set({ verificationSubmittedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
   const requestRef = verificationRequests.doc();
   const extension = contentType === 'application/pdf' ? 'pdf' : contentType === 'image/png' ? 'png' : 'jpg';
   const objectPath = `teacher-verification/${uid}/${requestRef.id}.${extension}`;
   const expiresAt = Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const bucket = adminStorage.bucket();
-  await bucket.file(objectPath).save(bytes, { resumable: false, validation: 'md5', metadata: { contentType, contentDisposition: 'attachment; filename=teacher-proof.' + extension, cacheControl: 'private, no-store, max-age=0', metadata: { expiresAt: expiresAt.toDate().toISOString() } } });
+  const screening = await screenTeacherProof(bytes, teacherName, schoolName, contentType);
+  if (screening.outcome === 'needs_review') await bucket.file(objectPath).save(bytes, { resumable: false, validation: 'md5', metadata: { contentType, contentDisposition: 'attachment; filename=teacher-proof.' + extension, cacheControl: 'private, no-store, max-age=0', metadata: { expiresAt: expiresAt.toDate().toISOString() } } });
   try {
     const batch = adminDb.batch();
-    batch.create(requestRef, { uid, teacherName, schoolName, schoolKey, status: 'pending', objectPath, contentType, fileSize: bytes.length, redactionConfirmed: true, createdAt: FieldValue.serverTimestamp(), expiresAt });
+    const requestStatus = screening.outcome === 'auto_approved' ? 'approved' : screening.outcome === 'auto_rejected' ? 'rejected' : 'pending';
+    const requestData = {
+      uid, status: requestStatus, screeningOutcome: screening.outcome, screeningReason: screening.reason,
+      screeningConfidence: screening.confidence, screeningSource: screening.source,
+      screeningChecks: screening.checks, issueDate: screening.issueDate, createdAt: FieldValue.serverTimestamp(), expiresAt
+    };
+    if (screening.outcome === 'needs_review') Object.assign(requestData, { teacherName, schoolName, schoolKey, objectPath, contentType, fileSize: bytes.length, redactionConfirmed: true });
+    else Object.assign(requestData, { decidedAutomatically: true, reviewedAt: FieldValue.serverTimestamp() });
+    batch.create(requestRef, requestData);
     const previousRequestId = text(teacherSnap.data()?.verificationRequestId, 128);
     if (previousRequestId) batch.set(verificationRequests.doc(previousRequestId), { status: 'superseded', supersededAt: FieldValue.serverTimestamp(), objectPath: FieldValue.delete(), teacherName: FieldValue.delete(), schoolName: FieldValue.delete(), schoolKey: FieldValue.delete(), contentType: FieldValue.delete(), fileSize: FieldValue.delete(), fileHash: FieldValue.delete(), redactionConfirmed: FieldValue.delete(), email: FieldValue.delete(), googleDisplayName: FieldValue.delete() }, { merge: true });
-    batch.set(teacherRef, { role: 'teacher', teacherName, verificationStatus: 'pending', verificationRequestId: requestRef.id, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    if (screening.outcome === 'auto_approved') {
+      batch.set(teacherRef, { role: 'teacher', teacherName, schoolName, schoolKey, verificationStatus: 'verified', verificationRequestId: requestRef.id, verificationObjectPath: FieldValue.delete(), verificationSubmittedAt: FieldValue.serverTimestamp(), verifiedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    } else {
+      batch.set(teacherRef, { role: 'teacher', teacherName, verificationStatus: screening.outcome === 'auto_rejected' ? 'rejected' : 'pending', verificationRequestId: requestRef.id, verificationObjectPath: screening.outcome === 'needs_review' ? objectPath : FieldValue.delete(), verificationSubmittedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    }
     await batch.commit();
-  } catch (error) { await bucket.file(objectPath).delete({ ignoreNotFound: true }).catch(() => {}); throw error; }
+  } catch (error) {
+    if (screening.outcome === 'needs_review') await bucket.file(objectPath).delete({ ignoreNotFound: true }).catch(() => {});
+    throw error;
+  }
   const previousPath = text(teacherSnap.data()?.verificationObjectPath, 300);
   if (previousPath) await bucket.file(previousPath).delete({ ignoreNotFound: true }).catch(() => {});
-  await teacherRef.set({ verificationObjectPath: objectPath }, { merge: true });
-  return { status: 'pending', teacherName, schoolName, expiresAt: expiresAt.toDate().toISOString() };
+  if (screening.outcome === 'auto_approved') await applyVerifiedSchoolToOwnedGuilds(uid, schoolKey, schoolName);
+  return {
+    status: screening.outcome === 'auto_approved' ? 'verified' : screening.outcome === 'auto_rejected' ? 'rejected' : 'pending',
+    screeningOutcome: screening.outcome,
+    screeningReason: screening.reason,
+    teacherName,
+    schoolName,
+    expiresAt: screening.outcome === 'needs_review' ? expiresAt.toDate().toISOString() : null
+  };
 }
 async function listVerificationRequests(token) {
   assertReviewer(token);
@@ -146,7 +280,7 @@ async function listVerificationRequests(token) {
     const data = doc.data();
     let reviewUrl = '';
     if (data.objectPath) [reviewUrl] = await bucket.file(data.objectPath).getSignedUrl({ action: 'read', expires: Date.now() + 10 * 60 * 1000, responseDisposition: 'attachment' });
-    return { id: doc.id, teacherName: text(data.teacherName, 40), schoolName: text(data.schoolName, 80), contentType: text(data.contentType, 40), fileSize: safeInt(data.fileSize, 0, 0), reviewUrl, createdAt: data.createdAt?.toDate?.().toISOString?.() || null };
+    return { id: doc.id, teacherName: text(data.teacherName, 40), schoolName: text(data.schoolName, 80), contentType: text(data.contentType, 40), fileSize: safeInt(data.fileSize, 0, 0), reviewUrl, screeningReason: text(data.screeningReason, 200), screeningConfidence: safeInt(data.screeningConfidence, 0, 0, 100), screeningChecks: data.screeningChecks || {}, issueDate: text(data.issueDate, 20), createdAt: data.createdAt?.toDate?.().toISOString?.() || null };
   }));
   return rows.sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)));
 }
@@ -167,10 +301,7 @@ async function reviewTeacherVerification(token, body) {
   else batch.set(teacherRef, { verificationStatus: 'rejected', verificationObjectPath: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
   await batch.commit();
   if (decision === 'approved') {
-    const teacher = await teacherRef.get();
-    const classSnaps = await Promise.all((teacher.data()?.classIds || []).slice(0, 100).map((id) => classes.doc(id).get()));
-    const updates = classSnaps.filter((snap) => snap.exists && !snap.data()?.schoolKey && snap.data()?.managerIds?.[0] === request.uid).map((snap) => snap.ref.set({ schoolKey: request.schoolKey, schoolName: request.schoolName, updatedAt: FieldValue.serverTimestamp() }, { merge: true }));
-    await Promise.all(updates);
+    await applyVerifiedSchoolToOwnedGuilds(request.uid, request.schoolKey, request.schoolName);
   }
   return { requestId, status: decision };
 }

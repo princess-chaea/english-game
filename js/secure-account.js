@@ -265,6 +265,53 @@ function openSignup(){hide('secureWelcomeModal');const main=$('secureStudentMain
   async function createTeacherGuildTrial(){if(!selectedTrialGuildId||!teacherWrongAnalysis)return;const items=[...document.querySelectorAll('#secureWrongWordList select[data-trial-word]')].map(select=>({word:select.dataset.trialWord,type:select.value}));const count=items.length;if(count<5){alertError(new Error('시련을 만들려면 오답 단어가 5개 이상 필요해요.'));return;}const issue=async()=>{const button=$('secureCreateTrial'),status=$('secureTrialStatus');button.disabled=true;status.textContent='검토한 문제로 길드 시련을 준비하는 중...';try{const {trial}=await teacherRequest('createGuildTrial',{classId:selectedTrialGuildId,count,items});status.textContent=`${trial.questionCount}문제 시련을 보냈어요. 힌트 ${trial.maxHints}회, 완료 보상 ${trial.rewardGuildCoins} 길드 코인이에요.`;toast('길드원에게 새 오답 시련을 보냈어요.');await openTeacherGuildTrial(selectedTrialGuild);}catch(error){status.textContent='시련을 만들지 못했어요.';alertError(error);}finally{button.disabled=false;}};const message=`검토한 ${count}문제로 시련을 내릴까요?<br>힌트 ${Math.max(1,Math.ceil(count/5))}회, 완료 보상 ${count*5} 길드 코인이며 기존 활성 시련을 대신합니다.`;if(typeof window.showConfirm==='function')window.showConfirm(message,issue,null,{icon:'📝',title:'길드 시련 내리기',yesLabel:'시련 보내기',noLabel:'취소'});else issue();}
   async function makeCode(classId,type){try{const {invite}=await teacherRequest('createInvite',{classId,type,rotate:false});await showInvite(invite,type,classId);}catch(error){alertError(error);}}
   function fileAsDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(new Error('증빙 파일을 읽지 못했어요.'));reader.readAsDataURL(file);});}
+  const teacherMarkupWithLegacyHeader=teacherMarkup;
+  teacherMarkup=()=>teacherMarkupWithLegacyHeader()
+    .replace('교사 인증·학교 길드','교사 등록')
+    .replace('id="secureTeacherSchoolOpen" type="button" class="','id="secureTeacherSchoolOpen" type="button" class="hidden ');
+  let teacherSchoolHubMode='registration';
+  function configureTeacherSchoolNavigation(){
+    const modal=$('secureTeacherSchoolModal'),schoolButton=$('secureTeacherSchoolOpen');
+    if(!modal||!schoolButton)return;
+    const verified=teacherProfileCache?.verificationStatus==='verified';
+    schoolButton.textContent='교사 등록';
+    schoolButton.classList.toggle('hidden',verified);
+    schoolButton.onclick=()=>openTeacherSchoolHub('registration');
+    let reviewerButton=$('secureTeacherReviewerOpen');
+    if(!reviewerButton){
+      reviewerButton=document.createElement('button');reviewerButton.id='secureTeacherReviewerOpen';reviewerButton.type='button';
+      reviewerButton.className='hidden border border-amber-700 bg-amber-950/20 px-3 py-2 text-xs font-bold text-amber-300 hover:border-amber-400';
+      reviewerButton.textContent='인증 검토';reviewerButton.onclick=()=>openTeacherSchoolHub('reviewer');
+      schoolButton.before(reviewerButton);
+    }
+    reviewerButton.classList.toggle('hidden',!teacherProfileCache?.isReviewer);
+    const form=$('secureTeacherVerificationForm');
+    if(form){
+      const title=form.querySelector('h3'),description=form.querySelector('h3+p');
+      if(title)title.textContent='첫 교사 가입 · 재직 확인';
+      if(description)description.textContent='학교정보 API에서 학교를 선택하고, 현재 날짜 기준 1개월 이내에 발급된 재직증명서를 제출해 주세요. 표준 PDF는 먼저 자동 확인하고 애매한 문서만 관리자가 검토합니다.';
+      const proofInput=$('secureTeacherProof'),proofLabel=proofInput?.closest('label');
+      if(proofLabel?.firstChild)proofLabel.firstChild.textContent='최근 1개월 이내 재직증명서 (JPG·PNG·PDF, 2MB 이하)';
+    }
+    if($('secureTeacherVerificationRefresh'))$('secureTeacherVerificationRefresh').onclick=()=>openTeacherSchoolHub(teacherSchoolHubMode);
+  }
+  function setTeacherSchoolHubMode(requestedMode){
+    const verified=teacherProfileCache?.verificationStatus==='verified';
+    teacherSchoolHubMode=requestedMode==='auto'?(verified?'school':'registration'):requestedMode;
+    const modal=$('secureTeacherSchoolModal'),statusSection=$('secureTeacherVerificationStatus')?.closest('section');
+    const form=$('secureTeacherVerificationForm'),schoolSection=$('secureSchoolGuildSection'),reviewerSection=$('secureTeacherReviewerSection');
+    const eyebrow=modal?.querySelector('header p'),title=modal?.querySelector('header h2'),description=modal?.querySelector('header h2+p');
+    const copy={
+      registration:['교사 등록','교사 재직 확인','교사 이름·학교와 최근 1개월 이내 재직증명서로 최초 1회 확인합니다.'],
+      school:['학교 길드','학교 길드 찾기','같은 학교의 길드를 확인하고 공동 관리자 참여를 신청할 수 있어요.'],
+      reviewer:['관리자','교사 인증 관리','자동 판정이 애매한 신청만 원본을 열어 승인하거나 반려합니다.']
+    }[teacherSchoolHubMode]||['교사','교사 관리',''];
+    if(eyebrow)eyebrow.textContent=copy[0];if(title)title.textContent=copy[1];if(description)description.textContent=copy[2];
+    statusSection?.classList.toggle('hidden',teacherSchoolHubMode!=='registration');
+    form?.classList.toggle('hidden',teacherSchoolHubMode!=='registration'||verified||teacherProfileCache?.verificationStatus==='pending');
+    schoolSection?.classList.toggle('hidden',teacherSchoolHubMode!=='school'||!verified);
+    reviewerSection?.classList.toggle('hidden',teacherSchoolHubMode!=='reviewer'||!teacherProfileCache?.isReviewer);
+  }
   function syncTeacherVerificationUI(profile){
     teacherProfileCache=profile||teacherProfileCache||{};
     const status=teacherProfileCache.verificationStatus||'unverified';
@@ -274,14 +321,13 @@ function openSignup(){hide('secureWelcomeModal');const main=$('secureStudentMain
     if(schoolEl)schoolEl.textContent=[teacherProfileCache.teacherName,teacherProfileCache.schoolName].filter(Boolean).join(' · ');
     if($('secureTeacherName')&&!$('secureTeacherName').value)$('secureTeacherName').value=teacherProfileCache.teacherName||'';
     if($('secureTeacherSchool')&&!$('secureTeacherSchool').value&&teacherProfileCache.schoolName)$('secureTeacherSchool').value=teacherProfileCache.schoolName;
-    if(form)form.classList.toggle('hidden',status==='verified'||status==='pending');
-    $('secureSchoolGuildSection')?.classList.toggle('hidden',status!=='verified');
-    $('secureTeacherReviewerSection')?.classList.toggle('hidden',!teacherProfileCache.isReviewer);
+    configureTeacherSchoolNavigation();
+    setTeacherSchoolHubMode(teacherSchoolHubMode);
   }
   async function loadTeacherProfile(openWhenNeeded=false){
     const {teacher}=await teacherRequest('bootstrap');
     syncTeacherVerificationUI(teacher);
-    if(openWhenNeeded&&teacher.needsProfile)show('secureTeacherSchoolModal');
+    if(openWhenNeeded&&teacher.needsProfile)await openTeacherSchoolHub('registration',false);
     return teacher;
   }
   function teacherSchoolGuildCard(guild){
@@ -319,17 +365,25 @@ function openSignup(){hide('secureWelcomeModal');const main=$('secureStudentMain
     const list=$('secureTeacherReviewerList');list.replaceChildren();
     (requests||[]).forEach((item)=>{
       const row=document.createElement('article'),info=document.createElement('div'),open=document.createElement('a'),actions=document.createElement('div'),approve=document.createElement('button'),reject=document.createElement('button');
-      row.className='border border-amber-900/60 bg-black p-3';info.className='text-[10px] leading-relaxed text-gray-300';info.textContent=item.teacherName+' · '+item.schoolName+' · '+Math.ceil(Number(item.fileSize||0)/1024)+'KB';
-      open.href=item.reviewUrl;open.target='_blank';open.rel='noopener noreferrer';open.className='mt-2 inline-block text-sky-300 underline';open.textContent='가린 증빙 확인 (10분)';
+      row.className='border border-amber-900/60 bg-black p-3';info.className='text-[10px] leading-relaxed text-gray-300';
+      const checks=item.screeningChecks||{},checkText=[['이름',checks.nameMatched],['학교',checks.schoolMatched],['문서',checks.documentMatched],['양식',checks.templateMatched],['최근 발급일',checks.dateFresh]].map(([label,ok])=>label+' '+(ok?'✓':'?')).join(' · ');
+      info.textContent=item.teacherName+' · '+item.schoolName+' · '+Math.ceil(Number(item.fileSize||0)/1024)+'KB\n1차 판정: '+(item.screeningReason||'확인 필요')+'\n'+checkText+(item.issueDate?' · 인식 발급일 '+item.issueDate:'');
+      info.style.whiteSpace='pre-line';
+      open.href=item.reviewUrl;open.target='_blank';open.rel='noopener noreferrer';open.className='mt-2 inline-block text-sky-300 underline';open.textContent='검토 필요 원본 열기 (10분)';
       actions.className='mt-3 flex gap-2';approve.textContent='교사 인증 승인';reject.textContent='반려 및 원본 삭제';approve.className='border border-emerald-600 px-3 py-2 text-[10px] text-emerald-300';reject.className='border border-red-700 px-3 py-2 text-[10px] text-red-300';
       const review=async(decision)=>{try{await teacherRequest('reviewVerification',{requestId:item.id,decision});toast(decision==='approve'?'교사 인증을 승인했어요.':'인증을 반려하고 원본을 삭제했어요.');await refreshTeacherVerificationReviews();}catch(error){alertError(error);}};
       approve.onclick=()=>review('approve');reject.onclick=()=>review('reject');actions.append(approve,reject);row.append(info,open,actions);list.append(row);
     });
     if(!(requests||[]).length)list.textContent='검토할 인증 신청이 없어요.';
   }
-  async function openTeacherSchoolHub(){
+  async function openTeacherSchoolHub(mode='auto',reloadProfile=true){
     show('secureTeacherSchoolModal');
-    try{await loadTeacherProfile(false);await Promise.all([refreshTeacherSchoolData(),refreshTeacherVerificationReviews()]);}catch(error){alertError(error);}
+    try{
+      if(reloadProfile)await loadTeacherProfile(false);
+      setTeacherSchoolHubMode(mode);
+      if(teacherSchoolHubMode==='school')await refreshTeacherSchoolData();
+      else if(teacherSchoolHubMode==='reviewer')await refreshTeacherVerificationReviews();
+    }catch(error){alertError(error);}
   }
   async function submitTeacherVerification(){
     const file=$('secureTeacherProof')?.files?.[0],school=$('secureTeacherSchool'),status=$('secureTeacherVerificationFormStatus'),button=$('secureTeacherVerificationSubmit');
@@ -337,13 +391,23 @@ function openSignup(){hide('secureWelcomeModal');const main=$('secureStudentMain
     if(!school?.dataset.schoolKey){alertError(new Error('학교 검색 결과에서 재직 학교를 선택해 주세요.'));return;}
     if(!file){alertError(new Error('가린 재직증명서 JPG·PNG·PDF 파일을 선택해 주세요.'));return;}
     if(file.size>2*1024*1024){alertError(new Error('증빙 파일은 2MB 이하로 준비해 주세요.'));return;}
-    button.disabled=true;status.textContent='가린 증빙을 안전하게 전송하는 중...';
+    button.disabled=true;status.textContent='재직증명서의 이름·학교·발급일을 1차 확인하는 중...';
     try{
       const fileData=await fileAsDataUrl(file);
       const {verification}=await teacherRequest('submitVerification',{teacherName:$('secureTeacherName').value,schoolName:school.dataset.schoolName,schoolKey:school.dataset.schoolKey,fileData,redactionConfirmed:true});
-      syncTeacherVerificationUI({...teacherProfileCache,teacherName:verification.teacherName,schoolName:verification.schoolName,verificationStatus:'pending',needsProfile:false});
-      status.textContent='신청을 받았어요. 검토가 끝나면 이 화면에서 상태를 확인할 수 있어요.';
+      syncTeacherVerificationUI({...teacherProfileCache,teacherName:verification.teacherName,schoolName:verification.schoolName,verificationStatus:verification.status,needsProfile:verification.status==='rejected'});
+      status.textContent=verification.screeningReason||'인증 신청을 처리했어요.';
       file.value='';
+      if(verification.status==='verified'){
+        toast('재직 정보가 자동 확인되어 교사 등록이 완료됐어요.');
+        await Promise.all([refreshClasses(),refreshTeacherSchoolData()]);
+        hide('secureTeacherSchoolModal');
+        switchTeacherTab('overview');
+      }else if(verification.status==='pending'){
+        toast('자동 판정이 애매해 관리자 검토가 필요해요.');
+      }else{
+        toast('재직증명서가 자동 반려됐어요. 안내를 확인해 주세요.');
+      }
     }catch(error){status.textContent='신청을 보내지 못했어요.';alertError(error);}finally{button.disabled=false;}
   }
   function setupTeacherSchoolSearch(){

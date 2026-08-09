@@ -2,8 +2,16 @@
   "name": "voca-hero",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=20" },
-  "dependencies": { "firebase-admin": "^13.0.2" },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "0.1.80",
+    "@tesseract.js-data/kor": "1.0.0",
+    "firebase-admin": "^13.0.2",
+    "pdfjs-dist": "4.10.38",
+    "tesseract.js": "7.0.0"
+  },
   "scripts": {
     "build:tiered-packs": "node scripts/build-tiered-word-packs.mjs",
     "build:curriculum-review": "node scripts/build-curriculum-review.mjs",

@@ -1,0 +1,9 @@
+{
+  "indexes": [],
+  "fieldOverrides": [
+    { "collectionGroup": "accounts", "fieldPath": "state", "indexes": [] },
+    { "collectionGroup": "members", "fieldPath": "questionTypeStats", "indexes": [] },
+    { "collectionGroup": "members", "fieldPath": "assignedWordPackIds", "indexes": [] },
+    { "collectionGroup": "trials", "fieldPath": "words", "indexes": [] }
+  ]
+}

@@ -1,0 +1,9 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Teacher proof files are uploaded and reviewed only by trusted server APIs.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

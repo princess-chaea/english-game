@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { adminDb, FieldValue, Timestamp } from './_firebase-admin.js';
+import { adminDb, adminStorage, FieldValue, Timestamp } from './_firebase-admin.js';
 import { handleApiError, safeInt, sendJson } from './_http.js';
 
 const settings = adminDb.collection('_system').doc('legacyMigrationCleanup');
@@ -16,6 +16,37 @@ function legacyDamageTotal(data) {
   const existing = safeInt(data?.legacyDamageTotal, 0, 0, 100000000000);
   const mapTotal = Object.values(data?.damages || {}).reduce((sum, value) => sum + safeInt(value, 0, 0, 100000000000), 0);
   return existing + mapTotal;
+}
+async function cleanupExpiredTeacherProofs() {
+  const now = Timestamp.now();
+  const expired = await adminDb.collection('teacherVerificationRequests').where('expiresAt', '<=', now).limit(50).get();
+  const expiredDocs = expired.docs;
+  if (!expiredDocs.length) return 0;
+  const pendingDocs = expiredDocs.filter((doc) => ['pending', 'superseded'].includes(doc.data()?.status));
+  const teacherIds = [...new Set(pendingDocs.map((doc) => doc.data()?.uid).filter(Boolean))];
+  const teacherSnaps = teacherIds.length ? await adminDb.getAll(...teacherIds.map((uid) => adminDb.collection('teachers').doc(uid))) : [];
+  const teacherById = new Map(teacherSnaps.map((snap) => [snap.id, snap]));
+  await Promise.all(expiredDocs.map((doc) => {
+    const objectPath = doc.data()?.objectPath;
+    return objectPath ? adminStorage.bucket().file(objectPath).delete({ ignoreNotFound: true }).catch(() => {}) : Promise.resolve();
+  }));
+  const batch = adminDb.batch();
+  expiredDocs.forEach((doc) => {
+    const data = doc.data() || {};
+    const update = {
+      objectPath: FieldValue.delete(), teacherName: FieldValue.delete(), schoolName: FieldValue.delete(), schoolKey: FieldValue.delete(),
+      contentType: FieldValue.delete(), fileSize: FieldValue.delete(), fileHash: FieldValue.delete(), redactionConfirmed: FieldValue.delete(),
+      email: FieldValue.delete(), googleDisplayName: FieldValue.delete()
+    };
+    if (['pending', 'superseded'].includes(data.status)) Object.assign(update, { status: 'expired', expiredAt: FieldValue.serverTimestamp() });
+    batch.set(doc.ref, update, { merge: true });
+    const teacherSnap = teacherById.get(data.uid);
+    if (teacherSnap?.exists && teacherSnap.data()?.verificationRequestId === doc.id && teacherSnap.data()?.verificationStatus === 'pending') {
+      batch.set(teacherSnap.ref, { verificationStatus: 'expired', verificationObjectPath: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    }
+  });
+  await batch.commit();
+  return expiredDocs.length;
 }
 async function cleanupSchedule() {
   const days = Math.min(180, Math.max(60, Number(process.env.LEGACY_MIGRATION_RETENTION_DAYS || 60)));
@@ -34,9 +65,10 @@ export default async function handler(req, res) {
   try {
     if (req.method !== 'GET') return sendJson(res, 405, { ok: false });
     if (!hasValidCronSecret(req)) return sendJson(res, 401, { ok: false });
+    const expiredTeacherProofsDeleted = await cleanupExpiredTeacherProofs();
     const schedule = await cleanupSchedule();
     if (schedule.deleteAfter.toMillis() > Date.now()) {
-      return sendJson(res, 200, { ok: true, pending: true, retentionDays: schedule.days, deleteAfter: schedule.deleteAfter.toDate().toISOString(), startedNow: schedule.startedNow });
+      return sendJson(res, 200, { ok: true, pending: true, retentionDays: schedule.days, deleteAfter: schedule.deleteAfter.toDate().toISOString(), startedNow: schedule.startedNow, expiredTeacherProofsDeleted });
     }
     const [userDocs, bossDocs] = await Promise.all([
       adminDb.collection('users').limit(200).get(),
@@ -62,7 +94,8 @@ export default async function handler(req, res) {
       retentionDays: schedule.days,
       deleteAfter: schedule.deleteAfter.toDate().toISOString(),
       legacyUsersDeleted: userDocs.size,
-      worldBossDocumentsSanitized: bossDocs.docs.filter((doc) => Boolean(doc.data().damages || doc.data().lastPlayedDates)).length
+      worldBossDocumentsSanitized: bossDocs.docs.filter((doc) => Boolean(doc.data().damages || doc.data().lastPlayedDates)).length,
+      expiredTeacherProofsDeleted
     });
   } catch (error) { handleApiError(res, error); }
 }

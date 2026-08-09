@@ -5,6 +5,7 @@ import { apiError, handleApiError, readBody, requireMethod, requireUser, safeInt
 const bosses = adminDb.collection('world_bosses');
 const accounts = adminDb.collection('accounts');
 const sessions = adminDb.collection('worldBossSessions');
+const classes = adminDb.collection('classes');
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const EPOCH_MONDAY_MS = Date.UTC(2024, 6, 1);
@@ -42,9 +43,12 @@ async function status(uid) {
   const maxHp = maxHpForWeek(week);
   const totalDamage = Math.min(maxHp, legacyTotal(boss) + safeInt(boss.secureDamageTotal, 0, 0));
   const contribution = contributionSnap.data() || {};
-  const publicDocs = topSnap.docs.filter((doc) => doc.data().publicLeaderboard).slice(0, 100);
+  const rankedDocs = topSnap.docs;
+  const publicDocs = rankedDocs.filter((doc) => doc.data().publicLeaderboard).slice(0, 100);
   const top = publicDocs.map((doc, index) => ({ rank: index + 1, nickname: doc.data().publicNickname, guildName: typeof doc.data().publicGuildName === 'string' ? doc.data().publicGuildName : null, titleName: typeof doc.data().publicTitleName === 'string' ? doc.data().publicTitleName : null, damage: safeInt(doc.data().damage, 0, 0) }));
-  const myRankIndex = publicDocs.findIndex((doc) => doc.id === uid);
+  // 공개 설정은 이름표 노출만 제어합니다. 실제 기여 순위와 1위 칭호 판정은
+  // 비공개 참가자도 포함한 전체 피해량 순서를 그대로 사용합니다.
+  const myRankIndex = rankedDocs.findIndex((doc) => doc.id === uid);
   return {
     week,
     day: kstDay(),
@@ -56,6 +60,37 @@ async function status(uid) {
     myRank: myRankIndex < 0 ? null : myRankIndex + 1,
     top
   };
+}
+async function claimWeeklyReward(uid) {
+  const week = currentWeek() - 1;
+  const ref = bossRef(week);
+  const contributionRef = ref.collection('contributions').doc(uid);
+  const claimRef = ref.collection('rewardClaims').doc(uid);
+  const [bossSnap, contributionSnap, winnerSnap] = await Promise.all([
+    ref.get(),
+    contributionRef.get(),
+    ref.collection('contributions').orderBy('damage', 'desc').limit(1).get()
+  ]);
+  if (!bossSnap.exists || !contributionSnap.exists) return { week, participated: false, alreadyClaimed: false, rewardFp: 0, gotTitle: false };
+  const boss = bossSnap.data() || {};
+  const maxHp = Math.max(1, safeInt(boss.maxHp, maxHpForWeek(week), 1));
+  const totalDamage = legacyTotal(boss) + safeInt(boss.secureDamageTotal, 0, 0);
+  const defeated = totalDamage >= maxHp;
+  const myDamage = safeInt(contributionSnap.data()?.damage, 0, 0);
+  if (!myDamage) return { week, participated: false, alreadyClaimed: false, rewardFp: 0, gotTitle: false };
+  const rewardFp = Math.max(0, Math.round(1000000 * Math.min(1, myDamage / maxHp) * (defeated ? 1 : 0.5)));
+  const gotTitle = defeated && winnerSnap.docs[0]?.id === uid;
+  const result = await adminDb.runTransaction(async (tx) => {
+    const [claimSnap, accountSnap] = await Promise.all([tx.get(claimRef), tx.get(accounts.doc(uid))]);
+    if (claimSnap.exists) return { alreadyClaimed: true };
+    if (!accountSnap.exists) throw apiError(404, 'PROFILE_NOT_FOUND', '먼저 용사를 만들어 주세요.');
+    tx.create(claimRef, { uid, week, rewardFp, gotTitle, claimedAt: FieldValue.serverTimestamp() });
+    const accountUpdate = { 'state.masteryPoints': FieldValue.increment(rewardFp), updatedAt: FieldValue.serverTimestamp() };
+    if (gotTitle) accountUpdate['state.unlockedTitles'] = FieldValue.arrayUnion('수호신');
+    tx.update(accounts.doc(uid), accountUpdate);
+    return { alreadyClaimed: false };
+  });
+  return { week, participated: true, defeated, alreadyClaimed: result.alreadyClaimed, rewardFp: result.alreadyClaimed ? 0 : rewardFp, gotTitle: result.alreadyClaimed ? false : gotTitle };
 }
 async function start(uid) {
   const week = currentWeek();
@@ -91,8 +126,12 @@ async function contribute(uid, body) {
   const account = accountSnap.data();
   const ref = bossRef(week);
   const contributionRef = ref.collection('contributions').doc(uid);
+  const activeClassId = typeof account.activeClassId === 'string' ? account.activeClassId : '';
+  const memberRef = activeClassId ? classes.doc(activeClassId).collection('members').doc(uid) : null;
   const result = await adminDb.runTransaction(async (tx) => {
-    const [bossSnap, contributionSnap, sessionSnap] = await Promise.all([tx.get(ref), tx.get(contributionRef), tx.get(sessionRef(uid, week))]);
+    const reads = [tx.get(ref), tx.get(contributionRef), tx.get(sessionRef(uid, week))];
+    if (memberRef) reads.push(tx.get(memberRef));
+    const [bossSnap, contributionSnap, sessionSnap, memberSnap] = await Promise.all(reads);
     const session = sessionSnap.data();
     if (!session || session.day !== day || session.submitted || session.expiresAt?.toMillis?.() <= Date.now() || session.tokenHash !== secretHash(token)) {
       throw apiError(409, 'RAID_SESSION_INVALID', '월드보스 참전 시간이 끝났어요. 새로 시작해 주세요.');
@@ -115,6 +154,19 @@ async function contribute(uid, body) {
       updatedAt: FieldValue.serverTimestamp()
     }, { merge: true });
     tx.update(sessionRef(uid, week), { submitted: true, submittedAt: FieldValue.serverTimestamp() });
+    if (memberRef && memberSnap?.exists && applied > 0) {
+      const member = memberSnap.data() || {};
+      const previousDaily = member.guildBossPointDay === day ? safeInt(member.guildBossPointDayAmount, 0, 0, 100) : 0;
+      const earned = Math.max(0, Math.min(100 - previousDaily, Math.floor(applied / 1000000)));
+      tx.set(memberRef, {
+        guildBossDamage: FieldValue.increment(applied),
+        guildBossPointTotal: FieldValue.increment(earned),
+        guildBossPointDay: day,
+        guildBossPointDayAmount: previousDaily + earned,
+        guildPoints: FieldValue.increment(earned),
+        lastActiveAt: FieldValue.serverTimestamp()
+      }, { merge: true });
+    }
     return { applied, damage: safeInt(previous.damage, 0, 0) + applied };
   });
   return { ...result, boss: await status(uid) };
@@ -127,6 +179,7 @@ export default async function handler(req, res) {
     const body = await readBody(req);
     let response;
     if (body.action === 'status') response = { boss: await status(user.uid) };
+    else if (body.action === 'weeklyReward') response = { reward: await claimWeeklyReward(user.uid) };
     else if (body.action === 'start') response = { raid: await start(user.uid) };
     else if (body.action === 'contribute') response = await contribute(user.uid, body);
     else throw apiError(400, 'UNKNOWN_ACTION', '알 수 없는 요청입니다.');

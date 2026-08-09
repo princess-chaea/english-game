@@ -65,7 +65,10 @@
 
             // ⚡ 무구 잠재력 잠금 슬롯 상태 (새로고침 후에도 유지)
             lockedPotentialSlots: {}, // { helmet: [0,1], armor: [], ... }
-            wrongWordCounts: {} // { "apple": 2, "banana": 1 }
+            wrongWordCounts: {}, // { "apple": 2, "banana": 1 }
+            questionTypeStats: {},
+            assignedWordPackIds: [],
+            assignedQuestionTypes: ["meaning-choice"]
         };
 
         const BOSS_UNLOCK_LIMIT = 10; // Capped at 10 monster defeats as requested
@@ -294,6 +297,8 @@
         let monsterCurrentHp = 10;
         let monsterMaxHp = 10;
         let currentQuizChoices = [];
+        let currentQuizCorrectValue = "";
+        let currentQuizType = "meaning-choice";
 
         // Custom Synthesizer using Web Audio API
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1037,8 +1042,12 @@
             return { mastered: mStr, wrong: wStr };
         }
 
-        function saveSessionToCloud() {
+        function saveSessionToCloud(quiet = false) {
             saveLocalCache();
+            // 새 보안 계정은 개인정보 기반 users 문서가 아니라 인증 UID 기반 저장 API를 사용한다.
+            if (gameState.isAnonymousStudent && typeof window._secureStudentSave === "function") {
+                return window._secureStudentSave(Boolean(quiet));
+            }
             if (!window._fbReady) {
                 showToast("💾 진행 상황이 로컬에 보존되었습니다.");
                 return;
@@ -1072,17 +1081,27 @@
 
         let wordPoolLoadVersion = 0;
 
-        async function loadAssignedWordPack() {
-            const wordPackId = gameState.assignedWordPackId;
-            if (!wordPackId) return null;
-            const response = await fetch('data/word-packs.json', { cache: 'no-store' });
-            if (!response.ok) throw new Error(`Word pack file returned ${response.status}`);
+        async function loadAssignedWordPacks() {
+            const ids = Array.isArray(gameState.assignedWordPackIds) && gameState.assignedWordPackIds.length
+                ? gameState.assignedWordPackIds
+                : (gameState.assignedWordPackId ? [gameState.assignedWordPackId] : []);
+            if (!ids.length) return null;
+            const response = await fetch('data/word-packs.json?v=20260809-21', { cache: 'force-cache' });
+            if (!response.ok) throw new Error('단어팩 파일을 불러오지 못했어요. (' + response.status + ')');
             const catalog = await response.json();
-            const pack = Array.isArray(catalog.packs) ? catalog.packs.find((item) => item.id === wordPackId) : null;
-            if (!pack || !Array.isArray(pack.words) || pack.words.length === 0) throw new Error('Assigned word pack is unavailable.');
-            return pack.words;
+            const byId = new Map((Array.isArray(catalog.packs) ? catalog.packs : []).map((pack) => [pack.id, pack]));
+            const merged = new Map();
+            ids.forEach((id) => {
+                const pack = byId.get(id);
+                if (!pack || !Array.isArray(pack.words)) return;
+                pack.words.forEach((entry) => {
+                    const key = String(entry?.word || '').trim().toLowerCase();
+                    if (key && entry?.meaning && !merged.has(key)) merged.set(key, { word: String(entry.word).trim(), meaning: String(entry.meaning).trim() });
+                });
+            });
+            if (!merged.size) throw new Error('배정된 단어팩을 찾지 못했어요.');
+            return { words: [...merged.values()], source: ids.join('+') };
         }
-
         async function fetchWordsFromSpreadsheet() {
             const loadVersion = ++wordPoolLoadVersion;
             const gradeStr = String(gameState.grade);
@@ -1095,15 +1114,14 @@
                 return true;
             };
 
-            if (gameState.assignedWordPackId) {
+            if ((Array.isArray(gameState.assignedWordPackIds) && gameState.assignedWordPackIds.length) || gameState.assignedWordPackId) {
                 try {
-                    const assignedWords = await loadAssignedWordPack();
-                    if (assignedWords && finish(assignedWords, gameState.assignedWordPackId)) return;
+                    const assignment = await loadAssignedWordPacks();
+                    if (assignment && finish(assignment.words, assignment.source)) return;
                 } catch (err) {
-                    console.warn('Assigned word pack load failed; using the grade list.', err);
+                    console.warn('배정 단어팩 로드 실패로 학년 기본 목록을 사용합니다.', err);
                 }
             }
-
             try {
                 if (!window._fbReady) {
                     finish(MOCK_WORDS[gradeStr] || MOCK_WORDS['4'], 'local fallback');
@@ -1120,12 +1138,12 @@
                     }
                 } else {
                     finish(MOCK_WORDS[gradeStr] || MOCK_WORDS['4'], 'local fallback');
-                    setTimeout(() => showToast('The shared word list is unavailable; using the temporary list.'), 2000);
+                    setTimeout(() => showToast('공유 단어 목록을 찾지 못해 임시 목록을 사용합니다.'), 2000);
                 }
             } catch (err) {
                 console.error('Firebase words fetch error:', err);
                 finish(MOCK_WORDS[gradeStr] || MOCK_WORDS['4'], 'local fallback');
-                setTimeout(() => showToast('Word list loading failed; using the temporary list.'), 2000);
+                setTimeout(() => showToast('단어 목록을 불러오지 못해 임시 목록을 사용합니다.'), 2000);
             }
         }
 
@@ -1412,7 +1430,9 @@
         function renderHeroIdentity(root) {
             if (!root) return;
             root.replaceChildren();
-            root.classList.add("inline-flex", "min-w-0", "max-w-full", "items-center", "gap-1", "align-middle");
+            root.className = root.id === "heroNameTag"
+                ? "inline-flex min-w-0 max-w-[260px] items-center gap-1 align-middle text-[9px] font-bold tracking-wider"
+                : "inline-flex min-w-0 max-w-full items-center gap-1 align-middle";
             const guildName = typeof gameState.activeGuildName === "string" ? gameState.activeGuildName.trim() : "";
             const activeTitle = gameState.equippedTitle || gameState.wbTitle || "";
             const titlePresentation = getTitlePresentation(activeTitle);
@@ -1489,7 +1509,7 @@
 
                 if (actualDelta > 60) {
                     // 앱이 백그라운드에 오래 있다가 활성화됨 -> 오프라인 보상으로 전환
-                    calculateOfflineGains();
+                    calculateOfflineGains(true);
                     return;
                 }
                 const delta = actualDelta;
@@ -1640,8 +1660,9 @@
 
         let _offlineCalculatedOnce = false;
 
-        function calculateOfflineGains() {
-            if (_offlineCalculatedOnce) return;
+        function calculateOfflineGains(forceRecheck = false) {
+            if (_offlineGoldPending > 0) return;
+            if (_offlineCalculatedOnce && !forceRecheck) return;
             // 서버 연동 유저인데 아직 동기화가 안 끝났다면 계산 보류
             if (gameState.name && gameState.name !== "방문자" && window._fbReady && !window._syncedFromServerThisSession) {
                 return;
@@ -1674,6 +1695,8 @@
                         gameState.gold = prevGold + goldGained;
                         gameState.accGold = (gameState.accGold || prevGold) + goldGained;
                         showToast(`💤 오프라인 보상 획득! ${goldGained.toLocaleString()}G 축적!`);
+                        _offlineGoldPending = 0;
+                        Promise.resolve(saveSessionToCloud(true)).catch(() => {});
                     }
                 }
             }
@@ -1682,7 +1705,7 @@
 
         function _showOfflineRewardModal(goldGained) {
             const modal = document.getElementById('offlineRewardModal');
-            if (!modal) return;
+            if (!modal) { _grantOfflineGold(1.0); return; }
             // 초기 화면으로 리셋
             document.getElementById('offlineRewardIntro').classList.remove('hidden');
             document.getElementById('offlineQuizArea').classList.add('hidden');
@@ -1694,8 +1717,9 @@
 
         function offlineSkipChallenge() {
             // 퀴즈 없이 기본 1배 지급
+            const gold = _offlineGoldPending;
             _grantOfflineGold(1.0);
-            _showOfflineResult(false, _offlineGoldPending);
+            _showOfflineResult(false, gold);
         }
 
         function offlineStartChallenge() {
@@ -1824,11 +1848,14 @@
         }
 
         function _grantOfflineGold(multiplier) {
+            if (_offlineGoldPending <= 0) return;
             const goldGained = Math.floor(_offlineGoldPending * multiplier);
+            _offlineGoldPending = 0;
             const prevGold = gameState.gold || 0;
             gameState.gold = prevGold + goldGained;
             gameState.accGold = (gameState.accGold || prevGold) + goldGained;
             saveLocalCache();
+            Promise.resolve(saveSessionToCloud(true)).catch(() => {});
             const gEl = document.getElementById('goldCount');
             if (gEl) gEl.innerText = gameState.gold.toLocaleString();
         }
@@ -3342,14 +3369,16 @@
             }
         }
 
-        function renderChoices(choices, correctMeaning) {
-            currentQuizChoices = [...choices];
+        function renderChoices(choices, correctChoice) {
+            currentQuizChoices = [...choices].slice(0, 4);
             currentQuizChoices.sort(() => 0.5 - Math.random());
-            gameState.currentQuizCorrectAnswer = currentQuizChoices.indexOf(correctMeaning);
+            currentQuizCorrectValue = correctChoice;
+            gameState.currentQuizCorrectAnswer = currentQuizChoices.indexOf(correctChoice);
 
             const buttons = document.getElementsByClassName("choice-btn");
             for (let i = 0; i < buttons.length; i++) {
-                buttons[i].querySelector(".choice-text").innerText = currentQuizChoices[i];
+                const value = currentQuizChoices[i] ?? "";
+                buttons[i].querySelector(".choice-text").innerText = value;
                 buttons[i].className = "choice-btn p-3.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group";
             }
         }
@@ -3359,36 +3388,81 @@
             return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
         }
 
+        function quizDistractors(field, correct) {
+            const values = [];
+            const add = (entry) => {
+                const value = String(entry?.[field] || "").trim();
+                if (value && value !== correct && !values.includes(value)) values.push(value);
+            };
+            (gameState.wordsPool || []).forEach(add);
+            Object.values(MOCK_WORDS).flat().forEach(add);
+            values.sort(() => 0.5 - Math.random());
+            return values;
+        }
+
+        function ensureQuizTypeLabel() {
+            let label = document.getElementById("quizTypeLabel");
+            const word = document.getElementById("quizWordEng");
+            if (!label && word?.parentElement) {
+                label = document.createElement("p");
+                label.id = "quizTypeLabel";
+                label.className = "mb-2 text-[10px] font-bold text-sky-400";
+                word.parentElement.insertBefore(label, word);
+            }
+            return label;
+        }
+
         function generateQuizCard() {
             if (!gameState.wordsPool || gameState.wordsPool.length === 0) {
                 document.getElementById("quizWordEng").innerText = "마법 성역의 단어가 고갈되었습니다";
                 return;
             }
 
-            // 랜덤으로 다음 문제 인덱스 선택
             gameState.currentQuizIndex = Math.floor(Math.random() * gameState.wordsPool.length);
             const current = gameState.wordsPool[gameState.currentQuizIndex];
-            document.getElementById("quizWordEng").innerText = capitalizeFirstLetter(current.word);
+            const allowed = new Set(["meaning-choice", "fill-blank", "word-choice", "listen-meaning"]);
+            const selected = [...new Set((Array.isArray(gameState.assignedQuestionTypes) ? gameState.assignedQuestionTypes : ["meaning-choice"]).filter((type) => allowed.has(type)))];
+            currentQuizType = selected[(gameState.totalQuizTries || 0) % Math.max(1, selected.length)] || "meaning-choice";
+            gameState.currentQuizType = currentQuizType;
+            const prompt = document.getElementById("quizWordEng");
+            const typeLabel = ensureQuizTypeLabel();
+            const labels = {
+                "meaning-choice": "영어 단어의 뜻을 찾으세요",
+                "fill-blank": "빈칸에 들어갈 철자를 찾으세요",
+                "word-choice": "뜻에 알맞은 영어 단어를 찾으세요",
+                "listen-meaning": "발음을 듣고 뜻을 찾으세요"
+            };
+            if (typeLabel) typeLabel.textContent = labels[currentQuizType] || labels["meaning-choice"];
 
-            let choices = [current.meaning];
-            let listMeanings = [];
-
-            for (let gradeKey in MOCK_WORDS) {
-                MOCK_WORDS[gradeKey].forEach(v => {
-                    if (v.meaning !== current.meaning && !listMeanings.includes(v.meaning)) {
-                        listMeanings.push(v.meaning);
-                    }
-                });
+            if (currentQuizType === "word-choice") {
+                prompt.innerText = current.meaning;
+                renderChoices([current.word, ...quizDistractors("word", current.word).slice(0, 3)], current.word);
+                return;
             }
-
-            listMeanings.sort(() => 0.5 - Math.random());
-            for (let i = 0; i < Math.min(3, listMeanings.length); i++) {
-                choices.push(listMeanings[i]);
+            if (currentQuizType === "listen-meaning") {
+                prompt.innerText = "🔊 발음 듣기";
+                renderChoices([current.meaning, ...quizDistractors("meaning", current.meaning).slice(0, 3)], current.meaning);
+                if (gameState.soundSettings?.masterSoundOn !== false) setTimeout(speakTargetWord, 120);
+                return;
             }
-
-            renderChoices(choices, current.meaning);
+            if (currentQuizType === "fill-blank") {
+                const word = String(current.word || "").toLowerCase();
+                const positions = [...word].map((char, index) => /[a-z]/.test(char) ? index : -1).filter((index) => index >= 0);
+                if (positions.length) {
+                    const blankIndex = positions[Math.floor(Math.random() * positions.length)];
+                    const correctLetter = word[blankIndex];
+                    const alphabet = "abcdefghijklmnopqrstuvwxyz".split("").filter((letter) => letter !== correctLetter).sort(() => 0.5 - Math.random());
+                    prompt.innerText = capitalizeFirstLetter(word.slice(0, blankIndex) + "_" + word.slice(blankIndex + 1));
+                    renderChoices([correctLetter, ...alphabet.slice(0, 3)], correctLetter);
+                    return;
+                }
+            }
+            currentQuizType = "meaning-choice";
+            gameState.currentQuizType = currentQuizType;
+            if (typeLabel) typeLabel.textContent = labels["meaning-choice"];
+            prompt.innerText = capitalizeFirstLetter(current.word);
+            renderChoices([current.meaning, ...quizDistractors("meaning", current.meaning).slice(0, 3)], current.meaning);
         }
-
         function getSkillMultiplier(skill) {
             const baseGrade = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
             const tier = skill.tier || 1;
@@ -4480,6 +4554,10 @@
                 buttons[i].style.pointerEvents = "none";
             }
             const current = gameState.wordsPool[gameState.currentQuizIndex];
+            if (!gameState.questionTypeStats || typeof gameState.questionTypeStats !== "object") gameState.questionTypeStats = {};
+            const typeStats = gameState.questionTypeStats[currentQuizType] || { tries: 0, correct: 0 };
+            typeStats.tries = Number(typeStats.tries || 0) + 1;
+            gameState.questionTypeStats[currentQuizType] = typeStats;
 
             if (index === gameState.currentQuizCorrectAnswer) {
                 if (!gameState.tutorialCompleted && tutorialStep === 1) {
@@ -4489,6 +4567,7 @@
                 playSoundEffect('correct');
                 buttons[index].className = "choice-btn p-3.5 bg-green-950/80 border-2 border-green-500 text-white font-bold rounded-none-forced text-center transition flex items-center justify-center";
                 gameState.totalQuizCorrect++;
+                typeStats.correct = Number(typeStats.correct || 0) + 1;
 
                 // 정복한 영단어 리스트에 추가 (중복 방지)
                 if (!gameState.masteredWords) gameState.masteredWords = [];
@@ -4568,7 +4647,7 @@
                 // 700ms 후 선택지 순서를 섞어 무차별 찍기를 방지합니다.
                 setTimeout(() => {
                     if (current) {
-                        renderChoices(currentQuizChoices, current.meaning);
+                        renderChoices(currentQuizChoices, currentQuizCorrectValue);
                     }
                     isEvaluatingQuiz = false;
                     for (let i = 0; i < buttons.length; i++) {
@@ -5107,74 +5186,14 @@
             const statRatioEl = document.getElementById("statSuccessRatio");
             if (statRatioEl) statRatioEl.innerText = `${ratio}%`;
 
-            // ✅ 영웅 칭호 태그 렌더링 (아바타 명찰 및 상단 헤더 내 이름 상자에 장착 칭호 및 등급별 전용 테두리/광원 효과 연동)
-            const activeTitle = gameState.equippedTitle || gameState.wbTitle || "";
-            const titleStr = activeTitle ? `[${activeTitle}] ` : "";
-            const titleDef = AVAILABLE_TITLES.find(t => t.name === activeTitle || t.id === activeTitle);
-
-            const applyTitleStyle = (el, isHeader = false) => {
-                if (!el) return;
-                refreshHeroIdentity();
-
-                if (titleDef) {
-                    if (titleDef.tier === "신화") {
-                        el.style.color = "#fef08a"; // yellow-200
-                        el.style.borderColor = "#f59e0b"; // amber-500
-                        el.style.backgroundColor = isHeader ? "rgba(45, 20, 3, 0.9)" : "rgba(69, 26, 3, 0.9)";
-                        el.style.boxShadow = "0 0 12px rgba(245, 158, 11, 0.8)";
-                        el.style.textShadow = "0 0 8px rgba(254, 240, 138, 0.9)";
-                    } else if (titleDef.tier === "전설") {
-                        el.style.color = "#fca5a5"; // red-300
-                        el.style.borderColor = "#dc2626"; // red-600
-                        el.style.backgroundColor = isHeader ? "rgba(45, 8, 8, 0.9)" : "rgba(69, 10, 10, 0.9)";
-                        el.style.boxShadow = "0 0 10px rgba(220, 38, 38, 0.7)";
-                        el.style.textShadow = "0 0 6px rgba(252, 165, 165, 0.8)";
-                    } else if (titleDef.tier === "영웅") {
-                        el.style.color = "#e9d5ff"; // purple-200
-                        el.style.borderColor = "#9333ea"; // purple-600
-                        el.style.backgroundColor = isHeader ? "rgba(38, 8, 58, 0.9)" : "rgba(58, 12, 90, 0.9)";
-                        el.style.boxShadow = "0 0 8px rgba(147, 51, 234, 0.6)";
-                        el.style.textShadow = "0 0 6px rgba(233, 213, 255, 0.8)";
-                    } else if (titleDef.tier === "희귀") {
-                        el.style.color = "#7dd3fc"; // sky-300
-                        el.style.borderColor = "#0284c7"; // sky-600
-                        el.style.backgroundColor = isHeader ? "rgba(8, 48, 70, 0.9)" : "rgba(12, 74, 110, 0.9)";
-                        el.style.boxShadow = "0 0 8px rgba(2, 132, 199, 0.5)";
-                        el.style.textShadow = "0 0 5px rgba(125, 211, 252, 0.7)";
-                    } else {
-                        el.style.color = "#d1d5db"; // gray-300
-                        el.style.borderColor = "#4b5563"; // gray-600
-                        el.style.backgroundColor = "#1a1a1a";
-                        el.style.boxShadow = "none";
-                        el.style.textShadow = "none";
-                    }
-                } else if (activeTitle) {
-                    el.style.color = "#fbbf24";
-                    el.style.borderColor = "#d97706";
-                    el.style.backgroundColor = "#1a1a1a";
-                    el.style.boxShadow = "0 0 8px rgba(251,191,36,0.6)";
-                    el.style.textShadow = "0 0 8px rgba(251,191,36,0.6)";
-                } else {
-                    el.style.color = isHeader ? "#e6e6e6" : "#bbbbbb";
-                    el.style.borderColor = "#3c3c3c";
-                    el.style.backgroundColor = "#1a1a1a";
-                    el.style.boxShadow = "none";
-                    el.style.textShadow = "none";
-                }
-            };
-
-            const nameTagEl = document.getElementById("heroNameTag");
-            if (nameTagEl && gameState.name) {
-                applyTitleStyle(nameTagEl, false);
-            }
-
-            const headerUserBox = document.getElementById("userInfoDisplay");
-            const headerNameEl = document.getElementById("displayStudentName");
-            if (headerUserBox && headerNameEl && gameState.name) {
-                applyTitleStyle(headerUserBox, true);
-            }
+            // 길드명·칭호·닉네임은 각각 별도 요소로 렌더링합니다.
+            // 칭호 광원은 칭호 배지에만 적용하고 이름표 바깥 컨테이너와 양옆 장비에는 번지지 않게 합니다.
+            refreshHeroIdentity();
+            [document.getElementById("heroNameTag"), document.getElementById("userInfoDisplay")].forEach((container) => {
+                if (!container) return;
+                ["color", "border-color", "background-color", "box-shadow", "text-shadow"].forEach((property) => container.style.removeProperty(property));
+            });
         }
-
         function updateSoundSettingsUI() {
             if (!gameState.soundSettings) {
                 gameState.soundSettings = {
@@ -5800,12 +5819,13 @@
             openRetireModal();
         }
 
-        // ⏱️ 60초 주기적 백그라운드 클라우드 자동 동기화 (구글 통신량 90% 최적화)
+        // ⏱️ 3분 주기 자동 동기화: 진행 손실을 제한하면서 서버 함수 호출량을 줄인다.
         setInterval(() => {
-            if (gameState.name && gameState.name !== "방문자") {
+            // 백그라운드에서는 이탈 순간의 저장 시각을 유지해야 오프라인 시간이 줄어들지 않는다.
+            if (document.visibilityState === "visible" && gameState.name && gameState.name !== "방문자") {
                 saveSessionToCloud(true);
             }
-        }, 60000);
+        }, 180000);
 
         // 🚨 창 닫기 / 탭 이탈 시 이탈 감지 무실시간 즉시 저장 처리
         window.addEventListener("beforeunload", function () {
@@ -6326,7 +6346,7 @@
             const debuffDescEl = document.getElementById("wbGuideDebuffDesc");
             if (debuffDescEl) {
                 debuffDescEl.innerHTML = (bossInfo.id === 'fafnir') ? "선다형 보기나 순서맞추기 단어칸에 불꽃이 일렁여 시야를 방해합니다.<br><span class='text-yellow-300 font-bold'>👉 (불꽃이 일렁이는 정답을 타격하면 비늘이 깨집니다!)</span>" :
-                                         (bossInfo.id === 'golem') ? "단단한 암석 피부로 일반 타격 데미지를 60% 감소(0.4배)합니다.<br><span class='text-yellow-300 font-bold'>👉 (철자 조합 문제나 6글자 이상 단어 정답 시 장갑이 파괴됩니다!)</span>" :
+                                         (bossInfo.id === 'golem') ? "단단한 암석 피부로 일반 타격 데미지를 60% 감소(0.4배)합니다.<br><span class='text-yellow-300 font-bold'>👉 (6글자 이상 철자 조합 정답 또는 10콤보 달성 시 외피가 붕괴됩니다!)</span>" :
                                          "10초마다 플레이어를 중독시켜 스펠을 교란합니다.<br><span class='text-red-400 font-bold'>👉 (마법 속성 오답 공격 시 플레이어 HP 10%를 소모하여 체력을 회복합니다!)</span>";
             }
             const weakNameEl = document.getElementById("wbGuideWeaknessName");
@@ -6539,7 +6559,7 @@
                 document.getElementById("myWorldBossShareDisplay").innerText = `${cachedWb.sharePct}%`;
                 const expectedTokensCache = Math.min(500, 200 + Math.floor(cachedWb.myDamage / 10000000) * 20);
                 const expectedFpCache = Math.round(parseFloat(cachedWb.sharePct) * 1000);
-                document.getElementById("myWorldBossRewardDisplay").innerHTML = `처치: <span style="color:white">+${expectedFpCache.toLocaleString()} FP</span> | 미처치: <span style="color:#9ca3af">+${Math.floor(expectedFpCache / 2).toLocaleString()} FP</span>`;
+                document.getElementById("myWorldBossRewardDisplay").innerHTML = `처치 시: <span style="color:white">+${expectedFpCache.toLocaleString()} FP</span> | 미처치 시: <span style="color:#9ca3af">+${Math.floor(expectedFpCache / 2).toLocaleString()} FP</span>`;
 
                 // 캐시 기반 클리어 오버레이 즉시 표시
                 const defeatedOverlay = document.getElementById("wbDefeatedOverlay");
@@ -6606,7 +6626,7 @@
                     
                     const expectedTokens = Math.min(500, 200 + Math.floor(myDamage / 10000000) * 20);
                     const expectedFp = Math.round(parseFloat(cappedShare) * 1000);
-                    document.getElementById("myWorldBossRewardDisplay").innerHTML = `처치: <span style="color:white">+${expectedFp.toLocaleString()} FP</span> | 미처치: <span style="color:#9ca3af">+${Math.floor(expectedFp / 2).toLocaleString()} FP</span>`;
+                    document.getElementById("myWorldBossRewardDisplay").innerHTML = `처치 시: <span style="color:white">+${expectedFp.toLocaleString()} FP</span> | 미처치 시: <span style="color:#9ca3af">+${Math.floor(expectedFp / 2).toLocaleString()} FP</span>`;
 
                     // ✅ 서버 응답 데이터를 로컬 캐시에 저장 (다음 탭 전환 시 즉시 표시용)
                     localStorage.setItem(wbCacheKey, JSON.stringify({
@@ -6708,7 +6728,7 @@
             if (share) share.innerText = `${sharePct}%`;
             if (reward) {
                 const fp = Math.round(Number(sharePct) * 1000);
-                reward.innerHTML = `Defeat: <span style="color:white">+${fp.toLocaleString()} FP</span> | Otherwise: <span style="color:#9ca3af">+${Math.floor(fp / 2).toLocaleString()} FP</span>`;
+                reward.innerHTML = `처치 시: <span style="color:white">+${fp.toLocaleString()} FP</span> | 미처치 시: <span style="color:#9ca3af">+${Math.floor(fp / 2).toLocaleString()} FP</span>`;
             }
             const raidKey = `vocahero_wb_raid_date_${gameState.uid || gameState.name}`;
             if (boss.canAttack) localStorage.removeItem(raidKey);
@@ -6720,10 +6740,10 @@
             if (btn && (!boss.canAttack || defeated)) {
                 btn.disabled = true;
                 btn.className = "w-full py-3.5 bg-[#262626] text-[#7e7e7e] font-bold text-sm tracking-wider uppercase rounded-none-forced cursor-not-allowed border border-red-950";
-                btn.innerText = defeated ? "World boss defeated" : "Today's raid is complete";
+                btn.innerText = defeated ? "월드보스 토벌 완료" : "오늘의 레이드 완료";
             }
             if (badge && (!boss.canAttack || defeated)) {
-                badge.innerText = defeated ? "Boss defeated" : "Today's raid complete";
+                badge.innerText = defeated ? "토벌 성공" : "오늘 참전 완료";
                 badge.className = "text-[9px] bg-yellow-950 text-yellow-400 border border-yellow-600 px-3 py-1 rounded-none-forced font-bold uppercase tracking-wider";
             }
             const overlay = document.getElementById("wbDefeatedOverlay");
@@ -7275,7 +7295,7 @@
                 const bossInfo = WORLD_BOSS_SEASONS[seasonIdx] || WORLD_BOSS_SEASONS[0];
                 if (bossInfo.id === 'rich') {
                     wbSkillCastCount = (wbSkillCastCount || 0) + 1;
-                    if (wbSkillCastCount >= 2) {
+                    if (wbSkillCastCount >= 4) {
                         wbBossState = "weakness_shattered";
                         updateCurrentWbQuizOptionTheme();
                         wbWeaknessTimer = 15.0;
@@ -7690,32 +7710,42 @@
                 wbComboCount++;
 
                 // 보스별 약점 파훼 트리거 판정
+                // 골렘은 ① 6글자 이상 철자조합과 ② 10콤보를 서로 독립된 경로로 판정한다.
                 let isWeaknessTriggered = false;
+                let weaknessTriggerKind = "";
+                let resetComboAfterAnswer = false;
+                const comboForThisAnswer = wbComboCount;
                 if (wbBossState === "normal" && wbGracePeriodTimer <= 0) {
                     if (bossInfo.id === 'fafnir') {
-                        // 🐲 파브니르: 화염 가림 상태에서 정답 타격(선다형, 순서맞추기 포함) OR 10콤보 달성
                         const isFlameAnswerHit = (wbIsFlameActive === true);
                         if (isFlameAnswerHit || wbComboCount >= 10) {
                             isWeaknessTriggered = true;
+                            weaknessTriggerKind = wbComboCount >= 10 ? "combo" : "flame";
+                            resetComboAfterAnswer = true;
                         }
                     } else if (bossInfo.id === 'golem') {
-                        // 파멸 골렘: 6글자 이상 철자 조합(Unscramble) 정답 OR 10연속 정답
-                        if ((wbCurrentQuizType === 'unscramble' && wbCurrentWordObj.word.length >= 6) || wbComboCount >= 10) {
+                        const currentRaidWord = String(wbCurrentWordObj?.word || "");
+                        const isLongUnscramble = wbCurrentQuizType === 'unscramble' && currentRaidWord.length >= 6;
+                        const isTenCombo = wbComboCount >= 10;
+                        if (isTenCombo || isLongUnscramble) {
                             isWeaknessTriggered = true;
+                            weaknessTriggerKind = isTenCombo ? "combo" : "long-unscramble";
+                            // 6글자 철자조합 성공은 콤보 경로를 끊지 않는다. 10콤보 달성 때만 콤보를 소모한다.
+                            resetComboAfterAnswer = isTenCombo;
                         }
                     } else if (bossInfo.id === 'rich') {
-                        // 불멸의 리치: 10연속 정답 OR 마법 4회 시전
                         if (wbComboCount >= 10 || wbSkillCastCount >= 4) {
                             isWeaknessTriggered = true;
+                            weaknessTriggerKind = wbComboCount >= 10 ? "combo" : "skill";
+                            resetComboAfterAnswer = true;
                         }
                     }
                 }
-
                 if (isWeaknessTriggered && wbBossState !== "weakness_shattered") {
                     wbBossState = "weakness_shattered";
                     updateCurrentWbQuizOptionTheme();
                     wbWeaknessTimer = (bossInfo.id === 'rich' ? 15.0 : bossInfo.id === 'fafnir' ? 10.0 : 12.0);
-                    wbComboCount = 0; // 약점 해제 후 콤보 리셋
+                    // 콤보 소모 여부는 정답 피해와 협공 연출이 끝난 뒤 경로별로 처리한다.
                     if (bossInfo.id === 'rich') {
                         wbSkillCooldowns = {};
                         updateWorldBossSkillCooldownsUI();
@@ -7749,7 +7779,7 @@
                 let isGolemShatterStrike = false;
                 if (wbBossState === "weakness_shattered") {
                     if (bossInfo.id === 'golem') {
-                        typeMultiplier *= 5.0; // 🪨 파멸 골렘: 5.0배 단일 대형 충격파 극딜!
+                        typeMultiplier *= 10.0; // 🪨 파멸 골렘: 화면 설명과 동일한 10.0배 단일 충격파
                         isGolemShatterStrike = true;
                     } else {
                         typeMultiplier *= 2.5; // 파브니르 / 리치 2.5배
@@ -7769,12 +7799,12 @@
                 let petNoticeText = "";
                 let totalComboDmg = heroDmg;
 
-                if (wbComboCount === 1) {
+                if (comboForThisAnswer === 1) {
                     const slimeDmg = 500 + (slimeLvl * 250);
                     totalComboDmg += slimeDmg;
                     petNoticeText = `🟢 1콤보! [슬라임] 박치기! -${slimeDmg.toLocaleString()}`;
                     spawnWbDamageParticle(`🟢 -${slimeDmg.toLocaleString()}`, false);
-                } else if (wbComboCount === 2) {
+                } else if (comboForThisAnswer === 2) {
                     const dragonDmg = 1500 + (dragonLvl * 600);
                     totalComboDmg += dragonDmg;
                     petNoticeText = `🐉 2연속 콤보! [드래곤] 화염 브레스! -${dragonDmg.toLocaleString()}`;
@@ -7784,7 +7814,7 @@
                     const totalPetDmg = (slimeLvl * 200) + (dragonLvl * 500) + fairyDmg;
                     totalComboDmg += totalPetDmg;
                     const weakTag = (wbBossState === "weakness_shattered") ? " 💥 [약점 폭딜!]" : "";
-                    petNoticeText = `✨ ${wbComboCount}연속 콤보! [펫 3종] 일제 총공격! -${totalPetDmg.toLocaleString()}${weakTag}`;
+                    petNoticeText = `✨ ${comboForThisAnswer}연속 콤보! [펫 3종] 일제 총공격! -${totalPetDmg.toLocaleString()}${weakTag}`;
                     spawnWbDamageParticle(`✨ -${totalPetDmg.toLocaleString()}`, true);
                 }
 
@@ -7792,7 +7822,8 @@
                     wbBossState = "normal";
                     wbGracePeriodTimer = 0.0; // 골렘은 항시 재시도 가능!
                     updateCurrentWbQuizOptionTheme();
-                    petNoticeText = `💥 [5배 단일 충격파!] 골렘 파쇄 타격 -${totalComboDmg.toLocaleString()}! (외피 즉시 재가동)`;
+                    const shatterCause = weaknessTriggerKind === "combo" ? "10콤보 달성" : "6글자 이상 철자조합 정답";
+                    petNoticeText = `💥 [${shatterCause}·10배 외피 붕괴!] -${totalComboDmg.toLocaleString()}! (외피 즉시 재가동)`;
                 }
 
                 wbTotalDamageDealt += totalComboDmg;
@@ -7800,6 +7831,8 @@
 
                 triggerHeroAttackAnim();
                 showWorldBossFxNotice(petNoticeText, "text-yellow-300 border-yellow-500");
+                if (resetComboAfterAnswer) wbComboCount = 0;
+                updateWorldBossHudUI();
                 generateWorldBossQuiz();
             } else {
                 playSoundEffect('incorrect');
@@ -7917,10 +7950,10 @@
                     gameState.wbBestDamageWeek = currentWeek;
                     saveSessionToCloud(true);
                     updateWorldBossUI();
-                    showToast(`Server recorded ${result.applied.toLocaleString()} world-boss damage.`);
+                    showToast(`서버에 월드보스 피해 ${result.applied.toLocaleString()}이(가) 기록되었습니다.`);
                 }).catch((err) => {
                     console.error("World boss submission failed:", err);
-                    showToast("World-boss damage was not recorded. Start a new raid.");
+                    showToast("월드보스 피해가 기록되지 않았어요. 새 참전을 시작해 주세요.");
                 });
                 return;
             }

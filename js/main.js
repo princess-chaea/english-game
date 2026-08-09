@@ -933,6 +933,7 @@
             } else {
                 gameState.lastSaved = data.lastSaved;
             }
+            _offlineBaselineSavedAt = Number(gameState.lastSaved || 0);
 
             gameState.skillsInventory = data.skillsInventory || [];
             gameState.equippedSkills = data.equippedSkills || [];
@@ -1656,6 +1657,7 @@
         // 💤 오프라인 보상 퀴즈 시스템
         // ========================================
         let _offlineGoldPending = 0;
+        let _offlineBaselineSavedAt = 0;
         let _offlineQuizState = { questions: [], current: 0, allCorrect: true };
 
         let _offlineCalculatedOnce = false;
@@ -1675,7 +1677,9 @@
                 return;
             }
             const now = Date.now();
-            const deltaSeconds = Math.floor((now - gameState.lastSaved) / 1000);
+            const offlineSavedAt = _offlineBaselineSavedAt || Number(gameState.lastSaved || 0);
+            const deltaSeconds = Math.floor((now - offlineSavedAt) / 1000);
+            _offlineBaselineSavedAt = 0;
             const autoGps = calculateAutoGoldPerSec();
 
             if (deltaSeconds > 15 && autoGps > 0) {
@@ -6002,7 +6006,7 @@
                 if (!snapshot) {
                     ['hofStageList','hofBossList','hofGoldList'].forEach(id => {
                         const el = document.getElementById(id);
-                        if (el) el.innerHTML = '<p class="text-gray-500 text-center py-4">랭킹 기능 준비 중</p>';
+                        if (el) el.innerHTML = '<p class="text-gray-500 text-center py-4">랭킹을 불러오지 못했어요.</p>';
                     });
                     return;
                 }

@@ -1,5 +1,5 @@
 // VOCA HERO! Service Worker - Edge Request & Cache Optimization
-const CACHE_NAME = 'vocahero-v43';
+const CACHE_NAME = 'vocahero-v44';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -30,7 +30,7 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch: Stale-While-Revalidate for JS/CSS/Assets, Network-First for HTML/Manifest
+// Fetch: Cache-First for versioned JS/static assets, Network-First for HTML/Manifest
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
@@ -62,37 +62,22 @@ self.addEventListener('fetch', event => {
       return;
     }
 
-    // 게임 로직은 항상 네트워크 우선으로 가져와 배포 뒤 이전 인증·보안 코드가 남지 않게 합니다.
+    // JS는 쿼리 버전이 바뀌면 URL도 달라집니다. 같은 버전은 캐시에서 재사용해 전송량을 줄입니다.
     if (url.pathname.startsWith('/js/')) {
       event.respondWith(
-        fetch(event.request).then(networkResp => {
+        caches.match(event.request).then(cached => cached || fetch(event.request).then(networkResp => {
           if (networkResp && networkResp.status === 200) caches.open(CACHE_NAME).then(cache => cache.put(event.request, networkResp.clone()));
           return networkResp;
-        }).catch(() => caches.match(event.request))
+        }))
       );
       return;
     }
 
-    // 이미지·폰트 등 정적 자산은 캐시 우선 후 백그라운드 갱신
+    // 버전이 바뀌지 않는 이미지·폰트는 캐시 우선. 불필요한 백그라운드 재다운로드를 하지 않습니다.
     event.respondWith(
-      caches.match(event.request).then(cached => {
-        if (cached) {
-          fetch(event.request).then(networkResp => {
-            if (networkResp && networkResp.status === 200) {
-              const clone = networkResp.clone();
-              caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-            }
-          }).catch(() => {});
-          return cached;
-        }
-        return fetch(event.request).then(networkResp => {
-          if (networkResp && networkResp.status === 200) {
-            const clone = networkResp.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-          }
-          return networkResp;
-        });
-      })
-    );
-  }
+      caches.match(event.request).then(cached => cached || fetch(event.request).then(networkResp => {
+        if (networkResp && networkResp.status === 200) caches.open(CACHE_NAME).then(cache => cache.put(event.request, networkResp.clone()));
+        return networkResp;
+      }))
+    );  }
 });

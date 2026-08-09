@@ -362,12 +362,41 @@ function safeQuestionTypeStats(value) {
   });
   return result;
 }
+const ANALYTICS_DAY_MS = 24 * 60 * 60 * 1000;
+function analyticsDayKey(daysAgo = 0) {
+  return new Date(Date.now() + 9 * 60 * 60 * 1000 - daysAgo * ANALYTICS_DAY_MS).toISOString().slice(0, 10);
+}
+function safeDailyLearning(value) {
+  const result = {};
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return result;
+  Object.entries(value).forEach(([day, raw]) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return;
+    result[day] = {
+      tries: safeInt(raw?.tries, 0, 0, 1000000),
+      correct: safeInt(raw?.correct, 0, 0, 1000000),
+      stageClears: safeInt(raw?.stageClears, 0, 0, 10000)
+    };
+  });
+  return result;
+}
+function dailySeriesForMembers(members, days = 14) {
+  return Array.from({ length: days }, (_, index) => analyticsDayKey(days - index - 1)).map((day) => {
+    const totals = members.reduce((sum, member) => {
+      const row = member.dailyLearning?.[day] || {};
+      sum.tries += safeInt(row.tries, 0, 0);
+      sum.correct += safeInt(row.correct, 0, 0);
+      sum.stageClears += safeInt(row.stageClears, 0, 0);
+      return sum;
+    }, { tries: 0, correct: 0, stageClears: 0 });
+    return { day, ...totals, accuracy: totals.tries ? Math.round(totals.correct / totals.tries * 1000) / 10 : 0 };
+  });
+}
 async function listGuildMembers(uid, body) {
   const classId = text(body.classId, 128);
   const classSnap = await ownedClass(uid, classId);
   const data = classSnap.data();
   const membersSnap = await classSnap.ref.collection('members')
-    .select('nickname', 'learningGrade', 'stage', 'totalCorrect', 'totalQuizTries', 'masteredCount', 'guildCoins', 'guildPoints', 'guildCorrectCount', 'guildStageClears', 'guildBossDamage', 'guildBossPointTotal', 'guildTrialCorrect', 'lastActiveAt', 'assignedWordPackIds', 'questionTypes', 'questionTypeStats')
+    .select('nickname', 'learningGrade', 'stage', 'totalCorrect', 'totalQuizTries', 'masteredCount', 'guildCoins', 'guildPoints', 'guildCorrectCount', 'guildStageClears', 'guildBossDamage', 'guildBossPointTotal', 'guildTrialCorrect', 'trialAttempts', 'trialRetries', 'trialHintsUsed', 'lastActiveAt', 'assignedWordPackIds', 'questionTypes', 'questionTypeStats', 'dailyLearning')
     .limit(200).get();
   const members = membersSnap.docs.map((member) => {
     const value = member.data() || {};
@@ -389,6 +418,10 @@ async function listGuildMembers(uid, body) {
       guildBossDamage: safeInt(value.guildBossDamage, 0, 0, 100000000000000),
       guildBossPointTotal: safeInt(value.guildBossPointTotal, 0, 0, 1000000000),
       guildTrialCorrect: safeInt(value.guildTrialCorrect, 0, 0, 1000000),
+      trialAttempts: safeInt(value.trialAttempts, 0, 0, 1000000),
+      trialRetries: safeInt(value.trialRetries, 0, 0, 1000000),
+      trialHintsUsed: safeInt(value.trialHintsUsed, 0, 0, 1000000),
+      dailyLearning: safeDailyLearning(value.dailyLearning),
       assignedWordPackIds: normalizeWordPackIds(value.assignedWordPackIds || data.wordPackIds || data.wordPackId, value.learningGrade || data.grade),
       questionTypes: normalizeQuestionTypes(value.questionTypes || data.defaultQuestionTypes),
       questionTypeStats: safeQuestionTypeStats(value.questionTypeStats),
@@ -470,11 +503,36 @@ async function guildLearningReport(uid, body) {
   }));
   const totalTries = members.reduce((sum, member) => sum + member.totalQuizTries, 0);
   const totalCorrect = members.reduce((sum, member) => sum + member.totalCorrect, 0);
+  const dailySeries = dailySeriesForMembers(members, 14);
+  const activeToday = members.filter((member) => member.lastActiveAt && now - Date.parse(member.lastActiveAt) <= ANALYTICS_DAY_MS).length;
+  const active7Days = members.filter((member) => member.lastActiveAt && now - Date.parse(member.lastActiveAt) <= 7 * ANALYTICS_DAY_MS).length;
+  const neverStarted = members.filter((member) => member.totalQuizTries === 0).length;
+  const inactive7Days = members.filter((member) => member.totalQuizTries > 0 && (!member.lastActiveAt || now - Date.parse(member.lastActiveAt) > 7 * ANALYTICS_DAY_MS)).length;
+  const achievementGroups = {
+    needsSupport: members.filter((member) => member.totalQuizTries >= 10 && member.accuracy < 60).length,
+    developing: members.filter((member) => member.totalQuizTries >= 10 && member.accuracy >= 60 && member.accuracy < 80).length,
+    onTrack: members.filter((member) => member.totalQuizTries >= 10 && member.accuracy >= 80).length
+  };
+  const questionPriority = Object.entries(questionTypeStats)
+    .map(([type, value]) => ({ type, tries: value.tries, accuracy: value.tries ? Math.round(value.correct / value.tries * 1000) / 10 : null }))
+    .sort((a, b) => (a.accuracy ?? 101) - (b.accuracy ?? 101));
+  const suggestedQuestionTypes = questionPriority.filter((row) => row.tries > 0).slice(0, 2).map((row) => row.type);
+  const overallAccuracy = totalTries ? totalCorrect / totalTries * 100 : 0;
+  const enoughEvidence = totalTries >= Math.max(10, members.length * 5);
+  const suggestedLevel = !enoughEvidence ? 'mid' : overallAccuracy < 65 ? 'low' : overallAccuracy >= 85 ? 'high' : 'mid';
+  const supportMembers = members
+    .filter((member) => member.totalQuizTries === 0 || (member.totalQuizTries >= 10 && member.accuracy < 60) || (member.totalQuizTries > 0 && (!member.lastActiveAt || now - Date.parse(member.lastActiveAt) > 7 * ANALYTICS_DAY_MS)))
+    .sort((a, b) => a.accuracy - b.accuracy || a.totalQuizTries - b.totalQuizTries)
+    .slice(0, 20)
+    .map((member) => ({ memberId: member.memberId, nickname: member.nickname, accuracy: member.accuracy, totalQuizTries: member.totalQuizTries, lastActiveAt: member.lastActiveAt, reason: member.totalQuizTries === 0 ? '학습 미시작' : member.totalQuizTries >= 10 && member.accuracy < 60 ? '정답률 보강 필요' : '7일 이상 미접속' }));
   return {
     guild: details.guild,
     summary: {
       memberCount: members.length,
-      active7Days: members.filter((member) => member.lastActiveAt && now - Date.parse(member.lastActiveAt) <= 7 * 24 * 60 * 60 * 1000).length,
+      activeToday,
+      active7Days,
+      inactive7Days,
+      neverStarted,
       totalTries,
       totalCorrect,
       accuracy: totalTries ? Math.round(totalCorrect / totalTries * 1000) / 10 : 0,
@@ -483,9 +541,17 @@ async function guildLearningReport(uid, body) {
       guildBossDamage: members.reduce((sum, member) => sum + member.guildBossDamage, 0)
     },
     questionTypeStats,
+    dailySeries,
+    achievementGroups,
+    recommendations: {
+      focusWords: analysis.words.slice(0, 8),
+      suggestedQuestionTypes: suggestedQuestionTypes.length ? suggestedQuestionTypes : ['meaning-choice'],
+      suggestedLevel
+    },
+    supportMembers,
     topWrongWords: analysis.words.slice(0, 20),
     activeTrial: analysis.activeTrial,
-    members
+    members: members.map(({ dailyLearning, ...member }) => member)
   };
 }
 async function memberLearningReport(uid, body) {
@@ -518,6 +584,10 @@ async function memberLearningReport(uid, body) {
     guildPoints: safeInt(member.guildPoints, 0, 0),
     guildCoins: safeInt(member.guildCoins, 0, 0),
     guildBossDamage: safeInt(member.guildBossDamage, 0, 0),
+    trialAttempts: safeInt(member.trialAttempts, 0, 0),
+    trialRetries: safeInt(member.trialRetries, 0, 0),
+    trialHintsUsed: safeInt(member.trialHintsUsed, 0, 0),
+    dailySeries: dailySeriesForMembers([{ dailyLearning: safeDailyLearning(member.dailyLearning) }], 14),
     assignedWordPackIds: normalizeWordPackIds(member.assignedWordPackIds || classSnap.data().wordPackIds || classSnap.data().wordPackId, member.learningGrade || classSnap.data().grade),
     questionTypes: normalizeQuestionTypes(member.questionTypes || classSnap.data().defaultQuestionTypes),
     questionTypeStats: safeQuestionTypeStats(state.questionTypeStats || member.questionTypeStats),
@@ -558,11 +628,24 @@ async function wrongWordSummary(uid, body) {
   const classId = text(body.classId, 128);
   const classSnap = await ownedClass(uid, classId);
   const eligibleWords = wordByKey;
-  const members = await classSnap.ref.collection('members').select().get();
+  const members = await classSnap.ref.collection('members').select('wrongWordCounts').limit(200).get();
   const memberIds = members.docs.map((member) => member.id).slice(0, 200);
-  const accountSnaps = await Promise.all(memberIds.map((id) => accounts.doc(id).get()));
   const totals = new Map();
-  accountSnaps.forEach((accountSnap) => {
+  const missing = [];
+  members.docs.forEach((member) => {
+    const wrong = member.data()?.wrongWordCounts;
+    if (!wrong || typeof wrong !== 'object' || Array.isArray(wrong)) {
+      missing.push(member.id);
+      return;
+    }
+    Object.entries(wrong).forEach(([rawWord, rawCount]) => {
+      const key = text(rawWord, 80).toLowerCase();
+      const count = safeInt(rawCount, 0, 0, 1000000);
+      if (key && count > 0 && eligibleWords.has(key)) totals.set(key, (totals.get(key) || 0) + count);
+    });
+  });
+  const legacyAccountSnaps = await Promise.all(missing.slice(0, 200).map((id) => accounts.doc(id).get()));
+  legacyAccountSnaps.forEach((accountSnap) => {
     const wrong = accountSnap.data()?.state?.wrongWordCounts;
     if (!wrong || typeof wrong !== 'object' || Array.isArray(wrong)) return;
     Object.entries(wrong).forEach(([rawWord, rawCount]) => {

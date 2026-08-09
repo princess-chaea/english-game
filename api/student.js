@@ -11,6 +11,32 @@ const TIER_WORD_PACK_IDS = [3,4,5,6].flatMap((grade) => ['low','mid','high'].map
 const ASSIGNABLE_WORD_PACK_IDS = new Set(['grade-3-current','grade-4-current','grade-5-current','grade-6-current','curriculum-2022-grade-3','curriculum-2022-grade-4','curriculum-2022-grade-5','curriculum-2022-grade-6',...TIER_WORD_PACK_IDS,REVIEW_PACK_ID]);
 const LEARNING_QUESTION_TYPES = new Set(['meaning-choice','fill-blank','word-choice','listen-meaning']);
 const defaultWordPack = (grade) => 'grade-' + grade + '-mid';
+const DAY_MS = 24 * 60 * 60 * 1000;
+function seoulDayKey(now = Date.now()) {
+  return new Date(now + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+function safeDailyLearning(value) {
+  const rows = [];
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    Object.entries(value).forEach(([day, raw]) => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return;
+      rows.push([day, {
+        tries: safeInt(raw?.tries, 0, 0, 1000000),
+        correct: safeInt(raw?.correct, 0, 0, 1000000),
+        stageClears: safeInt(raw?.stageClears, 0, 0, 10000)
+      }]);
+    });
+  }
+  return Object.fromEntries(rows.sort(([a], [b]) => a.localeCompare(b)).slice(-35));
+}
+function safeWrongWordCounts(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(Object.entries(value)
+    .map(([rawWord, rawCount]) => [text(rawWord, 80).toLowerCase(), safeInt(rawCount, 0, 0, 1000000)])
+    .filter(([word, count]) => word && count > 0)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 300));
+}
 function normalizedPackIds(value, grade) { const source=Array.isArray(value)?value:(value?[value]:[]);const ids=[...new Set(source.map((item)=>text(item,80)).filter((id)=>ASSIGNABLE_WORD_PACK_IDS.has(id)))].slice(0,12);return ids.length?ids:[defaultWordPack(grade)]; }
 function normalizedQuestionTypes(value) { const types=[...new Set((Array.isArray(value)?value:[]).map((item)=>text(item,32)).filter((item)=>LEARNING_QUESTION_TYPES.has(item)))];return types.length?types:['meaning-choice']; }
 function safeQuestionTypeStats(value) { const result={};LEARNING_QUESTION_TYPES.forEach((type)=>{const row=value&&typeof value==='object'&&!Array.isArray(value)?value[type]:null;result[type]={tries:safeInt(row?.tries,0,0,1000000000),correct:safeInt(row?.correct,0,0,1000000000)};});return result; }
@@ -167,18 +193,28 @@ async function guildTrialEvent(uid, body) {
     const maxHints = safeInt(trial.maxHints, Math.max(1, Math.ceil((trial.words?.length || 5) / 5)), 1, 20);
     if (event === 'attempt') {
       if (attemptId === text(current.lastAttemptId, 128)) return { completed: false, attemptCount, retryCount, hintsUsed, hintsRemaining: Math.max(0, maxHints - hintsUsed) };
-      if (attemptCount > 0) retryCount += 1;
+      const isRetry = attemptCount > 0;
+      if (isRetry) retryCount += 1;
       attemptCount += 1;
       update.attemptCount = attemptCount;
       update.retryCount = retryCount;
       update.lastAttemptId = attemptId;
       update.lastWrongCount = safeInt(body.wrongCount, 0, 0, 20);
       update.lastAttemptAt = FieldValue.serverTimestamp();
+      tx.set(memberRef, {
+        trialAttempts: FieldValue.increment(1),
+        trialRetries: FieldValue.increment(isRetry ? 1 : 0),
+        lastTrialActivityAt: FieldValue.serverTimestamp()
+      }, { merge: true });
     } else if (event === 'hint') {
       if (hintsUsed >= maxHints) throw apiError(409, 'NO_TRIAL_HINTS', '이번 시련에서 사용할 수 있는 힌트를 모두 사용했어요.');
       hintsUsed += 1;
       update.hintsUsed = hintsUsed;
       update.lastHintAt = FieldValue.serverTimestamp();
+      tx.set(memberRef, {
+        trialHintsUsed: FieldValue.increment(1),
+        lastTrialActivityAt: FieldValue.serverTimestamp()
+      }, { merge: true });
     }
     tx.set(progressRef, update, { merge: true });
     return { completed: false, attemptCount, retryCount, hintsUsed, hintsRemaining: Math.max(0, maxHints - hintsUsed) };
@@ -194,21 +230,38 @@ async function syncGuildMemberProgress(uid, data) {
       if (!memberSnap.exists) return;
       const member = memberSnap.data() || {};
       const correct = safeInt(state.totalQuizCorrect, 0, 0);
+      const tries = safeInt(state.totalQuizTries, correct, correct, 1000000000);
       const stage = safeInt(state.stage, 1, 1, 9999);
       const countedCorrect = safeInt(member.countedCorrect, correct, 0);
+      const countedTries = safeInt(member.countedTries, tries, 0);
       const countedStage = safeInt(member.countedStage, stage, 1);
       const correctGain = Math.max(0, correct - countedCorrect);
+      const triesGain = Math.max(correctGain, tries - countedTries);
       const stageGain = Math.max(0, stage - countedStage);
+      const day = seoulDayKey();
+      const dailyLearning = safeDailyLearning(member.dailyLearning);
+      const currentDay = dailyLearning[day] || { tries: 0, correct: 0, stageClears: 0 };
+      dailyLearning[day] = {
+        tries: currentDay.tries + triesGain,
+        correct: currentDay.correct + correctGain,
+        stageClears: currentDay.stageClears + stageGain
+      };
+      const prunedDailyLearning = Object.fromEntries(Object.entries(dailyLearning)
+        .filter(([key]) => Date.parse(`${key}T00:00:00+09:00`) >= Date.now() - 35 * DAY_MS)
+        .sort(([a], [b]) => a.localeCompare(b)));
       tx.set(memberRef, {
         nickname: data.nickname,
         learningGrade: data.learningGrade,
         totalCorrect: correct,
-        totalQuizTries: safeInt(state.totalQuizTries, correct, correct, 1000000000),
+        totalQuizTries: tries,
         questionTypeStats: safeQuestionTypeStats(state.questionTypeStats),
+        wrongWordCounts: safeWrongWordCounts(state.wrongWordCounts),
         masteredCount: Array.isArray(state.masteredWords) ? state.masteredWords.length : 0,
         stage,
         countedCorrect: Math.max(countedCorrect, correct),
+        countedTries: Math.max(countedTries, tries),
         countedStage: Math.max(countedStage, stage),
+        dailyLearning: prunedDailyLearning,
         guildCorrectCount: FieldValue.increment(correctGain),
         guildStageClears: FieldValue.increment(stageGain),
         guildPoints: FieldValue.increment(correctGain + stageGain * 20),
@@ -335,8 +388,8 @@ async function joinClass(uid, body) {
     if(configuredCode&&configuredCode!==code)throw apiError(404,'INVITE_REPLACED','이전 초대 정보예요. 선생님에게 새 코드·QR·링크를 받아 주세요.');
     const account=accountSnap.data(),classLabel=text(classSnap.data().guildName||classSnap.data().classLabel||invite.classLabel,40)||'길드',correct=safeInt(account.state?.totalQuizCorrect,0,0),stage=safeInt(account.state?.stage,1,1,9999);
     const classroom=classSnap.data()||{},defaultPacks=normalizedPackIds(classroom.wordPackIds||classroom.wordPackId,account.learningGrade),defaultTypes=normalizedQuestionTypes(classroom.defaultQuestionTypes);
-    const base={nickname:account.nickname,learningGrade:account.learningGrade,totalCorrect:correct,totalQuizTries:safeInt(account.state?.totalQuizTries,correct,correct,1000000000),questionTypeStats:safeQuestionTypeStats(account.state?.questionTypeStats),masteredCount:Array.isArray(account.state?.masteredWords)?account.state.masteredWords.length:0,stage,lastActiveAt:FieldValue.serverTimestamp()};
-    if(!memberSnap.exists)Object.assign(base,{assignedWordPackIds:defaultPacks,questionTypes:defaultTypes,countedCorrect:correct,countedStage:stage,guildCorrectCount:0,guildStageClears:0,guildBossDamage:0,guildBossPointTotal:0,guildTrialCorrect:0,guildPoints:0,guildCoins:0,joinedAt:FieldValue.serverTimestamp()});
+    const base={nickname:account.nickname,learningGrade:account.learningGrade,totalCorrect:correct,totalQuizTries:safeInt(account.state?.totalQuizTries,correct,correct,1000000000),questionTypeStats:safeQuestionTypeStats(account.state?.questionTypeStats),wrongWordCounts:safeWrongWordCounts(account.state?.wrongWordCounts),masteredCount:Array.isArray(account.state?.masteredWords)?account.state.masteredWords.length:0,stage,lastActiveAt:FieldValue.serverTimestamp()};
+    if(!memberSnap.exists)Object.assign(base,{assignedWordPackIds:defaultPacks,questionTypes:defaultTypes,countedCorrect:correct,countedTries:base.totalQuizTries,countedStage:stage,dailyLearning:{},guildCorrectCount:0,guildStageClears:0,guildBossDamage:0,guildBossPointTotal:0,guildTrialCorrect:0,trialAttempts:0,trialRetries:0,trialHintsUsed:0,guildPoints:0,guildCoins:0,joinedAt:FieldValue.serverTimestamp()});
     (Array.isArray(account.classIds)?account.classIds:[]).slice(0,100).filter(id=>id&&id!==invite.classId).forEach(id=>tx.delete(classes.doc(id).collection('members').doc(uid)));
     tx.set(memberRef,base,{merge:true});tx.update(accountRef,{classIds:[invite.classId],activeClassId:invite.classId,activeGuildName:classLabel,updatedAt:FieldValue.serverTimestamp()});return {classId:invite.classId,classLabel};
   });

@@ -1450,7 +1450,7 @@
                     logo.alt = "";
                     logo.loading = "lazy";
                     logo.referrerPolicy = "no-referrer";
-                    logo.className = "h-4 w-4 shrink-0 rounded-sm border border-sky-500/60 object-cover";
+                    logo.className = "h-6 w-6 shrink-0 rounded-sm border border-sky-400 bg-sky-950/60 object-cover shadow-[0_0_7px_rgba(56,189,248,.55)]";
                     root.append(logo);
                 }
                 const guild = document.createElement("span");

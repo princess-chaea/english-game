@@ -816,7 +816,7 @@
     <script>
         // 새로고침 시 세션이 없으면 게임 UI가 깜빡이는 것을 방지
         if (!sessionStorage.getItem("vocahero_active_session") && !localStorage.getItem("vocahero_active_session")) {
-            document.write('<style id="antiFlashStyle">header, main, nav { display: none !important; }</style>');
+            document.write('<style id="antiFlashStyle">body > header, body > main { display: none !important; }</style>');
         }
     </script>
     <!-- ⏳ FULLSCREEN INITIAL LOADING OVERLAY -->
@@ -3054,7 +3054,7 @@
         }
     </style>
 
-    <script src="js/config.js?v=20260809-27"></script><script src="js/main.js?v=20260809-27"></script><script src="js/secure-account.js?v=20260809-27"></script>
+    <script src="js/config.js?v=20260809-29"></script><script src="js/main.js?v=20260809-29"></script><script src="js/secure-account.js?v=20260809-29"></script>
 
     <!-- Damage Overlay (Scratch & Flash) -->
     <div id="damageOverlay" class="fixed inset-0 pointer-events-none hidden z-[100] flex-col items-center justify-center bg-red-900/60 transition-opacity duration-300">

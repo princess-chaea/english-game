@@ -1,8 +1,6 @@
 import { readFileSync } from 'node:fs';
-import * as Canvas from '@napi-rs/canvas';
-import korData from '@tesseract.js-data/kor';
-import { createWorker } from 'tesseract.js';
-import { adminDb, adminStorage, FieldValue, Timestamp } from './_firebase-admin.js';
+import { randomUUID } from 'node:crypto';
+import { adminAuth, adminDb, adminStorage, FieldValue, Timestamp } from './_firebase-admin.js';
 import { apiError, handleApiError, hash, isExpired, randomCode, readBody, requireMethod, requireTeacher, safeInt, sendJson, text } from './_http.js';
 
 const teachers = adminDb.collection('teachers');
@@ -75,6 +73,21 @@ function normalizeGuildSubtitle(value) {
   if (!/^[가-힣A-Za-z0-9 ()\-]{1,32}$/u.test(subtitle)) throw apiError(400, 'INVALID_GUILD_SUBTITLE', '교사용 부제목은 한글·영문·숫자·공백·괄호·하이픈만 사용해 32자 이내로 입력해 주세요.');
   return subtitle;
 }
+function safeGuildLogoUrl(value) {
+  const url = text(value, 1200);
+  return /^https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/[A-Za-z0-9._-]+\/o\//.test(url) ? url : null;
+}
+function guildLogoFile(body) {
+  const match = /^data:(image\/jpeg|image\/png|image\/webp);base64,([A-Za-z0-9+/=\r\n]+)$/.exec(typeof body.fileData === 'string' ? body.fileData : '');
+  if (!match) throw apiError(400, 'INVALID_GUILD_LOGO', 'JPG, PNG 또는 WebP 로고 파일을 선택해 주세요.');
+  const bytes = Buffer.from(match[2].replace(/\s/g, ''), 'base64');
+  if (bytes.length < 512 || bytes.length > 2 * 1024 * 1024) throw apiError(400, 'GUILD_LOGO_SIZE', '길드 로고는 2MB 이하로 준비해 주세요.');
+  const jpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  const png = bytes.subarray(0, 8).equals(Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]));
+  const webp = bytes.subarray(0, 4).toString('ascii') === 'RIFF' && bytes.subarray(8, 12).toString('ascii') === 'WEBP';
+  if (!jpeg && !png && !webp) throw apiError(400, 'INVALID_GUILD_LOGO', '이미지 파일의 실제 형식을 확인해 주세요.');
+  return bytes;
+}
 function normalizeTeacherName(value) {
   const name = text(value, 48).replace(/\s+/g, ' ');
   if (!/^[가-힣A-Za-z·ㆍ ]{2,40}$/u.test(name)) throw apiError(400, 'INVALID_TEACHER_NAME', '교사 이름을 2~40자로 입력해 주세요.');
@@ -140,6 +153,7 @@ function proofDateCandidates(value) {
 async function extractPdfProofText(bytes) {
   let document;
   try {
+    const Canvas = await import('@napi-rs/canvas');
     globalThis.DOMMatrix ||= Canvas.DOMMatrix;
     globalThis.ImageData ||= Canvas.ImageData;
     globalThis.Path2D ||= Canvas.Path2D;
@@ -150,16 +164,16 @@ async function extractPdfProofText(bytes) {
     const embeddedText = text(content.items.map((item) => typeof item?.str === 'string' ? item.str : '').join(' '), 20000);
     if (embeddedText.length >= 8) return { rawDocumentText: embeddedText, confidence: 100, source: 'pdf_text' };
     const baseViewport = page.getViewport({ scale: 1 });
-    let renderScale = Math.min(2, 1800 / baseViewport.width, 2400 / baseViewport.height);
-    renderScale = Math.max(0.05, renderScale);
+    let renderScale = Math.max(0.05, Math.min(2.5, 1800 / baseViewport.width, 2400 / baseViewport.height));
     let viewport = page.getViewport({ scale: renderScale });
-    const maxPixels = 4_500_000;
+    const maxPixels = 3_000_000;
     if (viewport.width * viewport.height > maxPixels) {
       renderScale *= Math.sqrt(maxPixels / (viewport.width * viewport.height));
       viewport = page.getViewport({ scale: renderScale });
     }
     const canvas = Canvas.createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
     await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    const [{ createWorker }, { default: korData }] = await Promise.all([import('tesseract.js'), import('@tesseract.js-data/kor')]);
     const worker = await createWorker('kor', 1, { langPath: korData.langPath, gzip: true, cacheMethod: 'none' });
     try {
       const result = await worker.recognize(canvas.toBuffer('image/png'));
@@ -174,8 +188,22 @@ async function extractPdfProofText(bytes) {
     if (document) await document.destroy().catch(() => {});
   }
 }
-async function screenTeacherProof(bytes, teacherName, schoolName, contentType) {
-  const extraction = contentType === 'application/pdf' ? await extractPdfProofText(bytes) : { rawDocumentText: '', confidence: 0, source: 'manual_image' };
+async function extractImageProofText(bytes) {
+  try {
+    const [{ createWorker }, { default: korData }] = await Promise.all([import('tesseract.js'), import('@tesseract.js-data/kor')]);
+    const worker = await createWorker('kor', 1, { langPath: korData.langPath, gzip: true, cacheMethod: 'none' });
+    try {
+      const result = await worker.recognize(bytes);
+      return { rawDocumentText: text(result.data.text, 20000), confidence: safeInt(result.data.confidence, 0, 0, 100), source: 'image_ocr' };
+    } finally {
+      await worker.terminate();
+    }
+  } catch (error) {
+    console.warn('[TeacherProof] Image OCR failed:', error?.message || error);
+    return { rawDocumentText: '', confidence: 0, source: 'failed' };
+  }
+}async function screenTeacherProof(bytes, teacherName, schoolName, contentType) {
+  const extraction = contentType === 'application/pdf' ? await extractPdfProofText(bytes) : await extractImageProofText(bytes);
   const { rawDocumentText, confidence, source } = extraction;
   const documentText = normalizedProofText(rawDocumentText);
   const normalizedName = normalizedProofText(teacherName);
@@ -193,13 +221,13 @@ async function screenTeacherProof(bytes, teacherName, schoolName, contentType) {
   const dateExpired = Boolean(issueDate && issueDate < cutoff);
   const checks = { nameMatched, schoolMatched, documentMatched, templateMatched, dateFresh };
   let outcome = 'needs_review';
-  let reason = contentType === 'application/pdf' ? '표준 PDF의 이름·학교명·발급일 중 일부를 확인하지 못했어요.' : '이미지 문서는 관리자가 확인해야 해요.';
+  let reason = '이름·학교명·문서 종류·발급일 중 일부를 자동 확인하지 못했어요.';
   const exactIdentityAndTemplate = nameMatched && schoolMatched && documentMatched && templateMatched;
-  const isStandardScannedPdf = contentType === 'application/pdf' && source === 'pdf_ocr' && confidence >= 50;
-  if (isStandardScannedPdf && exactIdentityAndTemplate && dateExpired) {
+  const isReadableStandardDocument = source === 'pdf_text' || (['pdf_ocr', 'image_ocr'].includes(source) && confidence >= 45);
+  if (isReadableStandardDocument && exactIdentityAndTemplate && dateExpired) {
     outcome = 'auto_rejected';
     reason = '발급일이 현재 날짜 기준 1개월을 초과했어요.';
-  } else if (isStandardScannedPdf && rawDocumentText.length >= 8 && Object.values(checks).every(Boolean)) {
+  } else if (isReadableStandardDocument && rawDocumentText.length >= 8 && Object.values(checks).every(Boolean)) {
     outcome = 'auto_approved';
     reason = '표준 양식·이름·학교·재직증명서·최근 발급일이 자동 확인됐어요.';
   } else {
@@ -293,6 +321,7 @@ async function reviewTeacherVerification(token, body) {
   const requestSnap = await requestRef.get();
   if (!requestSnap.exists || requestSnap.data()?.status !== 'pending') throw apiError(404, 'REQUEST_NOT_FOUND', '처리할 인증 신청을 찾지 못했어요.');
   const request = requestSnap.data();
+  if (decision === 'approved' && request.issueDate && request.screeningChecks?.dateFresh !== true) throw apiError(409, 'PROOF_DATE_EXPIRED', '발급일이 현재 날짜 기준 1개월을 초과한 재직증명서는 승인할 수 없어요.');
   if (request.objectPath) await adminStorage.bucket().file(request.objectPath).delete({ ignoreNotFound: true });
   const teacherRef = teachers.doc(request.uid);
   const batch = adminDb.batch();
@@ -329,10 +358,10 @@ async function createGuild(uid, body) {
   if (name.length < 2 || !grade) throw apiError(400, 'INVALID_GUILD', '길드 이름과 기본 단어 수준을 확인해 주세요.');
   const ref = classes.doc();
   const defaultPackId = defaultWordPack(grade);
-  const data = { schemaVersion: 2, guildName: name, classLabel: name, guildSubtitle, grade, ownerId: uid, managerIds: [uid], schoolKey: teacher.schoolKey, schoolName: teacher.schoolName, wordPackId: defaultPackId, wordPackIds: [defaultPackId], defaultQuestionTypes: [...DEFAULT_QUESTION_TYPES], createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() };
+  const data = { schemaVersion: 2, guildName: name, classLabel: name, guildSubtitle, guildLogoUrl: null, guildLogoPath: null, grade, ownerId: uid, managerIds: [uid], schoolKey: teacher.schoolKey, schoolName: teacher.schoolName, wordPackId: defaultPackId, wordPackIds: [defaultPackId], defaultQuestionTypes: [...DEFAULT_QUESTION_TYPES], createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() };
   await ref.create(data);
   await teachers.doc(uid).set({ classIds: FieldValue.arrayUnion(ref.id), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-  return { id: ref.id, guildName: name, guildSubtitle, grade, wordPackId: data.wordPackId, wordPackIds: data.wordPackIds, questionTypes: data.defaultQuestionTypes };
+  return { id: ref.id, guildName: name, guildSubtitle, guildLogoUrl: null, grade, wordPackId: data.wordPackId, wordPackIds: data.wordPackIds, questionTypes: data.defaultQuestionTypes };
 }
 async function listClasses(uid) {
   const teacher = await teachers.doc(uid).get();
@@ -346,7 +375,7 @@ async function listClasses(uid) {
     let totalCorrect = 0; let guildPoints = 0;
     let activeStudentCount = 0;
     members.docs.forEach((member) => { const correct = safeInt(member.data()?.totalCorrect, 0, 0); const points = safeInt(member.data()?.guildPoints, 0, 0); totalCorrect += correct; guildPoints += points; if (points > 0) activeStudentCount += 1; });
-    result.push({ id: snap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), grade: safeInt(data.grade, 4, 3, 6), managerCount: (data.managerIds || []).length, studentCount: members.size, activeStudentCount, totalCorrect, guildPoints, wordPackId: classPack(data.grade, data.wordPackId), wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade), questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes) });
+    result.push({ id: snap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), managerCount: (data.managerIds || []).length, studentCount: members.size, activeStudentCount, totalCorrect, guildPoints, wordPackId: classPack(data.grade, data.wordPackId), wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade), questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes) });
   }
   return result;
 }
@@ -362,7 +391,40 @@ function safeQuestionTypeStats(value) {
   });
   return result;
 }
-const ANALYTICS_DAY_MS = 24 * 60 * 60 * 1000;
+const WORD_MASTERY_CORRECT_THRESHOLD = 10;
+const WORD_MASTERY_ACCURACY_THRESHOLD = 0.8;
+function wordLearningRows(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return [];
+  return Object.entries(value).map(([rawKey, raw]) => {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+    const word = text(raw.w || rawKey, 80);
+    if (!word) return null;
+    const correctCount = safeInt(raw.c, 0, 0, 1000000);
+    const wrongCount = safeInt(raw.x, 0, 0, 1000000);
+    const tries = correctCount + wrongCount;
+    const byType = {};
+    LEARNING_QUESTION_TYPES.forEach((type) => {
+      const values = raw.t?.[type];
+      if (!Array.isArray(values)) return;
+      const typeTries = safeInt(values[0], 0, 0, 1000000);
+      const typeCorrect = Math.min(typeTries, safeInt(values[1], 0, 0, 1000000));
+      if (typeTries > 0) byType[type] = { tries: typeTries, correct: typeCorrect, wrong: typeTries - typeCorrect, accuracy: Math.round(typeCorrect / typeTries * 1000) / 10 };
+    });
+    return {
+      word,
+      meaning: text(raw.m, 160) || wordByKey.get(word.toLowerCase())?.meaning || '',
+      correctCount,
+      wrongCount,
+      tries,
+      accuracy: tries ? Math.round(correctCount / tries * 1000) / 10 : 0,
+      streak: safeInt(raw.s, 0, 0, 1000000),
+      bestStreak: safeInt(raw.b, 0, 0, 1000000),
+      mastered: correctCount >= WORD_MASTERY_CORRECT_THRESHOLD && correctCount / Math.max(1, tries) >= WORD_MASTERY_ACCURACY_THRESHOLD,
+      byType,
+      lastSeenAt: safeInt(raw.u, 0, 0, 9999999999999)
+    };
+  }).filter(Boolean);
+}const ANALYTICS_DAY_MS = 24 * 60 * 60 * 1000;
 function analyticsDayKey(daysAgo = 0) {
   return new Date(Date.now() + 9 * 60 * 60 * 1000 - daysAgo * ANALYTICS_DAY_MS).toISOString().slice(0, 10);
 }
@@ -396,7 +458,7 @@ async function listGuildMembers(uid, body) {
   const classSnap = await ownedClass(uid, classId);
   const data = classSnap.data();
   const membersSnap = await classSnap.ref.collection('members')
-    .select('nickname', 'learningGrade', 'stage', 'totalCorrect', 'totalQuizTries', 'masteredCount', 'guildCoins', 'guildPoints', 'guildCorrectCount', 'guildStageClears', 'guildBossDamage', 'guildBossPointTotal', 'guildTrialCorrect', 'trialAttempts', 'trialRetries', 'trialHintsUsed', 'lastActiveAt', 'assignedWordPackIds', 'questionTypes', 'questionTypeStats', 'dailyLearning')
+    .select('nickname', 'learningGrade', 'stage', 'totalCorrect', 'totalQuizTries', 'conqueredCount', 'masteredCount', 'combatPower', 'titleName', 'guildCoins', 'guildPoints', 'guildCorrectCount', 'guildStageClears', 'guildBossDamage', 'guildBossPointTotal', 'guildTrialCorrect', 'trialAttempts', 'trialRetries', 'trialHintsUsed', 'lastActiveAt', 'assignedWordPackIds', 'questionTypes', 'questionTypeStats', 'dailyLearning')
     .limit(200).get();
   const members = membersSnap.docs.map((member) => {
     const value = member.data() || {};
@@ -410,7 +472,10 @@ async function listGuildMembers(uid, body) {
       totalCorrect,
       totalQuizTries,
       accuracy: totalQuizTries ? Math.round(totalCorrect / totalQuizTries * 1000) / 10 : 0,
+      conqueredCount: safeInt(value.conqueredCount, safeInt(value.masteredCount, 0, 0), 0, 100000),
       masteredCount: safeInt(value.masteredCount, 0, 0, 100000),
+      combatPower: safeInt(value.combatPower, 0, 0, 9999999999999),
+      titleName: text(value.titleName, 80) || null,
       guildCoins: safeInt(value.guildCoins, 0, 0, 1000000000),
       guildPoints: safeInt(value.guildPoints, 0, 0, 1000000000),
       guildCorrectCount: safeInt(value.guildCorrectCount, 0, 0, 1000000000),
@@ -433,6 +498,7 @@ async function listGuildMembers(uid, body) {
       id: classSnap.id,
       guildName: guildName(data),
       guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle),
+      guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl),
       grade: safeInt(data.grade, 4, 3, 6),
       wordPackId: classPack(data.grade, data.wordPackId),
       wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade),
@@ -442,7 +508,45 @@ async function listGuildMembers(uid, body) {
     members
   };
 }
-async function setWordPack(uid, body) {
+async function updateGuildAppearance(uid, body) {
+  const classId = text(body.classId, 128);
+  const classSnap = await ownedClass(uid, classId);
+  const previousPath = text(classSnap.data()?.guildLogoPath, 500);
+  const source = guildLogoFile(body);
+  const Canvas = await import('@napi-rs/canvas');
+  let image;
+  try { image = await Canvas.loadImage(source); } catch { throw apiError(400, 'INVALID_GUILD_LOGO', '길드 로고 이미지를 읽지 못했어요.'); }
+  const size = Math.min(image.width, image.height);
+  if (!size) throw apiError(400, 'INVALID_GUILD_LOGO', '길드 로고 이미지 크기를 확인해 주세요.');
+  const canvas = Canvas.createCanvas(256, 256);
+  const context = canvas.getContext('2d');
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = 'high';
+  context.drawImage(image, Math.floor((image.width - size) / 2), Math.floor((image.height - size) / 2), size, size, 0, 0, 256, 256);
+  const bytes = await canvas.encode('webp', 82);
+  const token = randomUUID();
+  const objectPath = `guild-logos/${classId}/${randomUUID()}.webp`;
+  const bucket = adminStorage.bucket();
+  const uploaded = bucket.file(objectPath);
+  await uploaded.save(bytes, { resumable: false, validation: 'md5', metadata: { contentType: 'image/webp', cacheControl: 'public, max-age=31536000, immutable', metadata: { firebaseStorageDownloadTokens: token } } });
+  const guildLogoUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(objectPath)}?alt=media&token=${token}`;
+  try {
+    await classSnap.ref.update({ guildLogoUrl, guildLogoPath: objectPath, guildLogoVersion: FieldValue.increment(1), updatedAt: FieldValue.serverTimestamp() });
+    const members = await classSnap.ref.collection('members').select().limit(500).get();
+    for (let offset = 0; offset < members.docs.length; offset += 400) {
+      const batch = adminDb.batch();
+      members.docs.slice(offset, offset + 400).forEach((member) => batch.set(accounts.doc(member.id), { activeGuildLogoUrl: guildLogoUrl, updatedAt: FieldValue.serverTimestamp() }, { merge: true }));
+      await batch.commit();
+    }
+  } catch (error) {
+    await uploaded.delete({ ignoreNotFound: true }).catch(() => {});
+    throw error;
+  }
+  if (previousPath && previousPath !== objectPath && previousPath.startsWith(`guild-logos/${classId}/`)) {
+    await bucket.file(previousPath).delete({ ignoreNotFound: true }).catch(() => {});
+  }
+  return { classId, guildLogoUrl };
+}async function setWordPack(uid, body) {
   const classId = text(body.classId, 128);
   const classSnap = await ownedClass(uid, classId);
   const wordPackIds = normalizeWordPackIds(body.wordPackIds || body.wordPackId, classSnap.data().grade);
@@ -536,6 +640,7 @@ async function guildLearningReport(uid, body) {
       totalTries,
       totalCorrect,
       accuracy: totalTries ? Math.round(totalCorrect / totalTries * 1000) / 10 : 0,
+      conqueredCount: members.reduce((sum, member) => sum + member.conqueredCount, 0),
       masteredCount: members.reduce((sum, member) => sum + member.masteredCount, 0),
       guildPoints: members.reduce((sum, member) => sum + member.guildPoints, 0),
       guildBossDamage: members.reduce((sum, member) => sum + member.guildBossDamage, 0)
@@ -567,11 +672,17 @@ async function memberLearningReport(uid, body) {
   const totalCorrect = safeInt(state.totalQuizCorrect, safeInt(member.totalCorrect, 0, 0), 0, 1000000000);
   const totalQuizTries = Math.max(totalCorrect, safeInt(state.totalQuizTries, safeInt(member.totalQuizTries, totalCorrect, 0), 0, 1000000000));
   const wrong = state.wrongWordCounts && typeof state.wrongWordCounts === 'object' && !Array.isArray(state.wrongWordCounts) ? state.wrongWordCounts : {};
-  const wrongWords = Object.entries(wrong).map(([rawWord, rawCount]) => {
+  const learningRows = wordLearningRows(state.wordLearningStats || member.wordLearningStats);
+  const rowKeys = new Set(learningRows.map((entry) => entry.word.toLowerCase()));
+  Object.entries(wrong).forEach(([rawWord, rawCount]) => {
     const key = text(rawWord, 80).toLowerCase();
+    if (!key || rowKeys.has(key)) return;
     const entry = wordByKey.get(key);
-    return entry ? { ...entry, wrongCount: safeInt(rawCount, 0, 0, 1000000) } : null;
-  }).filter((entry) => entry && entry.wrongCount > 0).sort((a, b) => b.wrongCount - a.wrongCount || a.word.localeCompare(b.word)).slice(0, 50);
+    if (entry) learningRows.push({ ...entry, correctCount: 0, wrongCount: safeInt(rawCount, 0, 0, 1000000), tries: safeInt(rawCount, 0, 0, 1000000), accuracy: 0, streak: 0, bestStreak: 0, mastered: false, byType: {}, lastSeenAt: 0 });
+  });
+  learningRows.sort((a, b) => b.wrongCount - a.wrongCount || b.tries - a.tries || a.word.localeCompare(b.word));
+  const wrongWords = learningRows.filter((entry) => entry.wrongCount > 0).slice(0, 100);
+  const masteredCount = learningRows.filter((entry) => entry.mastered).length;
   return {
     memberId,
     nickname: text(member.nickname, 30) || '이름 없는 용사',
@@ -580,7 +691,10 @@ async function memberLearningReport(uid, body) {
     totalQuizTries,
     totalCorrect,
     accuracy: totalQuizTries ? Math.round(totalCorrect / totalQuizTries * 1000) / 10 : 0,
-    masteredCount: Array.isArray(state.masteredWords) ? state.masteredWords.length : safeInt(member.masteredCount, 0, 0),
+    conqueredCount: Array.isArray(state.masteredWords) ? state.masteredWords.length : safeInt(member.conqueredCount, 0, 0),
+    masteredCount,
+    masteryCriteria: { correctThreshold: WORD_MASTERY_CORRECT_THRESHOLD, accuracyThreshold: WORD_MASTERY_ACCURACY_THRESHOLD * 100 },
+    wordLearning: learningRows.slice(0, 300),
     guildPoints: safeInt(member.guildPoints, 0, 0),
     guildCoins: safeInt(member.guildCoins, 0, 0),
     guildBossDamage: safeInt(member.guildBossDamage, 0, 0),
@@ -713,7 +827,7 @@ async function listSchoolGuilds(uid) {
     const managed = Array.isArray(data.managerIds) && data.managerIds.includes(uid);
     const ownRequest = managed ? null : await classSnap.ref.collection('managerRequests').doc(uid).get();
     const masterName = ownerNames.get(text(data.ownerId, 128)) || '마스터';
-    guilds.push({ id: classSnap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), grade: safeInt(data.grade, 4, 3, 6), managerCount: Array.isArray(data.managerIds) ? data.managerIds.length : 0, masterName: managed ? masterName : maskedTeacherName(masterName), managed, requestStatus: ownRequest?.data()?.status || '' });
+    guilds.push({ id: classSnap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), managerCount: Array.isArray(data.managerIds) ? data.managerIds.length : 0, masterName: managed ? masterName : maskedTeacherName(masterName), managed, requestStatus: ownRequest?.data()?.status || '' });
     if (managed) {
       const requests = await classSnap.ref.collection('managerRequests').where('status', '==', 'pending').limit(50).get();
       requests.docs.forEach((request) => incomingRequests.push({ id: request.id, classId: classSnap.id, guildName: guildName(data), teacherName: text(request.data()?.teacherName, 40) || '이름 미확인', requestedAt: request.data()?.requestedAt?.toDate?.().toISOString?.() || null }));
@@ -736,7 +850,7 @@ async function schoolGuildPreview(uid, body) {
     teachers.doc(text(data.ownerId, 128)).get()
   ]);
   const masterName = text(ownerSnap.data()?.teacherName || ownerSnap.data()?.displayName, 40) || '마스터';
-  return { id: classSnap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), grade: safeInt(data.grade, 4, 3, 6), memberCount: safeInt(memberCountSnap.data()?.count, 0, 0, 100000), managerCount: Array.isArray(data.managerIds) ? data.managerIds.length : 0, masterName: managed ? masterName : maskedTeacherName(masterName), managed, requestStatus: ownRequest?.data()?.status || '' };
+  return { id: classSnap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), memberCount: safeInt(memberCountSnap.data()?.count, 0, 0, 100000), managerCount: Array.isArray(data.managerIds) ? data.managerIds.length : 0, masterName: managed ? masterName : maskedTeacherName(masterName), managed, requestStatus: ownRequest?.data()?.status || '' };
 }async function requestSchoolGuildJoin(uid, body) {
   const teacherSnap = await verifiedTeacher(uid);
   const teacher = teacherSnap.data();
@@ -837,6 +951,59 @@ async function joinManager(uid, body) {
   });
 }
 
+async function deleteTeacherAccount(uid) {
+  const teacherRef = teachers.doc(uid);
+  const teacherSnap = await teacherRef.get();
+  const teacher = teacherSnap.data() || {};
+  const classIds = Array.isArray(teacher.classIds) ? teacher.classIds.slice(0, 100) : [];
+  const managedClasses = classIds.length ? await adminDb.getAll(...classIds.map((id) => classes.doc(id))) : [];
+  const blockedGuilds = managedClasses.filter((snap) => {
+    if (!snap.exists || snap.data()?.ownerId !== uid) return false;
+    return !(snap.data()?.managerIds || []).some((managerId) => managerId !== uid);
+  });
+  if (blockedGuilds.length) {
+    const names = blockedGuilds.slice(0, 3).map((snap) => guildName(snap.data())).join(', ');
+    throw apiError(409, 'GUILD_OWNER_TRANSFER_REQUIRED', `먼저 ${names} 길드에 공동 관리자를 추가해 주세요. 길드 마스터 권한을 넘긴 뒤 계정을 삭제할 수 있어요.`);
+  }
+
+  for (const classSnap of managedClasses) {
+    if (!classSnap.exists || !(classSnap.data()?.managerIds || []).includes(uid)) continue;
+    const nextOwner = classSnap.data()?.ownerId === uid
+      ? (classSnap.data()?.managerIds || []).find((managerId) => managerId !== uid)
+      : null;
+    const update = { managerIds: FieldValue.arrayRemove(uid), updatedAt: FieldValue.serverTimestamp() };
+    if (nextOwner) update.ownerId = nextOwner;
+    await Promise.all([
+      classSnap.ref.update(update),
+      classSnap.ref.collection('managerRequests').doc(uid).delete().catch(() => {})
+    ]);
+  }
+
+  const schoolClassesPromise = teacher.schoolKey
+    ? classes.where('schoolKey', '==', teacher.schoolKey).limit(100).get()
+    : Promise.resolve({ docs: [] });
+  const [schoolClasses, verificationDocs, inviteDocs, studentAccount] = await Promise.all([
+    schoolClassesPromise,
+    verificationRequests.where('uid', '==', uid).limit(100).get(),
+    invites.where('createdBy', '==', uid).limit(100).get(),
+    accounts.doc(uid).get()
+  ]);
+  const proofPaths = new Set([
+    text(teacher.verificationObjectPath, 500),
+    ...verificationDocs.docs.map((doc) => text(doc.data()?.objectPath, 500))
+  ].filter((path) => path.startsWith(`teacher-verification/${uid}/`)));
+  await Promise.all([...proofPaths].map((path) => adminStorage.bucket().file(path).delete({ ignoreNotFound: true }).catch(() => {})));
+  await Promise.all([
+    ...schoolClasses.docs.map((snap) => snap.ref.collection('managerRequests').doc(uid).delete().catch(() => {})),
+    ...verificationDocs.docs.map((doc) => doc.ref.delete()),
+    ...inviteDocs.docs.map((doc) => doc.ref.delete()),
+    teacherRef.delete()
+  ]);
+  if (!studentAccount.exists) {
+    try { await adminAuth.deleteUser(uid); } catch (error) { if (error?.code !== 'auth/user-not-found') throw error; }
+  }
+  return { deleted: true, authAccountKeptForStudent: studentAccount.exists };
+}
 export default async function handler(req, res) {
   try {
     requireMethod(req, ['POST']);
@@ -859,6 +1026,7 @@ export default async function handler(req, res) {
     else if (body.action === 'guildReport') response = { report: await guildLearningReport(token.uid, body) };
     else if (body.action === 'memberReport') response = { report: await memberLearningReport(token.uid, body) };
     else if (body.action === 'updateMemberLearningSettings') response = { assignment: await updateMemberLearningSettings(token.uid, body) };
+    else if (body.action === 'updateGuildAppearance') response = { appearance: await updateGuildAppearance(token.uid, body) };
     else if (body.action === 'setClassWordPack' || body.action === 'setWordPack') response = { assignment: await setWordPack(token.uid, body) };
     else if (body.action === 'guildWrongWords') response = { analysis: await wrongWordSummary(token.uid, body) };
     else if (body.action === 'createGuildTrial') response = { trial: await createGuildTrial(token.uid, body) };
@@ -866,6 +1034,7 @@ export default async function handler(req, res) {
     else if (body.action === 'removeGuildManager') response = { management: await removeGuildManager(token.uid, body) };
     else if (body.action === 'createInvite') response = { invite: await invite(token.uid, body) };
     else if (body.action === 'joinAsManager') response = { membership: await joinManager(token.uid, body) };
+    else if (body.action === 'deleteTeacherAccount') response = { deletion: await deleteTeacherAccount(token.uid) };
     else throw apiError(400, 'UNKNOWN_ACTION', '알 수 없는 요청이에요.');
     sendJson(res, 200, { ok: true, ...response });
   } catch (error) { handleApiError(res, error); }

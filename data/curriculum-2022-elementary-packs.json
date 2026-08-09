@@ -5,7 +5,7 @@
   "packs": [
     {
       "id": "curriculum-2022-grade-3",
-      "label": "2022 curriculum draft - Grade 3",
+      "label": "2022 교육과정 검토안 · 3학년",
       "kind": "curriculum-draft",
       "grade": 3,
       "curriculumBand": "3-4",
@@ -1016,7 +1016,7 @@
     },
     {
       "id": "curriculum-2022-grade-4",
-      "label": "2022 curriculum draft - Grade 4 cumulative",
+      "label": "2022 교육과정 검토안 · 4학년 누적",
       "kind": "curriculum-draft",
       "grade": 4,
       "curriculumBand": "3-4",
@@ -2527,7 +2527,7 @@
     },
     {
       "id": "curriculum-2022-grade-5",
-      "label": "2022 curriculum draft - Grade 5",
+      "label": "2022 교육과정 검토안 · 5학년",
       "kind": "curriculum-draft",
       "grade": 5,
       "curriculumBand": "5-6",
@@ -3538,7 +3538,7 @@
     },
     {
       "id": "curriculum-2022-grade-6",
-      "label": "2022 curriculum draft - Grade 6 cumulative",
+      "label": "2022 교육과정 검토안 · 6학년 누적",
       "kind": "curriculum-draft",
       "grade": 6,
       "curriculumBand": "5-6",

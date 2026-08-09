@@ -5,7 +5,7 @@
   "packs": [
     {
       "id": "grade-3-current",
-      "label": "Grade 3 current list",
+      "label": "현행 3학년 단어",
       "kind": "grade-core",
       "grade": 3,
       "wordCount": 277,
@@ -1122,7 +1122,7 @@
     },
     {
       "id": "grade-4-current",
-      "label": "Grade 4 current list",
+      "label": "현행 4학년 단어",
       "kind": "grade-core",
       "grade": 4,
       "wordCount": 260,
@@ -2171,7 +2171,7 @@
     },
     {
       "id": "grade-5-current",
-      "label": "Grade 5 current list",
+      "label": "현행 5학년 단어",
       "kind": "grade-core",
       "grade": 5,
       "wordCount": 261,
@@ -3224,7 +3224,7 @@
     },
     {
       "id": "grade-6-current",
-      "label": "Grade 6 current list",
+      "label": "현행 6학년 단어",
       "kind": "grade-core",
       "grade": 6,
       "wordCount": 260,
@@ -4273,7 +4273,7 @@
     },
     {
       "id": "elementary-800-missing-review",
-      "label": "Elementary 800 missing-word review",
+      "label": "초등 필수 800 보충·복습 단어",
       "kind": "teacher-review",
       "grade": null,
       "wordCount": 444,
@@ -6502,7 +6502,7 @@
     },
     {
       "id": "curriculum-2022-grade-3",
-      "label": "2022 curriculum draft - Grade 3",
+      "label": "2022 교육과정 검토안 · 3학년",
       "kind": "curriculum-draft",
       "grade": 3,
       "curriculumBand": "3-4",
@@ -7513,7 +7513,7 @@
     },
     {
       "id": "curriculum-2022-grade-4",
-      "label": "2022 curriculum draft - Grade 4 cumulative",
+      "label": "2022 교육과정 검토안 · 4학년 누적",
       "kind": "curriculum-draft",
       "grade": 4,
       "curriculumBand": "3-4",
@@ -9024,7 +9024,7 @@
     },
     {
       "id": "curriculum-2022-grade-5",
-      "label": "2022 curriculum draft - Grade 5",
+      "label": "2022 교육과정 검토안 · 5학년",
       "kind": "curriculum-draft",
       "grade": 5,
       "curriculumBand": "5-6",
@@ -10035,7 +10035,7 @@
     },
     {
       "id": "curriculum-2022-grade-6",
-      "label": "2022 curriculum draft - Grade 6 cumulative",
+      "label": "2022 교육과정 검토안 · 6학년 누적",
       "kind": "curriculum-draft",
       "grade": 6,
       "curriculumBand": "5-6",

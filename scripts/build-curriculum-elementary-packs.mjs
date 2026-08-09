@@ -13,10 +13,10 @@ const toEntries = (words) => words.map((word) => {
   return entry;
 });
 const packDefinitions = [
-  { id: 'curriculum-2022-grade-3', label: '2022 curriculum draft - Grade 3', grade: 3, band: '3-4', words: placement.grade3Foundation },
-  { id: 'curriculum-2022-grade-4', label: '2022 curriculum draft - Grade 4 cumulative', grade: 4, band: '3-4', words: [...placement.grade3Foundation, ...placement.grade4Extension] },
-  { id: 'curriculum-2022-grade-5', label: '2022 curriculum draft - Grade 5', grade: 5, band: '5-6', words: placement.grade5Foundation },
-  { id: 'curriculum-2022-grade-6', label: '2022 curriculum draft - Grade 6 cumulative', grade: 6, band: '5-6', words: [...placement.grade5Foundation, ...placement.grade6Extension] },
+  { id: 'curriculum-2022-grade-3', label: '2022 교육과정 검토안 · 3학년', grade: 3, band: '3-4', words: placement.grade3Foundation },
+  { id: 'curriculum-2022-grade-4', label: '2022 교육과정 검토안 · 4학년 누적', grade: 4, band: '3-4', words: [...placement.grade3Foundation, ...placement.grade4Extension] },
+  { id: 'curriculum-2022-grade-5', label: '2022 교육과정 검토안 · 5학년', grade: 5, band: '5-6', words: placement.grade5Foundation },
+  { id: 'curriculum-2022-grade-6', label: '2022 교육과정 검토안 · 6학년 누적', grade: 6, band: '5-6', words: [...placement.grade5Foundation, ...placement.grade6Extension] },
 ];
 const packs = packDefinitions.map((definition) => ({
   id: definition.id,

@@ -9,6 +9,7 @@ const classes = adminDb.collection('classes');
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const EPOCH_MONDAY_MS = Date.UTC(2024, 6, 1);
+const guildLogoUrl = (value) => typeof value === 'string' && /^https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/[A-Za-z0-9._-]+\/o\//.test(value) ? value : null;
 
 function kstDay(now = Date.now()) {
   return new Date(now + KST_OFFSET_MS).toISOString().slice(0, 10);
@@ -45,7 +46,7 @@ async function status(uid) {
   const contribution = contributionSnap.data() || {};
   const rankedDocs = topSnap.docs;
   const publicDocs = rankedDocs.filter((doc) => doc.data().publicLeaderboard).slice(0, 100);
-  const top = publicDocs.map((doc, index) => ({ rank: index + 1, nickname: doc.data().publicNickname, guildName: typeof doc.data().publicGuildName === 'string' ? doc.data().publicGuildName : null, titleName: typeof doc.data().publicTitleName === 'string' ? doc.data().publicTitleName : null, damage: safeInt(doc.data().damage, 0, 0) }));
+  const top = publicDocs.map((doc, index) => ({ rank: index + 1, nickname: doc.data().publicNickname, guildName: typeof doc.data().publicGuildName === 'string' ? doc.data().publicGuildName : null, guildLogoUrl: typeof doc.data().publicGuildName === 'string' ? guildLogoUrl(doc.data().publicGuildLogoUrl) : null, titleName: typeof doc.data().publicTitleName === 'string' ? doc.data().publicTitleName : null, damage: safeInt(doc.data().damage, 0, 0) }));
   // 공개 설정은 이름표 노출만 제어합니다. 실제 기여 순위와 1위 칭호 판정은
   // 비공개 참가자도 포함한 전체 피해량 순서를 그대로 사용합니다.
   const myRankIndex = rankedDocs.findIndex((doc) => doc.id === uid);
@@ -150,6 +151,7 @@ async function contribute(uid, body) {
       publicLeaderboard: Boolean(account.leaderboardOptIn),
       publicNickname: account.leaderboardOptIn ? account.nickname : null,
       publicGuildName: account.leaderboardOptIn ? (typeof account.activeGuildName === 'string' ? account.activeGuildName : null) : null,
+      publicGuildLogoUrl: account.leaderboardOptIn && account.activeGuildName ? guildLogoUrl(account.activeGuildLogoUrl) : null,
       publicTitleName: account.leaderboardOptIn ? (typeof account.state?.equippedTitle === 'string' ? account.state.equippedTitle : (typeof account.state?.wbTitle === 'string' ? account.state.wbTitle : null)) : null,
       updatedAt: FieldValue.serverTimestamp()
     }, { merge: true });

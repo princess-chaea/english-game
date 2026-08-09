@@ -2,6 +2,7 @@ import { adminDb } from './_firebase-admin.js';
 import { apiError, handleApiError, readBody, requireMethod, requireUser, safeInt, sendJson } from './_http.js';
 
 const SORTS = new Set(['score', 'stage', 'gold']);
+const guildLogoUrl = (value) => typeof value === 'string' && /^https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/[A-Za-z0-9._-]+\/o\//.test(value) ? value : null;
 
 export default async function handler(req, res) {
   try {
@@ -18,6 +19,7 @@ export default async function handler(req, res) {
         isMe: doc.id === user.uid,
         nickname: data.nickname,
         guildName: typeof data.guildName === 'string' ? data.guildName : null,
+        guildLogoUrl: typeof data.guildName === 'string' ? guildLogoUrl(data.guildLogoUrl) : null,
         titleName: typeof data.titleName === 'string' ? data.titleName : null,
         score: safeInt(data.score, 0, 0),
         stage: safeInt(data.stage, 1, 1),

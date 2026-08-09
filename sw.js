@@ -1,8 +1,9 @@
 // VOCA HERO! Service Worker - Edge Request & Cache Optimization
-const CACHE_NAME = 'vocahero-v48';
+const CACHE_NAME = 'vocahero-v50';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
+  '/privacy.html',
   '/manifest.json',
   '/media/logo_v2.webp'
 ];
@@ -30,7 +31,7 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch: Cache-First for versioned JS/static assets, Network-First for HTML/Manifest
+// Fetch: Cache-First for versioned JS/static assets, Network-First for navigation/HTML/Manifest
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
@@ -48,8 +49,8 @@ self.addEventListener('fetch', event => {
   }
 
   if (url.origin === self.location.origin) {
-    // index.html 및 manifest.json 은 네트워크 우선 (업데이트 반영)
-    if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/manifest.json') {
+    // 화면 HTML과 manifest는 네트워크 우선 (업데이트 반영)
+    if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/privacy.html' || url.pathname === '/manifest.json') {
       event.respondWith(
         fetch(event.request).then(networkResp => {
           if (networkResp && networkResp.status === 200) {

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#050505">
+  <title>개인정보 처리·보관 및 계정 삭제 안내 | VOCA HERO!</title>
+  <style>
+    :root{color-scheme:dark;--line:#303030;--muted:#a0a8b8;--blue:#38bdf8;--yellow:#facc15;--red:#fb7185}*{box-sizing:border-box}body{margin:0;background:#050505;color:#f5f5f5;font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;line-height:1.7}main{width:min(880px,calc(100% - 28px));margin:32px auto 64px;border:1px solid #4a3a09;background:#090909;padding:clamp(20px,5vw,44px)}h1{margin:0;color:var(--yellow);font-size:clamp(25px,5vw,38px)}h2{margin:38px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--line);font-size:19px;color:#fff}h3{margin:22px 0 6px;font-size:15px;color:var(--blue)}p,li{font-size:14px;color:#d6d9df}ul{padding-left:22px}.summary{margin:20px 0;padding:16px;border:1px solid #164e63;background:#06151c}.warning{padding:14px;border:1px solid #7f1d1d;background:#1c0808;color:#fecdd3}strong{color:#fff}a{color:var(--blue)}.muted{color:var(--muted);font-size:12px}.back{display:inline-block;margin-bottom:18px;text-decoration:none;font-weight:800}.tag{display:inline-block;border:1px solid #365366;padding:2px 7px;color:#bae6fd;font-size:11px}footer{margin-top:42px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
+  </style>
+</head>
+<body>
+<main>
+  <a class="back" href="/">← VOCA HERO!로 돌아가기</a>
+  <div class="tag">시행일 2026년 8월 9일</div>
+  <h1>개인정보 처리·보관 및 계정 삭제 안내</h1>
+  <p class="muted">VOCA HERO!는 초등학생이 실명이나 학번 없이 영어를 학습할 수 있도록 개인정보를 최소한으로 처리합니다.</p>
+
+  <div class="summary"><strong>학생의 실명·학교·반·번호·PIN·Google 이메일은 새 게임 계정에 저장하지 않습니다.</strong><br>학생에게 필요한 정보는 닉네임, 학습 단어 학년, 게임 진행·학습 기록과 설정뿐입니다.</div>
+
+  <h2>1. 학생 계정에서 처리하는 정보</h2>
+  <ul>
+    <li><strong>필수:</strong> Firebase 인증 식별자(UID), 닉네임, 학습 단어 학년, 게임 진행·학습 기록, 오답·정답·문제 유형별 학습 통계, 서비스 설정</li>
+    <li><strong>선택:</strong> Google 계정 연결 여부, 전체 랭킹 공개 여부, 길드 가입 및 길드 활동 기록</li>
+    <li><strong>수집하지 않음:</strong> 학생 실명, 학교명, 반·번호, 주소, 전화번호, 주민등록번호, 새 계정용 PIN</li>
+  </ul>
+  <p>Google 로그인은 다른 기기에서 같은 게임 기록을 이어가기 위한 인증에만 사용합니다. Google 이메일은 게임 데이터베이스에 복사해 저장하지 않습니다. 단, 로그인 제공자인 Google과 Firebase Authentication은 인증 과정에서 계정 정보를 처리합니다.</p>
+
+  <h2>2. 기존 게임 기록 이전</h2>
+  <p>업데이트 전 기록을 찾을 때만 기존 학교명·학년·반·번호·이름·PIN을 입력받습니다. 이 정보는 일치하는 이전 영웅을 찾고 이전 여부를 확인하는 데 사용하며, 새 계정에는 복사하지 않습니다. 이전 개인정보 문서는 이전 완료 또는 보관 기준일로부터 60일간 보관한 뒤 순차적으로 삭제합니다.</p>
+
+  <h2>3. 랭킹과 길드</h2>
+  <ul>
+    <li>전체 랭킹은 기본 비공개이며, 학생이 켠 경우에만 닉네임·길드명/로고·장착 칭호와 게임 점수를 표시합니다.</li>
+    <li>랭킹을 숨기면 스테이지·골드·월드보스 공개 랭킹에서 모두 숨겨집니다. 실제 성과 계산과 1위 칭호 판정은 유지됩니다.</li>
+    <li>길드 교사는 길드에 가입한 학생의 닉네임과 학습·게임 성취 데이터만 확인합니다. 학생 실명·학교·학번은 제공하지 않습니다.</li>
+    <li>QR 카메라 영상은 기기 안에서 초대 코드를 읽는 용도로만 사용하며 서버에 업로드하지 않습니다.</li>
+  </ul>
+
+  <h2>4. 교사 인증 정보</h2>
+  <p>교사 기능은 Google 로그인 후 교사 이름, 학교명, 재직증명서를 이용해 재직 여부를 확인합니다. 이름과 학교명은 같은 학교 길드 연결과 관리 권한 표시에만 사용하며 학생·일반 사용자에게 공개하지 않습니다.</p>
+  <p class="warning"><strong>재직증명서 업로드 전 주민등록번호, 주소, 전화번호와 그 밖의 불필요한 개인정보를 반드시 가려 주세요.</strong> 학교명·교사 이름·직위·발급일·발급번호·직인처럼 확인에 필요한 부분만 남겨야 합니다.</p>
+  <ul>
+    <li>자동 승인·자동 반려된 증빙 원본은 저장하지 않습니다.</li>
+    <li>자동 판단이 애매해 수동 검토가 필요한 증빙만 비공개 저장소에 최대 7일 보관하며, 승인·반려 또는 만료 시 삭제합니다.</li>
+    <li>교사 이름과 학교명은 교사 계정을 유지하는 동안 보관합니다.</li>
+  </ul>
+
+  <h2>5. 보관 기간과 삭제</h2>
+  <ul>
+    <li>학생 게임 계정과 학습 기록은 학생이 계정을 삭제할 때까지 보관합니다.</li>
+    <li>학생은 게임의 <strong>설정 → 계정 관리 → 영웅 은퇴(초기화)</strong>에서 “영웅 은퇴”를 직접 입력해 계정 삭제를 요청할 수 있습니다.</li>
+    <li>학생 계정 삭제 시 인증 계정, 게임 진행, 공개 랭킹, 길드원 기록, 시련 진행·완료, 월드보스 기여·보상 기록과 연결된 이전 개인정보 문서를 삭제합니다.</li>
+    <li>교사는 <strong>교사 대시보드 → 길드 창설·참여 → 교사 계정 삭제</strong>에서 재직정보·인증자료·관리 권한을 삭제할 수 있습니다. 유일한 길드 마스터라면 먼저 공동 관리자에게 권한을 넘겨야 합니다.</li>
+    <li>하나의 Google 계정에 학생 게임 기록도 함께 있는 경우, 교사 정보 삭제 시 학생 게임 계정은 유지됩니다.</li>
+  </ul>
+
+  <h2>6. 처리 위탁·보안</h2>
+  <p>인증과 데이터 저장에는 Google Firebase, 웹 호스팅과 서버 API에는 Vercel을 사용합니다. 서비스 제공 과정에서 해당 사업자의 글로벌 인프라를 통해 정보가 처리될 수 있습니다. 사용자 데이터 문서는 브라우저에서 Firestore/Storage에 직접 접근할 수 없게 차단하고, 인증된 서버 API에서 권한을 확인한 뒤 처리합니다.</p>
+
+  <h2>7. 문의</h2>
+  <p>개인정보 처리 또는 계정 삭제에 관한 문의: <a href="mailto:dltjdrms320@gmail.com">dltjdrms320@gmail.com</a></p>
+  <p class="muted">서비스 기능 또는 처리 방식이 바뀌면 이 안내의 내용과 시행일을 함께 갱신합니다.</p>
+
+  <footer>VOCA HERO! · 영단어 용사 키우기</footer>
+</main>
+</body>
+</html>

@@ -66,6 +66,7 @@
             // ⚡ 무구 잠재력 잠금 슬롯 상태 (새로고침 후에도 유지)
             lockedPotentialSlots: {}, // { helmet: [0,1], armor: [], ... }
             wrongWordCounts: {}, // { "apple": 2, "banana": 1 }
+            wordLearningStats: {}, // 단어별 정답·오답·연속 정답·문제 유형 통계
             questionTypeStats: {},
             assignedWordPackIds: [],
             assignedQuestionTypes: ["meaning-choice"]
@@ -830,6 +831,7 @@
                 if (typeof gameState.totalQuizCorrect === 'undefined') gameState.totalQuizCorrect = 0;
                 if (!gameState.masteredWords) gameState.masteredWords = [];
                 if (!gameState.wrongWordCounts) gameState.wrongWordCounts = {};
+                if (!gameState.wordLearningStats || typeof gameState.wordLearningStats !== "object") gameState.wordLearningStats = {};
                 if (!gameState.lockedPotentialSlots) gameState.lockedPotentialSlots = {};
             } else {
                 gameState.schoolName = schoolName;
@@ -854,6 +856,7 @@
                 gameState.skillsInventory = [];
                 gameState.equippedSkills = [];
                 gameState.wrongWordCounts = {};
+                gameState.wordLearningStats = {};
                 gameState.lockedPotentialSlots = {};
                 gameState.lastSaved = Date.now();
                 gameState.tutorialCompleted = false;
@@ -951,6 +954,7 @@
 
             // 📚 정복 단어, 칭호, 퀴즈 통계 복원
             gameState.wrongWordCounts = extra.wrongWordCounts || data.wrongWordCounts || {};
+            gameState.wordLearningStats = extra.wordLearningStats || data.wordLearningStats || {};
             gameState.equippedTitle = extra.equippedTitle || data.equippedTitle || "";
             gameState.wbTitle = extra.wbTitle || data.wbTitle || "";
             gameState.unlockedTitles = extra.unlockedTitles || data.unlockedTitles || [];
@@ -1022,6 +1026,7 @@
                 totalQuizCorrect: gameState.totalQuizCorrect || 0,
                 masteredWords: gameState.masteredWords || [],
                 wrongWordCounts: gameState.wrongWordCounts || {},
+                wordLearningStats: gameState.wordLearningStats || {},
                 soundSettings: gameState.soundSettings || { masterMute: false, sfxAttack: true, sfxQuiz: true, sfxLevelup: true }
             });
         }
@@ -1438,6 +1443,16 @@
             const activeTitle = gameState.equippedTitle || gameState.wbTitle || "";
             const titlePresentation = getTitlePresentation(activeTitle);
             if (guildName) {
+                const guildLogoUrl = typeof gameState.activeGuildLogoUrl === "string" ? gameState.activeGuildLogoUrl.trim() : "";
+                if (guildLogoUrl) {
+                    const logo = document.createElement("img");
+                    logo.src = guildLogoUrl;
+                    logo.alt = "";
+                    logo.loading = "lazy";
+                    logo.referrerPolicy = "no-referrer";
+                    logo.className = "h-4 w-4 shrink-0 rounded-sm border border-sky-500/60 object-cover";
+                    root.append(logo);
+                }
                 const guild = document.createElement("span");
                 guild.className = "inline-block max-w-[100px] shrink-0 truncate border border-sky-400 bg-sky-950/60 px-1.5 py-0.5 text-[10px] text-sky-200 shadow-[0_0_7px_rgba(56,189,248,.65)]";
                 guild.textContent = guildName;
@@ -1924,6 +1939,7 @@
                 (goldMultiplier * 200)
             );
         }
+        window.getPlayerCombatPower = calculatePlayerCP;
 
         function calculateRequiredCP(stage, isBoss) {
             const st = Math.max(1, stage || 1);
@@ -4546,6 +4562,45 @@
             saveLocalCache();
         }
 
+        const WORD_MASTERY_CORRECT_THRESHOLD = 10;
+        const WORD_MASTERY_ACCURACY_THRESHOLD = 0.8;
+        function recordWordLearningResult(entry, questionType, correct) {
+            if (!entry || !entry.word) return;
+            if (!gameState.wordLearningStats || typeof gameState.wordLearningStats !== "object" || Array.isArray(gameState.wordLearningStats)) gameState.wordLearningStats = {};
+            const key = String(entry.word).trim().toLowerCase();
+            if (!key) return;
+            const previous = gameState.wordLearningStats[key] && typeof gameState.wordLearningStats[key] === "object" ? gameState.wordLearningStats[key] : {};
+            const byType = previous.t && typeof previous.t === "object" && !Array.isArray(previous.t) ? { ...previous.t } : {};
+            const typeKey = ["meaning-choice","fill-blank","word-choice","listen-meaning"].includes(questionType) ? questionType : "meaning-choice";
+            const typeValue = Array.isArray(byType[typeKey]) ? byType[typeKey] : [0, 0];
+            typeValue[0] = Math.max(0, Number(typeValue[0] || 0)) + 1;
+            if (correct) typeValue[1] = Math.max(0, Number(typeValue[1] || 0)) + 1;
+            byType[typeKey] = typeValue;
+            const correctCount = Math.max(0, Number(previous.c || 0)) + (correct ? 1 : 0);
+            const wrongCount = Math.max(0, Number(previous.x || 0)) + (correct ? 0 : 1);
+            const streak = correct ? Math.max(0, Number(previous.s || 0)) + 1 : 0;
+            gameState.wordLearningStats[key] = {
+                w: String(entry.word).slice(0, 80),
+                m: String(entry.meaning || "").slice(0, 160),
+                c: correctCount,
+                x: wrongCount,
+                s: streak,
+                b: Math.max(Math.max(0, Number(previous.b || 0)), streak),
+                t: byType,
+                u: Date.now()
+            };
+        }
+        function getWordMasterySummary() {
+            const rows = Object.values(gameState.wordLearningStats || {}).filter((entry) => entry && typeof entry === "object");
+            const mastered = rows.filter((entry) => {
+                const correct = Math.max(0, Number(entry.c || 0));
+                const wrong = Math.max(0, Number(entry.x || 0));
+                return correct >= WORD_MASTERY_CORRECT_THRESHOLD && correct / Math.max(1, correct + wrong) >= WORD_MASTERY_ACCURACY_THRESHOLD;
+            });
+            return { conquered: Array.isArray(gameState.masteredWords) ? gameState.masteredWords.length : 0, mastered: mastered.length, thresholdCorrect: WORD_MASTERY_CORRECT_THRESHOLD, thresholdAccuracy: WORD_MASTERY_ACCURACY_THRESHOLD * 100 };
+        }
+        window.getWordMasterySummary = getWordMasterySummary;
+
         let isEvaluatingQuiz = false;
 
         function evaluateAnswer(index) {
@@ -4562,6 +4617,7 @@
             const typeStats = gameState.questionTypeStats[currentQuizType] || { tries: 0, correct: 0 };
             typeStats.tries = Number(typeStats.tries || 0) + 1;
             gameState.questionTypeStats[currentQuizType] = typeStats;
+            recordWordLearningResult(current, currentQuizType, index === gameState.currentQuizCorrectAnswer);
 
             if (index === gameState.currentQuizCorrectAnswer) {
                 if (!gameState.tutorialCompleted && tutorialStep === 1) {
@@ -6105,7 +6161,7 @@
             { id: "고고학자", name: "고고학자", tier: "전설", desc: "고대 유물 전종(10종) 수집 및 모두 3성 이상", condition: (gs) => (gs.acquiredRelics || []).length >= 10 && (gs.acquiredRelics || []).every(r => (r.stars||0) >= 3), style: "border-[#059669] bg-gradient-to-r from-[#047857] to-[#064e3b] text-[#a7f3d0] shadow-[0_0_10px_rgba(5,150,105,0.7)]" },
             { id: "잠재력 마스터", name: "잠재력 마스터", tier: "전설", desc: "잠재력 슬롯 30개 모두 해금", condition: (gs) => { let c=0; ["helmet","armor","weapon","shield","shoes"].forEach(k=>c+=(gs.gearPotentials?.[k]||[]).filter(x=>x).length); return c>=30; }, style: "border-[#059669] bg-gradient-to-r from-[#047857] to-[#064e3b] text-[#a7f3d0] shadow-[0_0_10px_rgba(5,150,105,0.7)]" },
             { id: "신화적 마법사", name: "신화적 마법사", tier: "전설", desc: "신화(Mythic) 스킬 5개 이상 보유", condition: (gs) => (gs.skillsInventory || []).filter(s => s.grade === 'mythic').length >= 5, style: "border-[#059669] bg-gradient-to-r from-[#047857] to-[#064e3b] text-[#a7f3d0] shadow-[0_0_10px_rgba(5,150,105,0.7)]" },
-            { id: "서고의 현자", name: "서고의 현자", tier: "전설", desc: "영단어 마스터 단어 500개 이상 기록", condition: (gs) => (gs.masteredWords || []).length >= 500, style: "border-[#6366f1] bg-gradient-to-r from-[#4f46e5] to-[#3730a3] text-[#c7d2fe] shadow-[0_0_10px_rgba(99,102,241,0.7)]" },
+            { id: "서고의 현자", name: "서고의 현자", tier: "전설", desc: "정복 단어 500개 이상 기록", condition: (gs) => (gs.masteredWords || []).length >= 500, style: "border-[#6366f1] bg-gradient-to-r from-[#4f46e5] to-[#3730a3] text-[#c7d2fe] shadow-[0_0_10px_rgba(99,102,241,0.7)]" },
             { id: "스테이지 70 정복자", name: "스테이지 70 정복자", tier: "전설", desc: "스테이지 70 이상 돌파", condition: (gs) => (gs.stage || 1) >= 70, style: "border-[#dc2626] bg-gradient-to-r from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] shadow-[0_0_10px_rgba(220,38,38,0.7)]" },
             { id: "펫 마스터", name: "펫 마스터", tier: "전설", desc: "펫 3종 모두 레벨 30 이상 달성", condition: (gs) => { const p = gs.petLevels || {}; return (p.slime||0)>=30 && (p.dragon||0)>=30 && (p.fairy||0)>=30; }, style: "border-[#be185d] bg-gradient-to-r from-[#9d174d] to-[#831843] text-[#fbcfe8] shadow-[0_0_10px_rgba(190,24,93,0.7)]" },
             { id: "장신구 대가", name: "장신구 대가", tier: "전설", desc: "목걸이, 팔찌, 반지 모두 Lv.30 달성", condition: (gs) => (gs.necklaceLvl||0)>=30 && (gs.braceletLvl||0)>=30 && (gs.ringLvl||0)>=30, style: "border-[#d97706] bg-gradient-to-r from-[#b45309] to-[#78350f] text-[#fde68a] shadow-[0_0_10px_rgba(217,119,6,0.7)]" },
@@ -6117,7 +6173,7 @@
             { id: "토벌 대장", name: "토벌 대장", tier: "영웅", desc: "월드보스 랭킹 Top 5 이내 진입", condition: (gs, res) => typeof res?.myBossRank === 'number' && res.myBossRank > 0 && res.myBossRank <= 5 && (gs.wbBestDamage||0) > 0, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
             { id: "정복 선봉장", name: "정복 선봉장", tier: "영웅", desc: "스테이지 40 이상 정복 달성", condition: (gs) => (gs.stage || 1) >= 40, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
             { id: "단어 마스터", name: "단어 마스터", tier: "영웅", desc: "단어 정답 300개 이상 정복", condition: (gs) => (gs.totalQuizCorrect || 0) >= 300, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
-            { id: "완벽주의자", name: "완벽주의자", tier: "영웅", desc: "영단어 서고 마스터 단어 150개 이상 기록", condition: (gs) => (gs.masteredWords || []).length >= 150, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
+            { id: "완벽주의자", name: "완벽주의자", tier: "영웅", desc: "정복 단어 150개 이상 기록", condition: (gs) => (gs.masteredWords || []).length >= 150, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
             { id: "검성", name: "검성", tier: "영웅", desc: "무기(수호검) 50강(MAX) 달성", condition: (gs) => (gs.weaponLvl || 1) >= 50, style: "border-[#b91c1c] bg-gradient-to-r from-[#991b1b] to-[#7f1d1d] text-[#fca5a5]" },
             { id: "방어의 탑", name: "방어의 탑", tier: "영웅", desc: "방어구(수호갑옷) 50강(MAX) 달성", condition: (gs) => (gs.armorLvl || 1) >= 50, style: "border-[#0369a1] bg-gradient-to-r from-[#075985] to-[#0c4a6e] text-[#7dd3fc]" },
             { id: "부유한 모험가", name: "부유한 모험가", tier: "영웅", desc: "누적 10,000,000(1천만) 골드 보유", condition: (gs) => (gs.gold || 0) >= 10000000, style: "border-[#d97706] bg-gradient-to-r from-[#b45309] to-[#78350f] text-[#fde68a]" },

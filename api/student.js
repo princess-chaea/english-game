@@ -10,6 +10,7 @@ const REVIEW_PACK_ID = 'elementary-800-missing-review';
 const TIER_WORD_PACK_IDS = [3,4,5,6].flatMap((grade) => ['low','mid','high'].map((level) => 'grade-' + grade + '-' + level));
 const ASSIGNABLE_WORD_PACK_IDS = new Set(['grade-3-current','grade-4-current','grade-5-current','grade-6-current','curriculum-2022-grade-3','curriculum-2022-grade-4','curriculum-2022-grade-5','curriculum-2022-grade-6',...TIER_WORD_PACK_IDS,REVIEW_PACK_ID]);
 const LEARNING_QUESTION_TYPES = new Set(['meaning-choice','fill-blank','word-choice','listen-meaning']);
+const safeGuildLogoUrl = (value) => { const url=text(value,1200);return /^https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/[A-Za-z0-9._-]+\/o\//.test(url)?url:null; };
 const defaultWordPack = (grade) => 'grade-' + grade + '-mid';
 const DAY_MS = 24 * 60 * 60 * 1000;
 function seoulDayKey(now = Date.now()) {
@@ -37,30 +38,64 @@ function safeWrongWordCounts(value) {
     .sort(([, a], [, b]) => b - a)
     .slice(0, 300));
 }
-function normalizedPackIds(value, grade) { const source=Array.isArray(value)?value:(value?[value]:[]);const ids=[...new Set(source.map((item)=>text(item,80)).filter((id)=>ASSIGNABLE_WORD_PACK_IDS.has(id)))].slice(0,12);return ids.length?ids:[defaultWordPack(grade)]; }
+const WORD_MASTERY_CORRECT_THRESHOLD = 10;
+const WORD_MASTERY_ACCURACY_THRESHOLD = 0.8;
+function safeWordLearningStats(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const rows = Object.entries(value).map(([rawKey, raw]) => {
+    const key = text(rawKey, 80).toLowerCase();
+    if (!key || !raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+    const correct = safeInt(raw.c, 0, 0, 1000000);
+    const wrong = safeInt(raw.x, 0, 0, 1000000);
+    const streak = safeInt(raw.s, 0, 0, 1000000);
+    const bestStreak = Math.max(streak, safeInt(raw.b, streak, 0, 1000000));
+    const byType = {};
+    LEARNING_QUESTION_TYPES.forEach((type) => {
+      const stats = raw.t?.[type];
+      if (!Array.isArray(stats)) return;
+      const tries = safeInt(stats[0], 0, 0, 1000000);
+      const typeCorrect = Math.min(tries, safeInt(stats[1], 0, 0, 1000000));
+      if (tries > 0) byType[type] = [tries, typeCorrect];
+    });
+    return [key, { w: text(raw.w || rawKey, 80), m: text(raw.m, 160), c: correct, x: wrong, s: streak, b: bestStreak, t: byType, u: safeInt(raw.u, 0, 0, 9999999999999) }];
+  }).filter(Boolean).sort((a, b) => b[1].u - a[1].u).slice(0, 2000);
+  return Object.fromEntries(rows);
+}
+function wordMasterySummary(value, conqueredFallback = 0) {
+  const stats = safeWordLearningStats(value);
+  let masteredCount = 0;
+  Object.values(stats).forEach((entry) => {
+    const tries = entry.c + entry.x;
+    if (entry.c >= WORD_MASTERY_CORRECT_THRESHOLD && entry.c / Math.max(1, tries) >= WORD_MASTERY_ACCURACY_THRESHOLD) masteredCount += 1;
+  });
+  return { stats, masteredCount, conqueredCount: safeInt(conqueredFallback, 0, 0, 100000) };
+}function normalizedPackIds(value, grade) { const source=Array.isArray(value)?value:(value?[value]:[]);const ids=[...new Set(source.map((item)=>text(item,80)).filter((id)=>ASSIGNABLE_WORD_PACK_IDS.has(id)))].slice(0,12);return ids.length?ids:[defaultWordPack(grade)]; }
 function normalizedQuestionTypes(value) { const types=[...new Set((Array.isArray(value)?value:[]).map((item)=>text(item,32)).filter((item)=>LEARNING_QUESTION_TYPES.has(item)))];return types.length?types:['meaning-choice']; }
 function safeQuestionTypeStats(value) { const result={};LEARNING_QUESTION_TYPES.forEach((type)=>{const row=value&&typeof value==='object'&&!Array.isArray(value)?value[type]:null;result[type]={tries:safeInt(row?.tries,0,0,1000000000),correct:safeInt(row?.correct,0,0,1000000000)};});return result; }
 function classPack(grade, wordPackId) { return ASSIGNABLE_WORD_PACK_IDS.has(wordPackId) ? wordPackId : defaultWordPack(grade); }
-const fields = new Set(['avatarType','gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petType','petLvl','petLevels','stage','progress','totalQuizTries','totalQuizCorrect','masteredWords','currentQuizIndex','skillsInventory','equippedSkills','activeSkillDeck','skillEssence','lockedPotentialSlots','wrongWordCounts','questionTypeStats','masteryPoints','necklaceLvl','braceletLvl','ringLvl','acquiredRelics','equippedRelicId','gearPotentials','isPotentialUnlocked','equippedTitle','wbTitle','unlockedTitles','bossTokens','relicEssence','soundSettings','tutorialCompleted','lastSaved']);
+const fields = new Set(['avatarType','gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petType','petLvl','petLevels','stage','progress','totalQuizTries','totalQuizCorrect','masteredWords','currentQuizIndex','skillsInventory','equippedSkills','activeSkillDeck','skillEssence','lockedPotentialSlots','wrongWordCounts','wordLearningStats','questionTypeStats','combatPower','masteryPoints','necklaceLvl','braceletLvl','ringLvl','acquiredRelics','equippedRelicId','gearPotentials','isPotentialUnlocked','equippedTitle','wbTitle','unlockedTitles','bossTokens','relicEssence','soundSettings','tutorialCompleted','lastSaved']);
 
-function defaultState() { return { avatarType:'male', gold:0, accGold:0, helmetLvl:1, armorLvl:1, weaponLvl:1, shieldLvl:1, shoesLvl:1, stage:1, progress:0, totalQuizTries:0, totalQuizCorrect:0, masteredWords:[], skillsInventory:[], equippedSkills:[], activeSkillDeck:[], skillEssence:0, wrongWordCounts:{}, questionTypeStats:{}, masteryPoints:0, tutorialCompleted:false }; }
+function defaultState() { return { avatarType:'male', gold:0, accGold:0, helmetLvl:1, armorLvl:1, weaponLvl:1, shieldLvl:1, shoesLvl:1, stage:1, progress:0, totalQuizTries:0, totalQuizCorrect:0, masteredWords:[], skillsInventory:[], equippedSkills:[], activeSkillDeck:[], skillEssence:0, wrongWordCounts:{}, wordLearningStats:{}, questionTypeStats:{}, combatPower:0, masteryPoints:0, tutorialCompleted:false }; }
 function cleanState(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw apiError(400,'INVALID_STATE','저장할 학습 기록 형식이 올바르지 않아요.');
   const state = {};
   fields.forEach((key) => { if (Object.hasOwn(input,key)) state[key] = input[key]; });
-  ['gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petLvl','stage','progress','totalQuizTries','totalQuizCorrect','currentQuizIndex','masteryPoints','necklaceLvl','braceletLvl','ringLvl','bossTokens','relicEssence'].forEach((key) => { if (Object.hasOwn(state,key)) state[key]=safeInt(state[key],0,0,9999999999); });
+  ['gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petLvl','stage','progress','totalQuizTries','totalQuizCorrect','currentQuizIndex','masteryPoints','necklaceLvl','braceletLvl','ringLvl','bossTokens','relicEssence','combatPower'].forEach((key) => { if (Object.hasOwn(state,key)) state[key]=safeInt(state[key],0,0,9999999999); });
   if (state.masteredWords && !Array.isArray(state.masteredWords)) delete state.masteredWords;
+  state.wrongWordCounts = safeWrongWordCounts(state.wrongWordCounts);
+  state.wordLearningStats = safeWordLearningStats(state.wordLearningStats);
+  state.questionTypeStats = safeQuestionTypeStats(state.questionTypeStats);
   if (state.skillsInventory && !Array.isArray(state.skillsInventory)) delete state.skillsInventory;
   if ((state.masteredWords?.length||0)>5000 || (state.skillsInventory?.length||0)>1000 || Buffer.byteLength(JSON.stringify(state),'utf8')>600000) throw apiError(400,'STATE_TOO_LARGE','저장할 학습 기록이 너무 커요.');
   return state;
 }
 function score(state) { return safeInt(state.totalQuizCorrect,0,0)*1000 + (Array.isArray(state.masteredWords)?state.masteredWords.length:0)*10 + Math.min(safeInt(state.stage,1,1),999); }
-function publicAccount(data) { return { nickname:data.nickname, learningGrade:data.learningGrade, state:{...defaultState(),...(data.state||{})}, freeNicknameChangeUsed:Boolean(data.freeNicknameChangeUsed), renameCount:safeInt(data.renameCount,0,0), leaderboardOptIn:Boolean(data.leaderboardOptIn), classIds:Array.isArray(data.classIds)?data.classIds:[], activeGuildName:text(data.activeGuildName,40)||null, legacyGoogleLinked:Boolean(data.legacyGoogleLinked) }; }
+function publicAccount(data) { return { nickname:data.nickname, learningGrade:data.learningGrade, state:{...defaultState(),...(data.state||{})}, freeNicknameChangeUsed:Boolean(data.freeNicknameChangeUsed), renameCount:safeInt(data.renameCount,0,0), leaderboardOptIn:Boolean(data.leaderboardOptIn), classIds:Array.isArray(data.classIds)?data.classIds:[], activeGuildName:text(data.activeGuildName,40)||null, activeGuildLogoUrl:data.activeGuildName?safeGuildLogoUrl(data.activeGuildLogoUrl):null, legacyGoogleLinked:Boolean(data.legacyGoogleLinked) }; }
 function legacyLearningGrade(data, fallback=4) { return safeInt(data?.grade, safeInt(data?.learningGrade, fallback, 3, 6), 3, 6); }
 async function loadAccount(uid) {
   const ref=accounts.doc(uid),snap=await ref.get();if(!snap.exists)return null;
   let data=snap.data();
-  if(!data.activeGuildName&&data.activeClassId){const assignment=await assignedWordPack(uid);if(assignment.classLabel){const update={activeGuildName:assignment.classLabel,updatedAt:FieldValue.serverTimestamp()};await ref.update(update);data={...data,...update};}}
+  if(data.activeClassId&&(!data.activeGuildName||!data.activeGuildLogoUrl)){const assignment=await assignedWordPack(uid);if(assignment.classLabel){const update={activeGuildName:assignment.classLabel,activeGuildLogoUrl:assignment.guildLogoUrl,updatedAt:FieldValue.serverTimestamp()};await ref.update(update);data={...data,...update};}}
   if(!data.legacyMigratedAt&&!data.legacyGoogleMigratedAt)return publicAccount(data);
   const matches=await legacyUsers.where('migratedTo','==',uid).limit(2).get();
   if(matches.size!==1)return publicAccount(data);
@@ -75,7 +110,7 @@ async function loadAccount(uid) {
 }
 async function assignedWordPack(uid) {
   const accountSnap = await accounts.doc(uid).get();
-  if (!accountSnap.exists) return { wordPackId: null, wordPackIds: [], questionTypes: ['meaning-choice'] };
+  if (!accountSnap.exists) return { wordPackId: null, wordPackIds: [], questionTypes: ['meaning-choice'], guildLogoUrl: null };
   const account = accountSnap.data();
   const classIds = Array.isArray(account.classIds) ? account.classIds.slice(0, 100) : [];
   const orderedIds = [account.activeClassId, ...classIds.filter((id) => id !== account.activeClassId)].filter(Boolean);
@@ -89,9 +124,9 @@ async function assignedWordPack(uid) {
     const grade = safeInt(member.learningGrade, safeInt(classroom.grade, account.learningGrade, 3, 6), 3, 6);
     const wordPackIds = normalizedPackIds(member.assignedWordPackIds || classroom.wordPackIds || classroom.wordPackId, grade);
     const questionTypes = normalizedQuestionTypes(member.questionTypes || classroom.defaultQuestionTypes);
-    return { classId, classLabel: classroom.guildName || classroom.classLabel || '길드', wordPackId: wordPackIds[0], wordPackIds, questionTypes };
+    return { classId, classLabel: classroom.guildName || classroom.classLabel || '길드', guildLogoUrl: safeGuildLogoUrl(classroom.guildLogoUrl), wordPackId: wordPackIds[0], wordPackIds, questionTypes };
   }
-  return { wordPackId: null, wordPackIds: [], questionTypes: ['meaning-choice'] };
+  return { wordPackId: null, wordPackIds: [], questionTypes: ['meaning-choice'], guildLogoUrl: null };
 }function normalizedTrialAnswer(value) { return text(value, 160).normalize('NFKC').trim().toLowerCase().replace(/[.!?,'’\-]/g, '').replace(/\s+/g, ' '); }
 async function loadGuildTrial(uid) {
   const assignment = await assignedWordPack(uid);
@@ -114,6 +149,7 @@ async function loadGuildTrial(uid) {
     guildCoins,
     trial: {
       id: trialId,
+      sceneImage: '/media/test/test' + (parseInt(hash(uid + ':' + trialId).slice(0, 8), 16) % 5 + 1) + '.webp?v=20260809-1',
       words: trial.words.slice(0, 20).map((entry) => ({ word: text(entry?.word, 80), meaning: text(entry?.meaning, 160), type: text(entry?.type, 32) })).filter((entry) => entry.word && entry.meaning),
       maxHints: safeInt(trial.maxHints, Math.max(1, Math.ceil(trial.words.length / 5)), 1, 20),
       hintsUsed: safeInt(progressSnap.data()?.hintsUsed, 0, 0, 20),
@@ -133,7 +169,7 @@ async function loadGuildOverview(uid) {
   const [classSnap, ownMemberSnap, membersSnap, memberCountSnap] = await Promise.all([
     classRef.get(),
     membersRef.doc(uid).get(),
-    membersRef.select('nickname', 'learningGrade', 'stage', 'totalCorrect', 'masteredCount', 'guildPoints', 'guildCorrectCount', 'guildStageClears', 'guildBossDamage', 'guildBossPointTotal', 'guildTrialCorrect', 'lastActiveAt').limit(200).get(),
+    membersRef.select('nickname', 'learningGrade', 'stage', 'totalCorrect', 'totalQuizTries', 'conqueredCount', 'masteredCount', 'combatPower', 'titleName', 'guildCoins', 'guildPoints', 'guildCorrectCount', 'guildStageClears', 'guildBossDamage', 'guildBossPointTotal', 'guildTrialCorrect', 'lastActiveAt').limit(200).get(),
     membersRef.count().get()
   ]);
   if (!classSnap.exists || !ownMemberSnap.exists) return { ...guild, memberCount: 0, guildTotalCorrect: 0, guildMasteredCount: 0, members: [] };
@@ -144,7 +180,12 @@ async function loadGuildOverview(uid) {
       learningGrade: safeInt(data.learningGrade, 4, 3, 6),
       stage: safeInt(data.stage, 1, 1, 9999),
       totalCorrect: safeInt(data.totalCorrect, 0, 0, 1000000000),
+      totalQuizTries: Math.max(safeInt(data.totalCorrect, 0, 0, 1000000000), safeInt(data.totalQuizTries, 0, 0, 1000000000)),
+      conqueredCount: safeInt(data.conqueredCount, safeInt(data.masteredCount, 0, 0), 0, 100000),
       masteredCount: safeInt(data.masteredCount, 0, 0, 100000),
+      combatPower: safeInt(data.combatPower, 0, 0, 9999999999999),
+      titleName: text(data.titleName, 80) || null,
+      guildCoins: safeInt(data.guildCoins, 0, 0, 1000000000),
       guildPoints: safeInt(data.guildPoints, 0, 0, 1000000000),
       guildCorrectCount: safeInt(data.guildCorrectCount, 0, 0, 1000000000),
       guildStageClears: safeInt(data.guildStageClears, 0, 0, 1000000),
@@ -158,8 +199,10 @@ async function loadGuildOverview(uid) {
   return {
     ...guild,
     guildName: text(classSnap.data()?.guildName || classSnap.data()?.classLabel, 40) || guild.guildName,
+    guildLogoUrl: safeGuildLogoUrl(classSnap.data()?.guildLogoUrl),
     memberCount: safeInt(memberCountSnap.data()?.count, members.length, 0),
     guildTotalCorrect: members.reduce((sum, member) => sum + member.totalCorrect, 0),
+    guildConqueredCount: members.reduce((sum, member) => sum + member.conqueredCount, 0),
     guildMasteredCount: members.reduce((sum, member) => sum + member.masteredCount, 0),
     guildPoints: members.reduce((sum, member) => sum + member.guildPoints, 0),
     members
@@ -249,6 +292,8 @@ async function syncGuildMemberProgress(uid, data) {
       const prunedDailyLearning = Object.fromEntries(Object.entries(dailyLearning)
         .filter(([key]) => Date.parse(`${key}T00:00:00+09:00`) >= Date.now() - 35 * DAY_MS)
         .sort(([a], [b]) => a.localeCompare(b)));
+      const conqueredCount = Array.isArray(state.masteredWords) ? state.masteredWords.length : 0;
+      const mastery = wordMasterySummary(state.wordLearningStats, conqueredCount);
       tx.set(memberRef, {
         nickname: data.nickname,
         learningGrade: data.learningGrade,
@@ -256,7 +301,11 @@ async function syncGuildMemberProgress(uid, data) {
         totalQuizTries: tries,
         questionTypeStats: safeQuestionTypeStats(state.questionTypeStats),
         wrongWordCounts: safeWrongWordCounts(state.wrongWordCounts),
-        masteredCount: Array.isArray(state.masteredWords) ? state.masteredWords.length : 0,
+        wordLearningStats: mastery.stats,
+        conqueredCount,
+        masteredCount: mastery.masteredCount,
+        combatPower: safeInt(state.combatPower, 0, 0, 9999999999999),
+        titleName: text(state.equippedTitle || state.wbTitle, 80) || null,
         stage,
         countedCorrect: Math.max(countedCorrect, correct),
         countedTries: Math.max(countedTries, tries),
@@ -289,7 +338,7 @@ async function guildLeaderboard() {
       bossPoints += safeInt(data.guildBossPointTotal, 0, 0);
       trialPoints += safeInt(data.guildTrialCorrect, 0, 0) * 10;
     });
-    return { id: classSnap.id, guildName: text(classSnap.data()?.guildName || classSnap.data()?.classLabel, 40) || '이름 없는 길드', memberCount: safeInt(memberCountSnap.data()?.count, members.size, 0), guildPoints, breakdown: { correct: correctPoints, stage: stagePoints, worldBoss: bossPoints, trial: trialPoints } };
+    return { id: classSnap.id, guildName: text(classSnap.data()?.guildName || classSnap.data()?.classLabel, 40) || '이름 없는 길드', guildLogoUrl: safeGuildLogoUrl(classSnap.data()?.guildLogoUrl), memberCount: safeInt(memberCountSnap.data()?.count, members.size, 0), guildPoints, breakdown: { correct: correctPoints, stage: stagePoints, worldBoss: bossPoints, trial: trialPoints } };
   }));
   const ranked = rows.filter((row) => row.memberCount > 0).sort((a, b) => b.guildPoints - a.guildPoints || a.guildName.localeCompare(b.guildName)).slice(0, 50).map((row, index) => ({ ...row, rank: index + 1 }));
   guildRankCache = { expiresAt: Date.now() + 60_000, rows: ranked };
@@ -330,6 +379,7 @@ async function publish(uid, data) {
   return leaderboard.doc(uid).set({
     nickname:data.nickname,
     guildName:text(data.activeGuildName,40)||null,
+    guildLogoUrl:data.activeGuildName?safeGuildLogoUrl(data.activeGuildLogoUrl):null,
     titleName:text(state.equippedTitle||state.wbTitle,80)||null,
     score:score(state),
     stage:safeInt(state.stage,1,1),
@@ -361,7 +411,7 @@ async function syncWorldBossVisibility(uid, accountData) {
   const ref=adminDb.collection('world_bosses').doc(`global_week_${currentBossWeek()}`).collection('contributions').doc(uid);
   const snap=await ref.get();if(!snap.exists)return;
   const visible=Boolean(account.leaderboardOptIn);
-  await ref.update({publicLeaderboard:visible,publicNickname:visible?account.nickname:null,publicGuildName:visible?(text(account.activeGuildName,40)||null):null,publicTitleName:visible?(text(account.state?.equippedTitle||account.state?.wbTitle,80)||null):null,updatedAt:FieldValue.serverTimestamp()});
+  await ref.update({publicLeaderboard:visible,publicNickname:visible?account.nickname:null,publicGuildName:visible?(text(account.activeGuildName,40)||null):null,publicGuildLogoUrl:visible&&account.activeGuildName?safeGuildLogoUrl(account.activeGuildLogoUrl):null,publicTitleName:visible?(text(account.state?.equippedTitle||account.state?.wbTitle,80)||null):null,updatedAt:FieldValue.serverTimestamp()});
 }async function save(uid, body) {
   const requested=cleanState(body.state);
   // 클라이언트 시계와 무관하게 서버가 오프라인 보상의 기준 시각을 확정한다.
@@ -386,12 +436,12 @@ async function joinClass(uid, body) {
     if(!accountSnap.exists)throw apiError(404,'PROFILE_NOT_FOUND','먼저 용사를 만들어 주세요.');if(!classSnap.exists)throw apiError(404,'GUILD_NOT_FOUND','길드를 찾지 못했어요.');
     const configuredCode=text(classSnap.data()?.inviteCodes?.student?.code,32).toUpperCase().replace(/[^A-Z0-9]/g,'');
     if(configuredCode&&configuredCode!==code)throw apiError(404,'INVITE_REPLACED','이전 초대 정보예요. 선생님에게 새 코드·QR·링크를 받아 주세요.');
-    const account=accountSnap.data(),classLabel=text(classSnap.data().guildName||classSnap.data().classLabel||invite.classLabel,40)||'길드',correct=safeInt(account.state?.totalQuizCorrect,0,0),stage=safeInt(account.state?.stage,1,1,9999);
+    const account=accountSnap.data(),classLabel=text(classSnap.data().guildName||classSnap.data().classLabel||invite.classLabel,40)||'길드',guildLogoUrl=safeGuildLogoUrl(classSnap.data().guildLogoUrl),correct=safeInt(account.state?.totalQuizCorrect,0,0),stage=safeInt(account.state?.stage,1,1,9999);
     const classroom=classSnap.data()||{},defaultPacks=normalizedPackIds(classroom.wordPackIds||classroom.wordPackId,account.learningGrade),defaultTypes=normalizedQuestionTypes(classroom.defaultQuestionTypes);
-    const base={nickname:account.nickname,learningGrade:account.learningGrade,totalCorrect:correct,totalQuizTries:safeInt(account.state?.totalQuizTries,correct,correct,1000000000),questionTypeStats:safeQuestionTypeStats(account.state?.questionTypeStats),wrongWordCounts:safeWrongWordCounts(account.state?.wrongWordCounts),masteredCount:Array.isArray(account.state?.masteredWords)?account.state.masteredWords.length:0,stage,lastActiveAt:FieldValue.serverTimestamp()};
+    const conqueredCount=Array.isArray(account.state?.masteredWords)?account.state.masteredWords.length:0,mastery=wordMasterySummary(account.state?.wordLearningStats,conqueredCount);const base={nickname:account.nickname,learningGrade:account.learningGrade,totalCorrect:correct,totalQuizTries:safeInt(account.state?.totalQuizTries,correct,correct,1000000000),questionTypeStats:safeQuestionTypeStats(account.state?.questionTypeStats),wrongWordCounts:safeWrongWordCounts(account.state?.wrongWordCounts),wordLearningStats:mastery.stats,conqueredCount,masteredCount:mastery.masteredCount,combatPower:safeInt(account.state?.combatPower,0,0,9999999999999),titleName:text(account.state?.equippedTitle||account.state?.wbTitle,80)||null,stage,lastActiveAt:FieldValue.serverTimestamp()};
     if(!memberSnap.exists)Object.assign(base,{assignedWordPackIds:defaultPacks,questionTypes:defaultTypes,countedCorrect:correct,countedTries:base.totalQuizTries,countedStage:stage,dailyLearning:{},guildCorrectCount:0,guildStageClears:0,guildBossDamage:0,guildBossPointTotal:0,guildTrialCorrect:0,trialAttempts:0,trialRetries:0,trialHintsUsed:0,guildPoints:0,guildCoins:0,joinedAt:FieldValue.serverTimestamp()});
     (Array.isArray(account.classIds)?account.classIds:[]).slice(0,100).filter(id=>id&&id!==invite.classId).forEach(id=>tx.delete(classes.doc(id).collection('members').doc(uid)));
-    tx.set(memberRef,base,{merge:true});tx.update(accountRef,{classIds:[invite.classId],activeClassId:invite.classId,activeGuildName:classLabel,updatedAt:FieldValue.serverTimestamp()});return {classId:invite.classId,classLabel};
+    tx.set(memberRef,base,{merge:true});tx.update(accountRef,{classIds:[invite.classId],activeClassId:invite.classId,activeGuildName:classLabel,activeGuildLogoUrl:guildLogoUrl,updatedAt:FieldValue.serverTimestamp()});return {classId:invite.classId,classLabel,guildLogoUrl};
   });
   const updated=await accountRef.get();if(updated.exists)await Promise.all([publish(uid,updated.data()),syncWorldBossVisibility(uid,updated.data())]);return membership;
 }
@@ -410,10 +460,11 @@ async function leaveClass(uid) {
     activeTrialId = text(classSnap.data()?.activeTrialId, 128);
     tx.delete(classRef.collection('members').doc(uid));
     const classIds = (Array.isArray(current.classIds) ? current.classIds : []).filter((id) => id !== classId);
-    tx.update(accountRef, { classIds, activeClassId: FieldValue.delete(), activeGuildName: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() });
+    tx.update(accountRef, { classIds, activeClassId: FieldValue.delete(), activeGuildName: FieldValue.delete(), activeGuildLogoUrl: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() });
     const next = { ...current, classIds };
     delete next.activeClassId;
     delete next.activeGuildName;
+    delete next.activeGuildLogoUrl;
     return next;
   });
   if (activeTrialId) {
@@ -479,5 +530,40 @@ async function claimGoogleLink(targetUid, body) {
   await Promise.all([publish(targetUid,data),leaderboard.doc(sourceUid).delete(),transferCurrentBossRecord({toUid:targetUid,fromUid:sourceUid,nickname:data.nickname,publicLeaderboard:data.leaderboardOptIn})]);
   return publicAccount(data);
 }
-async function erase(uid) { const snap=await accounts.doc(uid).get();if(!snap.exists)return;await Promise.all((snap.data().classIds||[]).slice(0,100).map(id=>adminDb.collection('classes').doc(id).collection('members').doc(uid).delete()));await Promise.all([accounts.doc(uid).delete(),leaderboard.doc(uid).delete()]); }
+async function erase(uid) {
+  const accountSnap = await accounts.doc(uid).get();
+  const classIds = Array.isArray(accountSnap.data()?.classIds) ? accountSnap.data().classIds.slice(0, 100) : [];
+  for (const classId of classIds) {
+    const classRef = classes.doc(classId);
+    const trials = await classRef.collection('trials').select().limit(200).get();
+    await Promise.all([
+      classRef.collection('members').doc(uid).delete().catch(() => {}),
+      ...trials.docs.flatMap((trial) => [
+        trial.ref.collection('progress').doc(uid).delete().catch(() => {}),
+        trial.ref.collection('completions').doc(uid).delete().catch(() => {})
+      ])
+    ]);
+  }
+
+  const [bosses, sessionsByOwner, migratedLegacy] = await Promise.all([
+    adminDb.collection('world_bosses').select().limit(300).get(),
+    adminDb.collection('worldBossSessions').where('uid', '==', uid).limit(100).get(),
+    legacyUsers.where('migratedTo', '==', uid).limit(100).get()
+  ]);
+  await Promise.all([
+    ...bosses.docs.flatMap((boss) => [
+      boss.ref.collection('contributions').doc(uid).delete().catch(() => {}),
+      boss.ref.collection('rewardClaims').doc(uid).delete().catch(() => {})
+    ]),
+    ...sessionsByOwner.docs.map((session) => session.ref.delete()),
+    ...migratedLegacy.docs.map((legacy) => legacy.ref.delete()),
+    accounts.doc(uid).delete(),
+    leaderboard.doc(uid).delete()
+  ]);
+  try {
+    await adminAuth.deleteUser(uid);
+  } catch (error) {
+    if (error?.code !== 'auth/user-not-found') throw error;
+  }
+}
 export default async function handler(req,res){try{requireMethod(req,['POST']);const user=await requireUser(req);const body=await readBody(req);let response;if(body.action==='load')response={account:await loadAccount(user.uid)};else if(body.action==='loadAssignedWordPack')response={assignment:await assignedWordPack(user.uid)};else if(body.action==='create')response={account:await create(user.uid,body)};else if(body.action==='save')response={account:await save(user.uid,body)};else if(body.action==='rename')response=await rename(user.uid,body);else if(body.action==='joinClass')response={membership:await joinClass(user.uid,body)};else if(body.action==='leaveClass')response={account:await leaveClass(user.uid)};else if(body.action==='loadGuildTrial')response={guild:await loadGuildTrial(user.uid)};else if(body.action==='loadGuildOverview')response={guild:await loadGuildOverview(user.uid),rankings:await guildLeaderboard()};else if(body.action==='guildTrialEvent')response={progress:await guildTrialEvent(user.uid,body)};else if(body.action==='completeGuildTrial')response={completion:await completeGuildTrial(user.uid,body)};else if(body.action==='migrateLegacy')response={account:await migrate(user.uid,body)};else if(body.action==='recoverMigratedLegacy')response={account:await recoverMigratedLegacy(user.uid,body)};else if(body.action==='migrateLegacyGoogle'){if(user.firebase?.sign_in_provider!=='google.com')throw apiError(403,'GOOGLE_REQUIRED','이전에 연결한 Google 계정으로 먼저 로그인해 주세요.');response={account:await migrateGoogleLegacy(user.uid,body)};}else if(body.action==='claimGoogleLink'){if(user.firebase?.sign_in_provider!=='google.com')throw apiError(403,'GOOGLE_REQUIRED','Google 계정으로 본인 확인 후 연결해 주세요.');response={account:await claimGoogleLink(user.uid,body)};}else if(body.action==='delete'){await erase(user.uid);response={deleted:true};}else throw apiError(400,'UNKNOWN_ACTION','알 수 없는 요청입니다.');sendJson(res,200,{ok:true,...response});}catch(error){handleApiError(res,error);}}

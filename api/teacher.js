@@ -392,8 +392,17 @@ function classPack(grade, wordPackId) {
 }
 async function bootstrap(uid, token) {
   const ref = teachers.doc(uid);
-  await ref.set({ role: 'teacher', displayName: FieldValue.delete(), email: FieldValue.delete(), googleDisplayName: FieldValue.delete(), lastLoginAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-  const data = (await ref.get()).data();
+  const snap = await ref.get();
+  if (!snap.exists) {
+    await ref.set({ role: 'teacher', lastLoginAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+  } else {
+    const update = { role: 'teacher', lastLoginAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() };
+    if (snap.get('displayName') !== undefined) update.displayName = FieldValue.delete();
+    if (snap.get('email') !== undefined) update.email = FieldValue.delete();
+    if (snap.get('googleDisplayName') !== undefined) update.googleDisplayName = FieldValue.delete();
+    await ref.update(update);
+  }
+  const data = (await ref.get()).data() || {};
   return { displayName: text(data.teacherName, 40) || '교사', teacherName: text(data.teacherName, 40), schoolName: text(data.schoolName, 80), verificationStatus: text(data.verificationStatus, 20) || 'unverified', needsProfile: !data.teacherName || !['pending','verified'].includes(data.verificationStatus), isReviewer: isReviewer(token), guildIds: Array.isArray(data.classIds) ? data.classIds : [] };
 }
 async function ownedClass(uid, id) {

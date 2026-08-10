@@ -316,12 +316,27 @@ async function loadGuildTrial(uid) {
   ]);
   if (!classSnap.exists || !ownMemberSnap.exists) return { ...guild, memberCount: 0, guildTotalCorrect: 0, guildMasteredCount: 0, members: [] };
   const classData = classSnap.data() || {};
-  const staffIds = [...new Set([text(classData.ownerId, 128), ...(Array.isArray(classData.managerIds) ? classData.managerIds : [])].filter(Boolean))].slice(0, 30);
-  const staffSnaps = await Promise.all(staffIds.map((id) => teachers.doc(id).get()));
-  const staff = staffSnaps.filter((snap) => snap.exists).map((snap) => ({
-    name: text(snap.data()?.teacherName || snap.data()?.displayName || snap.data()?.googleDisplayName, 40) || '선생님',
-    role: snap.id === classData.ownerId ? 'master' : 'manager'
+  const ownerId = text(classData.ownerId, 128);
+  const rawManagerIds = (Array.isArray(classData.managerIds) ? classData.managerIds : []).map((id) => text(id, 128)).filter(Boolean);
+  const coManagerIds = [...new Set(rawManagerIds)].filter((id) => id && id !== ownerId);
+  const allStaffIds = [...new Set([ownerId, ...coManagerIds].filter(Boolean))].slice(0, 30);
+
+  const staffSnaps = await Promise.all(allStaffIds.map(async (id) => {
+    const [tSnap, aSnap] = await Promise.all([teachers.doc(id).get(), accounts.doc(id).get()]);
+    const tData = tSnap.data() || {};
+    const aData = aSnap.data() || {};
+    const name = text(tData.teacherName || tData.displayName || tData.googleDisplayName || tData.name || aData.nickname || aData.teacherName || aData.displayName, 40) || '선생님';
+    return { id, name };
   }));
+  const staffNameMap = new Map(staffSnaps.map((s) => [s.id, s.name]));
+
+  const masterName = ownerId ? (staffNameMap.get(ownerId) || '선생님') : '선생님';
+  const coManagerNames = coManagerIds.map((id) => staffNameMap.get(id)).filter(Boolean);
+
+  const staff = [
+    { role: 'master', name: masterName },
+    ...coManagerNames.map((name) => ({ role: 'manager', name }))
+  ];
   const members = membersSnap.docs.map((member) => {
     const data = member.data() || {};
     return {

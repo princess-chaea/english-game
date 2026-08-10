@@ -953,8 +953,14 @@ async function listSchoolGuilds(uid) {
   const teacher = teacherSnap.data();
   const snapshot = await classes.where('schoolKey', '==', teacher.schoolKey).limit(100).get();
   const ownerIds = [...new Set(snapshot.docs.map((snap) => text(snap.data()?.ownerId, 128)).filter(Boolean))];
-  const ownerSnaps = ownerIds.length ? await adminDb.getAll(...ownerIds.map((id) => teachers.doc(id))) : [];
-  const ownerNames = new Map(ownerSnaps.map((snap) => [snap.id, text(snap.data()?.teacherName || snap.data()?.displayName, 40) || '마스터']));
+  const ownerSnaps = ownerIds.length ? await Promise.all(ownerIds.map(async (id) => {
+    const [tSnap, aSnap] = await Promise.all([teachers.doc(id).get(), accounts.doc(id).get()]);
+    const tData = tSnap.data() || {};
+    const aData = aSnap.data() || {};
+    const name = text(tData.teacherName || tData.displayName || tData.googleDisplayName || tData.name || aData.nickname || aData.teacherName || aData.displayName, 40) || '마스터';
+    return { id, name };
+  })) : [];
+  const ownerNames = new Map(ownerSnaps.map((item) => [item.id, item.name]));
   const guilds = [];
   const incomingRequests = [];
   for (const classSnap of snapshot.docs) {
@@ -979,12 +985,16 @@ async function schoolGuildPreview(uid, body) {
   if (!classSnap.exists || classSnap.data()?.schoolKey !== teacher.schoolKey) throw apiError(404, 'SCHOOL_GUILD_NOT_FOUND', '같은 학교의 길드를 찾지 못했어요.');
   const data = classSnap.data();
   const managed = Array.isArray(data.managerIds) && data.managerIds.includes(uid);
-  const [memberCountSnap, ownRequest, ownerSnap] = await Promise.all([
+  const ownerId = text(data.ownerId, 128);
+  const [memberCountSnap, ownRequest, ownerTSnap, ownerASnap] = await Promise.all([
     classRef.collection('members').count().get(),
     managed ? Promise.resolve(null) : classRef.collection('managerRequests').doc(uid).get(),
-    teachers.doc(text(data.ownerId, 128)).get()
+    teachers.doc(ownerId).get(),
+    accounts.doc(ownerId).get()
   ]);
-  const masterName = text(ownerSnap.data()?.teacherName || ownerSnap.data()?.displayName, 40) || '마스터';
+  const ownerTData = ownerTSnap.data() || {};
+  const ownerAData = ownerASnap.data() || {};
+  const masterName = text(ownerTData.teacherName || ownerTData.displayName || ownerTData.googleDisplayName || ownerTData.name || ownerAData.nickname || ownerAData.teacherName || ownerAData.displayName, 40) || '마스터';
   return { id: classSnap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), memberCount: safeInt(memberCountSnap.data()?.count, 0, 0, 100000), managerCount: Array.isArray(data.managerIds) ? data.managerIds.length : 0, masterName: managed ? masterName : maskedTeacherName(masterName), managed, requestStatus: ownRequest?.data()?.status || '' };
 }async function requestSchoolGuildJoin(uid, body) {
   const teacherSnap = await verifiedTeacher(uid);
@@ -1020,10 +1030,18 @@ async function listGuildManagers(uid, body) {
   const classId = text(body.classId, 128);
   const classSnap = await ownedClass(uid, classId);
   const data = classSnap.data();
-  const managerIds = [...new Set((data.managerIds || []).map((id) => text(id, 128)).filter(Boolean))];
-  const snapshots = managerIds.length ? await adminDb.getAll(...managerIds.map((id) => teachers.doc(id))) : [];
-  const byId = new Map(snapshots.map((snap) => [snap.id, snap.data() || {}]));
-  return { classId, isOwner: data.ownerId === uid, managers: managerIds.map((id) => ({ uid: id, teacherName: text(byId.get(id)?.teacherName || byId.get(id)?.displayName, 40) || '이름 미확인', isOwner: id === data.ownerId, isMe: id === uid })) };
+  const ownerId = text(data.ownerId, 128);
+  const rawManagerIds = (Array.isArray(data.managerIds) ? data.managerIds : []).map((id) => text(id, 128)).filter(Boolean);
+  const managerIds = [...new Set(rawManagerIds)].filter((id) => id && id !== ownerId);
+  const snapshots = managerIds.length ? await Promise.all(managerIds.map(async (id) => {
+    const [tSnap, aSnap] = await Promise.all([teachers.doc(id).get(), accounts.doc(id).get()]);
+    const tData = tSnap.data() || {};
+    const aData = aSnap.data() || {};
+    const name = text(tData.teacherName || tData.displayName || tData.googleDisplayName || tData.name || aData.nickname || aData.teacherName || aData.displayName, 40) || '이름 미확인';
+    return { id, name };
+  })) : [];
+  const byId = new Map(snapshots.map((s) => [s.id, s.name]));
+  return { classId, isOwner: ownerId === uid, managers: managerIds.map((id) => ({ uid: id, teacherName: byId.get(id) || '이름 미확인', isOwner: false, isMe: id === uid })) };
 }
 async function removeGuildMember(uid, body) {
   const classId = text(body.classId, 128);

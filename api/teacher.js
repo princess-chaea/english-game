@@ -392,9 +392,14 @@ function classPack(grade, wordPackId) {
 }
 async function bootstrap(uid, token) {
   const ref = teachers.doc(uid);
-  await ref.set({ role: 'teacher', displayName: FieldValue.delete(), email: FieldValue.delete(), googleDisplayName: FieldValue.delete(), lastLoginAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-  const data = (await ref.get()).data();
-  return { displayName: text(data.teacherName, 40) || '교사', teacherName: text(data.teacherName, 40), schoolName: text(data.schoolName, 80), verificationStatus: text(data.verificationStatus, 20) || 'unverified', needsProfile: !data.teacherName || !['pending','verified'].includes(data.verificationStatus), isReviewer: isReviewer(token), guildIds: Array.isArray(data.classIds) ? data.classIds : [] };
+  const googleName = text(token?.name, 40);
+  const updateData = { role: 'teacher', lastLoginAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() };
+  if (googleName) updateData.googleDisplayName = googleName;
+  await ref.set(updateData, { merge: true });
+  const data = (await ref.get()).data() || {};
+  const teacherName = text(data.teacherName || data.displayName || data.googleDisplayName, 40);
+  const displayName = teacherName || googleName || '교사';
+  return { displayName, teacherName: text(data.teacherName, 40), schoolName: text(data.schoolName, 80), verificationStatus: text(data.verificationStatus, 20) || 'unverified', needsProfile: !data.teacherName || !['pending','verified'].includes(data.verificationStatus), isReviewer: isReviewer(token), guildIds: Array.isArray(data.classIds) ? data.classIds : [] };
 }
 async function ownedClass(uid, id) {
   const snap = await classes.doc(id).get();
@@ -1038,8 +1043,9 @@ async function listGuildManagers(uid, body) {
   const data = classSnap.data();
   const ownerId = text(data.ownerId, 128);
   const rawManagerIds = (Array.isArray(data.managerIds) ? data.managerIds : []).map((id) => text(id, 128)).filter(Boolean);
-  const managerIds = [...new Set(rawManagerIds)].filter((id) => id && id !== ownerId);
-  const snapshots = managerIds.length ? await Promise.all(managerIds.map(async (id) => {
+  const coManagerIds = [...new Set(rawManagerIds)].filter((id) => id && id !== ownerId);
+  const allIds = [ownerId, ...coManagerIds].filter(Boolean);
+  const snapshots = allIds.length ? await Promise.all(allIds.map(async (id) => {
     const [tSnap, aSnap] = await Promise.all([teachers.doc(id).get(), accounts.doc(id).get()]);
     const tData = tSnap.data() || {};
     const aData = aSnap.data() || {};
@@ -1047,7 +1053,8 @@ async function listGuildManagers(uid, body) {
     return { id, name };
   })) : [];
   const byId = new Map(snapshots.map((s) => [s.id, s.name]));
-  return { classId, isOwner: ownerId === uid, managers: managerIds.map((id) => ({ uid: id, teacherName: byId.get(id) || '이름 미확인', isOwner: false, isMe: id === uid })) };
+  const managers = allIds.map((id) => ({ uid: id, teacherName: byId.get(id) || '이름 미확인', isOwner: id === ownerId, isMe: id === uid }));
+  return { classId, isOwner: ownerId === uid, managers };
 }
 async function removeGuildMember(uid, body) {
   const classId = text(body.classId, 128);

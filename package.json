@@ -3,14 +3,10 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": "24.x"
+    "node": "20.x"
   },
   "dependencies": {
-    "@napi-rs/canvas": "0.1.80",
-    "@tesseract.js-data/kor": "1.0.0",
-    "firebase-admin": "^13.0.2",
-    "pdfjs-dist": "4.10.38",
-    "tesseract.js": "7.0.0"
+    "firebase-admin": "^13.0.2"
   },
   "scripts": {
     "build:tiered-packs": "node scripts/build-tiered-word-packs.mjs",

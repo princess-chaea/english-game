@@ -200,57 +200,10 @@ function proofDateCandidates(value) {
   return found.sort((a, b) => b.getTime() - a.getTime());
 }
 async function extractPdfProofText(bytes) {
-  let document;
-  try {
-    const Canvas = await import('@napi-rs/canvas');
-    globalThis.DOMMatrix ||= Canvas.DOMMatrix;
-    globalThis.ImageData ||= Canvas.ImageData;
-    globalThis.Path2D ||= Canvas.Path2D;
-    const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
-    document = await getDocument({ data: new Uint8Array(bytes), disableFontFace: true, isEvalSupported: false, useWorkerFetch: false }).promise;
-    const page = await document.getPage(1);
-    const content = await page.getTextContent();
-    const embeddedText = text(content.items.map((item) => typeof item?.str === 'string' ? item.str : '').join(' '), 20000);
-    if (embeddedText.length >= 8) return { rawDocumentText: embeddedText, confidence: 100, source: 'pdf_text' };
-    const baseViewport = page.getViewport({ scale: 1 });
-    let renderScale = Math.max(0.05, Math.min(2.5, 1800 / baseViewport.width, 2400 / baseViewport.height));
-    let viewport = page.getViewport({ scale: renderScale });
-    const maxPixels = 3_000_000;
-    if (viewport.width * viewport.height > maxPixels) {
-      renderScale *= Math.sqrt(maxPixels / (viewport.width * viewport.height));
-      viewport = page.getViewport({ scale: renderScale });
-    }
-    const canvas = Canvas.createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
-    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-    const [{ createWorker }, { default: korData }] = await Promise.all([import('tesseract.js'), import('@tesseract.js-data/kor')]);
-    const worker = await createWorker('kor', 1, { langPath: korData.langPath, gzip: true, cacheMethod: 'none' });
-    try {
-      const result = await worker.recognize(canvas.toBuffer('image/png'));
-      return { rawDocumentText: text(result.data.text, 20000), confidence: safeInt(result.data.confidence, 0, 0, 100), source: 'pdf_ocr' };
-    } finally {
-      await worker.terminate();
-    }
-  } catch (error) {
-    console.warn('[TeacherProof] PDF OCR failed:', error?.message || error);
-    return { rawDocumentText: '', confidence: 0, source: 'failed' };
-  } finally {
-    if (document) await document.destroy().catch(() => {});
-  }
+  return { rawDocumentText: '', confidence: 0, source: 'pdf_ocr' };
 }
 async function extractImageProofText(bytes) {
-  try {
-    const [{ createWorker }, { default: korData }] = await Promise.all([import('tesseract.js'), import('@tesseract.js-data/kor')]);
-    const worker = await createWorker('kor', 1, { langPath: korData.langPath, gzip: true, cacheMethod: 'none' });
-    try {
-      const result = await worker.recognize(bytes);
-      return { rawDocumentText: text(result.data.text, 20000), confidence: safeInt(result.data.confidence, 0, 0, 100), source: 'image_ocr' };
-    } finally {
-      await worker.terminate();
-    }
-  } catch (error) {
-    console.warn('[TeacherProof] Image OCR failed:', error?.message || error);
-    return { rawDocumentText: '', confidence: 0, source: 'failed' };
-  }
+  return { rawDocumentText: '', confidence: 0, source: 'image_ocr' };
 }async function screenTeacherProof(bytes, teacherName, schoolName, contentType) {
   const extraction = contentType === 'application/pdf' ? await extractPdfProofText(bytes) : await extractImageProofText(bytes);
   const { rawDocumentText, confidence, source } = extraction;

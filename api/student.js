@@ -316,7 +316,7 @@ async function loadGuildTrial(uid) {
   ]);
   if (!classSnap.exists || !ownMemberSnap.exists) return { ...guild, memberCount: 0, guildTotalCorrect: 0, guildMasteredCount: 0, members: [] };
   const classData = classSnap.data() || {};
-  const ownerId = text(classData.ownerId, 128);
+  const ownerId = text(classData.ownerId || classData.managerIds?.[0], 128);
   const rawManagerIds = (Array.isArray(classData.managerIds) ? classData.managerIds : []).map((id) => text(id, 128)).filter(Boolean);
   const coManagerIds = [...new Set(rawManagerIds)].filter((id) => id && id !== ownerId);
   const allStaffIds = [...new Set([ownerId, ...coManagerIds].filter(Boolean))].slice(0, 30);

@@ -2,7 +2,8 @@
   "cleanUrls": true,
   "functions": {
     "api/teacher.js": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "includeFiles": "node_modules/{@napi-rs,@tesseract.js-data,tesseract.js-core,pdfjs-dist}/**"
     }
   },
   "crons": [

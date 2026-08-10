@@ -11,14 +11,7 @@ export function apiError(status, code, message) { const e = new Error(message); 
 export function handleApiError(res, error) {
   const status = Number.isInteger(error?.status) ? error.status : 500;
   if (status >= 500) console.error(error);
-  sendJson(res, status, {
-    ok: false,
-    error: {
-      code: error?.code || 'SERVER_ERROR',
-      message: status >= 500 ? (error?.message || '서버에서 요청을 처리하지 못했어요.') : error.message,
-      details: error?.stack ? String(error.stack).replace(/\s+/g, ' ').slice(0, 250) : String(error || '')
-    }
-  });
+  sendJson(res, status, { ok: false, error: { code: error?.code || 'SERVER_ERROR', message: status >= 500 ? '서버에서 요청을 처리하지 못했어요. 잠시 후 다시 시도해 주세요.' : error.message } });
 }
 export function requireMethod(req, methods) { if (!methods.includes(req.method)) throw apiError(405, 'METHOD_NOT_ALLOWED', '허용되지 않은 요청입니다.'); }
 export async function readBody(req) {
@@ -31,7 +24,7 @@ export async function requireUser(req, { googleOnly = false } = {}) {
   const value = /^Bearer\s+(.+)$/i.exec(req.headers.authorization || '')?.[1];
   if (!value) throw apiError(401, 'AUTH_REQUIRED', '로그인이 필요해요.');
   let token;
-  try { token = await adminAuth.verifyIdToken(value, false); } catch (err) { console.error('[requireUser verifyIdToken error]', err); throw apiError(401, 'INVALID_TOKEN', '로그인이 만료되었어요. 다시 로그인해 주세요.'); }
+  try { token = await adminAuth.verifyIdToken(value, true); } catch { throw apiError(401, 'INVALID_TOKEN', '로그인이 만료되었어요. 다시 로그인해 주세요.'); }
   if (googleOnly && token.firebase?.sign_in_provider !== 'google.com') throw apiError(403, 'GOOGLE_REQUIRED', '교사 기능은 Google 로그인이 필요해요.');
   return token;
 }

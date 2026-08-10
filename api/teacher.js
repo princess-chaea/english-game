@@ -1,4 +1,4 @@
-import packCatalog from '../data/word-packs.js';
+import { readFileSync } from 'node:fs';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { adminAuth, adminDb, adminStorage, FieldValue, Timestamp } from './_firebase-admin.js';
 import { apiError, handleApiError, hash, isExpired, randomCode, readBody, requireMethod, requireTeacher, safeInt, sendJson, text } from './_http.js';
@@ -9,14 +9,15 @@ const classes = adminDb.collection('classes');
 const invites = adminDb.collection('classInvites');
 const verificationRequests = adminDb.collection('teacherVerificationRequests');
 const INVITE_CODE_LENGTH = 6;
+const MANAGER_INVITE_LENGTH = 24;
 const MANAGER_INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const DELETE_QUERY_PAGE_SIZE = 100;
 
 function normalizeInviteCode(value) {
   return text(value, 32).toUpperCase().replace(/[^A-Z0-9]/g, '');
 }
-function guildInviteCode() {
-  return Array.from(randomBytes(INVITE_CODE_LENGTH), (byte) => MANAGER_INVITE_ALPHABET[byte & 31]).join('');
+function managerInviteCode() {
+  return Array.from(randomBytes(MANAGER_INVITE_LENGTH), (byte) => MANAGER_INVITE_ALPHABET[byte & 31]).join('');
 }
 async function queryAllDocs(baseQuery, pageSize = DELETE_QUERY_PAGE_SIZE) {
   const docs = [];
@@ -45,6 +46,8 @@ async function deleteRefsInBatches(refs) {
     await batch.commit();
   }
 }
+
+const packCatalog = JSON.parse(readFileSync(new URL('../data/word-packs.json', import.meta.url), 'utf8'));
 const wordByKey = new Map();
 const packWordsById = new Map();
 (packCatalog.packs || []).forEach((pack) => {
@@ -107,13 +110,6 @@ function normalizeGuildSubtitle(value) {
   if (!subtitle) return '';
   if (!/^[가-힣A-Za-z0-9 ()\-]{1,32}$/u.test(subtitle)) throw apiError(400, 'INVALID_GUILD_SUBTITLE', '길드 태그는 한글·영문·숫자·공백·괄호·하이픈만 사용해 32자 이내로 입력해 주세요.');
   return subtitle;
-}
-function safeGuildSubtitle(value) {
-  try {
-    return normalizeGuildSubtitle(value);
-  } catch {
-    return text(value, 48).replace(/\s+/g, ' ');
-  }
 }
 function safeGuildLogoUrl(value) {
   const url = text(value, 1200);
@@ -193,10 +189,57 @@ function proofDateCandidates(value) {
   return found.sort((a, b) => b.getTime() - a.getTime());
 }
 async function extractPdfProofText(bytes) {
-  return { rawDocumentText: '', confidence: 0, source: 'pdf_ocr' };
+  let document;
+  try {
+    const Canvas = await import('@napi-rs/canvas');
+    globalThis.DOMMatrix ||= Canvas.DOMMatrix;
+    globalThis.ImageData ||= Canvas.ImageData;
+    globalThis.Path2D ||= Canvas.Path2D;
+    const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    document = await getDocument({ data: new Uint8Array(bytes), disableFontFace: true, isEvalSupported: false, useWorkerFetch: false }).promise;
+    const page = await document.getPage(1);
+    const content = await page.getTextContent();
+    const embeddedText = text(content.items.map((item) => typeof item?.str === 'string' ? item.str : '').join(' '), 20000);
+    if (embeddedText.length >= 8) return { rawDocumentText: embeddedText, confidence: 100, source: 'pdf_text' };
+    const baseViewport = page.getViewport({ scale: 1 });
+    let renderScale = Math.max(0.05, Math.min(2.5, 1800 / baseViewport.width, 2400 / baseViewport.height));
+    let viewport = page.getViewport({ scale: renderScale });
+    const maxPixels = 3_000_000;
+    if (viewport.width * viewport.height > maxPixels) {
+      renderScale *= Math.sqrt(maxPixels / (viewport.width * viewport.height));
+      viewport = page.getViewport({ scale: renderScale });
+    }
+    const canvas = Canvas.createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    const [{ createWorker }, { default: korData }] = await Promise.all([import('tesseract.js'), import('@tesseract.js-data/kor')]);
+    const worker = await createWorker('kor', 1, { langPath: korData.langPath, gzip: true, cacheMethod: 'none' });
+    try {
+      const result = await worker.recognize(canvas.toBuffer('image/png'));
+      return { rawDocumentText: text(result.data.text, 20000), confidence: safeInt(result.data.confidence, 0, 0, 100), source: 'pdf_ocr' };
+    } finally {
+      await worker.terminate();
+    }
+  } catch (error) {
+    console.warn('[TeacherProof] PDF OCR failed:', error?.message || error);
+    return { rawDocumentText: '', confidence: 0, source: 'failed' };
+  } finally {
+    if (document) await document.destroy().catch(() => {});
+  }
 }
 async function extractImageProofText(bytes) {
-  return { rawDocumentText: '', confidence: 0, source: 'image_ocr' };
+  try {
+    const [{ createWorker }, { default: korData }] = await Promise.all([import('tesseract.js'), import('@tesseract.js-data/kor')]);
+    const worker = await createWorker('kor', 1, { langPath: korData.langPath, gzip: true, cacheMethod: 'none' });
+    try {
+      const result = await worker.recognize(bytes);
+      return { rawDocumentText: text(result.data.text, 20000), confidence: safeInt(result.data.confidence, 0, 0, 100), source: 'image_ocr' };
+    } finally {
+      await worker.terminate();
+    }
+  } catch (error) {
+    console.warn('[TeacherProof] Image OCR failed:', error?.message || error);
+    return { rawDocumentText: '', confidence: 0, source: 'failed' };
+  }
 }async function screenTeacherProof(bytes, teacherName, schoolName, contentType) {
   const extraction = contentType === 'application/pdf' ? await extractPdfProofText(bytes) : await extractImageProofText(bytes);
   const { rawDocumentText, confidence, source } = extraction;
@@ -343,27 +386,9 @@ function classPack(grade, wordPackId) {
 }
 async function bootstrap(uid, token) {
   const ref = teachers.doc(uid);
-  const snap = await ref.get();
-  const now = FieldValue.serverTimestamp();
-  if (!snap.exists) {
-    await ref.set({ role: 'teacher', lastLoginAt: now, updatedAt: now }, { merge: true });
-  } else {
-    const data = snap.data() || {};
-    const update = { role: 'teacher', lastLoginAt: now, updatedAt: now };
-    if ('displayName' in data) update.displayName = FieldValue.delete();
-    if ('email' in data) update.email = FieldValue.delete();
-    if ('googleDisplayName' in data) update.googleDisplayName = FieldValue.delete();
-    try {
-      await ref.update(update);
-    } catch (e) {
-      console.warn('[bootstrap update fallback]', e);
-      await ref.set({ role: 'teacher', lastLoginAt: now, updatedAt: now }, { merge: true });
-    }
-  }
-  const data = (await ref.get()).data() || {};
-  const teacherName = text(data.teacherName, 40);
-  const displayName = teacherName || text(token?.name, 40) || '교사';
-  return { displayName, teacherName, schoolName: text(data.schoolName, 80), verificationStatus: text(data.verificationStatus, 20) || 'unverified', needsProfile: !teacherName || !['pending', 'verified'].includes(data.verificationStatus), isReviewer: isReviewer(token), guildIds: Array.isArray(data.classIds) ? data.classIds : [] };
+  await ref.set({ role: 'teacher', displayName: FieldValue.delete(), email: FieldValue.delete(), googleDisplayName: FieldValue.delete(), lastLoginAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+  const data = (await ref.get()).data();
+  return { displayName: text(data.teacherName, 40) || '교사', teacherName: text(data.teacherName, 40), schoolName: text(data.schoolName, 80), verificationStatus: text(data.verificationStatus, 20) || 'unverified', needsProfile: !data.teacherName || !['pending','verified'].includes(data.verificationStatus), isReviewer: isReviewer(token), guildIds: Array.isArray(data.classIds) ? data.classIds : [] };
 }
 async function ownedClass(uid, id) {
   const snap = await classes.doc(id).get();
@@ -414,7 +439,7 @@ async function listClasses(uid) {
     let totalCorrect = 0; let guildPoints = 0;
     let activeStudentCount = 0;
     members.docs.forEach((member) => { const correct = safeInt(member.data()?.totalCorrect, 0, 0); const points = safeInt(member.data()?.guildPoints, 0, 0); totalCorrect += correct; guildPoints += points; if (points > 0) activeStudentCount += 1; });
-    result.push({ id: snap.id, guildName: guildName(data), guildSubtitle: safeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), ownerId: text(data.ownerId, 128), isOwner: data.ownerId === uid, managerCount: (data.managerIds || []).length, studentCount: members.size, activeStudentCount, totalCorrect, guildPoints, guildRank: rankMap.get(snap.id) || null, wordPackId: classPack(data.grade, data.wordPackId), wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade), questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes) });
+    result.push({ id: snap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), ownerId: text(data.ownerId, 128), isOwner: data.ownerId === uid, managerCount: (data.managerIds || []).length, studentCount: members.size, activeStudentCount, totalCorrect, guildPoints, guildRank: rankMap.get(snap.id) || null, wordPackId: classPack(data.grade, data.wordPackId), wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade), questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes) });
   }
   return result;
 }
@@ -527,7 +552,7 @@ async function listGuildMembers(uid, body) {
   const classSnap = await ownedClass(uid, classId);
   const data = classSnap.data();
   const membersSnap = await classSnap.ref.collection('members')
-    .select('nickname', 'learningGrade', 'stage', 'totalCorrect', 'totalQuizTries', 'conqueredCount', 'masteredCount', 'combatPower', 'titleName', 'guildCoins', 'guildPoints', 'guildCorrectCount', 'guildStageClears', 'guildBossDamage', 'guildBossPointTotal', 'guildTrialCorrect', 'trialAttempts', 'trialRetries', 'trialHintsUsed', 'trialHintedCorrect', 'trialUnassistedCorrect', 'trialUnassistedTries', 'lastActiveAt', 'assignedWordPackIds', 'questionTypes', 'usesGuildLearningDefaults', 'questionTypeStats', 'dailyLearning')
+    .select('nickname', 'learningGrade', 'stage', 'totalCorrect', 'totalQuizTries', 'conqueredCount', 'masteredCount', 'combatPower', 'titleName', 'guildCoins', 'guildPoints', 'guildCorrectCount', 'guildStageClears', 'guildBossDamage', 'guildBossPointTotal', 'guildTrialCorrect', 'trialAttempts', 'trialRetries', 'trialHintsUsed', 'trialHintedCorrect', 'trialUnassistedCorrect', 'trialUnassistedTries', 'lastActiveAt', 'assignedWordPackIds', 'questionTypes', 'questionTypeStats', 'dailyLearning')
     .limit(200).get();
   const members = membersSnap.docs.map((member) => {
     const value = member.data() || {};
@@ -565,9 +590,8 @@ async function listGuildMembers(uid, body) {
       trialUnassistedTries,
       trialUnassistedAccuracy: percent(trialUnassistedCorrect, trialUnassistedTries),
       dailyLearning: safeDailyLearning(value.dailyLearning),
-      usesGuildLearningDefaults: value.usesGuildLearningDefaults !== false,
-      assignedWordPackIds: normalizeWordPackIds(value.usesGuildLearningDefaults === false ? value.assignedWordPackIds : (data.wordPackIds || data.wordPackId), value.learningGrade || data.grade),
-      questionTypes: normalizeQuestionTypes(value.usesGuildLearningDefaults === false ? value.questionTypes : data.defaultQuestionTypes),
+      assignedWordPackIds: normalizeWordPackIds(value.assignedWordPackIds || data.wordPackIds || data.wordPackId, value.learningGrade || data.grade),
+      questionTypes: normalizeQuestionTypes(value.questionTypes || data.defaultQuestionTypes),
       questionTypeStats: safeQuestionTypeStats(value.questionTypeStats),
       lastActiveAt: value.lastActiveAt?.toDate?.().toISOString?.() || null
     };
@@ -576,7 +600,7 @@ async function listGuildMembers(uid, body) {
     guild: {
       id: classSnap.id,
       guildName: guildName(data),
-      guildSubtitle: safeGuildSubtitle(data.guildSubtitle),
+      guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle),
       guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl),
       grade: safeInt(data.grade, 4, 3, 6),
       wordPackId: classPack(data.grade, data.wordPackId),
@@ -661,7 +685,6 @@ async function updateMemberLearningSettings(uid, body) {
   memberDocs.forEach((member) => batch.set(member.ref, {
     assignedWordPackIds: wordPackIds,
     questionTypes,
-    usesGuildLearningDefaults: body.applyAll === true && body.applyToFuture !== false,
     learningSettingsVersion: 1,
     learningSettingsUpdatedBy: uid,
     learningSettingsUpdatedAt: FieldValue.serverTimestamp()
@@ -772,12 +795,8 @@ async function memberLearningReport(uid, body) {
     const entry = wordByKey.get(key);
     if (entry) learningRows.push({ ...entry, correctCount: 0, wrongCount: safeInt(rawCount, 0, 0, 1000000), tries: safeInt(rawCount, 0, 0, 1000000), accuracy: 0, streak: 0, bestStreak: 0, mastered: false, byType: {}, lastSeenAt: 0 });
   });
-  const reviewWords = learningRows.filter((entry) => !entry.mastered && (entry.wrongCount > 0 || entry.accuracy < 80))
-    .sort((a, b) => b.wrongCount - a.wrongCount || a.accuracy - b.accuracy || b.tries - a.tries || a.word.localeCompare(b.word));
-  const masteredWords = learningRows.filter((entry) => entry.mastered)
-    .sort((a, b) => b.lastSeenAt - a.lastSeenAt || b.tries - a.tries || a.word.localeCompare(b.word));
-  learningRows.sort((a, b) => b.lastSeenAt - a.lastSeenAt || b.tries - a.tries || a.word.localeCompare(b.word));
-  const wrongWords = reviewWords.filter((entry) => entry.wrongCount > 0).slice(0, 100);
+  learningRows.sort((a, b) => b.wrongCount - a.wrongCount || b.tries - a.tries || a.word.localeCompare(b.word));
+  const wrongWords = learningRows.filter((entry) => entry.wrongCount > 0).slice(0, 100);
   const masteredCount = learningRows.filter((entry) => entry.mastered).length;
   const trialHintsUsed = safeInt(member.trialHintsUsed, 0, 0, 1000000);
   const trialHintedCorrect = Math.min(trialHintsUsed, safeInt(member.trialHintedCorrect, 0, 0, 1000000));
@@ -797,9 +816,6 @@ async function memberLearningReport(uid, body) {
     masteredCount,
     masteryCriteria: { correctThreshold: WORD_MASTERY_CORRECT_THRESHOLD, accuracyThreshold: WORD_MASTERY_ACCURACY_THRESHOLD * 100 },
     wordLearning: learningRows.slice(0, 300),
-    wordLearningSort: '최근 학습순',
-    reviewWords: reviewWords.slice(0, 300),
-    masteredWords: masteredWords.slice(0, 300),
     guildPoints: safeInt(member.guildPoints, 0, 0),
     guildCoins: safeInt(member.guildCoins, 0, 0),
     guildBossDamage: safeInt(member.guildBossDamage, 0, 0),
@@ -818,40 +834,22 @@ async function memberLearningReport(uid, body) {
     },
     trialDailyResults: safeTrialDailyResults(member.trialDailyResults),
     dailySeries: dailySeriesForMembers([{ dailyLearning: safeDailyLearning(member.dailyLearning) }], 120),
-    usesGuildLearningDefaults: member.usesGuildLearningDefaults !== false,
-    assignedWordPackIds: normalizeWordPackIds(member.usesGuildLearningDefaults === false ? member.assignedWordPackIds : (classSnap.data().wordPackIds || classSnap.data().wordPackId), member.learningGrade || classSnap.data().grade),
-    questionTypes: normalizeQuestionTypes(member.usesGuildLearningDefaults === false ? member.questionTypes : classSnap.data().defaultQuestionTypes),
+    assignedWordPackIds: normalizeWordPackIds(member.assignedWordPackIds || classSnap.data().wordPackIds || classSnap.data().wordPackId, member.learningGrade || classSnap.data().grade),
+    questionTypes: normalizeQuestionTypes(member.questionTypes || classSnap.data().defaultQuestionTypes),
     questionTypeStats: safeQuestionTypeStats(state.questionTypeStats || member.questionTypeStats),
     wrongWords,
     lastActiveAt: member.lastActiveAt?.toDate?.().toISOString?.() || null
   };
-function safeTrialAttemptHistory(value) {
-  if (!Array.isArray(value)) return [];
-  return value.slice(-TRIAL_MAX_ATTEMPTS).map((raw) => ({
-    attemptId: text(raw?.attemptId, 128),
-    attemptNo: safeInt(raw?.attemptNo, 1, 1, TRIAL_MAX_ATTEMPTS),
-    correctCount: safeInt(raw?.correctCount, 0, 0, 20),
-    questionCount: safeInt(raw?.questionCount, 0, 0, 20),
-    accuracy: Math.max(0, Math.min(100, Number(raw?.accuracy) || 0)),
-    hintsUsed: safeInt(raw?.hintsUsed, 0, 0, 20),
-    correctAfterHint: safeInt(raw?.correctAfterHint, 0, 0, 20),
-    unassistedCorrect: safeInt(raw?.unassistedCorrect, 0, 0, 20),
-    unassistedTries: safeInt(raw?.unassistedTries, 0, 0, 20),
-    completedAtMs: safeInt(raw?.completedAtMs, 0, 0, 9999999999999),
-    overcome: Boolean(raw?.overcome)
-  })).filter((entry) => entry.attemptId && entry.questionCount > 0);
-}
-const TRIAL_TYPES = new Set(['meaning-choice', 'fill-blank', 'word-choice', 'listen-meaning', 'word-order', 'short-answer', 'spelling', 'unscramble']);
+}const TRIAL_TYPES = new Set(['meaning-choice', 'word-choice', 'spelling', 'unscramble']);
 async function activeTrialStats(classRef, classData) {
   const trialId = text(classData?.activeTrialId, 128);
   if (!trialId) return null;
   const trialRef = classRef.collection('trials').doc(trialId);
   const trialSnap = await trialRef.get();
   if (!trialSnap.exists) return null;
-  const [progress, completions, members] = await Promise.all([
+  const [progress, completions] = await Promise.all([
     trialRef.collection('progress').limit(200).get(),
-    trialRef.collection('completions').limit(200).get(),
-    classRef.collection('members').select('nickname').limit(200).get()
+    trialRef.collection('completions').limit(200).get()
   ]);
   let attemptCount = 0; let retryCount = 0; let hintCount = 0;
   progress.docs.forEach((doc) => {
@@ -860,16 +858,6 @@ async function activeTrialStats(classRef, classData) {
     hintCount += safeInt(doc.data()?.hintsUsed, 0, 0, 10000);
   });
   const trial = trialSnap.data();
-  const progressById = new Map(progress.docs.map((doc) => [doc.id, doc.data() || {}]));
-  const completedIds = new Set(completions.docs.map((doc) => doc.id));
-  const participants = members.docs.filter((doc) => progressById.has(doc.id)).map((doc) => {
-    const item = progressById.get(doc.id) || {};
-    const history = safeTrialAttemptHistory(item.attemptHistory);
-    const latest = history.at(-1) || {};
-    return { memberId: doc.id, nickname: text(doc.data()?.nickname, 30) || '이름 없는 용사', attemptCount: history.length, correctCount: safeInt(latest.correctCount, 0, 0, 20), questionCount: safeInt(latest.questionCount, safeInt(trial.questionCount, 0, 0, 20), 0, 20), accuracy: Number(latest.accuracy) || 0, hintsUsed: history.reduce((sum, row) => sum + safeInt(row.hintsUsed, 0, 0, 20), 0), overcome: completedIds.has(doc.id) };
-  });
-  const nonParticipants = members.docs.filter((doc) => !progressById.has(doc.id)).map((doc) => ({ memberId: doc.id, nickname: text(doc.data()?.nickname, 30) || '이름 없는 용사' }));
-  const averageAccuracy = participants.length ? Math.round(participants.reduce((sum, row) => sum + row.accuracy, 0) / participants.length * 10) / 10 : 0;
   return {
     id: trialId,
     questionCount: safeInt(trial.questionCount, 0, 0, 20),
@@ -879,11 +867,6 @@ async function activeTrialStats(classRef, classData) {
     attemptCount,
     retryCount,
     hintCount,
-    participationRate: members.size ? Math.round(participants.length / members.size * 1000) / 10 : 0,
-    averageAccuracy,
-    participants,
-    nonParticipants,
-    overcomeNames: participants.filter((row) => row.overcome).map((row) => row.nickname),
     expired: isExpired(trial.expiresAt)
   };
 }
@@ -979,7 +962,7 @@ async function listSchoolGuilds(uid) {
     const managed = Array.isArray(data.managerIds) && data.managerIds.includes(uid);
     const ownRequest = managed ? null : await classSnap.ref.collection('managerRequests').doc(uid).get();
     const masterName = ownerNames.get(text(data.ownerId, 128)) || '마스터';
-    guilds.push({ id: classSnap.id, guildName: guildName(data), guildSubtitle: safeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), managerCount: Array.isArray(data.managerIds) ? data.managerIds.length : 0, masterName: managed ? masterName : maskedTeacherName(masterName), managed, requestStatus: ownRequest?.data()?.status || '' });
+    guilds.push({ id: classSnap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), managerCount: Array.isArray(data.managerIds) ? data.managerIds.length : 0, masterName: managed ? masterName : maskedTeacherName(masterName), managed, requestStatus: ownRequest?.data()?.status || '' });
     if (managed) {
       const requests = await classSnap.ref.collection('managerRequests').where('status', '==', 'pending').limit(50).get();
       requests.docs.forEach((request) => incomingRequests.push({ id: request.id, classId: classSnap.id, guildName: guildName(data), teacherName: text(request.data()?.teacherName, 40) || '이름 미확인', requestedAt: request.data()?.requestedAt?.toDate?.().toISOString?.() || null }));
@@ -1002,7 +985,7 @@ async function schoolGuildPreview(uid, body) {
     teachers.doc(text(data.ownerId, 128)).get()
   ]);
   const masterName = text(ownerSnap.data()?.teacherName || ownerSnap.data()?.displayName, 40) || '마스터';
-  return { id: classSnap.id, guildName: guildName(data), guildSubtitle: safeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), memberCount: safeInt(memberCountSnap.data()?.count, 0, 0, 100000), managerCount: Array.isArray(data.managerIds) ? data.managerIds.length : 0, masterName: managed ? masterName : maskedTeacherName(masterName), managed, requestStatus: ownRequest?.data()?.status || '' };
+  return { id: classSnap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), memberCount: safeInt(memberCountSnap.data()?.count, 0, 0, 100000), managerCount: Array.isArray(data.managerIds) ? data.managerIds.length : 0, masterName: managed ? masterName : maskedTeacherName(masterName), managed, requestStatus: ownRequest?.data()?.status || '' };
 }async function requestSchoolGuildJoin(uid, body) {
   const teacherSnap = await verifiedTeacher(uid);
   const teacher = teacherSnap.data();
@@ -1147,7 +1130,7 @@ async function invite(uid, body) {
   if (type === 'manager' && !classSchoolKey) throw apiError(409, 'GUILD_SCHOOL_REQUIRED', '학교 인증이 연결된 길드에서만 공동 관리자를 초대할 수 있어요.');
   const rotate = body.rotate === true;
   const currentCode = normalizeInviteCode(classSnap.data()?.inviteCodes?.[type]?.code);
-  const currentCodeIsValid = currentCode.length === INVITE_CODE_LENGTH;
+  const currentCodeIsValid = type === 'manager' ? currentCode.length === MANAGER_INVITE_LENGTH : currentCode.length >= 6;
   if (!rotate && currentCodeIsValid) {
     const currentSnap = await invites.doc(hash(currentCode)).get();
     const currentSchoolKey = text(currentSnap.data()?.schoolKey, 48).toUpperCase();
@@ -1157,8 +1140,8 @@ async function invite(uid, body) {
   }
   let code; let ref; let available = false;
   for (let index = 0; index < 5; index += 1) {
-    code = guildInviteCode();
-    if (code.length !== INVITE_CODE_LENGTH) continue;
+    code = type === 'manager' ? managerInviteCode() : randomCode();
+    if ((type === 'manager' && code.length !== MANAGER_INVITE_LENGTH) || (type === 'student' && code.length < 6)) continue;
     ref = invites.doc(hash(code));
     if (!(await ref.get()).exists) { available = true; break; }
   }
@@ -1173,7 +1156,7 @@ async function invite(uid, body) {
 }
 async function joinManager(uid, body) {
   const code = normalizeInviteCode(body.code);
-  if (code.length !== INVITE_CODE_LENGTH) throw apiError(400, 'INVALID_INVITE', '6자리 공동 관리자 초대 코드를 확인해 주세요.');
+  if (code.length !== MANAGER_INVITE_LENGTH) throw apiError(400, 'INVALID_INVITE', '24자리 공동 관리자 코드를 확인해 주세요.');
   const ref = invites.doc(hash(code));
   return adminDb.runTransaction(async (transaction) => {
     const invite = await transaction.get(ref);
@@ -1261,7 +1244,7 @@ export default async function handler(req, res) {
     else if (body.action === 'reviewSchoolGuildJoin') response = { review: await reviewSchoolGuildJoin(token.uid, body) };
     else if (body.action === 'createGuild' || body.action === 'createClass') response = { classroom: await createGuild(token.uid, body) };
     else if (body.action === 'listClasses') response = { classes: await listClasses(token.uid) };
-    else if (body.action === 'listWordPacks') response = { wordPacks: WORD_PACKS, questionTypes: [{ id: 'meaning-choice', label: '뜻 찾기', default: true }, { id: 'fill-blank', label: '빈칸 넣기' }, { id: 'word-choice', label: '영어 단어 찾기' }, { id: 'listen-meaning', label: '발음 듣고 뜻 찾기' }, { id: 'word-order', label: '철자 순서 맞추기' }, { id: 'short-answer', label: '영어 단답식' }] };
+    else if (body.action === 'listWordPacks') response = { wordPacks: WORD_PACKS, questionTypes: [{ id: 'meaning-choice', label: '뜻 찾기 (4지선다)', default: true }, { id: 'fill-blank', label: '빈칸 넣기' }, { id: 'word-choice', label: '영어 단어 찾기 (4지선다)' }, { id: 'listen-meaning', label: '발음 듣고 뜻 찾기' }, { id: 'word-order', label: '철자 순서 맞추기' }, { id: 'short-answer', label: '영어 단답식' }] };
     else if (body.action === 'wordPackPreview') response = { wordPack: await wordPackPreview(body) };
     else if (body.action === 'guildMembers') response = { details: await listGuildMembers(token.uid, body) };
     else if (body.action === 'guildReport') response = { report: await guildLearningReport(token.uid, body) };

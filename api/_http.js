@@ -11,7 +11,14 @@ export function apiError(status, code, message) { const e = new Error(message); 
 export function handleApiError(res, error) {
   const status = Number.isInteger(error?.status) ? error.status : 500;
   if (status >= 500) console.error(error);
-  sendJson(res, status, { ok: false, error: { code: error?.code || 'SERVER_ERROR', message: status >= 500 ? '서버에서 요청을 처리하지 못했어요. 잠시 후 다시 시도해 주세요.' : error.message } });
+  sendJson(res, status, {
+    ok: false,
+    error: {
+      code: error?.code || 'SERVER_ERROR',
+      message: status >= 500 ? (error?.message || '서버에서 요청을 처리하지 못했어요.') : error.message,
+      details: error?.stack ? String(error.stack).replace(/\s+/g, ' ').slice(0, 250) : String(error || '')
+    }
+  });
 }
 export function requireMethod(req, methods) { if (!methods.includes(req.method)) throw apiError(405, 'METHOD_NOT_ALLOWED', '허용되지 않은 요청입니다.'); }
 export async function readBody(req) {

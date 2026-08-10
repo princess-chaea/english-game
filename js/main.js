@@ -3977,6 +3977,7 @@
 
                             if (drawCount === 10) {
                                 const gradeInfo = SKILL_GRADES[resultSkill.grade] || SKILL_GRADES.normal;
+                                const rolledGradeInfo = SKILL_GRADES[rolledGrade] || SKILL_GRADES.normal;
                                 const mult = getSkillMultiplier(resultSkill);
                                 const starsCount = resultSkill.stars || 0;
                                 const starsHtml = starsCount > 0 ? "⭐".repeat(starsCount) : "0성";
@@ -4108,6 +4109,7 @@
                 acquiredList.push(resultSkill);
 
                 const gradeInfo = SKILL_GRADES[resultSkill.grade] || SKILL_GRADES.normal;
+                const rolledGradeInfo = SKILL_GRADES[rolledGrade] || SKILL_GRADES.normal;
                 const mult = getSkillMultiplier(resultSkill);
                 const starsCount = resultSkill.stars || 0;
                 const starsHtml = starsCount > 0 ? "⭐".repeat(starsCount) : "0성";
@@ -4440,6 +4442,7 @@
             showToast("🔮 스킬 장착 슬롯 배치가 완료되었습니다!");
             buildSkillTabUI();
             renderSkillsUI();
+            refreshStateVisuals();
             saveLocalCache();
         }
 
@@ -4449,6 +4452,7 @@
             showToast("🔮 스킬 장착이 해제되었습니다.");
             buildSkillTabUI();
             renderSkillsUI();
+            refreshStateVisuals();
             saveLocalCache();
         }
 
@@ -4467,6 +4471,7 @@
             gameState.equippedSkills = top4;
             renderSkillsUI();
             buildSkillTabUI();
+            refreshStateVisuals();
             saveLocalCache();
             showToast("✨ 가장 강력한 마법 비기 4개가 자동 장착되었습니다!");
             playSoundEffect('levelup');

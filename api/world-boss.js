@@ -9,6 +9,12 @@ const classes = adminDb.collection('classes');
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const EPOCH_MONDAY_MS = Date.UTC(2024, 6, 1);
+const WEEKLY_REWARD_FP_AT_FULL_CONTRIBUTION = 100000;
+const RAID_ANSWER_INTERVAL_MS = 1200;
+const RAID_MAX_REPORTED_ANSWERS = 120;
+const RAID_ANSWERS_FOR_FULL_DAMAGE_CAP = 10;
+const RAID_MIN_FULL_DAMAGE_DURATION_MS = 120000;
+const RAID_MAX_DAMAGE_RATE = 0.15; // 1일 레이드 정상 고전투력 폭딜 허용, 변조 방지 상한 15%
 const guildLogoUrl = (value) => typeof value === 'string' && /^https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/[A-Za-z0-9._-]+\/o\//.test(value) ? value : null;
 
 function kstDay(now = Date.now()) {
@@ -81,7 +87,7 @@ async function claimWeeklyReward(uid) {
   const defeated = totalDamage >= maxHp;
   const myDamage = safeInt(contributionSnap.data()?.damage, 0, 0);
   if (!myDamage) return { week, participated: false, alreadyClaimed: false, rewardFp: 0, gotTitle: false };
-  const rewardFp = Math.max(0, Math.round(1000000 * Math.min(1, myDamage / maxHp) * (defeated ? 1 : 0.5)));
+  const rewardFp = Math.max(0, Math.round(WEEKLY_REWARD_FP_AT_FULL_CONTRIBUTION * Math.min(1, myDamage / maxHp) * (defeated ? 1 : 0.5)));
   const contributionQuery = ref.collection('contributions');
   const [participantAggregate, higherDamageAggregate] = await Promise.all([
     contributionQuery.count().get(),
@@ -136,38 +142,73 @@ async function start(uid) {
     if (existing?.day === day && existing?.expiresAt?.toMillis?.() > now && !existing.submitted) {
       throw apiError(409, 'RAID_ALREADY_STARTED', '같은 기기에서 이어하거나 15분 뒤에 다시 시작해 주세요.');
     }
-    tx.set(ref, { uid, week, day, tokenHash, submitted: false, createdAt: FieldValue.serverTimestamp(), expiresAt });
+    tx.set(ref, { uid, week, day, tokenHash, startedAtMs: now, submitted: false, createdAt: FieldValue.serverTimestamp(), expiresAt });
   });
-  return { week, token, expiresAt: expiresAt.toDate().toISOString() };
+  return { week, day, token, expiresAt: expiresAt.toDate().toISOString() };
+}
+function rewardsForAppliedDamage(appliedDamage) {
+  const applied = safeInt(appliedDamage, 0, 0);
+  return {
+    rewardGold: Math.max(500, Math.floor(applied / 500)),
+    rewardTokens: Math.min(500, 200 + Math.floor(applied / 10000000) * 20)
+  };
 }
 async function contribute(uid, body) {
   const week = currentWeek();
   const day = kstDay();
   const token = typeof body.raidToken === 'string' ? body.raidToken : '';
   if (token.length < 20) throw apiError(400, 'INVALID_RAID_TOKEN', '먼저 월드보스 참전을 시작해 주세요.');
-  const requested = safeInt(body.damage, 0, 0, Math.floor(maxHpForWeek(week) * 0.05));
+  if (!Object.prototype.hasOwnProperty.call(body, 'correctAnswers') || body.correctAnswers == null) {
+    throw apiError(409, 'RAID_CLIENT_UPDATE_REQUIRED', '게임을 새로고침한 후 다시 참전해 주세요.');
+  }
+  const reportedCorrectAnswers = safeInt(body.correctAnswers, 0, 0, RAID_MAX_REPORTED_ANSWERS);
+  const requested = safeInt(body.damage, 0, 0, Math.floor(maxHpForWeek(week) * RAID_MAX_DAMAGE_RATE));
   if (!requested) throw apiError(400, 'INVALID_DAMAGE', '피해량은 0보다 커야 해요.');
-  const accountSnap = await accounts.doc(uid).get();
-  if (!accountSnap.exists) throw apiError(404, 'PROFILE_NOT_FOUND', '먼저 용사를 만들어 주세요.');
-  const account = accountSnap.data();
+  const accountRef = accounts.doc(uid);
   const ref = bossRef(week);
   const contributionRef = ref.collection('contributions').doc(uid);
-  const activeClassId = typeof account.activeClassId === 'string' ? account.activeClassId : '';
-  const memberRef = activeClassId ? classes.doc(activeClassId).collection('members').doc(uid) : null;
+  const raidSessionRef = sessionRef(uid, week);
   const result = await adminDb.runTransaction(async (tx) => {
-    const reads = [tx.get(ref), tx.get(contributionRef), tx.get(sessionRef(uid, week))];
-    if (memberRef) reads.push(tx.get(memberRef));
-    const [bossSnap, contributionSnap, sessionSnap, memberSnap] = await Promise.all(reads);
+    const [bossSnap, contributionSnap, sessionSnap, accountSnap] = await Promise.all([
+      tx.get(ref),
+      tx.get(contributionRef),
+      tx.get(raidSessionRef),
+      tx.get(accountRef)
+    ]);
+    if (!accountSnap.exists) throw apiError(404, 'PROFILE_NOT_FOUND', '먼저 용사를 만들어 주세요.');
+    const account = accountSnap.data() || {};
+    const activeClassId = typeof account.activeClassId === 'string' ? account.activeClassId : '';
+    const memberRef = activeClassId ? classes.doc(activeClassId).collection('members').doc(uid) : null;
+    const memberSnap = memberRef ? await tx.get(memberRef) : null;
     const session = sessionSnap.data();
-    if (!session || session.day !== day || session.submitted || session.expiresAt?.toMillis?.() <= Date.now() || session.tokenHash !== secretHash(token)) {
+    const now = Date.now();
+    const startedAtMs = safeInt(session?.startedAtMs || session?.createdAt?.toMillis?.(), 0, 0, now);
+    if (!session || !startedAtMs || startedAtMs > now || session.day !== day || session.submitted || session.expiresAt?.toMillis?.() <= now || session.tokenHash !== secretHash(token)) {
       throw apiError(409, 'RAID_SESSION_INVALID', '월드보스 참전 시간이 끝났어요. 새로 시작해 주세요.');
     }
+    const elapsedMs = Math.max(0, now - startedAtMs);
+    const allowedAnswersByElapsedTime = Math.min(RAID_MAX_REPORTED_ANSWERS, Math.floor(elapsedMs / RAID_ANSWER_INTERVAL_MS));
+    const verifiedCorrectAnswers = Math.min(reportedCorrectAnswers, allowedAnswersByElapsedTime);
     const previous = contributionSnap.data() || {};
     if (previous.lastPlayedKstDay === day) throw apiError(409, 'RAID_ALREADY_COMPLETED', "오늘의 월드보스 참전은 이미 완료했어요.");
     const maxHp = maxHpForWeek(week);
     const boss = bossSnap.data() || {};
     const currentTotal = legacyTotal(boss) + safeInt(boss.secureDamageTotal, 0, 0);
-    const applied = Math.min(requested, Math.max(0, maxHp - currentTotal));
+    const verificationScale = Math.min(1, verifiedCorrectAnswers / RAID_ANSWERS_FOR_FULL_DAMAGE_CAP, elapsedMs / RAID_MIN_FULL_DAMAGE_DURATION_MS);
+    const verifiedRequestedDamage = Math.floor(requested * verificationScale);
+    const hardDamageCap = Math.floor(maxHp * RAID_MAX_DAMAGE_RATE);
+    const effectiveDamageCap = Math.min(verifiedRequestedDamage, hardDamageCap);
+    const applied = Math.min(effectiveDamageCap, Math.max(0, maxHp - currentTotal));
+    const { rewardGold, rewardTokens } = rewardsForAppliedDamage(applied);
+    const accountState = account.state && typeof account.state === 'object' && !Array.isArray(account.state) ? account.state : {};
+    const currentGold = safeInt(accountState.gold, 0, 0);
+    const currentAccGold = safeInt(accountState.accGold ?? accountState.gold, currentGold, 0);
+    const currentBossTokens = safeInt(accountState.bossTokens, 0, 0);
+    const nextAccountState = {
+      gold: safeInt(currentGold + rewardGold, currentGold, 0),
+      accGold: safeInt(currentAccGold + rewardGold, currentAccGold, 0),
+      bossTokens: safeInt(currentBossTokens + rewardTokens, currentBossTokens, 0)
+    };
     const secureDamageTotal = safeInt(boss.secureDamageTotal, 0, 0) + applied;
     tx.set(ref, { maxHp, curHp: Math.max(0, maxHp - legacyTotal(boss) - secureDamageTotal), secureDamageTotal, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
     tx.set(contributionRef, {
@@ -178,9 +219,17 @@ async function contribute(uid, body) {
       publicGuildName: account.leaderboardOptIn ? (typeof account.activeGuildName === 'string' ? account.activeGuildName : null) : null,
       publicGuildLogoUrl: account.leaderboardOptIn && account.activeGuildName ? guildLogoUrl(account.activeGuildLogoUrl) : null,
       publicTitleName: account.leaderboardOptIn ? (typeof account.state?.equippedTitle === 'string' ? account.state.equippedTitle : (typeof account.state?.wbTitle === 'string' ? account.state.wbTitle : null)) : null,
+      reportedCorrectAnswers: FieldValue.increment(reportedCorrectAnswers),
+      verifiedCorrectAnswers: FieldValue.increment(verifiedCorrectAnswers),
       updatedAt: FieldValue.serverTimestamp()
     }, { merge: true });
-    tx.update(sessionRef(uid, week), { submitted: true, submittedAt: FieldValue.serverTimestamp() });
+    tx.update(raidSessionRef, { reportedCorrectAnswers, verifiedCorrectAnswers, submitted: true, submittedAt: FieldValue.serverTimestamp() });
+    tx.update(accountRef, {
+      'state.gold': nextAccountState.gold,
+      'state.accGold': nextAccountState.accGold,
+      'state.bossTokens': nextAccountState.bossTokens,
+      updatedAt: FieldValue.serverTimestamp()
+    });
     if (memberRef && memberSnap?.exists && applied > 0) {
       const member = memberSnap.data() || {};
       const previousDaily = member.guildBossPointDay === day ? safeInt(member.guildBossPointDayAmount, 0, 0, 100) : 0;
@@ -194,11 +243,23 @@ async function contribute(uid, body) {
         lastActiveAt: FieldValue.serverTimestamp()
       }, { merge: true });
     }
-    return { applied, damage: safeInt(previous.damage, 0, 0) + applied };
+    return {
+      applied,
+      requested,
+      damageCap: effectiveDamageCap,
+      hardDamageCap,
+      verificationScale,
+      capped: applied < requested,
+      damage: safeInt(previous.damage, 0, 0) + applied,
+      reportedCorrectAnswers,
+      verifiedCorrectAnswers,
+      rewardGold,
+      rewardTokens,
+      accountState: nextAccountState
+    };
   });
   return { ...result, boss: await status(uid) };
 }
-
 export default async function handler(req, res) {
   try {
     requireMethod(req, ['POST']);

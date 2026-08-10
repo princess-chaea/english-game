@@ -26,18 +26,29 @@ async function cleanupExpiredTeacherProofs() {
   const teacherIds = [...new Set(pendingDocs.map((doc) => doc.data()?.uid).filter(Boolean))];
   const teacherSnaps = teacherIds.length ? await adminDb.getAll(...teacherIds.map((uid) => adminDb.collection('teachers').doc(uid))) : [];
   const teacherById = new Map(teacherSnaps.map((snap) => [snap.id, snap]));
-  await Promise.all(expiredDocs.map((doc) => {
+  const clearedProofIds = new Set();
+  await Promise.all(expiredDocs.map(async (doc) => {
     const objectPath = doc.data()?.objectPath;
-    return objectPath ? adminStorage.bucket().file(objectPath).delete({ ignoreNotFound: true }).catch(() => {}) : Promise.resolve();
+    if (!objectPath) {
+      clearedProofIds.add(doc.id);
+      return;
+    }
+    try {
+      await adminStorage.bucket().file(objectPath).delete({ ignoreNotFound: true });
+      clearedProofIds.add(doc.id);
+    } catch (error) {
+      console.warn('Expired teacher proof cleanup deferred', { requestId: doc.id, message: error?.message || String(error) });
+    }
   }));
   const batch = adminDb.batch();
   expiredDocs.forEach((doc) => {
     const data = doc.data() || {};
     const update = {
-      objectPath: FieldValue.delete(), teacherName: FieldValue.delete(), schoolName: FieldValue.delete(), schoolKey: FieldValue.delete(),
+      teacherName: FieldValue.delete(), schoolName: FieldValue.delete(), schoolKey: FieldValue.delete(),
       contentType: FieldValue.delete(), fileSize: FieldValue.delete(), fileHash: FieldValue.delete(), redactionConfirmed: FieldValue.delete(),
       email: FieldValue.delete(), googleDisplayName: FieldValue.delete()
     };
+    if (clearedProofIds.has(doc.id)) update.objectPath = FieldValue.delete();
     if (['pending', 'superseded'].includes(data.status)) Object.assign(update, { status: 'expired', expiredAt: FieldValue.serverTimestamp() });
     batch.set(doc.ref, update, { merge: true });
     const teacherSnap = teacherById.get(data.uid);

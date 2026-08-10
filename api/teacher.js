@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { adminAuth, adminDb, adminStorage, FieldValue, Timestamp } from './_firebase-admin.js';
 import { apiError, handleApiError, hash, isExpired, randomCode, readBody, requireMethod, requireTeacher, safeInt, sendJson, text } from './_http.js';
 
@@ -8,6 +8,43 @@ const accounts = adminDb.collection('accounts');
 const classes = adminDb.collection('classes');
 const invites = adminDb.collection('classInvites');
 const verificationRequests = adminDb.collection('teacherVerificationRequests');
+const MANAGER_INVITE_LENGTH = 24;
+const MANAGER_INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const DELETE_QUERY_PAGE_SIZE = 100;
+
+function normalizeInviteCode(value) {
+  return text(value, 32).toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+function managerInviteCode() {
+  return Array.from(randomBytes(MANAGER_INVITE_LENGTH), (byte) => MANAGER_INVITE_ALPHABET[byte & 31]).join('');
+}
+async function queryAllDocs(baseQuery, pageSize = DELETE_QUERY_PAGE_SIZE) {
+  const docs = [];
+  let cursor = null;
+  while (true) {
+    let query = baseQuery.limit(pageSize);
+    if (cursor) query = query.startAfter(cursor);
+    const page = await query.get();
+    docs.push(...page.docs);
+    if (page.size < pageSize) return docs;
+    cursor = page.docs[page.docs.length - 1];
+  }
+}
+async function getAllInChunks(refs, chunkSize = DELETE_QUERY_PAGE_SIZE) {
+  const snapshots = [];
+  for (let offset = 0; offset < refs.length; offset += chunkSize) {
+    snapshots.push(...await adminDb.getAll(...refs.slice(offset, offset + chunkSize)));
+  }
+  return snapshots;
+}
+async function deleteRefsInBatches(refs) {
+  const uniqueRefs = [...new Map(refs.map((ref) => [ref.path, ref])).values()];
+  for (let offset = 0; offset < uniqueRefs.length; offset += 400) {
+    const batch = adminDb.batch();
+    uniqueRefs.slice(offset, offset + 400).forEach((ref) => batch.delete(ref));
+    await batch.commit();
+  }
+}
 
 const packCatalog = JSON.parse(readFileSync(new URL('../data/word-packs.json', import.meta.url), 'utf8'));
 const wordByKey = new Map();
@@ -228,8 +265,7 @@ async function extractImageProofText(bytes) {
     outcome = 'auto_rejected';
     reason = '발급일이 현재 날짜 기준 1개월을 초과했어요.';
   } else if (isReadableStandardDocument && rawDocumentText.length >= 8 && Object.values(checks).every(Boolean)) {
-    outcome = 'auto_approved';
-    reason = '표준 양식·이름·학교·재직증명서·최근 발급일이 자동 확인됐어요.';
+    reason = '1차 자동 확인을 통과했어요. 총괄 관리자의 수동 승인을 기다려 주세요.';
   } else {
     const missing = [];
     if (!nameMatched) missing.push('이름');
@@ -262,11 +298,13 @@ async function submitTeacherVerification(uid, token, body) {
   const objectPath = `teacher-verification/${uid}/${requestRef.id}.${extension}`;
   const expiresAt = Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const bucket = adminStorage.bucket();
+  const previousRequestId = text(teacherSnap.data()?.verificationRequestId, 128);
+  const previousPath = text(teacherSnap.data()?.verificationObjectPath, 500);
   const screening = await screenTeacherProof(bytes, teacherName, schoolName, contentType);
   if (screening.outcome === 'needs_review') await bucket.file(objectPath).save(bytes, { resumable: false, validation: 'md5', metadata: { contentType, contentDisposition: 'attachment; filename=teacher-proof.' + extension, cacheControl: 'private, no-store, max-age=0', metadata: { expiresAt: expiresAt.toDate().toISOString() } } });
   try {
     const batch = adminDb.batch();
-    const requestStatus = screening.outcome === 'auto_approved' ? 'approved' : screening.outcome === 'auto_rejected' ? 'rejected' : 'pending';
+    const requestStatus = screening.outcome === 'auto_rejected' ? 'rejected' : 'pending';
     const requestData = {
       uid, status: requestStatus, screeningOutcome: screening.outcome, screeningReason: screening.reason,
       screeningConfidence: screening.confidence, screeningSource: screening.source,
@@ -275,23 +313,23 @@ async function submitTeacherVerification(uid, token, body) {
     if (screening.outcome === 'needs_review') Object.assign(requestData, { teacherName, schoolName, schoolKey, objectPath, contentType, fileSize: bytes.length, redactionConfirmed: true });
     else Object.assign(requestData, { decidedAutomatically: true, reviewedAt: FieldValue.serverTimestamp() });
     batch.create(requestRef, requestData);
-    const previousRequestId = text(teacherSnap.data()?.verificationRequestId, 128);
-    if (previousRequestId) batch.set(verificationRequests.doc(previousRequestId), { status: 'superseded', supersededAt: FieldValue.serverTimestamp(), objectPath: FieldValue.delete(), teacherName: FieldValue.delete(), schoolName: FieldValue.delete(), schoolKey: FieldValue.delete(), contentType: FieldValue.delete(), fileSize: FieldValue.delete(), fileHash: FieldValue.delete(), redactionConfirmed: FieldValue.delete(), email: FieldValue.delete(), googleDisplayName: FieldValue.delete() }, { merge: true });
-    if (screening.outcome === 'auto_approved') {
-      batch.set(teacherRef, { role: 'teacher', teacherName, schoolName, schoolKey, verificationStatus: 'verified', verificationRequestId: requestRef.id, verificationObjectPath: FieldValue.delete(), verificationSubmittedAt: FieldValue.serverTimestamp(), verifiedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-    } else {
-      batch.set(teacherRef, { role: 'teacher', teacherName, verificationStatus: screening.outcome === 'auto_rejected' ? 'rejected' : 'pending', verificationRequestId: requestRef.id, verificationObjectPath: screening.outcome === 'needs_review' ? objectPath : FieldValue.delete(), verificationSubmittedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-    }
+    if (previousRequestId) batch.set(verificationRequests.doc(previousRequestId), { status: 'superseded', supersededAt: FieldValue.serverTimestamp(), teacherName: FieldValue.delete(), schoolName: FieldValue.delete(), schoolKey: FieldValue.delete(), contentType: FieldValue.delete(), fileSize: FieldValue.delete(), fileHash: FieldValue.delete(), redactionConfirmed: FieldValue.delete(), email: FieldValue.delete(), googleDisplayName: FieldValue.delete() }, { merge: true });
+    batch.set(teacherRef, { role: 'teacher', teacherName, verificationStatus: screening.outcome === 'auto_rejected' ? 'rejected' : 'pending', verificationRequestId: requestRef.id, verificationObjectPath: screening.outcome === 'needs_review' ? objectPath : FieldValue.delete(), verificationSubmittedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
     await batch.commit();
   } catch (error) {
     if (screening.outcome === 'needs_review') await bucket.file(objectPath).delete({ ignoreNotFound: true }).catch(() => {});
     throw error;
   }
-  const previousPath = text(teacherSnap.data()?.verificationObjectPath, 300);
-  if (previousPath) await bucket.file(previousPath).delete({ ignoreNotFound: true }).catch(() => {});
-  if (screening.outcome === 'auto_approved') await applyVerifiedSchoolToOwnedGuilds(uid, schoolKey, schoolName);
+  if (previousPath) {
+    try {
+      await bucket.file(previousPath).delete({ ignoreNotFound: true });
+      if (previousRequestId) await verificationRequests.doc(previousRequestId).update({ objectPath: FieldValue.delete() });
+    } catch (error) {
+      console.warn('[TeacherProof] Superseded proof cleanup deferred:', error?.message || error);
+    }
+  }
   return {
-    status: screening.outcome === 'auto_approved' ? 'verified' : screening.outcome === 'auto_rejected' ? 'rejected' : 'pending',
+    status: screening.outcome === 'auto_rejected' ? 'rejected' : 'pending',
     screeningOutcome: screening.outcome,
     screeningReason: screening.reason,
     teacherName,
@@ -322,13 +360,21 @@ async function reviewTeacherVerification(token, body) {
   if (!requestSnap.exists || requestSnap.data()?.status !== 'pending') throw apiError(404, 'REQUEST_NOT_FOUND', '처리할 인증 신청을 찾지 못했어요.');
   const request = requestSnap.data();
   if (decision === 'approved' && request.issueDate && request.screeningChecks?.dateFresh !== true) throw apiError(409, 'PROOF_DATE_EXPIRED', '발급일이 현재 날짜 기준 1개월을 초과한 재직증명서는 승인할 수 없어요.');
-  if (request.objectPath) await adminStorage.bucket().file(request.objectPath).delete({ ignoreNotFound: true });
+  const objectPath = text(request.objectPath, 500);
   const teacherRef = teachers.doc(request.uid);
   const batch = adminDb.batch();
-  batch.update(requestRef, { status: decision, reviewedByUid: token.uid, reviewedBy: FieldValue.delete(), reviewedAt: FieldValue.serverTimestamp(), objectPath: FieldValue.delete(), teacherName: FieldValue.delete(), schoolName: FieldValue.delete(), schoolKey: FieldValue.delete(), contentType: FieldValue.delete(), fileSize: FieldValue.delete(), fileHash: FieldValue.delete(), redactionConfirmed: FieldValue.delete(), email: FieldValue.delete(), googleDisplayName: FieldValue.delete() });
+  batch.update(requestRef, { status: decision, reviewedByUid: token.uid, reviewedBy: FieldValue.delete(), reviewedAt: FieldValue.serverTimestamp(), teacherName: FieldValue.delete(), schoolName: FieldValue.delete(), schoolKey: FieldValue.delete(), contentType: FieldValue.delete(), fileSize: FieldValue.delete(), fileHash: FieldValue.delete(), redactionConfirmed: FieldValue.delete(), email: FieldValue.delete(), googleDisplayName: FieldValue.delete() });
   if (decision === 'approved') batch.set(teacherRef, { role: 'teacher', teacherName: request.teacherName, schoolName: request.schoolName, schoolKey: request.schoolKey, verificationStatus: 'verified', verificationObjectPath: FieldValue.delete(), verifiedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
   else batch.set(teacherRef, { verificationStatus: 'rejected', verificationObjectPath: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
   await batch.commit();
+  if (objectPath) {
+    try {
+      await adminStorage.bucket().file(objectPath).delete({ ignoreNotFound: true });
+      await requestRef.update({ objectPath: FieldValue.delete() });
+    } catch (error) {
+      console.warn('[TeacherProof] Post-review storage cleanup deferred:', error?.message || error);
+    }
+  }
   if (decision === 'approved') {
     await applyVerifiedSchoolToOwnedGuilds(request.uid, request.schoolKey, request.schoolName);
   }
@@ -359,8 +405,10 @@ async function createGuild(uid, body) {
   const ref = classes.doc();
   const defaultPackId = defaultWordPack(grade);
   const data = { schemaVersion: 2, guildName: name, classLabel: name, guildSubtitle, guildLogoUrl: null, guildLogoPath: null, grade, ownerId: uid, managerIds: [uid], schoolKey: teacher.schoolKey, schoolName: teacher.schoolName, wordPackId: defaultPackId, wordPackIds: [defaultPackId], defaultQuestionTypes: [...DEFAULT_QUESTION_TYPES], createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() };
-  await ref.create(data);
-  await teachers.doc(uid).set({ classIds: FieldValue.arrayUnion(ref.id), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+  const batch = adminDb.batch();
+  batch.create(ref, data);
+  batch.set(teachers.doc(uid), { classIds: FieldValue.arrayUnion(ref.id), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+  await batch.commit();
   return { id: ref.id, guildName: name, guildSubtitle, guildLogoUrl: null, grade, wordPackId: data.wordPackId, wordPackIds: data.wordPackIds, questionTypes: data.defaultQuestionTypes };
 }
 let teacherGuildRankCache = { expiresAt: 0, ranks: new Map() };
@@ -442,6 +490,8 @@ function wordLearningRows(value) {
 }
 
 const ANALYTICS_DAY_MS = 24 * 60 * 60 * 1000;
+const TRIAL_HISTORY_DAYS = 120;
+const TRIAL_MAX_ATTEMPTS = 3;
 function analyticsDayKey(daysAgo = 0) {
   return new Date(Date.now() + 9 * 60 * 60 * 1000 - daysAgo * ANALYTICS_DAY_MS).toISOString().slice(0, 10);
 }
@@ -457,6 +507,32 @@ function safeDailyLearning(value) {
     };
   });
   return result;
+}
+function safeTrialDailyResults(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const rows = Object.entries(value)
+    .filter(([day]) => /^\d{4}-\d{2}-\d{2}$/.test(day))
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-TRIAL_HISTORY_DAYS);
+  return Object.fromEntries(rows.map(([day, attempts]) => [day, (Array.isArray(attempts) ? attempts : [])
+    .slice(-12)
+    .map((raw) => ({
+      trialId: text(raw?.trialId, 128),
+      attemptNo: safeInt(raw?.attemptNo, 1, 1, TRIAL_MAX_ATTEMPTS),
+      correctCount: safeInt(raw?.correctCount, 0, 0, 20),
+      questionCount: safeInt(raw?.questionCount, 0, 0, 20),
+      accuracy: Math.max(0, Math.min(100, Number(raw?.accuracy) || 0)),
+      hintsUsed: safeInt(raw?.hintsUsed, 0, 0, 20),
+      correctAfterHint: safeInt(raw?.correctAfterHint, 0, 0, 20),
+      unassistedCorrect: safeInt(raw?.unassistedCorrect, 0, 0, 20),
+      unassistedTries: safeInt(raw?.unassistedTries, 0, 0, 20),
+      completedAtMs: safeInt(raw?.completedAtMs, 0, 0, 9999999999999),
+      overcome: Boolean(raw?.overcome)
+    }))
+    .filter((entry) => entry.trialId && entry.questionCount > 0)]));
+}
+function percent(correct, tries) {
+  return tries ? Math.round(correct / tries * 1000) / 10 : 0;
 }
 function dailySeriesForMembers(members, days = 14) {
   return Array.from({ length: days }, (_, index) => analyticsDayKey(days - index - 1)).map((day) => {
@@ -475,12 +551,16 @@ async function listGuildMembers(uid, body) {
   const classSnap = await ownedClass(uid, classId);
   const data = classSnap.data();
   const membersSnap = await classSnap.ref.collection('members')
-    .select('nickname', 'learningGrade', 'stage', 'totalCorrect', 'totalQuizTries', 'conqueredCount', 'masteredCount', 'combatPower', 'titleName', 'guildCoins', 'guildPoints', 'guildCorrectCount', 'guildStageClears', 'guildBossDamage', 'guildBossPointTotal', 'guildTrialCorrect', 'trialAttempts', 'trialRetries', 'trialHintsUsed', 'lastActiveAt', 'assignedWordPackIds', 'questionTypes', 'questionTypeStats', 'dailyLearning')
+    .select('nickname', 'learningGrade', 'stage', 'totalCorrect', 'totalQuizTries', 'conqueredCount', 'masteredCount', 'combatPower', 'titleName', 'guildCoins', 'guildPoints', 'guildCorrectCount', 'guildStageClears', 'guildBossDamage', 'guildBossPointTotal', 'guildTrialCorrect', 'trialAttempts', 'trialRetries', 'trialHintsUsed', 'trialHintedCorrect', 'trialUnassistedCorrect', 'trialUnassistedTries', 'lastActiveAt', 'assignedWordPackIds', 'questionTypes', 'questionTypeStats', 'dailyLearning')
     .limit(200).get();
   const members = membersSnap.docs.map((member) => {
     const value = member.data() || {};
     const totalCorrect = safeInt(value.totalCorrect, 0, 0, 1000000000);
     const totalQuizTries = Math.max(totalCorrect, safeInt(value.totalQuizTries, totalCorrect, 0, 1000000000));
+    const trialHintsUsed = safeInt(value.trialHintsUsed, 0, 0, 1000000);
+    const trialHintedCorrect = Math.min(trialHintsUsed, safeInt(value.trialHintedCorrect, 0, 0, 1000000));
+    const trialUnassistedTries = safeInt(value.trialUnassistedTries, 0, 0, 1000000);
+    const trialUnassistedCorrect = Math.min(trialUnassistedTries, safeInt(value.trialUnassistedCorrect, 0, 0, 1000000));
     return {
       memberId: member.id,
       nickname: text(value.nickname, 30) || '이름 없는 용사',
@@ -502,7 +582,12 @@ async function listGuildMembers(uid, body) {
       guildTrialCorrect: safeInt(value.guildTrialCorrect, 0, 0, 1000000),
       trialAttempts: safeInt(value.trialAttempts, 0, 0, 1000000),
       trialRetries: safeInt(value.trialRetries, 0, 0, 1000000),
-      trialHintsUsed: safeInt(value.trialHintsUsed, 0, 0, 1000000),
+      trialHintsUsed,
+      trialHintedCorrect,
+      trialHintedAccuracy: percent(trialHintedCorrect, trialHintsUsed),
+      trialUnassistedCorrect,
+      trialUnassistedTries,
+      trialUnassistedAccuracy: percent(trialUnassistedCorrect, trialUnassistedTries),
       dailyLearning: safeDailyLearning(value.dailyLearning),
       assignedWordPackIds: normalizeWordPackIds(value.assignedWordPackIds || data.wordPackIds || data.wordPackId, value.learningGrade || data.grade),
       questionTypes: normalizeQuestionTypes(value.questionTypes || data.defaultQuestionTypes),
@@ -637,10 +722,13 @@ async function guildLearningReport(uid, body) {
   const active7Days = members.filter((member) => member.lastActiveAt && now - Date.parse(member.lastActiveAt) <= 7 * ANALYTICS_DAY_MS).length;
   const neverStarted = members.filter((member) => member.totalQuizTries === 0).length;
   const inactive7Days = members.filter((member) => member.totalQuizTries > 0 && (!member.lastActiveAt || now - Date.parse(member.lastActiveAt) > 7 * ANALYTICS_DAY_MS)).length;
+  const isInactive7Days = (member) => member.totalQuizTries > 0 && (!member.lastActiveAt || now - Date.parse(member.lastActiveAt) > 7 * ANALYTICS_DAY_MS);
+  const needsSupport = (member) => member.totalQuizTries === 0 || (member.totalQuizTries >= 10 && member.accuracy < 40) || isInactive7Days(member);
+  const isStable = (member) => member.totalQuizTries >= 10 && member.accuracy >= 70 && !isInactive7Days(member);
   const achievementGroups = {
-    needsSupport: members.filter((member) => member.totalQuizTries === 0 || (member.totalQuizTries >= 10 && member.accuracy < 70) || (member.totalQuizTries > 0 && (!member.lastActiveAt || now - Date.parse(member.lastActiveAt) > 7 * ANALYTICS_DAY_MS))).length,
-    developing: members.filter((member) => member.totalQuizTries > 0 && !(member.totalQuizTries >= 10 && member.accuracy >= 90) && !(!member.lastActiveAt || now - Date.parse(member.lastActiveAt) > 7 * ANALYTICS_DAY_MS) && !(member.totalQuizTries >= 10 && member.accuracy < 70)).length,
-    onTrack: members.filter((member) => member.totalQuizTries >= 10 && member.accuracy >= 90 && member.lastActiveAt && now - Date.parse(member.lastActiveAt) <= 7 * ANALYTICS_DAY_MS).length
+    needsSupport: members.filter(needsSupport).length,
+    developing: members.filter((member) => !needsSupport(member) && !isStable(member)).length,
+    onTrack: members.filter(isStable).length
   };
   const questionPriority = Object.entries(questionTypeStats)
     .map(([type, value]) => ({ type, tries: value.tries, accuracy: value.tries ? Math.round(value.correct / value.tries * 1000) / 10 : null }))
@@ -650,10 +738,10 @@ async function guildLearningReport(uid, body) {
   const enoughEvidence = totalTries >= Math.max(10, members.length * 5);
   const suggestedLevel = !enoughEvidence ? 'mid' : overallAccuracy < 65 ? 'low' : overallAccuracy >= 85 ? 'high' : 'mid';
   const supportMembers = members
-    .filter((member) => member.totalQuizTries === 0 || (member.totalQuizTries >= 10 && member.accuracy < 70) || (member.totalQuizTries > 0 && (!member.lastActiveAt || now - Date.parse(member.lastActiveAt) > 7 * ANALYTICS_DAY_MS)))
+    .filter(needsSupport)
     .sort((a, b) => a.accuracy - b.accuracy || a.totalQuizTries - b.totalQuizTries)
     .slice(0, 20)
-    .map((member) => ({ memberId: member.memberId, nickname: member.nickname, accuracy: member.accuracy, totalQuizTries: member.totalQuizTries, lastActiveAt: member.lastActiveAt, reason: member.totalQuizTries === 0 ? '학습 미시작' : member.totalQuizTries >= 10 && member.accuracy < 70 ? '정답률 보강 필요' : '7일 이상 미접속' }));
+    .map((member) => ({ memberId: member.memberId, nickname: member.nickname, accuracy: member.accuracy, totalQuizTries: member.totalQuizTries, lastActiveAt: member.lastActiveAt, reason: member.totalQuizTries === 0 ? '학습 미시작' : member.totalQuizTries >= 10 && member.accuracy < 40 ? '정답률 40% 미만' : '7일 이상 미접속' }));
   return {
     guild: details.guild,
     summary: {
@@ -673,7 +761,7 @@ async function guildLearningReport(uid, body) {
     questionTypeStats,
     dailySeries,
     achievementGroups,
-    achievementCriteria: { support: '학습 미시작, 7일 이상 미접속 또는 10회 이상 응시·정답률 70% 미만', developing: '학습 중이며 지원 필요·안정 기준 사이', stable: '최근 7일 참여, 10회 이상 응시·정답률 90% 이상' },
+    achievementCriteria: { support: '학습 미시작, 7일 이상 미접속 또는 10회 이상 응시·정답률 40% 미만', developing: '최근 참여 중이며 지원 필요·안정 기준 사이', stable: '최근 7일 참여, 10회 이상 응시·정답률 70% 이상' },
     recommendations: {
       focusWords: analysis.words.slice(0, 8),
       suggestedQuestionTypes: suggestedQuestionTypes.length ? suggestedQuestionTypes : ['meaning-choice'],
@@ -709,6 +797,12 @@ async function memberLearningReport(uid, body) {
   learningRows.sort((a, b) => b.wrongCount - a.wrongCount || b.tries - a.tries || a.word.localeCompare(b.word));
   const wrongWords = learningRows.filter((entry) => entry.wrongCount > 0).slice(0, 100);
   const masteredCount = learningRows.filter((entry) => entry.mastered).length;
+  const trialHintsUsed = safeInt(member.trialHintsUsed, 0, 0, 1000000);
+  const trialHintedCorrect = Math.min(trialHintsUsed, safeInt(member.trialHintedCorrect, 0, 0, 1000000));
+  const trialUnassistedTries = safeInt(member.trialUnassistedTries, 0, 0, 1000000);
+  const trialUnassistedCorrect = Math.min(trialUnassistedTries, safeInt(member.trialUnassistedCorrect, 0, 0, 1000000));
+  const trialHintedAccuracy = percent(trialHintedCorrect, trialHintsUsed);
+  const trialUnassistedAccuracy = percent(trialUnassistedCorrect, trialUnassistedTries);
   return {
     memberId,
     nickname: text(member.nickname, 30) || '이름 없는 용사',
@@ -726,7 +820,18 @@ async function memberLearningReport(uid, body) {
     guildBossDamage: safeInt(member.guildBossDamage, 0, 0),
     trialAttempts: safeInt(member.trialAttempts, 0, 0),
     trialRetries: safeInt(member.trialRetries, 0, 0),
-    trialHintsUsed: safeInt(member.trialHintsUsed, 0, 0),
+    trialHintsUsed,
+    trialHintedTries: trialHintsUsed,
+    trialHintedCorrect,
+    trialHintedAccuracy,
+    trialUnassistedCorrect,
+    trialUnassistedTries,
+    trialUnassistedAccuracy,
+    trialHintCorrelation: {
+      hinted: { tries: trialHintsUsed, correct: trialHintedCorrect, accuracy: trialHintedAccuracy },
+      unassisted: { tries: trialUnassistedTries, correct: trialUnassistedCorrect, accuracy: trialUnassistedAccuracy }
+    },
+    trialDailyResults: safeTrialDailyResults(member.trialDailyResults),
     dailySeries: dailySeriesForMembers([{ dailyLearning: safeDailyLearning(member.dailyLearning) }], 120),
     assignedWordPackIds: normalizeWordPackIds(member.assignedWordPackIds || classSnap.data().wordPackIds || classSnap.data().wordPackId, member.learningGrade || classSnap.data().grade),
     questionTypes: normalizeQuestionTypes(member.questionTypes || classSnap.data().defaultQuestionTypes),
@@ -820,15 +925,18 @@ async function createGuildTrial(uid, body) {
   const classRef = classes.doc(summary.classId);
   const trialRef = classRef.collection('trials').doc();
   const rewardGuildCoins = words.length * 5;
-  const maxHints = Math.max(1, Math.ceil(words.length / 5));
+  const maxHintsPerQuestion = 1;
+  // 구버전 클라이언트의 전체 힌트 한도 필드도 문제당 1회와 같은 총량으로 유지합니다.
+  const maxHints = words.length;
   const expiresAt = Timestamp.fromMillis(Date.now() + 14 * 24 * 60 * 60 * 1000);
   const batch = adminDb.batch();
   batch.create(trialRef, {
-    schemaVersion: 2,
+    schemaVersion: 3,
     status: 'active',
     kind: 'wrong-words',
     words,
     questionCount: words.length,
+    maxHintsPerQuestion,
     maxHints,
     rewardGuildCoins,
     createdBy: uid,
@@ -837,7 +945,7 @@ async function createGuildTrial(uid, body) {
   });
   batch.update(classRef, { activeTrialId: trialRef.id, updatedAt: FieldValue.serverTimestamp() });
   await batch.commit();
-  return { id: trialRef.id, classId: summary.classId, guildName: summary.guildName, questionCount: words.length, maxHints, rewardGuildCoins, expiresAt: expiresAt.toDate().toISOString() };
+  return { id: trialRef.id, classId: summary.classId, guildName: summary.guildName, questionCount: words.length, maxHintsPerQuestion, maxHints, rewardGuildCoins, expiresAt: expiresAt.toDate().toISOString() };
 }
 async function listSchoolGuilds(uid) {
   const teacherSnap = await verifiedTeacher(uid);
@@ -920,13 +1028,14 @@ async function removeGuildManager(uid, body) {
   const classId = text(body.classId, 128);
   const targetUid = text(body.targetUid, 128);
   const classRef = classes.doc(classId);
-  const classSnap = await classRef.get();
+  const targetTeacherRef = teachers.doc(targetUid);
+  const [classSnap, targetTeacherSnap] = await Promise.all([classRef.get(), targetTeacherRef.get()]);
   if (!classSnap.exists || classSnap.data()?.ownerId !== uid) throw apiError(403, 'GUILD_OWNER_REQUIRED', '길드 마스터만 공동 관리자를 내보낼 수 있어요.');
   if (!targetUid || targetUid === uid || targetUid === classSnap.data()?.ownerId) throw apiError(400, 'INVALID_MANAGER_REMOVAL', '길드 마스터는 내보낼 수 없어요.');
   if (!(classSnap.data()?.managerIds || []).includes(targetUid)) throw apiError(404, 'MANAGER_NOT_FOUND', '공동 관리자를 찾지 못했어요.');
   const batch = adminDb.batch();
   batch.update(classRef, { managerIds: FieldValue.arrayRemove(targetUid), updatedAt: FieldValue.serverTimestamp() });
-  batch.set(teachers.doc(targetUid), { classIds: FieldValue.arrayRemove(classId), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+  if (targetTeacherSnap.exists) batch.update(targetTeacherRef, { classIds: FieldValue.arrayRemove(classId), updatedAt: FieldValue.serverTimestamp() });
   await batch.commit();
   return { classId, targetUid, removed: true };
 }
@@ -956,45 +1065,59 @@ async function deleteGuild(uid, body) {
   const name = guildName(data);
   if (text(body.confirmGuildName, 40) !== name) throw apiError(400, 'GUILD_NAME_CONFIRMATION_REQUIRED', '폐쇄할 길드 이름을 정확히 입력해 주세요.');
   const members = await classRef.collection('members').get();
-  const accountSnaps = members.size ? await adminDb.getAll(...members.docs.map((member) => accounts.doc(member.id))) : [];
+  const guildInvites = await invites.where('classId', '==', classId).get();
   const managerIds = [...new Set((data.managerIds || []).map((id) => text(id, 128)).filter(Boolean))];
-  const accountById = new Map(accountSnaps.map((snap) => [snap.id, snap.data() || {}]));
+  const [accountSnaps, managerSnaps] = await Promise.all([
+    members.size ? adminDb.getAll(...members.docs.map((member) => accounts.doc(member.id))) : [],
+    managerIds.length ? adminDb.getAll(...managerIds.map((managerId) => teachers.doc(managerId))) : []
+  ]);
+  const accountById = new Map(accountSnaps.filter((snap) => snap.exists).map((snap) => [snap.id, snap.data() || {}]));
   const writes = [];
   members.docs.forEach((member) => {
+    if (!accountById.has(member.id)) return;
     const accountRef = accounts.doc(member.id);
     const update = { classIds: FieldValue.arrayRemove(classId), updatedAt: FieldValue.serverTimestamp() };
     if (accountById.get(member.id)?.activeClassId === classId) Object.assign(update, { activeClassId: FieldValue.delete(), activeGuildName: FieldValue.delete(), activeGuildLogoUrl: FieldValue.delete() });
     writes.push({ ref: accountRef, update });
   });
-  managerIds.forEach((managerId) => writes.push({ ref: teachers.doc(managerId), update: { classIds: FieldValue.arrayRemove(classId), updatedAt: FieldValue.serverTimestamp() } }));
+  managerSnaps.filter((snap) => snap.exists).forEach((managerSnap) => writes.push({ ref: managerSnap.ref, update: { classIds: FieldValue.arrayRemove(classId), updatedAt: FieldValue.serverTimestamp() } }));
   for (let offset = 0; offset < writes.length; offset += 400) {
     const batch = adminDb.batch();
-    writes.slice(offset, offset + 400).forEach((write) => batch.set(write.ref, write.update, { merge: true }));
+    writes.slice(offset, offset + 400).forEach((write) => batch.update(write.ref, write.update));
+    await batch.commit();
+  }
+  for (let offset = 0; offset < guildInvites.docs.length; offset += 400) {
+    const batch = adminDb.batch();
+    guildInvites.docs.slice(offset, offset + 400).forEach((inviteDoc) => batch.delete(inviteDoc.ref));
     await batch.commit();
   }
   await adminDb.recursiveDelete(classRef);
   const logoPath = text(data.guildLogoPath, 500);
   if (logoPath) await adminStorage.bucket().file(logoPath).delete({ ignoreNotFound: true }).catch(() => {});
   teacherGuildRankCache.expiresAt = 0;
-  return { classId, guildName: name, deleted: true, removedMembers: members.size };
+  return { classId, guildName: name, deleted: true, removedMembers: members.size, removedInvites: guildInvites.size };
 }
 async function invite(uid, body) {
   const classId = text(body.classId, 128);
   const type = body.type === 'manager' ? 'manager' : body.type === 'student' ? 'student' : '';
   if (!type) throw apiError(400, 'INVALID_INVITE_TYPE', '초대 코드 종류를 확인해 주세요.');
   const classSnap = await ownedClass(uid, classId);
+  const classSchoolKey = text(classSnap.data()?.schoolKey, 48).toUpperCase();
+  if (type === 'manager' && !classSchoolKey) throw apiError(409, 'GUILD_SCHOOL_REQUIRED', '학교 인증이 연결된 길드에서만 공동 관리자를 초대할 수 있어요.');
   const rotate = body.rotate === true;
-  const currentCode = text(classSnap.data()?.inviteCodes?.[type]?.code, 32).toUpperCase().replace(/[^A-Z0-9]/g, '');
-  if (!rotate && currentCode) {
+  const currentCode = normalizeInviteCode(classSnap.data()?.inviteCodes?.[type]?.code);
+  const currentCodeIsValid = type === 'manager' ? currentCode.length === MANAGER_INVITE_LENGTH : currentCode.length >= 6;
+  if (!rotate && currentCodeIsValid) {
     const currentSnap = await invites.doc(hash(currentCode)).get();
-    if (currentSnap.exists && currentSnap.data().type === type && currentSnap.data().classId === classId && !isExpired(currentSnap.data().expiresAt)) {
+    const currentSchoolKey = text(currentSnap.data()?.schoolKey, 48).toUpperCase();
+    if (currentSnap.exists && currentSnap.data().type === type && currentSnap.data().classId === classId && (type !== 'manager' || currentSchoolKey === classSchoolKey) && !isExpired(currentSnap.data().expiresAt)) {
       return { code: currentCode, type, persistent: true };
     }
   }
   let code; let ref; let available = false;
   for (let index = 0; index < 5; index += 1) {
-    code = randomCode();
-    if (code.length < 6) continue;
+    code = type === 'manager' ? managerInviteCode() : randomCode();
+    if ((type === 'manager' && code.length !== MANAGER_INVITE_LENGTH) || (type === 'student' && code.length < 6)) continue;
     ref = invites.doc(hash(code));
     if (!(await ref.get()).exists) { available = true; break; }
   }
@@ -1002,24 +1125,29 @@ async function invite(uid, body) {
   const previous = await invites.where('classId', '==', classId).limit(100).get();
   const batch = adminDb.batch();
   previous.docs.filter((doc) => doc.data()?.type === type).forEach((doc) => batch.delete(doc.ref));
-  batch.create(ref, { type, classId, classLabel: guildName(classSnap.data()), createdBy: uid, persistent: true, createdAt: FieldValue.serverTimestamp() });
+  batch.create(ref, { type, classId, classLabel: guildName(classSnap.data()), schoolKey: classSchoolKey || null, createdBy: uid, persistent: true, createdAt: FieldValue.serverTimestamp() });
   batch.update(classSnap.ref, { [`inviteCodes.${type}`]: { code, rotatedAt: Timestamp.now() }, updatedAt: FieldValue.serverTimestamp() });
   await batch.commit();
   return { code, type, persistent: true };
 }
 async function joinManager(uid, body) {
-  await verifiedTeacher(uid);
-  const code = text(body.code, 32).toUpperCase().replace(/[^A-Z0-9]/g, '');
-  if (code.length < 6) throw apiError(400, 'INVALID_INVITE', '공동 관리자 코드를 확인해 주세요.');
+  const code = normalizeInviteCode(body.code);
+  if (code.length !== MANAGER_INVITE_LENGTH) throw apiError(400, 'INVALID_INVITE', '24자리 공동 관리자 코드를 확인해 주세요.');
   const ref = invites.doc(hash(code));
   return adminDb.runTransaction(async (transaction) => {
     const invite = await transaction.get(ref);
     if (!invite.exists || invite.data().type !== 'manager' || isExpired(invite.data().expiresAt)) throw apiError(404, 'INVITE_NOT_FOUND', '코드가 올바르지 않거나 만료됐어요.');
     const classRef = classes.doc(invite.data().classId);
-    const classSnap = await transaction.get(classRef);
+    const [classSnap, teacherSnap] = await Promise.all([transaction.get(classRef), transaction.get(teachers.doc(uid))]);
     if (!classSnap.exists) throw apiError(404, 'GUILD_NOT_FOUND', '길드를 찾지 못했어요.');
-    const configuredCode = text(classSnap.data()?.inviteCodes?.manager?.code, 32).toUpperCase().replace(/[^A-Z0-9]/g, '');
-    if (configuredCode && configuredCode !== code) throw apiError(404, 'INVITE_REPLACED', '이전 초대 정보예요. 길드 마스터에게 새 코드·QR·링크를 받아 주세요.');
+    const teacherSchoolKey = text(teacherSnap.data()?.schoolKey, 48).toUpperCase();
+    const guildSchoolKey = text(classSnap.data()?.schoolKey, 48).toUpperCase();
+    const inviteSchoolKey = text(invite.data()?.schoolKey, 48).toUpperCase();
+    if (!teacherSnap.exists || teacherSnap.data()?.verificationStatus !== 'verified' || !teacherSchoolKey || teacherSchoolKey !== guildSchoolKey || teacherSchoolKey !== inviteSchoolKey) {
+      throw apiError(409, 'SCHOOL_MISMATCH', '같은 학교의 인증된 교사만 공동 관리자로 참여할 수 있어요.');
+    }
+    const configuredCode = normalizeInviteCode(classSnap.data()?.inviteCodes?.manager?.code);
+    if (configuredCode !== code) throw apiError(404, 'INVITE_REPLACED', '이전 초대 정보예요. 길드 마스터에게 새 코드·QR·링크를 받아 주세요.');
     transaction.update(classRef, { managerIds: FieldValue.arrayUnion(uid), updatedAt: FieldValue.serverTimestamp() });
     transaction.set(teachers.doc(uid), { classIds: FieldValue.arrayUnion(classRef.id), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
     return { classId: classRef.id, classLabel: guildName(classSnap.data()) };
@@ -1030,8 +1158,8 @@ async function deleteTeacherAccount(uid) {
   const teacherRef = teachers.doc(uid);
   const teacherSnap = await teacherRef.get();
   const teacher = teacherSnap.data() || {};
-  const classIds = Array.isArray(teacher.classIds) ? teacher.classIds.slice(0, 100) : [];
-  const managedClasses = classIds.length ? await adminDb.getAll(...classIds.map((id) => classes.doc(id))) : [];
+  const classIds = Array.isArray(teacher.classIds) ? [...new Set(teacher.classIds.map((id) => text(id, 128)).filter(Boolean))] : [];
+  const managedClasses = await getAllInChunks(classIds.map((id) => classes.doc(id)));
   const blockedGuilds = managedClasses.filter((snap) => {
     if (!snap.exists || snap.data()?.ownerId !== uid) return false;
     return !(snap.data()?.managerIds || []).some((managerId) => managerId !== uid);
@@ -1054,25 +1182,22 @@ async function deleteTeacherAccount(uid) {
     ]);
   }
 
-  const schoolClassesPromise = teacher.schoolKey
-    ? classes.where('schoolKey', '==', teacher.schoolKey).limit(100).get()
-    : Promise.resolve({ docs: [] });
-  const [schoolClasses, verificationDocs, inviteDocs, studentAccount] = await Promise.all([
-    schoolClassesPromise,
-    verificationRequests.where('uid', '==', uid).limit(100).get(),
-    invites.where('createdBy', '==', uid).limit(100).get(),
+  const [schoolClassDocs, verificationDocs, inviteDocs, studentAccount] = await Promise.all([
+    teacher.schoolKey ? queryAllDocs(classes.where('schoolKey', '==', teacher.schoolKey)) : [],
+    queryAllDocs(verificationRequests.where('uid', '==', uid)),
+    queryAllDocs(invites.where('createdBy', '==', uid)),
     accounts.doc(uid).get()
   ]);
   const proofPaths = new Set([
     text(teacher.verificationObjectPath, 500),
-    ...verificationDocs.docs.map((doc) => text(doc.data()?.objectPath, 500))
+    ...verificationDocs.map((doc) => text(doc.data()?.objectPath, 500))
   ].filter((path) => path.startsWith(`teacher-verification/${uid}/`)));
-  await Promise.all([...proofPaths].map((path) => adminStorage.bucket().file(path).delete({ ignoreNotFound: true }).catch(() => {})));
-  await Promise.all([
-    ...schoolClasses.docs.map((snap) => snap.ref.collection('managerRequests').doc(uid).delete().catch(() => {})),
-    ...verificationDocs.docs.map((doc) => doc.ref.delete()),
-    ...inviteDocs.docs.map((doc) => doc.ref.delete()),
-    teacherRef.delete()
+  await Promise.all([...proofPaths].map((path) => adminStorage.bucket().file(path).delete({ ignoreNotFound: true })));
+  await deleteRefsInBatches([
+    ...schoolClassDocs.map((snap) => snap.ref.collection('managerRequests').doc(uid)),
+    ...verificationDocs.map((doc) => doc.ref),
+    ...inviteDocs.map((doc) => doc.ref),
+    teacherRef
   ]);
   if (!studentAccount.exists) {
     try { await adminAuth.deleteUser(uid); } catch (error) { if (error?.code !== 'auth/user-not-found') throw error; }

@@ -29,6 +29,7 @@
         };
         let gameState = {
             grade: 4,
+            learningGrade: null,
             classNum: 1,
             studentNum: 1,
             name: "방문자",
@@ -155,8 +156,11 @@
             const rankMults = { normal: 1.0, rare: 1.2, hero: 1.5, legendary: 2.0, mythic: 3.0 };
             const rMult = rankMults[r.grade] || 1.0;
             const starMult = 1.0 + ((r.stars || 0) * 0.1); // +10% per star
+            const rawTranscendLvl = Number(gameState.relicTranscendLvl);
+            const transcendLvl = Number.isFinite(rawTranscendLvl) ? Math.max(0, Math.floor(rawTranscendLvl)) : 0;
+            const transcendMult = 1.0 + (transcendLvl * 0.1); // 한계 초월 레벨당 모든 유물 +10%
 
-            return Math.floor(baseValue * rMult * starMult);
+            return Math.floor(baseValue * rMult * starMult * transcendMult);
         }
 
         function getRelicEffectString(relicDef, r) {
@@ -241,6 +245,7 @@
                 el.classList.remove("hidden");
                 el.classList.add("flex");
             }
+            if (modalId === "wbVictoryNoticeModal" && typeof syncWorldBossSettlementSupplementalFields === "function") syncWorldBossSettlementSupplementalFields();
             if (modalId === "loginModal" || modalId === "pinVerifyModal" || modalId === "newUserRegisterModal") {
                 hideGameLoadingOverlay();
             }
@@ -866,6 +871,7 @@
                 gameState.masteryPoints = 0;
                 gameState.gearPotentials = {};
                 gameState.acquiredRelics = [];
+                gameState.relicTranscendLvl = 0;
             }
 
             gameState.wordsPool = MOCK_WORDS[String(gameState.grade)] || MOCK_WORDS["3"];
@@ -960,6 +966,10 @@
             gameState.unlockedTitles = extra.unlockedTitles || data.unlockedTitles || [];
             gameState.bossTokens = extra.bossTokens || data.bossTokens || 0;
             gameState.relicEssence = extra.relicEssence || data.relicEssence || 0;
+            const savedRelicTranscendLvl = Number(extra.relicTranscendLvl ?? data.relicTranscendLvl ?? 0);
+            gameState.relicTranscendLvl = Number.isFinite(savedRelicTranscendLvl)
+                ? Math.max(0, Math.floor(savedRelicTranscendLvl))
+                : 0;
             gameState.totalQuizTries = extra.totalQuizTries || data.totalQuizTries || 0;
             gameState.totalQuizCorrect = extra.totalQuizCorrect || data.totalQuizCorrect || 0;
             // 화운드 설정: 저장된 값을 불러오되, 없는 필드는 안전하게 디폴트로 시독
@@ -1022,6 +1032,7 @@
                 wbTitle: gameState.wbTitle || "",
                 unlockedTitles: gameState.unlockedTitles || [],
                 bossTokens: gameState.bossTokens || 0,
+                relicTranscendLvl: Math.max(0, Math.floor(Number(gameState.relicTranscendLvl) || 0)),
                 totalQuizTries: gameState.totalQuizTries || 0,
                 totalQuizCorrect: gameState.totalQuizCorrect || 0,
                 masteredWords: gameState.masteredWords || [],
@@ -1483,7 +1494,8 @@
             if (_userInfoDisplay) _userInfoDisplay.classList.remove("hidden");
             const _nameEl = document.getElementById("displayStudentName");
             if (_nameEl) refreshHeroIdentity();            const _badgeEl = document.getElementById("gradeLevelBadge");
-            if (_badgeEl) _badgeEl.innerText = `교과 영단어 ${gameState.grade}학년`;
+            const displayedLearningGrade = Number(gameState.learningGrade || gameState.grade || 4);
+            if (_badgeEl) _badgeEl.innerText = `교과 영단어 ${displayedLearningGrade}학년`;
 
             if (typeof gameState.skillsInventory === 'string') {
                 try { gameState.skillsInventory = JSON.parse(gameState.skillsInventory); } catch(e) { gameState.skillsInventory = []; }
@@ -3169,6 +3181,16 @@
                 const rolledExp = expMap[rolledGrade] || 1;
 
                 if (existing) {
+                    const normalizedGrade = Object.prototype.hasOwnProperty.call(SKILL_GRADES, existing.grade) ? existing.grade : "normal";
+                    const normalizedStars = Number(existing.stars);
+                    const normalizedExp = Number(existing.exp);
+                    existing.grade = normalizedGrade;
+                    existing.stars = Number.isFinite(normalizedStars) ? Math.min(6, Math.max(0, Math.floor(normalizedStars))) : 0;
+                    existing.exp = Number.isFinite(normalizedExp) ? Math.max(0, Math.floor(normalizedExp)) : 0;
+
+                    const previousGrade = existing.grade;
+                    const previousStars = existing.stars;
+                    const previousExp = existing.exp;
                     const oldRank = (SKILL_GRADES[existing.grade] || SKILL_GRADES.normal).rank;
                     const newRank = (SKILL_GRADES[rolledGrade] || SKILL_GRADES.normal).rank;
 
@@ -3186,13 +3208,13 @@
                             existing.stars = 6;
                             existing.exp = 0;
                         }
-                        drawnResults.push({ def: pickedRelicDef, grade: existing.grade, stars: existing.stars, currentExp: existing.exp, reqExp: currentReqExp, isGradePromotion: true });
+                        drawnResults.push({ def: pickedRelicDef, grade: rolledGrade, rolledGrade, currentGrade: existing.grade, stars: existing.stars, currentExp: existing.exp, reqExp: currentReqExp, gainedExp: rolledExp, previousGrade, previousStars, previousExp, isDuplicate: true, isGradePromotion: true });
                     } else if ((existing.stars || 0) >= 6) {
                         const rewardMap = { "normal": 1, "rare": 2, "hero": 3, "legendary": 4, "mythic": 5 };
                         const reward = rewardMap[rolledGrade] || 1;
                         gameState.relicEssence = (gameState.relicEssence || 0) + reward;
                         refundCount += reward;
-                        drawnResults.push({ def: pickedRelicDef, grade: rolledGrade, stars: 6, isEssenceRefund: true, refundAmount: reward });
+                        drawnResults.push({ def: pickedRelicDef, grade: rolledGrade, rolledGrade, currentGrade: existing.grade, stars: 6, currentExp: 0, reqExp: expMap[existing.grade] || 1, gainedExp: 0, previousGrade, previousStars, previousExp, isDuplicate: true, isEssenceRefund: true, refundAmount: reward });
                     } else {
                         if (typeof existing.exp === 'undefined') existing.exp = 0;
                         const oldReqExp = expMap[existing.grade] || 1;
@@ -3204,7 +3226,7 @@
                             existing.stars = 6;
                             existing.exp = 0;
                         }
-                        drawnResults.push({ def: pickedRelicDef, grade: existing.grade, stars: existing.stars, currentExp: existing.exp, reqExp: currentReqExp });
+                        drawnResults.push({ def: pickedRelicDef, grade: rolledGrade, rolledGrade, currentGrade: existing.grade, stars: existing.stars, currentExp: existing.exp, reqExp: currentReqExp, gainedExp: rolledExp, previousGrade, previousStars, previousExp, isDuplicate: true });
                     }
                 } else {
                     existing = {
@@ -3214,7 +3236,7 @@
                         exp: 0
                     };
                     gameState.acquiredRelics.push(existing);
-                    drawnResults.push({ def: pickedRelicDef, grade: rolledGrade, stars: existing.stars, currentExp: existing.exp, reqExp: expMap[rolledGrade] });
+                    drawnResults.push({ def: pickedRelicDef, grade: rolledGrade, rolledGrade, currentGrade: rolledGrade, stars: existing.stars, currentExp: existing.exp, reqExp: expMap[rolledGrade], gainedExp: 0, previousGrade: null, previousStars: 0, previousExp: 0, isNew: true });
                 }
             }
 
@@ -3225,8 +3247,43 @@
             
             showRelicDrawResultModal(drawnResults);
             renderRelicsUI();
-            saveLocalCache();
+            saveRelicStateImmediately();
         }
+
+        function selectMythicCraftTarget(acquiredRelics = []) {
+            const gradeRanks = { normal: 1, rare: 2, hero: 3, legendary: 4, mythic: 5 };
+            let best = null;
+
+            (Array.isArray(acquiredRelics) ? acquiredRelics : []).forEach((item, index) => {
+                if (!item || typeof item !== 'object') return;
+                const grade = Object.prototype.hasOwnProperty.call(gradeRanks, item.grade) ? item.grade : 'normal';
+                const starsValue = Number(item.stars);
+                const expValue = Number(item.exp);
+                const stars = Number.isFinite(starsValue) ? Math.min(6, Math.max(0, Math.floor(starsValue))) : 0;
+                const exp = Number.isFinite(expValue) ? Math.max(0, Math.floor(expValue)) : 0;
+                if (grade === 'mythic' && stars >= 6) return;
+
+                const candidate = {
+                    item,
+                    index,
+                    gradeRank: gradeRanks[grade],
+                    stars,
+                    exp,
+                    id: String(item.id || '')
+                };
+                if (!best
+                    || candidate.gradeRank > best.gradeRank
+                    || (candidate.gradeRank === best.gradeRank && candidate.stars > best.stars)
+                    || (candidate.gradeRank === best.gradeRank && candidate.stars === best.stars && candidate.exp > best.exp)
+                    || (candidate.gradeRank === best.gradeRank && candidate.stars === best.stars && candidate.exp === best.exp && candidate.id < best.id)
+                    || (candidate.gradeRank === best.gradeRank && candidate.stars === best.stars && candidate.exp === best.exp && candidate.id === best.id && candidate.index < best.index)) {
+                    best = candidate;
+                }
+            });
+
+            return best ? best.item : null;
+        }
+        window.__vocaHeroTestHooks = { ...(window.__vocaHeroTestHooks || {}), selectMythicCraftTarget };
 
         function craftMythicRelicFromEssence() {
             if (typeof gameState.relicEssence === 'undefined') gameState.relicEssence = 0;
@@ -3240,11 +3297,11 @@
             if (!gameState.acquiredRelics) gameState.acquiredRelics = [];
 
             // 아직 6성 신화가 아닌 유물 중 가장 상위 등급 유물을 100% 확정 6성 신화로 승급!
-            let targetRelic = gameState.acquiredRelics.find(item => item.grade !== 'mythic' || item.stars < 6);
+            let targetRelic = selectMythicCraftTarget(gameState.acquiredRelics);
             if (!targetRelic) {
                 const unacquiredDef = RELIC_DEFINITIONS.find(def => !gameState.acquiredRelics.some(r => r.id === def.id));
                 if (unacquiredDef) {
-                    targetRelic = { id: unacquiredDef.id, grade: 'mythic', stars: 6 };
+                    targetRelic = { id: unacquiredDef.id, grade: 'mythic', stars: 6, exp: 0 };
                     gameState.acquiredRelics.push(targetRelic);
                 }
             }
@@ -3252,6 +3309,7 @@
             if (targetRelic) {
                 targetRelic.grade = 'mythic';
                 targetRelic.stars = 6;
+                targetRelic.exp = 0;
                 const rDef = RELIC_DEFINITIONS.find(d => d.id === targetRelic.id);
                 const rName = rDef ? rDef.name : "고대 유물";
                 playSoundEffect('levelup');
@@ -3264,7 +3322,19 @@
 
             renderRelicsUI();
             refreshStateVisuals();
+            saveRelicStateImmediately();
+        }
+
+        function saveRelicStateImmediately() {
             saveLocalCache();
+            try {
+                const cloudSaveResult = typeof saveSessionToCloud === 'function' ? saveSessionToCloud(true) : null;
+                if (cloudSaveResult && typeof cloudSaveResult.catch === 'function') {
+                    cloudSaveResult.catch(error => console.warn('Immediate relic cloud save failed:', error));
+                }
+            } catch (error) {
+                console.warn('Immediate relic cloud save failed:', error);
+            }
         }
 
         window.revealHiddenRelic = function(el, colorClass) {
@@ -3289,6 +3359,25 @@
             }
         };
 
+        function getRelicDrawResultPresentation(res) {
+            const rolledGrade = res?.rolledGrade || res?.grade || "normal";
+            const currentGrade = res?.currentGrade || rolledGrade;
+            const rolledGradeInfo = SKILL_GRADES[rolledGrade] || SKILL_GRADES.normal;
+            const currentGradeInfo = SKILL_GRADES[currentGrade] || SKILL_GRADES.normal;
+            const gainedExp = Math.max(0, Number(res?.gainedExp || 0));
+            const currentStars = Math.max(0, Math.floor(Number(res?.stars) || 0));
+            const previousStars = Math.max(0, Math.floor(Number(res?.previousStars) || 0));
+            const starGain = Math.max(0, currentStars - previousStars);
+            const starGainText = starGain > 0 ? ` · ${starGain}성 강화` : "";
+            let outcomeText = `${rolledGradeInfo.name} 획득`;
+            if (res?.isEssenceRefund) outcomeText = `${rolledGradeInfo.name} 획득 → 6성 ${currentGradeInfo.name} · 신화 정수 +${Math.max(0, Number(res.refundAmount || 0))}`;
+            else if (res?.isNew) outcomeText = `신규 ${rolledGradeInfo.name} 유물 획득`;
+            else if (res?.isGradePromotion) outcomeText = `${rolledGradeInfo.name} 획득 → 보유 등급 ${currentGradeInfo.name} 승급 · EXP +${gainedExp}${starGainText}`;
+            else if (rolledGrade === currentGrade) outcomeText = `동일 등급 ${rolledGradeInfo.name} 획득 · EXP +${gainedExp}${starGainText}`;
+            else outcomeText = `${rolledGradeInfo.name} 획득 → 보유 ${currentGradeInfo.name} EXP +${gainedExp}${starGainText}`;
+            return { rolledGrade, currentGrade, rolledGradeInfo, currentGradeInfo, gainedExp, starGain, outcomeText };
+        }
+        window.__vocaHeroTestHooks = { ...(window.__vocaHeroTestHooks || {}), getRelicDrawResultPresentation };
         function showRelicDrawResultModal(results) {
             const grid = document.getElementById("relicDrawResultGrid");
             if (!grid) return;
@@ -3296,12 +3385,13 @@
             let html = "";
             let hiddenCount = 0;
             results.forEach(res => {
-                const gradeInfo = SKILL_GRADES[res.grade] || SKILL_GRADES.normal;
-                const isHighGrade = (res.grade === 'legendary' || res.grade === 'mythic');
+                const presentation = getRelicDrawResultPresentation(res);
+                const { rolledGrade, currentGrade, rolledGradeInfo, outcomeText } = presentation;
+                const isHighGrade = (rolledGrade === 'legendary' || rolledGrade === 'mythic');
                 const starsHtml = res.stars > 0 ? "⭐".repeat(res.stars) : "0성";
                 const innerHtml = `
                         <div class="flex justify-between items-center text-[7px] text-gray-300 font-bold mb-1 w-full">
-                            <span>${gradeInfo.name}</span>
+                            <span class="text-gray-200">추첨 ${rolledGradeInfo.name}</span>
                             <div class="flex items-center">
                                 ${res.stars < 6 && res.currentExp !== undefined ? `<span class="text-[6px] text-gray-400 font-normal mr-1">(${res.currentExp}/${res.reqExp})</span>` : ""}
                                 <span class="text-yellow-400">${starsHtml}</span>
@@ -3311,13 +3401,14 @@
                             <img src="${res.def.img}" class="w-full h-full object-contain filter drop-shadow-[0_0_8px_#fbbf24]">
                         </div>
                         <h5 class="text-[9px] font-black text-white whitespace-nowrap overflow-hidden text-ellipsis px-1 tracking-tighter w-full">${res.def.name}</h5>
-                        <p class="text-[8px] font-bold text-yellow-300 mt-0.5 leading-[1.2] tracking-tighter w-full">${getRelicEffectString(res.def, {grade: res.grade, stars: res.stars})}</p>
+                        <p class="mt-1 w-full text-[7px] font-black leading-[1.25] text-sky-200">${outcomeText}</p>
+                        <p class="text-[7px] font-bold text-yellow-300 mt-0.5 leading-[1.2] tracking-tighter w-full">${getRelicEffectString(res.def, {grade: currentGrade, stars: res.stars})}</p>
                 `;
 
                 if (isHighGrade) {
                     hiddenCount++;
                     html += `
-                    <div class="border border-yellow-500/50 p-2 text-center flex flex-col justify-between min-h-[120px] rounded-none-forced relative cursor-pointer group" onclick="revealHiddenRelic(this, '${gradeInfo.colorClass}')">
+                    <div class="border border-yellow-500/50 p-2 text-center flex flex-col justify-between min-h-[140px] rounded-none-forced relative cursor-pointer group" onclick="revealHiddenRelic(this, '${rolledGradeInfo.colorClass}')">
                         <div class="hidden-overlay absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 flex flex-col items-center justify-center z-10 transition-opacity duration-500 group-hover:brightness-125">
                             <span class="text-2xl animate-bounce">✨</span>
                             <span class="text-[8px] text-yellow-400 font-bold mt-1">클릭하여 확인!</span>
@@ -3329,7 +3420,7 @@
                     `;
                 } else {
                     html += `
-                        <div class="border ${gradeInfo.colorClass} p-2 text-center flex flex-col justify-between min-h-[120px] rounded-none-forced items-center">
+                        <div class="border ${rolledGradeInfo.colorClass} p-2 text-center flex flex-col justify-between min-h-[140px] rounded-none-forced items-center">
                             ${innerHtml}
                         </div>
                     `;
@@ -3745,10 +3836,12 @@
                     }
                 }
 
-                if (!suppressModal) showSkillModal(existingSkill, SKILL_GRADES[existingSkill.grade]);
-                buildSkillTabUI();
-                renderSkillsUI();
-                saveLocalCache();
+                if (!suppressModal) {
+                    showSkillModal(existingSkill, SKILL_GRADES[existingSkill.grade]);
+                    buildSkillTabUI();
+                    renderSkillsUI();
+                    saveLocalCache();
+                }
                 return existingSkill;
             } else {
                 // 신규 스킬 카드 획득 (추출된 랜덤 Tier 1~3 부여)
@@ -3767,11 +3860,12 @@
 
                 gameState.skillsInventory.push(newSkill);
 
-                if (!suppressModal) showSkillModal(newSkill, gradeInfo);
-
-                buildSkillTabUI();
-                renderSkillsUI();
-                saveLocalCache();
+                if (!suppressModal) {
+                    showSkillModal(newSkill, gradeInfo);
+                    buildSkillTabUI();
+                    renderSkillsUI();
+                    saveLocalCache();
+                }
                 return newSkill;
             }
         }
@@ -3871,7 +3965,7 @@
                                     <div class="border-2 ${gradeInfo.colorClass} bg-[#0d0d0d] p-2 text-center flex flex-col justify-between min-h-[90px] rounded-none-forced">
                                         <div>
                                             <div class="flex justify-[#7e7e7e] flex items-center justify-between text-[8px] font-bold">
-                                                <span>${gradeInfo.name}</span>
+                                                <span class="text-gray-200">추첨 ${rolledGradeInfo.name}</span>
                                                 <span class="text-yellow-400 font-bold">${starsHtml}</span>
                                             </div>
                                             <p class="text-[11px] font-bold  text-white truncate mt-0.5">${capitalizeFirstLetter(resultSkill.word)}</p>
@@ -4002,7 +4096,7 @@
                     <div class="border-2 ${gradeInfo.colorClass} bg-[#0d0d0d] p-2 text-center flex flex-col justify-between min-h-[90px] rounded-none-forced">
                         <div>
                             <div class="flex items-center justify-between text-[8px] font-bold text-[#7e7e7e]">
-                                <span>${gradeInfo.name}</span>
+                                <span class="text-gray-200">추첨 ${rolledGradeInfo.name}</span>
                                 <span class="text-yellow-400 font-bold">${starsHtml}</span>
                             </div>
                             <p class="text-[11px] font-bold  text-white truncate mt-0.5">${capitalizeFirstLetter(resultSkill.word)}</p>
@@ -5128,18 +5222,54 @@
             // 학습 기록을 행동 중심의 상태·진행도·유형별 성취로 재구성합니다.
             const weakContainer = document.getElementById("weakWordsContainer");
             const weakBadge = document.getElementById("weakWordsCountBadge");
-            const learningRows = Object.entries(gameState.wordLearningStats || {}).map(([key, raw]) => {
+            const normalizeLearningWordKey = (value) => String(value || "").trim().toLowerCase();
+            const legacyWordLookup = new Map();
+            const addLegacyWordLookup = (item) => {
+                const word = typeof item === "string" ? item : item?.word;
+                const key = normalizeLearningWordKey(word);
+                if (!key) return;
+                const meaning = typeof item === "object" && item ? String(item.meaning || "") : "";
+                const previous = legacyWordLookup.get(key);
+                if (!previous || (!previous.meaning && meaning)) legacyWordLookup.set(key, { word: String(word), meaning });
+            };
+            (gameState.wordsPool || []).forEach(addLegacyWordLookup);
+            Object.values(MOCK_WORDS).flat().forEach(addLegacyWordLookup);
+            (masteredList || []).forEach(addLegacyWordLookup);
+
+            let learningRows = Object.entries(gameState.wordLearningStats || {}).map(([key, raw]) => {
                 const correct = Math.max(0, Number(raw?.c || 0));
                 const wrong = Math.max(0, Number(raw?.x || 0));
                 const tries = correct + wrong;
                 const accuracy = tries ? correct / tries * 100 : 0;
                 const mastered = correct >= WORD_MASTERY_CORRECT_THRESHOLD && accuracy >= WORD_MASTERY_ACCURACY_THRESHOLD * 100;
-                return { key, word: String(raw?.w || key), meaning: String(raw?.m || ""), correct, wrong, tries, accuracy, mastered, updatedAt: Number(raw?.u || 0), byType: raw?.t || {} };
+                return { key: normalizeLearningWordKey(key), word: String(raw?.w || key), meaning: String(raw?.m || ""), correct, wrong, tries, accuracy, mastered, updatedAt: Number(raw?.u || 0), byType: raw?.t || {} };
             }).filter((row) => row.word);
+            const learningRowKeys = new Set(learningRows.map((row) => row.key));
+            Object.entries(gameState.wrongWordCounts || {}).forEach(([rawKey, rawWrong]) => {
+                const key = normalizeLearningWordKey(rawKey);
+                const wrong = Math.max(0, Number(rawWrong || 0));
+                if (!key || wrong <= 0 || learningRowKeys.has(key)) return;
+                const legacyWord = legacyWordLookup.get(key);
+                learningRows.push({
+                    key,
+                    word: String(legacyWord?.word || rawKey),
+                    meaning: String(legacyWord?.meaning || "뜻 정보 없음"),
+                    correct: 0,
+                    wrong,
+                    tries: wrong,
+                    accuracy: 0,
+                    mastered: false,
+                    updatedAt: 0,
+                    byType: {}
+                });
+                learningRowKeys.add(key);
+            });
             const learnedKeys = new Set(learningRows.map((row) => row.key));
             (masteredList || []).forEach((item) => learnedKeys.add(String(item?.word || "").trim().toLowerCase()));
             Object.keys(gameState.wrongWordCounts || {}).forEach((key) => learnedKeys.add(String(key).trim().toLowerCase()));
             const masteredRows = learningRows.filter((row) => row.mastered);
+            const wrongRows = learningRows.filter((row) => row.wrong > 0)
+                .sort((a, b) => b.wrong - a.wrong || a.accuracy - b.accuracy || b.updatedAt - a.updatedAt);
             const reviewRows = learningRows.filter((row) => !row.mastered && row.wrong > 0 && row.accuracy < 80)
                 .sort((a, b) => (b.wrong * 3 - b.correct) - (a.wrong * 3 - a.correct) || b.updatedAt - a.updatedAt);
             const reviewKeys = new Set(reviewRows.map((row) => row.key));
@@ -5166,7 +5296,8 @@
                         ? "현재 기록은 안정적이에요. 새로운 단어팩에 도전해 보세요."
                         : "퀴즈 전투를 시작하면 단어별 성장 기록이 쌓여요.";
 
-            if (weakBadge) weakBadge.innerText = `학습 기록 ${learningRows.length.toLocaleString()}개`;
+            const weakWordCardsHtml = wrongRows.slice(0, 8).map((row, index) => `<article class="border border-rose-900/50 bg-black/70 p-2.5"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><b class="block truncate text-[10px] text-white">${index + 1}. ${esc(row.word)}</b><span class="mt-0.5 block truncate text-[8px] text-gray-400">${esc(row.meaning || "뜻 정보 없음")}</span></div><span class="shrink-0 text-[9px] font-bold text-rose-300">오답 ${row.wrong}회</span></div><div class="mt-2 flex items-center justify-between border-t border-[#311d22] pt-1.5 text-[8px]"><span class="text-sky-300">정답 ${row.correct}회</span><span class="text-gray-500">정답률 ${row.accuracy.toFixed(0)}%</span></div></article>`).join("");
+            if (weakBadge) weakBadge.innerText = `오답 단어 ${wrongRows.length.toLocaleString()}개`;
             if (weakContainer) {
                 weakContainer.innerHTML = `
                     <div class="grid grid-cols-3 gap-1.5 text-center">
@@ -5178,7 +5309,8 @@
                         <span class="bg-rose-500" style="width:${pct(reviewRows.length)}%"></span><span class="bg-sky-500" style="width:${pct(progressingRows.length)}%"></span><span class="bg-emerald-400" style="width:${pct(masteredRows.length)}%"></span>
                     </div>
                     <p class="mt-2 border-l-2 border-yellow-500 pl-2 text-[9px] leading-relaxed text-yellow-100">${esc(nextAction)}</p>
-                    <p class="mt-1 text-[8px] text-gray-500">최근 7일에 다시 만난 단어 ${lastSevenDays}개 · 아직 만나지 않은 배정 단어 ${unseenCount}개</p>`;
+                    <p class="mt-1 text-[8px] text-gray-500">최근 7일에 다시 만난 단어 ${lastSevenDays}개 · 아직 만나지 않은 배정 단어 ${unseenCount}개</p>
+                    <div class="mt-3 border-t border-rose-900/40 pt-2"><div class="mb-2 flex items-center justify-between gap-2"><b class="text-[9px] text-rose-300">집중 복습 오답 단어</b><span class="text-[8px] text-gray-500">오답 횟수 높은 순</span></div><div class="grid gap-2 sm:grid-cols-2">${weakWordCardsHtml || '<p class="col-span-full border border-dashed border-emerald-900/50 p-4 text-center text-[9px] text-emerald-300">아직 기록된 오답 단어가 없어요.</p>'}</div></div>`;
             }
 
             const conqueredCount = new Set((masteredList || []).map((item) => String(item?.word || "").trim().toLowerCase()).filter(Boolean)).size;
@@ -6445,6 +6577,7 @@
         let wbPlayerMaxHp = 100;
         let wbTimerInterval = null;
         let wbTotalDamageDealt = 0;
+        let wbCorrectAnswers = 0;
         let wbCurrentWordObj = null;
 
         function calculatePlayerRaidMaxHp() {
@@ -6492,6 +6625,122 @@
             }
         ];
 
+        function getWorldBossSettlementPresentation(details = {}) {
+            const defeated = Boolean(details.defeated ?? details.isVictory);
+            const myDamage = Math.max(0, Number(details.myDamage) || 0);
+            const totalDamage = Math.max(0, Number(details.totalDamage) || 0);
+            const participantCount = Math.max(0, Math.floor(Number(details.participantCount) || 0));
+            const myRank = Math.max(0, Math.floor(Number(details.myRank) || 0));
+            const rewardFp = Math.max(0, Math.floor(Number(details.rewardFp ?? details.totalFp) || 0));
+            const gotTitle = Boolean(details.gotTitle ?? details.getsTitle);
+            const bossName = String(details.bossName || "").trim();
+            const isWeekly = details.isWeekly !== false;
+            const explicitRate = Number(details.teamContributionRate ?? details.contributionRate);
+            const contributionRate = Number.isFinite(explicitRate)
+                ? Math.max(0, Math.min(1, explicitRate))
+                : (totalDamage > 0 ? Math.max(0, Math.min(1, myDamage / totalDamage)) : 0);
+            const resultText = defeated ? "완전 승리 ✅" : "토벌 실패 · 부분 보상";
+            const rankText = myRank
+                ? `${myRank.toLocaleString()}위${participantCount ? ` / ${participantCount.toLocaleString()}명` : ""}`
+                : "집계되지 않음";
+            const titleText = gotTitle
+                ? "[수호신] 칭호 획득 👑"
+                : (defeated ? "기여 순위에 따라 칭호 판정 완료" : "토벌 성공 시 기여 1위에게 [수호신] 수여");
+            const targetText = bossName ? `[${bossName}]` : "전 학년 연합 레이드";
+            const periodText = isWeekly ? "지난 주" : "이번";
+            const description = totalDamage > 0
+                ? `${periodText} ${targetText}에서 전 학년 용사들이 총 ${totalDamage.toLocaleString()} 피해를 기록했어요.`
+                : `${periodText} ${targetText} 전투 결과가 집계되었어요.`;
+            return {
+                banner: isWeekly
+                    ? `월드보스 주간 결산 · 전 학년 연합 ${defeated ? "토벌 성공" : "전투 종료"}`
+                    : "월드보스 토벌 완료 · 전 학년 연합 레이드",
+                heading: defeated ? "🏆 월드보스 완전 토벌!" : "⚔️ 월드보스 주간 전투 종료",
+                description,
+                targetText,
+                resultText,
+                statusColor: defeated ? "#4ade80" : "#f87171",
+                damageText: `${myDamage.toLocaleString()} HP`,
+                contributionText: `${(contributionRate * 100).toFixed(2)}%`,
+                rankText,
+                titleText,
+                titleColor: gotTitle ? "#fbbf24" : "#9ca3af",
+                rewardLabel: defeated ? "🎁 승리 기여 보상" : "🎁 미처치 부분 보상 (50%)",
+                rewardText: `+${rewardFp.toLocaleString()} FP${gotTitle ? " · [수호신] 칭호" : ""}`
+            };
+        }
+
+        function renderWorldBossSettlementModal(details = {}) {
+            const presentation = getWorldBossSettlementPresentation(details);
+            const modal = document.getElementById("wbVictoryNoticeModal");
+            if (!modal) return presentation;
+            const setText = (id, value) => {
+                const element = document.getElementById(id);
+                if (element) element.textContent = value;
+                return element;
+            };
+            setText("wbModalBanner", presentation.banner);
+            const heading = modal.querySelector("h2");
+            if (heading) heading.textContent = presentation.heading;
+            setText("wbModalDescription", presentation.description);
+            setText("wbModalBossLabel", presentation.targetText);
+            const status = setText("wbModalClearStatus", presentation.resultText);
+            if (status) status.style.color = presentation.statusColor;
+            setText("wbModalMyDamage", presentation.damageText);
+            setText("wbModalMyShare", presentation.contributionText);
+            setText("wbModalMyRank", presentation.rankText);
+            const title = setText("wbModalTitleResult", presentation.titleText);
+            if (title) title.style.color = presentation.titleColor;
+            setText("wbModalRewardLabel", presentation.rewardLabel);
+            setText("wbModalRewardSummary", presentation.rewardText);
+            return presentation;
+        }
+
+        function syncWorldBossSettlementSupplementalFields() {
+            const statusText = document.getElementById("wbModalClearStatus")?.textContent || "";
+            const summaryText = document.getElementById("wbModalRewardSummary")?.textContent || "";
+            const gotTitle = summaryText.includes("[수호신]");
+            const defeated = statusText.includes("승리") || statusText.includes("토벌 성공");
+            const title = document.getElementById("wbModalTitleResult");
+            if (title) {
+                title.textContent = gotTitle
+                    ? "[수호신] 칭호 획득 👑"
+                    : (defeated ? "기여 순위에 따라 칭호 판정 완료" : "토벌 성공 시 기여 1위에게 [수호신] 수여");
+                title.style.color = gotTitle ? "#fbbf24" : "#9ca3af";
+            }
+            const rewardLabel = document.getElementById("wbModalRewardLabel");
+            if (rewardLabel) rewardLabel.textContent = defeated ? "🎁 승리 기여 보상" : "🎁 미처치 부분 보상 (50%)";
+        }
+        function resolveRichSkillCastState({ bossId, bossState, gracePeriodTimer, skillCastCount } = {}) {
+            const currentCount = Math.max(0, Math.floor(Number(skillCastCount) || 0));
+            const eligible = bossId === "rich" && bossState === "normal" && Number(gracePeriodTimer || 0) <= 0;
+            const counted = eligible ? currentCount + 1 : currentCount;
+            const triggered = eligible && counted >= 4;
+            return {
+                eligible,
+                triggered,
+                resetCooldowns: triggered,
+                nextSkillCastCount: triggered ? 0 : counted
+            };
+        }
+
+        function advanceRichCurseTimer({ bossId, bossState, gracePeriodTimer, ultimateEventActive, timer, delta = 0.1 } = {}) {
+            const numericTimer = Number(timer);
+            const currentTimer = Number.isFinite(numericTimer) && numericTimer >= 0 ? numericTimer : 10;
+            const active = bossId === "rich" && bossState === "normal" && Number(gracePeriodTimer || 0) <= 0 && !ultimateEventActive;
+            if (!active) return { active, triggered: false, nextTimer: currentTimer };
+            const remaining = currentTimer - Math.max(0, Number(delta) || 0);
+            const triggered = remaining <= 0;
+            return { active, triggered, nextTimer: triggered ? 10 : remaining };
+        }
+
+        window.renderWorldBossSettlementModal = renderWorldBossSettlementModal;
+        window.__vocaHeroTestHooks = {
+            ...(window.__vocaHeroTestHooks || {}),
+            getWorldBossSettlementPresentation,
+            resolveRichSkillCastState,
+            advanceRichCurseTimer
+        };
         function getCurrentWeekNum() {
             const EPOCH_MONDAY = new Date("2024-07-01T00:00:00Z");
             const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
@@ -6501,6 +6750,39 @@
             const thisMonday = new Date(kstMidnight.getTime() - daysSinceMonday * 24 * 60 * 60 * 1000);
             const oneWeek = 1000 * 60 * 60 * 24 * 7;
             return Math.floor((thisMonday.getTime() - EPOCH_MONDAY.getTime()) / oneWeek);
+        }
+
+        function getKstDayString(now = Date.now()) {
+            return new Date(now + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        }
+
+        function getWorldBossRaidStorageKeys() {
+            const keys = [];
+            if (gameState.uid) keys.push(`vocahero_wb_raid_date_${gameState.uid}`);
+            keys.push(`vocahero_wb_raid_date_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`);
+            return [...new Set(keys)];
+        }
+
+        function hasCompletedWorldBossToday(day = getKstDayString()) {
+            let completed = false;
+            getWorldBossRaidStorageKeys().forEach((key) => {
+                const savedDay = localStorage.getItem(key);
+                if (savedDay === day) completed = true;
+                else if (savedDay) localStorage.removeItem(key);
+            });
+            return completed;
+        }
+
+        function markWorldBossCompleted(day = getKstDayString()) {
+            getWorldBossRaidStorageKeys().forEach((key) => localStorage.setItem(key, day));
+        }
+
+        function clearWorldBossCompletion() {
+            getWorldBossRaidStorageKeys().forEach((key) => localStorage.removeItem(key));
+        }
+
+        function getWorldBossCacheKey() {
+            return `vocahero_wb_cache_${gameState.uid || `${gameState.grade}_${gameState.name}_${gameState.studentNum}`}`;
         }
 
         function getWbExpectedMaxHp() {
@@ -6531,7 +6813,7 @@
 
         function updateWorldBossUI() {
             const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
-            const wbCacheKey = `vocahero_wb_cache_${gameState.grade}_${gameState.name}_${gameState.studentNum}`;
+            const wbCacheKey = getWorldBossCacheKey();
             wbPlayerMaxHp = calculatePlayerRaidMaxHp();
 
             // 주차별 월드보스 일러스트 & 정보 동적 세팅
@@ -6712,10 +6994,8 @@
             }
 
             // 로컬 클라이언트 1일 1회 완료 여부 즉시 사전 검사 (학년, 반, 번호, 이름까지 고유 식별 키 생성)
-            const todayStr = new Date().toISOString().slice(0, 10);
-            const wbRaidKey = `vocahero_wb_raid_date_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
-            const lastRaidDate = localStorage.getItem(wbRaidKey);
-            const isTodayDone = (lastRaidDate === todayStr);
+            const todayStr = getKstDayString();
+            const isTodayDone = hasCompletedWorldBossToday(todayStr);
 
             const btn = document.getElementById("startWorldBossBtn");
             const badge = document.getElementById("worldBossEntryBadge");
@@ -6757,7 +7037,7 @@
 
             // ✅ 캐시 데이터 즉시 반영 (이어하기 기록이 있을 때만)
             const cachedWb = JSON.parse(localStorage.getItem(wbCacheKey) || "null");
-            if (cachedWb && isResume) {
+            if (cachedWb && cachedWb.day === todayStr && isResume) {
                 const cachedPct = Math.max(0, Math.min(100, (cachedWb.curHp / cachedWb.maxHp) * 100));
                 document.getElementById("worldBossHpBar").style.width = `${cachedPct}%`;
                 document.getElementById("worldBossHpText").innerText = `${cachedWb.curHp.toLocaleString()} / ${cachedWb.maxHp.toLocaleString()} HP (${cachedPct.toFixed(1)}%) [캐시]`;
@@ -6836,6 +7116,7 @@
 
                     // ✅ 서버 응답 데이터를 로컬 캐시에 저장 (다음 탭 전환 시 즉시 표시용)
                     localStorage.setItem(wbCacheKey, JSON.stringify({
+                        day: todayStr,
                         curHp: wbCurBossHp,
                         maxHp: wbMaxBossHp,
                         myDamage: myDamage,
@@ -6870,11 +7151,20 @@
                             if(sortedDmg.length > 0) myRank = sortedDmg.indexOf(myDamage) + 1;
                             const getsTitle = myRank === 1;
 
-                            document.getElementById("wbModalMyDamage").innerText = `${myDamage.toLocaleString()} HP`;
-                            document.getElementById("wbModalMyShare").innerText = `${cappedShare}%`;
-                            let titleBadge = getsTitle ? " / [수호신]" : "";
-                            document.getElementById("wbModalRewardSummary").innerText = `+${totalFp.toLocaleString()} FP${titleBadge}`;
-
+                            const totalRecordedDamage = Object.values(damages).reduce((sum, value) => sum + Math.max(0, Number(value) || 0), 0);
+                            const participantCount = Object.values(damages).filter(value => Number(value) > 0).length;
+                            renderWorldBossSettlementModal({
+                                isWeekly: false,
+                                defeated: true,
+                                bossName: bossInfo.name,
+                                myDamage,
+                                totalDamage: totalRecordedDamage,
+                                participantCount,
+                                myRank,
+                                rewardFp: totalFp,
+                                gotTitle: getsTitle,
+                                teamContributionRate: totalRecordedDamage > 0 ? myDamage / totalRecordedDamage : 0
+                            });
                             const claimBtn = document.getElementById("wbVictoryNoticeClaimBtn");
                             if (claimBtn) {
                                 claimBtn.onclick = () => {
@@ -6896,7 +7186,7 @@
                     }
 
                     if (!canAttack) {
-                        localStorage.setItem(wbRaidKey, todayStr);
+                        markWorldBossCompleted(todayStr);
                     }
 
                     if (!canAttack || isTodayDone || wbCurBossHp <= 0) {
@@ -6936,10 +7226,10 @@
                 const fp = Math.round(Number(sharePct) * 1000);
                 reward.innerHTML = `처치 시: <span style="color:white">+${fp.toLocaleString()} FP</span> | 미처치 시: <span style="color:#9ca3af">+${Math.floor(fp / 2).toLocaleString()} FP</span>`;
             }
-            const raidKey = `vocahero_wb_raid_date_${gameState.uid || gameState.name}`;
-            if (boss.canAttack) localStorage.removeItem(raidKey);
-            else localStorage.setItem(raidKey, boss.day);
-            localStorage.setItem(`vocahero_wb_cache_${gameState.uid || gameState.name}`, JSON.stringify({ curHp: wbCurBossHp, maxHp: wbMaxBossHp, myDamage, sharePct, canAttack: Boolean(boss.canAttack), cachedAt: Date.now() }));
+            const bossDay = typeof boss.day === 'string' ? boss.day : getKstDayString();
+            if (boss.canAttack) clearWorldBossCompletion();
+            else markWorldBossCompleted(bossDay);
+            localStorage.setItem(getWorldBossCacheKey(), JSON.stringify({ day: bossDay, curHp: wbCurBossHp, maxHp: wbMaxBossHp, myDamage, sharePct, canAttack: Boolean(boss.canAttack), cachedAt: Date.now() }));
             const btn = document.getElementById("startWorldBossBtn");
             const badge = document.getElementById("worldBossEntryBadge");
             const defeated = wbCurBossHp <= 0;
@@ -6948,9 +7238,19 @@
                 btn.className = "w-full py-3.5 bg-[#262626] text-[#7e7e7e] font-bold text-sm tracking-wider uppercase rounded-none-forced cursor-not-allowed border border-red-950";
                 btn.innerText = defeated ? "월드보스 토벌 완료" : "오늘의 레이드 완료";
             }
+            if (btn && boss.canAttack && !defeated) {
+                btn.disabled = false;
+                btn.className = "w-full py-4 bg-gradient-to-r from-red-700 via-pink-700 to-red-600 hover:from-red-600 hover:to-pink-600 text-white font-black text-base tracking-wider uppercase transition shadow-xl flex items-center justify-center gap-2 rounded-none-forced";
+                btn.innerHTML = '<i data-lucide="swords" class="w-6 h-6"></i><span>월드보스 토벌전 참전하기 (1일 1회)</span>';
+                window.lucide?.createIcons?.();
+            }
             if (badge && (!boss.canAttack || defeated)) {
                 badge.innerText = defeated ? "토벌 성공" : "오늘 참전 완료";
                 badge.className = "text-[9px] bg-yellow-950 text-yellow-400 border border-yellow-600 px-3 py-1 rounded-none-forced font-bold uppercase tracking-wider";
+            }
+            if (badge && boss.canAttack && !defeated) {
+                badge.innerText = "1일 1회 도전 가능";
+                badge.className = "text-[9px] bg-red-950 text-red-400 border border-red-600 px-3 py-1 rounded-none-forced font-bold uppercase tracking-wider";
             }
             const overlay = document.getElementById("wbDefeatedOverlay");
             if (overlay) overlay.classList.toggle("hidden", !defeated);
@@ -6990,6 +7290,7 @@
         let wbUltimateTimer = 0;
         let wbNextUltimateTime = 135.0;
         let wbSkillCastCount = 0;
+        let wbRichCurseTimer = 10.0;
 
         function updateWorldBossHudUI() {
             const seasonIdx = getWeeklyBossIndex();
@@ -7060,12 +7361,14 @@
             wbUltimateTimer = 0;
             wbNextUltimateTime = 135.0;
             wbSkillCastCount = 0;
+            wbRichCurseTimer = 10.0;
             wbTotalDamageDealt = 0;
+            wbCorrectAnswers = 0;
             wbSkillCooldowns = {};
             wbPlayerMaxHp = calculatePlayerRaidMaxHp();
             wbPlayerHp = wbPlayerMaxHp;
 
-            const todayStr = new Date().toISOString().slice(0, 10);
+            const todayStr = getKstDayString();
             const inProgressKey = `vocahero_wb_progress_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
             let loadedHintRemaining = null;
             try {
@@ -7075,8 +7378,10 @@
                     if (saved.date === todayStr) {
                         wbTimerRemaining = saved.wbTimerRemaining ?? 180.0;
                         wbTotalDamageDealt = saved.wbTotalDamageDealt ?? 0;
+                        wbCorrectAnswers = Math.max(0, Math.floor(Number(saved.wbCorrectAnswers) || 0));
                         wbPlayerHp = saved.wbPlayerHp ?? wbPlayerMaxHp;
                         wbSkillCooldowns = saved.wbSkillCooldowns || {};
+                        wbRichCurseTimer = Math.max(0.1, Number(saved.wbRichCurseTimer) || 10.0);
                         if (typeof saved.wbPetHintRemaining === 'number') {
                             loadedHintRemaining = saved.wbPetHintRemaining;
                         }
@@ -7158,10 +7463,23 @@
                         const sIdx = getWeeklyBossIndex();
                         const bInfo = WORLD_BOSS_SEASONS[sIdx] || WORLD_BOSS_SEASONS[0];
                         wbGracePeriodTimer = (bInfo.id === 'golem' ? 0.0 : 20.0); // 파브니르/리치는 20초 쿨타임, 골렘은 항시
+                        if (bInfo.id === 'rich') wbRichCurseTimer = 10.0;
                         showWorldBossFxNotice(`🛡️ 보스의 약점 무력화 상태가 종료되어 외피/저주를 재가동합니다. (${bInfo.id === 'golem' ? '즉시 재시도 가능' : '20초 재정비'})`, "text-gray-400 border-gray-600");
                     }
                 }
 
+                // 리치 고유 패턴: 저주가 활성화된 동안 10초마다 장착 스킬의 화면 위치를 교란합니다.
+                const timerBossInfo = WORLD_BOSS_SEASONS[getWeeklyBossIndex()] || WORLD_BOSS_SEASONS[0];
+                const richCurseTick = advanceRichCurseTimer({
+                    bossId: timerBossInfo.id,
+                    bossState: wbBossState,
+                    gracePeriodTimer: wbGracePeriodTimer,
+                    ultimateEventActive: wbUltimateEventActive,
+                    timer: wbRichCurseTimer,
+                    delta: 0.1
+                });
+                wbRichCurseTimer = richCurseTick.nextTimer;
+                if (richCurseTick.triggered) triggerWorldBossRichCurse();
                 // 필살기 저지 카운터 타이머 차감 (20초 제공)
                 if (wbUltimateEventActive) {
                     wbUltimateTimer -= 0.1;
@@ -7212,14 +7530,16 @@
                 // 1초 단위로 중간 저장 (이탈 대비)
                 if (Math.floor(wbTimerRemaining * 10) % 10 === 0) {
                     try {
-                        const todayStr = new Date().toISOString().slice(0, 10);
+                        const todayStr = getKstDayString();
                         const inProgressKey = `vocahero_wb_progress_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
                         localStorage.setItem(inProgressKey, JSON.stringify({
                             date: todayStr,
                             wbTimerRemaining,
                             wbTotalDamageDealt,
+                            wbCorrectAnswers,
                             wbPlayerHp,
                             wbSkillCooldowns,
+                            wbRichCurseTimer,
                             wbPetHintRemaining
                         }));
                     } catch(e) {}
@@ -7289,6 +7609,24 @@
 
             container.appendChild(p);
             setTimeout(() => p.remove(), 700);
+        }
+
+        function triggerWorldBossRichCurse() {
+            const container = document.getElementById("wbRaidSkillsContainer");
+            if (!container) return;
+            const cards = Array.from(container.querySelectorAll('button[id^="wb-skill-btn-"]'));
+            if (cards.length < 2) return;
+            for (let i = cards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [cards[i], cards[j]] = [cards[j], cards[i]];
+            }
+            cards.forEach((card) => {
+                container.appendChild(card);
+                card.classList.add('animate-pulse');
+                setTimeout(() => card.classList.remove('animate-pulse'), 700);
+            });
+            playSoundEffect('alert');
+            showWorldBossFxNotice("🔮 [사령의 저주] 장착 마법 스킬의 위치가 뒤섞였습니다!", "text-purple-300 border-purple-500 animate-pulse");
         }
 
         function renderWorldBossRaidSkills() {
@@ -7495,17 +7833,24 @@
 
             const cdKey = String(skill.id);
             if (wbSkillCooldowns[cdKey] > 0) return;
+            let richWeaknessTriggeredBySkill = false;
 
             if (isWorldBossRaidActive && wbBossState === "normal" && wbGracePeriodTimer <= 0) {
                 const seasonIdx = getWeeklyBossIndex();
                 const bossInfo = WORLD_BOSS_SEASONS[seasonIdx] || WORLD_BOSS_SEASONS[0];
                 if (bossInfo.id === 'rich') {
-                    wbSkillCastCount = (wbSkillCastCount || 0) + 1;
-                    if (wbSkillCastCount >= 4) {
+                    const richCastResolution = resolveRichSkillCastState({
+                        bossId: bossInfo.id,
+                        bossState: wbBossState,
+                        gracePeriodTimer: wbGracePeriodTimer,
+                        skillCastCount: wbSkillCastCount
+                    });
+                    wbSkillCastCount = richCastResolution.nextSkillCastCount;
+                    if (richCastResolution.triggered) {
                         wbBossState = "weakness_shattered";
+                        richWeaknessTriggeredBySkill = true;
                         updateCurrentWbQuizOptionTheme();
                         wbWeaknessTimer = 15.0;
-                        wbSkillCastCount = 0;
                         wbSkillCooldowns = {};
                         updateWorldBossSkillCooldownsUI();
                         const shatterOverlay = document.getElementById("wbWeaknessShatterOverlay");
@@ -7528,7 +7873,7 @@
             const relicCdRed = getEquippedRelicBonus("relic_clock");
             const totalCdRed = Math.min(60, necklaceCdRed + relicCdRed);
             const baseCd = skill.maxCooldown || 30.0;
-            wbSkillCooldowns[cdKey] = baseCd * (1 - totalCdRed / 100);
+            if (!richWeaknessTriggeredBySkill) wbSkillCooldowns[cdKey] = baseCd * (1 - totalCdRed / 100);
 
             // 스킬 원어민 음성 발음 재생
             if ('speechSynthesis' in window) {
@@ -7852,6 +8197,7 @@
 
             const seasonIdx = getWeeklyBossIndex();
             const bossInfo = WORLD_BOSS_SEASONS[seasonIdx] || WORLD_BOSS_SEASONS[0];
+            if (isCorrect) wbCorrectAnswers++;
 
             // 보스 필살기 카운터 저지 이벤트 판정
             if (wbUltimateEventActive) {
@@ -8100,109 +8446,57 @@
             const arena = document.getElementById("worldBossBattleArena");
             arena.classList.add("hidden");
             arena.classList.remove("flex");
-
             document.getElementById("worldBossReadyBox").classList.remove("hidden");
 
-            // ✅ 참전 즉시 보상: 피해량 비례 골드 및 고대 보스 증표(유물 재화) 적립
-            const rewardGold = Math.max(500, Math.floor(wbTotalDamageDealt / 500));
-            const rewardTokens = Math.min(500, 200 + Math.floor(wbTotalDamageDealt / 10000000) * 20);
-
-            gameState.gold = (gameState.gold || 0) + rewardGold; 
-            gameState.accGold = (gameState.accGold || gameState.gold || 0) + rewardGold;
-            gameState.bossTokens = (gameState.bossTokens || 0) + rewardTokens;
-
-            // 참전 완료 후 즉시 1일 1회 도전 완료 잠금 처리 (로컬 + 서버 이중 락)
-            const todayStr = new Date().toISOString().slice(0, 10);
-            const wbRaidKey = `vocahero_wb_raid_date_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
-            localStorage.setItem(wbRaidKey, todayStr);
-            
             try {
                 const inProgressKey = `vocahero_wb_progress_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
                 localStorage.removeItem(inProgressKey);
             } catch(e) {}
 
-            playSoundEffect('levelup');
-            refreshStateVisuals();
-            saveLocalCache();
-
-            updateWorldBossUI();
-            showWorldBossResultModal(wbTotalDamageDealt, reasonMessage, rewardGold, rewardTokens);
-            showToast(`${reasonMessage} 🪙 골드: +${rewardGold.toLocaleString()}G / 🏺 증표: +${rewardTokens}개 획득!`);
-
-            // 서버 전송 전 즉시 로컬 데이터 가상 반영
-            document.getElementById("myWorldBossDmgDisplay").innerText = wbTotalDamageDealt.toLocaleString();
-            document.getElementById("myWorldBossRewardDisplay").innerText = `주간 결산 시 FP / 칭호 지급 (증표 +${rewardTokens})`;
-
-            // ✅ 서버에 피해량 전송 → 완료 후 즉시 클리어 보상 체크 (격파자 포함 통합 처리)
-            const studentKey = `${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
-            
-            if (window._secureWorldBossContribute) {
-                window._secureWorldBossContribute(wbTotalDamageDealt).then((result) => {
-                    const currentWeek = getCurrentWeekNum();
-                    gameState.wbBestDamage = result.damage;
-                    gameState.wbBestDamageWeek = currentWeek;
-                    saveSessionToCloud(true);
-                    updateWorldBossUI();
-                    showToast(`서버에 월드보스 피해 ${result.applied.toLocaleString()}이(가) 기록되었습니다.`);
-                }).catch((err) => {
-                    console.error("World boss submission failed:", err);
-                    showToast("월드보스 피해가 기록되지 않았어요. 새 참전을 시작해 주세요.");
-                });
+            if (!window._secureWorldBossContribute) {
+                updateWorldBossUI();
+                showToast("⚠️ 안전한 월드보스 정산 연결을 준비하지 못했어요. 보상은 지급되지 않았습니다. 새로고침 후 다시 참전해 주세요.");
                 return;
             }
 
-            if (window._fbReady) {
-                const bossDocRef = window._fbDoc(window._fbDb, "world_bosses", `global_week_${getCurrentWeekNum()}`);
-                window._fbRunTransaction(window._fbDb, async (transaction) => {
-                    const docSnap = await transaction.get(bossDocRef);
-                    if (!docSnap.exists()) {
-                        const expectedMaxHp = getWbExpectedMaxHp();
-                        transaction.set(bossDocRef, {
-                            maxHp: expectedMaxHp,
-                            curHp: Math.max(0, expectedMaxHp - wbTotalDamageDealt),
-                            damages: { [studentKey]: wbTotalDamageDealt },
-                            lastPlayedDates: { [studentKey]: todayStr }
-                        });
-                    } else {
-                        const data = docSnap.data();
-                        
-                        const expectedMaxHp = getWbExpectedMaxHp();
-                        
-                        const damages = data.damages || {};
-                        const oldDamage = damages[studentKey] || 0;
-                        damages[studentKey] = oldDamage + wbTotalDamageDealt;
-                        
-                        let dbTotalDmg = 0;
-                        if (data.damages) {
-                            dbTotalDmg = Object.values(damages).reduce((a, b) => a + b, 0);
-                        }
-                        
-                        const newHp = Math.max(0, expectedMaxHp - dbTotalDmg);
-                        
-                        const lastPlayedDates = data.lastPlayedDates || {};
-                        lastPlayedDates[studentKey] = todayStr;
-                        
-                        transaction.update(bossDocRef, { maxHp: expectedMaxHp, curHp: newHp, damages, lastPlayedDates });
-                    }
-                }).then(() => {
-                    showToast("✨ 서버에 월드보스 누적 피해 기록이 반영되었습니다!");
-                    // 랜킹용 필드 저장 (users 문서 동기화)
-                    const newBestDmg = (gameState.wbBestDamageWeek === getCurrentWeekNum())
-                        ? (gameState.wbBestDamage || 0) + wbTotalDamageDealt
-                        : wbTotalDamageDealt;
-                    gameState.wbBestDamage = newBestDmg;
-                    gameState.wbBestDamageWeek = getCurrentWeekNum();
-                    saveSessionToCloud(true);
-                    updateWorldBossUI();
-                    setTimeout(() => { checkWorldBossVictoryOnStartup(); }, 1000);
-                }).catch(err => {
-                    console.error("Firebase WB Transaction failed:", err);
-                    showToast("⚠️ 월드보스 데미지 전송 실패!");
-                    updateWorldBossUI();
-                });
-            }
-        }
+            showToast("⚔️ 전투 기록을 확인하고 보상을 정산하는 중입니다...");
+            window._secureWorldBossContribute(wbTotalDamageDealt, wbCorrectAnswers).then((result) => {
+                const appliedDamage = Math.max(0, Math.floor(Number(result.applied) || 0));
+                const rewardGold = Math.max(0, Math.floor(Number(result.rewardGold) || 0));
+                const rewardTokens = Math.max(0, Math.floor(Number(result.rewardTokens) || 0));
+                const serverState = result.accountState && typeof result.accountState === "object" ? result.accountState : null;
+                const previousGold = Math.max(0, Number(gameState.gold) || 0);
+                const previousAccGoldValue = Number(gameState.accGold);
+                const previousAccGold = Number.isFinite(previousAccGoldValue) ? Math.max(0, previousAccGoldValue) : previousGold;
+                const previousBossTokens = Math.max(0, Number(gameState.bossTokens) || 0);
 
+                gameState.gold = Number.isFinite(Number(serverState?.gold)) ? Math.max(0, Number(serverState.gold)) : previousGold + rewardGold;
+                gameState.accGold = Number.isFinite(Number(serverState?.accGold)) ? Math.max(0, Number(serverState.accGold)) : previousAccGold + rewardGold;
+                gameState.bossTokens = Number.isFinite(Number(serverState?.bossTokens)) ? Math.max(0, Number(serverState.bossTokens)) : previousBossTokens + rewardTokens;
+                gameState.wbBestDamage = Math.max(0, Math.floor(Number(result.damage) || appliedDamage));
+                gameState.wbBestDamageWeek = getCurrentWeekNum();
+                markWorldBossCompleted(result.boss?.day || getKstDayString());
+
+                playSoundEffect('levelup');
+                refreshStateVisuals();
+                saveLocalCache();
+                updateWorldBossUI();
+                showWorldBossResultModal(appliedDamage, reasonMessage, rewardGold, rewardTokens);
+
+                const damageDisplay = document.getElementById("myWorldBossDmgDisplay");
+                if (damageDisplay) damageDisplay.innerText = gameState.wbBestDamage.toLocaleString();
+                const rewardDisplay = document.getElementById("myWorldBossRewardDisplay");
+                if (rewardDisplay) rewardDisplay.innerText = `주간 결산 시 FP / 칭호 지급 (증표 +${rewardTokens})`;
+
+                saveSessionToCloud(true);
+                const capNotice = result.capped ? ` · 서버 적용 피해 ${appliedDamage.toLocaleString()} (공정성 상한 ${Number(result.damageCap || 0).toLocaleString()})` : "";
+                showToast(`${reasonMessage} 🪙 골드: +${rewardGold.toLocaleString()}G / 🏺 증표: +${rewardTokens}개 획득!${capNotice}`);
+            }).catch((err) => {
+                console.error("World boss submission failed:", err);
+                updateWorldBossUI();
+                showToast("월드보스 피해와 보상이 기록되지 않았어요. 새 참전을 시작해 주세요.");
+            });
+        }
         function openPotentialProbModal() {
             openModal('potentialProbModal');
         }
@@ -8937,9 +9231,3 @@
                     .catch(err => console.warn('[SW] Registration failed:', err));
             });
         }
-
-
-
-
-
-

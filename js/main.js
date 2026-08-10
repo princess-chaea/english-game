@@ -9231,8 +9231,19 @@
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('[SW] Registered:', reg.scope))
+                navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+                    .then(reg => {
+                        console.log('[SW] Registered:', reg.scope);
+                        reg.update();
+                    })
                     .catch(err => console.warn('[SW] Registration failed:', err));
+
+                let refreshing = false;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (refreshing) return;
+                    refreshing = true;
+                    console.log('[SW] New version activated, reloading page for instant update...');
+                    window.location.reload();
+                });
             });
         }

@@ -41,6 +41,8 @@
     syncStudentAuthUI();syncLeaderboardUI();syncGuildUI();if(typeof initGameEngine==='function')initGameEngine();window.refreshHeroIdentity?.();
     if(previousAssignment!==JSON.stringify(assignedWordPackIds)&&typeof fetchWordsFromSpreadsheet==='function')fetchWordsFromSpreadsheet();
     setTimeout(loadPendingGuildTrial,200);
+    setInterval(()=>{if(account?.classIds?.length&&!guildTrialState)loadPendingGuildTrial();},20000);
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&account?.classIds?.length&&!guildTrialState)loadPendingGuildTrial();});
     setTimeout(openInviteFromLocation,250);
   }
   async function save(quiet=false,force=false){if(!account||!window._fbAuth?.currentUser)return;if(saving){if(!force)return saving;await saving;}if(quiet&&!force&&Date.now()-savedAt<8000)return;saving=request(studentApi,{action:'save',state:state(),leaderboardOptIn:account.leaderboardOptIn},window._fbAuth).then(({account:data})=>{account=data;savedAt=Date.now();rankLoadedAt=0;if(data.state?.lastSaved)gameState.lastSaved=data.state.lastSaved;gameState.freeNicknameChangeUsed=data.freeNicknameChangeUsed;gameState.nicknameChangeCount=data.renameCount;if(!quiet)toast('💾 영웅의 영혼에 진행 기록이 각인되었습니다.');}).catch(error=>{console.error(error);if(!quiet)alertError(error);if(force)throw error;}).finally(()=>{saving=null;});return saving;}

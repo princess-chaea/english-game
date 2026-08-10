@@ -1,5 +1,5 @@
 // VOCA HERO! Service Worker - Edge Request & Cache Optimization
-const CACHE_NAME = 'vocahero-v60';
+const CACHE_NAME = 'vocahero-v61';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -67,7 +67,10 @@ self.addEventListener('fetch', event => {
     if (url.pathname.startsWith('/js/')) {
       event.respondWith(
         caches.match(event.request).then(cached => cached || fetch(event.request).then(networkResp => {
-          if (networkResp && networkResp.status === 200) caches.open(CACHE_NAME).then(cache => cache.put(event.request, networkResp.clone()));
+          if (networkResp && networkResp.status === 200) {
+            const toCache = networkResp.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, toCache));
+          }
           return networkResp;
         }))
       );
@@ -77,8 +80,12 @@ self.addEventListener('fetch', event => {
     // 버전이 바뀌지 않는 이미지·폰트는 캐시 우선. 불필요한 백그라운드 재다운로드를 하지 않습니다.
     event.respondWith(
       caches.match(event.request).then(cached => cached || fetch(event.request).then(networkResp => {
-        if (networkResp && networkResp.status === 200) caches.open(CACHE_NAME).then(cache => cache.put(event.request, networkResp.clone()));
+        if (networkResp && networkResp.status === 200) {
+          const toCache = networkResp.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, toCache));
+        }
         return networkResp;
       }))
-    );  }
+    );
+  }
 });

@@ -2,11 +2,7 @@
   "cleanUrls": true,
   "functions": {
     "api/teacher.js": {
-      "maxDuration": 30,
-      "includeFiles": "data/word-packs.json"
-    },
-    "api/student.js": {
-      "includeFiles": "data/word-packs.json"
+      "maxDuration": 30
     }
   },
   "crons": [

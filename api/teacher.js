@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import packCatalog from '../data/word-packs.js';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { adminAuth, adminDb, adminStorage, FieldValue, Timestamp } from './_firebase-admin.js';
 import { apiError, handleApiError, hash, isExpired, randomCode, readBody, requireMethod, requireTeacher, safeInt, sendJson, text } from './_http.js';
@@ -44,13 +44,6 @@ async function deleteRefsInBatches(refs) {
     uniqueRefs.slice(offset, offset + 400).forEach((ref) => batch.delete(ref));
     await batch.commit();
   }
-}
-
-let packCatalog = { packs: [] };
-try {
-  packCatalog = JSON.parse(readFileSync(new URL('../data/word-packs.json', import.meta.url), 'utf8'));
-} catch (error) {
-  console.error('[api/teacher.js] Failed to load word-packs.json:', error);
 }
 const wordByKey = new Map();
 const packWordsById = new Map();

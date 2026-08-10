@@ -46,4 +46,5 @@ catalog.curriculumDraft = {
   rebuiltWith: 'scripts/build-curriculum-elementary-packs.mjs',
 };
 await writeFile('data/word-packs.json', `${JSON.stringify(catalog, null, 2)}\n`, 'utf8');
+await writeFile('data/word-packs.js', `export default ${JSON.stringify(catalog)};\n`, 'utf8');
 console.log(JSON.stringify(packs.map((pack) => ({ id: pack.id, wordCount: pack.wordCount }))));

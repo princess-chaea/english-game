@@ -1447,12 +1447,19 @@
         function renderHeroIdentity(root) {
             if (!root) return;
             root.replaceChildren();
-            root.className = root.id === "heroNameTag"
-                ? "inline-flex min-w-0 max-w-[260px] items-center gap-1 align-middle text-[9px] font-bold tracking-wider"
+            const isBattleTag = root.id === "heroNameTag";
+            root.className = isBattleTag
+                ? "inline-flex min-w-0 max-w-[220px] flex-col items-center justify-center gap-0.5 align-middle text-[9px] font-bold tracking-wider"
                 : "inline-flex min-w-0 max-w-full items-center gap-1 align-middle";
             const guildName = typeof gameState.activeGuildName === "string" ? gameState.activeGuildName.trim() : "";
             const activeTitle = gameState.equippedTitle || gameState.wbTitle || "";
             const titlePresentation = getTitlePresentation(activeTitle);
+            const guildRow = isBattleTag ? document.createElement("span") : root;
+            const heroRow = isBattleTag ? document.createElement("span") : root;
+            if (isBattleTag) {
+                guildRow.className = "inline-flex min-w-0 max-w-full items-center justify-center gap-1";
+                heroRow.className = "inline-flex min-w-0 max-w-full items-center justify-center gap-1";
+            }
             if (guildName) {
                 const guildLogoUrl = typeof gameState.activeGuildLogoUrl === "string" ? gameState.activeGuildLogoUrl.trim() : "";
                 if (guildLogoUrl) {
@@ -1462,23 +1469,27 @@
                     logo.loading = "lazy";
                     logo.referrerPolicy = "no-referrer";
                     logo.className = "h-6 w-6 shrink-0 rounded-sm border border-sky-400 bg-sky-950/60 object-cover shadow-[0_0_7px_rgba(56,189,248,.55)]";
-                    root.append(logo);
+                    guildRow.append(logo);
                 }
                 const guild = document.createElement("span");
                 guild.className = "inline-block max-w-[100px] shrink-0 truncate border border-sky-400 bg-sky-950/60 px-1.5 py-0.5 text-[10px] text-sky-200 shadow-[0_0_7px_rgba(56,189,248,.65)]";
                 guild.textContent = guildName;
-                root.append(guild);
+                guildRow.append(guild);
             }
             if (activeTitle) {
                 const title = document.createElement("span");
                 title.className = `inline-block shrink-0 border px-1.5 py-0.5 text-[10px] ${titlePresentation.style}`;
                 title.textContent = `[${titlePresentation.name}]`;
-                root.append(title);
+                heroRow.append(title);
             }
             const nickname = document.createElement("span");
             nickname.className = "min-w-0 truncate text-white";
             nickname.textContent = gameState.name || "새 용사";
-            root.append(nickname);
+            heroRow.append(nickname);
+            if (isBattleTag) {
+                if (guildName) root.append(guildRow);
+                root.append(heroRow);
+            }
         }
         function refreshHeroIdentity() {
             renderHeroIdentity(document.getElementById("displayStudentName"));
@@ -3485,20 +3496,22 @@
         function formatEnglishWordInput(inputEl) {
             if (!inputEl) return false;
             const raw = String(inputEl.value || "").normalize("NFKC");
-            if (!/^[A-Za-z ]*$/.test(raw)) {
+            if (!/^[A-Za-z]*$/.test(raw)) {
                 inputEl.value = "";
-                showToast("⚠️ 영어 알파벳과 띄어쓰기만 입력할 수 있어요.");
+                showToast("⚠️ 영어 알파벳만 입력할 수 있어요. 띄어쓰기는 입력하지 않아도 정답으로 인정돼요.");
                 return false;
             }
             const lower = raw.toLowerCase();
-            const firstLetter = lower.search(/[a-z]/);
-            inputEl.value = firstLetter < 0
-                ? lower
-                : lower.slice(0, firstLetter) + lower.charAt(firstLetter).toUpperCase() + lower.slice(firstLetter + 1);
+            inputEl.value = lower ? lower.charAt(0).toUpperCase() + lower.slice(1) : "";
             return true;
+        }
+        function formatEnglishWordDisplay(value) {
+            const lower = String(value || "").normalize("NFKC").trim().toLowerCase();
+            return lower ? lower.charAt(0).toUpperCase() + lower.slice(1) : "";
         }
         window.normalizeVocaEnglishAnswer = normalizeEnglishAnswer;
         window.formatVocaEnglishInput = formatEnglishWordInput;
+        window.formatVocaEnglishDisplay = formatEnglishWordDisplay;
 
         function ensureQuizConstructedArea() {
             const grid = document.getElementById("quizChoiceGrid") || document.querySelector(".choice-btn")?.parentElement;
@@ -3526,8 +3539,8 @@
         function submitConstructedQuizAnswer(value, current) {
             if (isEvaluatingQuiz) return;
             const answer = String(value || "");
-            if (!/^[A-Za-z ]+$/.test(answer.trim())) {
-                showToast("⚠️ 영어 알파벳과 띄어쓰기만 입력할 수 있어요.");
+            if (!/^[A-Za-z]+$/.test(answer.trim())) {
+                showToast("⚠️ 영어 알파벳만 입력할 수 있어요. 띄어쓰기는 입력하지 않아도 정답으로 인정돼요.");
                 return;
             }
             gameState.currentQuizCorrectAnswer = 0;
@@ -3605,7 +3618,7 @@
             const buttons = document.getElementsByClassName("choice-btn");
             for (let i = 0; i < buttons.length; i++) {
                 const value = currentQuizChoices[i] ?? "";
-                buttons[i].querySelector(".choice-text").innerText = value;
+                buttons[i].querySelector(".choice-text").innerText = /^[A-Za-z]+(?:\s+[A-Za-z]+)*$/.test(String(value || "")) ? formatEnglishWordDisplay(value) : value;
                 buttons[i].className = "choice-btn p-3.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group";
             }
         }
@@ -5272,12 +5285,6 @@
                 .sort((a, b) => b.wrong - a.wrong || a.accuracy - b.accuracy || b.updatedAt - a.updatedAt);
             const reviewRows = learningRows.filter((row) => !row.mastered && row.wrong > 0 && row.accuracy < 80)
                 .sort((a, b) => (b.wrong * 3 - b.correct) - (a.wrong * 3 - a.correct) || b.updatedAt - a.updatedAt);
-            const reviewKeys = new Set(reviewRows.map((row) => row.key));
-            const progressingRows = learningRows.filter((row) => !row.mastered && !reviewKeys.has(row.key));
-            const poolKeys = new Set((gameState.wordsPool || []).map((entry) => String(entry?.word || "").trim().toLowerCase()).filter(Boolean));
-            const unseenCount = Math.max(0, poolKeys.size - [...learnedKeys].filter((key) => poolKeys.has(key)).length);
-            const totalTracked = Math.max(1, learningRows.length);
-            const pct = (value) => Math.max(0, Math.min(100, value / totalTracked * 100));
             const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
             const typeLabels = { "meaning-choice": "뜻 찾기", "fill-blank": "빈칸 넣기", "word-choice": "영어 단어 찾기", "listen-meaning": "발음 듣고 뜻 찾기", "word-order": "철자 순서 맞추기", "short-answer": "영어 단답식" };
             const typeTotals = {};
@@ -5287,30 +5294,17 @@
                 typeTotals[type].tries += Math.max(0, Number(values[0] || 0));
                 typeTotals[type].correct += Math.max(0, Number(values[1] || 0));
             }));
-            const lastSevenDays = learningRows.filter((row) => row.updatedAt >= Date.now() - 7 * 24 * 60 * 60 * 1000).length;
-            const nextAction = reviewRows.length
-                ? `먼저 ${reviewRows.slice(0, 3).map((row) => row.word).join(", ")} 단어를 다시 만나 보세요.`
-                : progressingRows.length
-                    ? `학습 중인 ${progressingRows.length}개 단어를 반복하면 숙련 단어가 늘어요.`
-                    : masteredRows.length
-                        ? "현재 기록은 안정적이에요. 새로운 단어팩에 도전해 보세요."
-                        : "퀴즈 전투를 시작하면 단어별 성장 기록이 쌓여요.";
-
-            const weakWordCardsHtml = wrongRows.slice(0, 8).map((row, index) => `<article class="border border-rose-900/50 bg-black/70 p-2.5"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><b class="block truncate text-[10px] text-white">${index + 1}. ${esc(row.word)}</b><span class="mt-0.5 block truncate text-[8px] text-gray-400">${esc(row.meaning || "뜻 정보 없음")}</span></div><span class="shrink-0 text-[9px] font-bold text-rose-300">오답 ${row.wrong}회</span></div><div class="mt-2 flex items-center justify-between border-t border-[#311d22] pt-1.5 text-[8px]"><span class="text-sky-300">정답 ${row.correct}회</span><span class="text-gray-500">정답률 ${row.accuracy.toFixed(0)}%</span></div></article>`).join("");
-            if (weakBadge) weakBadge.innerText = `오답 단어 ${wrongRows.length.toLocaleString()}개`;
+            const totalTypeTries = Object.values(typeTotals).reduce((sum, value) => sum + Math.max(0, Number(value?.tries || 0)), 0);
+            const typeAchievementHtml = Object.entries(typeLabels).map(([type, label]) => {
+                const value = typeTotals[type] || { tries: 0, correct: 0 };
+                const rate = value.tries > 0 ? value.correct / value.tries * 100 : 0;
+                const color = value.tries < 1 ? "bg-gray-700" : rate >= 80 ? "bg-emerald-400" : rate >= 60 ? "bg-amber-400" : "bg-rose-500";
+                const textColor = value.tries < 1 ? "text-gray-500" : rate >= 80 ? "text-emerald-300" : rate >= 60 ? "text-amber-300" : "text-rose-300";
+                return `<article class="border border-[#24323a] bg-black/70 p-2.5"><div class="flex items-center justify-between gap-2"><b class="truncate text-[10px] text-gray-200">${esc(label)}</b><span class="shrink-0 text-[9px] font-bold ${textColor}">${value.correct}/${value.tries} · ${rate.toFixed(0)}%</span></div><div class="mt-2 h-2 overflow-hidden bg-[#222]"><span class="block h-full ${color}" style="width:${Math.min(100, rate)}%"></span></div></article>`;
+            }).join("");
+            if (weakBadge) weakBadge.innerText = `총 ${totalTypeTries.toLocaleString()}회`;
             if (weakContainer) {
-                weakContainer.innerHTML = `
-                    <div class="grid grid-cols-3 gap-1.5 text-center">
-                        <div class="border border-rose-900/60 bg-rose-950/15 p-2"><span class="block text-[8px] text-gray-500">복습 필요</span><b class="text-base text-rose-300">${reviewRows.length}개</b></div>
-                        <div class="border border-sky-900/60 bg-sky-950/15 p-2"><span class="block text-[8px] text-gray-500">학습 중</span><b class="text-base text-sky-300">${progressingRows.length}개</b></div>
-                        <div class="border border-emerald-900/60 bg-emerald-950/15 p-2"><span class="block text-[8px] text-gray-500">숙련</span><b class="text-base text-emerald-300">${masteredRows.length}개</b></div>
-                    </div>
-                    <div class="mt-2 flex h-2 overflow-hidden bg-[#222]" title="복습 필요 · 학습 중 · 숙련">
-                        <span class="bg-rose-500" style="width:${pct(reviewRows.length)}%"></span><span class="bg-sky-500" style="width:${pct(progressingRows.length)}%"></span><span class="bg-emerald-400" style="width:${pct(masteredRows.length)}%"></span>
-                    </div>
-                    <p class="mt-2 border-l-2 border-yellow-500 pl-2 text-[9px] leading-relaxed text-yellow-100">${esc(nextAction)}</p>
-                    <p class="mt-1 text-[8px] text-gray-500">최근 7일에 다시 만난 단어 ${lastSevenDays}개 · 아직 만나지 않은 배정 단어 ${unseenCount}개</p>
-                    <div class="mt-3 border-t border-rose-900/40 pt-2"><div class="mb-2 flex items-center justify-between gap-2"><b class="text-[9px] text-rose-300">집중 복습 오답 단어</b><span class="text-[8px] text-gray-500">오답 횟수 높은 순</span></div><div class="grid gap-2 sm:grid-cols-2">${weakWordCardsHtml || '<p class="col-span-full border border-dashed border-emerald-900/50 p-4 text-center text-[9px] text-emerald-300">아직 기록된 오답 단어가 없어요.</p>'}</div></div>`;
+                weakContainer.innerHTML = typeAchievementHtml;
             }
 
             const conqueredCount = new Set((masteredList || []).map((item) => String(item?.word || "").trim().toLowerCase()).filter(Boolean)).size;
@@ -5326,19 +5320,10 @@
                     <div class="border border-emerald-900/60 bg-emerald-950/10 p-3 text-center"><span class="text-[8px] text-gray-500">숙련 단어</span><b class="mt-1 block text-lg text-emerald-300">${masteredRows.length}개</b></div>
                     <div class="border border-rose-900/60 bg-rose-950/10 p-3 text-center"><span class="text-[8px] text-gray-500">우선 복습</span><b class="mt-1 block text-lg text-rose-300">${reviewRows.length}개</b></div>
                 </div>`;
-            const reviewHtml = reviewRows.length ? reviewRows.slice(0, 6).map((row, index) => {
-                const masteryProgress = Math.min(100, row.correct / WORD_MASTERY_CORRECT_THRESHOLD * 100);
-                return `<div class="border border-[#3a252a] bg-black p-2.5"><div class="flex items-center justify-between gap-2"><b class="truncate text-[10px] text-white">${index + 1}. ${esc(row.word)} <span class="text-gray-500">· ${esc(row.meaning)}</span></b><span class="shrink-0 text-[9px] text-rose-300">오답 ${row.wrong}회</span></div><div class="mt-2 h-1.5 overflow-hidden bg-[#241a1d]"><span class="block h-full bg-gradient-to-r from-rose-500 to-amber-400" style="width:${masteryProgress}%"></span></div><p class="mt-1 text-[8px] text-gray-500">숙련까지 정답 ${Math.max(0, WORD_MASTERY_CORRECT_THRESHOLD - row.correct)}회 · 현재 정답률 ${row.accuracy.toFixed(0)}%</p></div>`;
-            }).join("") : '<p class="border border-dashed border-emerald-900/60 p-5 text-center text-[10px] text-emerald-300">우선 복습이 필요한 단어가 없어요.</p>';
-            const typeHtml = Object.entries(typeTotals).filter(([, value]) => value.tries > 0).map(([type, value]) => {
-                const rate = value.correct / Math.max(1, value.tries) * 100;
-                const color = rate >= 80 ? "bg-emerald-400" : rate >= 60 ? "bg-amber-400" : "bg-rose-500";
-                return `<div><div class="flex justify-between gap-2 text-[9px]"><span class="text-gray-300">${esc(typeLabels[type] || type)}</span><b class="${rate >= 80 ? "text-emerald-300" : rate >= 60 ? "text-amber-300" : "text-rose-300"}">${value.correct}/${value.tries} · ${rate.toFixed(0)}%</b></div><div class="mt-1 h-2 overflow-hidden bg-[#222]"><span class="block h-full ${color}" style="width:${Math.min(100, rate)}%"></span></div></div>`;
-            }).join("") || '<p class="text-[10px] text-gray-500">유형별 학습 기록이 아직 없어요.</p>';
-            const recentMastered = [...masteredRows].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 10);
-            const recentHtml = recentMastered.length ? recentMastered.map((row) => `<span class="border border-emerald-800/70 bg-emerald-950/20 px-2 py-1 text-[9px] text-emerald-200">${esc(row.word)} · ${row.accuracy.toFixed(0)}%</span>`).join("") : '<span class="text-[9px] text-gray-500">정답 10회·정답률 80%를 달성하면 여기에 숙련 단어가 나타나요.</span>';
+            const wrongHtml = wrongRows.length ? wrongRows.slice(0, 12).map((row, index) => `<article class="border border-[#3a252a] bg-black p-2.5"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><b class="block truncate text-[10px] text-white">${index + 1}. ${esc(row.word)}</b><span class="mt-0.5 block truncate text-[8px] text-gray-400">${esc(row.meaning || "뜻 정보 없음")}</span></div><span class="shrink-0 text-[9px] font-bold text-rose-300">오답 ${row.wrong}회</span></div><div class="mt-2 flex items-center justify-between border-t border-[#311d22] pt-1.5 text-[8px]"><span class="text-sky-300">정답 ${row.correct}회</span><span class="text-gray-500">정답률 ${row.accuracy.toFixed(0)}%</span></div></article>`).join("") : '<p class="col-span-full border border-dashed border-emerald-900/60 p-5 text-center text-[10px] text-emerald-300">아직 기록된 오답 단어가 없어요.</p>';
+            const masteredHtml = [...masteredRows].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 20).map((row) => `<article class="border border-emerald-900/60 bg-black p-2.5"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><b class="block truncate text-[10px] text-emerald-200">${esc(row.word)}</b><span class="mt-0.5 block truncate text-[8px] text-gray-400">${esc(row.meaning || "뜻 정보 없음")}</span></div><span class="shrink-0 text-[9px] font-bold text-emerald-300">숙련</span></div><p class="mt-2 border-t border-[#173128] pt-1.5 text-[8px] text-gray-500">정답 ${row.correct}회 · 정답률 ${row.accuracy.toFixed(0)}%</p></article>`).join("") || '<p class="col-span-full border border-dashed border-emerald-900/60 p-5 text-center text-[10px] text-gray-500">정답 10회·정답률 80%를 달성하면 숙련 단어가 나타나요.</p>';
             const detailRows = [...learningRows].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 300).map((row) => `<div class="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2 border-b border-[#1f2933] py-2 text-[9px]"><span class="truncate text-gray-200">${esc(row.word)} · ${esc(row.meaning)}</span><span class="text-sky-300">${row.correct}정답</span><span class="${row.mastered ? "text-emerald-300" : row.wrong ? "text-rose-300" : "text-gray-400"}">${row.mastered ? "숙련" : row.wrong + "오답"}</span></div>`).join("");
-            listDiv.innerHTML = `${insightCards}<div class="mt-3 grid gap-3 lg:grid-cols-2"><section class="border border-rose-900/50 bg-rose-950/5 p-3"><div class="flex items-center justify-between"><b class="text-xs text-rose-300">지금 복습하면 좋은 단어</b><span class="text-[8px] text-gray-500">오답과 숙련 진행도 기준</span></div><div class="mt-2 grid gap-2">${reviewHtml}</div></section><section class="border border-sky-900/50 bg-sky-950/5 p-3"><b class="text-xs text-sky-300">문제 유형별 성취</b><div class="mt-3 space-y-3">${typeHtml}</div><div class="mt-4 border-t border-[#24323a] pt-3"><b class="text-[10px] text-emerald-300">최근 숙련 단어</b><div class="mt-2 flex flex-wrap gap-1.5">${recentHtml}</div></div></section></div><details class="mt-3 border border-[#27323a] bg-black"><summary class="cursor-pointer px-3 py-2 text-[10px] font-bold text-gray-300">전체 단어 학습 기록 펼쳐보기 (${learningRows.length}개)</summary><div class="max-h-64 overflow-y-auto px-3 pb-3">${detailRows || '<p class="py-4 text-center text-[10px] text-gray-500">아직 단어별 학습 기록이 없어요.</p>'}</div></details>`;
+            listDiv.innerHTML = `${insightCards}<div class="mt-3 grid gap-3 lg:grid-cols-2"><section class="border border-rose-900/50 bg-rose-950/5 p-3"><div class="flex items-center justify-between"><b class="text-xs text-rose-300">내가 많이 틀린 단어</b><span class="text-[8px] text-gray-500">오답 횟수 높은 순</span></div><div class="mt-2 grid gap-2 sm:grid-cols-2">${wrongHtml}</div></section><section class="border border-emerald-900/50 bg-emerald-950/5 p-3"><div class="flex items-center justify-between"><b class="text-xs text-emerald-300">숙련 단어</b><span class="text-[8px] text-gray-500">최근 숙련 순</span></div><div class="mt-2 grid gap-2 sm:grid-cols-2">${masteredHtml}</div></section></div><details class="mt-3 border border-[#27323a] bg-black"><summary class="cursor-pointer px-3 py-2 text-[10px] font-bold text-gray-300">전체 단어 학습 기록 펼쳐보기 (${learningRows.length}개)</summary><div class="max-h-64 overflow-y-auto px-3 pb-3">${detailRows || '<p class="py-4 text-center text-[10px] text-gray-500">아직 단어별 학습 기록이 없어요.</p>'}</div></details>`;
         }
         // ==========================================
         // STAGE BOSS SYSTEM
@@ -8489,8 +8474,7 @@
                 if (rewardDisplay) rewardDisplay.innerText = `주간 결산 시 FP / 칭호 지급 (증표 +${rewardTokens})`;
 
                 saveSessionToCloud(true);
-                const capNotice = result.capped ? ` · 서버 적용 피해 ${appliedDamage.toLocaleString()} (공정성 상한 ${Number(result.damageCap || 0).toLocaleString()})` : "";
-                showToast(`${reasonMessage} 🪙 골드: +${rewardGold.toLocaleString()}G / 🏺 증표: +${rewardTokens}개 획득!${capNotice}`);
+                showToast(`${reasonMessage} ⚔️ 실제 피해 ${appliedDamage.toLocaleString()} · 🪙 골드 +${rewardGold.toLocaleString()}G · 🏺 증표 +${rewardTokens}개`);
             }).catch((err) => {
                 console.error("World boss submission failed:", err);
                 updateWorldBossUI();

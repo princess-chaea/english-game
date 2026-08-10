@@ -196,31 +196,14 @@ const legacyClientRewardMarkers = [
 if (secureContributionAt < 0 || authoritativeStateAt < secureContributionAt || clientRewardMutationAt < authoritativeStateAt || legacyClientRewardMarkers.some((marker) => endRaidBlock.includes(marker))) {
   throw new Error('World-boss raid completion must wait for the server reward state and must not pre-credit or write Firestore directly.');
 }
-if (!worldBossApi.includes('const RAID_MAX_DAMAGE_RATE = 0.15;')) throw new Error('World-boss verified damage cap must remain at 15%.');
-const raidFullDamageAnswersMatch = worldBossApi.match(/const RAID_ANSWERS_FOR_FULL_DAMAGE_CAP = (\d+);/);
-const raidFullDamageDurationMatch = worldBossApi.match(/const RAID_MIN_FULL_DAMAGE_DURATION_MS = (\d+);/);
-const raidDamageRateMatch = worldBossApi.match(/const RAID_MAX_DAMAGE_RATE = ([0-9.]+);/);
-if (!raidFullDamageAnswersMatch || Number(raidFullDamageAnswersMatch[1]) !== 10) throw new Error('World-boss full damage cap must unlock at 10 verified correct answers.');
-if (!raidFullDamageDurationMatch || Number(raidFullDamageDurationMatch[1]) !== 120000) throw new Error('World-boss full damage cap must require at least 120 seconds of server-observed raid time.');
-if (!worldBossApi.includes('const verificationScale = Math.min(1, verifiedCorrectAnswers / RAID_ANSWERS_FOR_FULL_DAMAGE_CAP, elapsedMs / RAID_MIN_FULL_DAMAGE_DURATION_MS);') || !worldBossApi.includes('const verifiedRequestedDamage = Math.floor(requested * verificationScale);') || !worldBossApi.includes('const hardDamageCap = Math.floor(maxHp * RAID_MAX_DAMAGE_RATE);') || !worldBossApi.includes('const applied = Math.min(effectiveDamageCap, Math.max(0, maxHp - currentTotal));')) throw new Error('World-boss damage must scale the requested damage by both verified answers and elapsed time before applying the hard cap.');
-const raidRegressionMaxHp = 12_000_000_000;
-const raidRegressionCorrectAnswers = 10;
+if (worldBossApi.includes('RAID_MAX_DAMAGE_RATE') || worldBossApi.includes('hardDamageCap') || worldBossApi.includes('verificationScale')) throw new Error('World-boss damage must not use a personal percentage or elapsed-time reduction cap.');
+if (!worldBossApi.includes("throw apiError(409, 'RAID_ANSWER_RATE_INVALID'") || !worldBossApi.includes("throw apiError(409, 'RAID_DAMAGE_VERIFICATION_FAILED'")) throw new Error('World-boss answer-rate and damage plausibility rejection checks are missing.');
+if (!worldBossApi.includes('const applied = Math.min(requested, Math.max(0, maxHp - currentTotal));')) throw new Error('World-boss must apply the full verified requested damage, limited only by remaining boss HP.');
+if (!worldBossApi.includes('const savedPower = safeInt(account.state?.combatPower') || !worldBossApi.includes('verifiedCorrectAnswers + 4')) throw new Error('World-boss plausibility verification must use server-saved combat power and verified answers.');
+const raidRegressionRemainingHp = 12_000_000_000;
 const raidRegressionRequestedDamage = 1_000_000_000;
-const raidRegressionElapsedMs = 120000;
-const raidRegressionScale = Math.min(1, raidRegressionCorrectAnswers / Number(raidFullDamageAnswersMatch[1]), raidRegressionElapsedMs / Number(raidFullDamageDurationMatch[1]));
-const raidRegressionVerifiedRequested = Math.floor(raidRegressionRequestedDamage * raidRegressionScale);
-const raidRegressionHardCap = Math.floor(raidRegressionMaxHp * Number(raidDamageRateMatch?.[1] || 0));
-const raidRegressionAppliedDamage = Math.min(raidRegressionVerifiedRequested, raidRegressionHardCap, raidRegressionMaxHp);
-if (raidRegressionAppliedDamage !== 1_000_000_000) throw new Error('World-boss regression: 12B HP, 10 correct answers, 120 seconds and 1B requested damage must apply the full 1B damage.');
-const raidShortSessionElapsedMs = 60000;
-const raidShortSessionScale = Math.min(1, raidRegressionCorrectAnswers / Number(raidFullDamageAnswersMatch[1]), raidShortSessionElapsedMs / Number(raidFullDamageDurationMatch[1]));
-const raidShortSessionAppliedDamage = Math.min(Math.floor(raidRegressionRequestedDamage * raidShortSessionScale), raidRegressionHardCap, raidRegressionMaxHp);
-if (raidShortSessionAppliedDamage !== 500_000_000) throw new Error('World-boss regression: a 60-second raid must scale 1B requested damage down to 500M.');
-const raidBypassAttemptElapsedMs = 67000;
-const raidBypassAttemptScale = Math.min(1, raidRegressionCorrectAnswers / Number(raidFullDamageAnswersMatch[1]), raidBypassAttemptElapsedMs / Number(raidFullDamageDurationMatch[1]));
-const raidBypassAttemptAppliedDamage = Math.min(Math.floor(raidRegressionRequestedDamage * raidBypassAttemptScale), raidRegressionHardCap, raidRegressionMaxHp);
-if (raidBypassAttemptAppliedDamage >= raidRegressionRequestedDamage) throw new Error('World-boss regression: a 67-second raid must not bypass the elapsed-time verification by requesting less than the HP-based hard cap.');
-if (raidRegressionHardCap !== 1_800_000_000) throw new Error('World-boss regression: the hard damage cap must remain 15% of 12B HP.');
+const raidRegressionAppliedDamage = Math.min(raidRegressionRequestedDamage, raidRegressionRemainingHp);
+if (raidRegressionAppliedDamage !== raidRegressionRequestedDamage) throw new Error('World-boss regression: a verified 1B request must apply the full 1B damage.');
 if (!mainJs.includes('function getKstDayString(now = Date.now())') || !mainJs.includes('월드보스 토벌전 참전하기 (1일 1회)')) throw new Error('KST raid-day logic or the active raid button wording is missing.');
 const worldBossHookStart = mainJs.indexOf('window.__vocaHeroTestHooks = {', mainJs.indexOf('window.renderWorldBossSettlementModal'));
 const worldBossHookEnd = mainJs.indexOf('};', worldBossHookStart);

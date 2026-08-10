@@ -12,9 +12,9 @@ const EPOCH_MONDAY_MS = Date.UTC(2024, 6, 1);
 const WEEKLY_REWARD_FP_AT_FULL_CONTRIBUTION = 100000;
 const RAID_ANSWER_INTERVAL_MS = 1200;
 const RAID_MAX_REPORTED_ANSWERS = 120;
-const RAID_ANSWERS_FOR_FULL_DAMAGE_CAP = 10;
-const RAID_MIN_FULL_DAMAGE_DURATION_MS = 120000;
-const RAID_MAX_DAMAGE_RATE = 0.15; // 1일 레이드 정상 고전투력 폭딜 허용, 변조 방지 상한 15%
+// 피해를 보스 체력의 일정 비율로 자르지 않고 저장된 전투력·정답·시간으로 검증한다.
+const RAID_DAMAGE_PER_POWER_PER_ANSWER = 2000;
+const RAID_MIN_VERIFIABLE_POWER = 10000;
 const guildLogoUrl = (value) => typeof value === 'string' && /^https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/[A-Za-z0-9._-]+\/o\//.test(value) ? value : null;
 
 function kstDay(now = Date.now()) {
@@ -162,7 +162,7 @@ async function contribute(uid, body) {
     throw apiError(409, 'RAID_CLIENT_UPDATE_REQUIRED', '게임을 새로고침한 후 다시 참전해 주세요.');
   }
   const reportedCorrectAnswers = safeInt(body.correctAnswers, 0, 0, RAID_MAX_REPORTED_ANSWERS);
-  const requested = safeInt(body.damage, 0, 0, Math.floor(maxHpForWeek(week) * RAID_MAX_DAMAGE_RATE));
+  const requested = safeInt(body.damage, 0, 0, Number.MAX_SAFE_INTEGER);
   if (!requested) throw apiError(400, 'INVALID_DAMAGE', '피해량은 0보다 커야 해요.');
   const accountRef = accounts.doc(uid);
   const ref = bossRef(week);
@@ -188,17 +188,27 @@ async function contribute(uid, body) {
     }
     const elapsedMs = Math.max(0, now - startedAtMs);
     const allowedAnswersByElapsedTime = Math.min(RAID_MAX_REPORTED_ANSWERS, Math.floor(elapsedMs / RAID_ANSWER_INTERVAL_MS));
-    const verifiedCorrectAnswers = Math.min(reportedCorrectAnswers, allowedAnswersByElapsedTime);
+    if (reportedCorrectAnswers > allowedAnswersByElapsedTime) {
+      throw apiError(409, 'RAID_ANSWER_RATE_INVALID', '정답 기록의 시간 검증에 실패했어요. 새로고침 후 다시 참전해 주세요.');
+    }
+    const verifiedCorrectAnswers = reportedCorrectAnswers;
     const previous = contributionSnap.data() || {};
     if (previous.lastPlayedKstDay === day) throw apiError(409, 'RAID_ALREADY_COMPLETED', "오늘의 월드보스 참전은 이미 완료했어요.");
     const maxHp = maxHpForWeek(week);
     const boss = bossSnap.data() || {};
     const currentTotal = legacyTotal(boss) + safeInt(boss.secureDamageTotal, 0, 0);
-    const verificationScale = Math.min(1, verifiedCorrectAnswers / RAID_ANSWERS_FOR_FULL_DAMAGE_CAP, elapsedMs / RAID_MIN_FULL_DAMAGE_DURATION_MS);
-    const verifiedRequestedDamage = Math.floor(requested * verificationScale);
-    const hardDamageCap = Math.floor(maxHp * RAID_MAX_DAMAGE_RATE);
-    const effectiveDamageCap = Math.min(verifiedRequestedDamage, hardDamageCap);
-    const applied = Math.min(effectiveDamageCap, Math.max(0, maxHp - currentTotal));
+    const savedPower = safeInt(account.state?.combatPower, 0, 0, 9999999999999);
+    const verifiablePower = Math.max(RAID_MIN_VERIFIABLE_POWER, savedPower);
+    // 네 개의 비기, 약점 파훼, 필살기 반격까지 포함한 서버 검증 범위다.
+    // 정상 피해는 그대로 인정하고 범위를 벗어난 요청은 조용히 깎지 않고 거부한다.
+    const plausibleDamage = Math.max(
+      verifiablePower * 40,
+      verifiablePower * Math.max(1, verifiedCorrectAnswers + 4) * RAID_DAMAGE_PER_POWER_PER_ANSWER
+    );
+    if (requested > plausibleDamage) {
+      throw apiError(409, 'RAID_DAMAGE_VERIFICATION_FAILED', '전투력과 정답 기록으로 확인할 수 없는 피해량이에요. 전투 기록은 반영되지 않았습니다.');
+    }
+    const applied = Math.min(requested, Math.max(0, maxHp - currentTotal));
     const { rewardGold, rewardTokens } = rewardsForAppliedDamage(applied);
     const accountState = account.state && typeof account.state === 'object' && !Array.isArray(account.state) ? account.state : {};
     const currentGold = safeInt(accountState.gold, 0, 0);
@@ -246,10 +256,9 @@ async function contribute(uid, body) {
     return {
       applied,
       requested,
-      damageCap: effectiveDamageCap,
-      hardDamageCap,
-      verificationScale,
-      capped: applied < requested,
+      verifiedDamage: requested,
+      plausibleDamage,
+      capped: false,
       damage: safeInt(previous.damage, 0, 0) + applied,
       reportedCorrectAnswers,
       verifiedCorrectAnswers,

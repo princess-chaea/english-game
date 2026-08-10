@@ -28,6 +28,18 @@
             #leftRpgPanel .gap-1\.5 { gap: 0.125rem !important; }
             #leftRpgPanel .py-1\.5 { padding-top: 0.125rem !important; padding-bottom: 0.125rem !important; }
             .telemetry-cell { padding: 0.125rem !important; }
+            .quiz-battle-panel { overflow: hidden !important; padding: .45rem !important; gap: .2rem !important; }
+            .quiz-battle-panel > .flex.justify-between { padding-bottom: .25rem !important; }
+            #quizContainer { margin: .15rem 0 !important; }
+            #quizWordEng { margin-bottom: .2rem !important; font-size: 2rem !important; line-height: 1 !important; }
+            #quizChoiceGrid { gap: .3rem !important; margin-bottom: .3rem !important; }
+            #quizChoiceGrid .choice-btn { min-height: 2.25rem !important; padding: .35rem !important; }
+            #quizChoiceGrid .choice-text { font-size: .72rem !important; }
+            .quiz-skill-panel { padding: .35rem !important; }
+            .quiz-skill-panel > div:first-child { margin-bottom: .2rem !important; }
+            #quizEquippedSkillsContainer { gap: .25rem !important; }
+            #quizEquippedSkillsContainer > * { min-height: 2.1rem !important; padding: .3rem !important; }
+            .quiz-bottom-guide { display: none !important; }
         }
 
         /* 🐉 월드보스 고유 문항/보기/타일 비주얼 이펙트 */
@@ -1094,7 +1106,7 @@
 
             <!-- TAB 1: Combat Learning Quiz View -->
             <div id="quizTab"
-                class="bg-black border border-[#3c3c3c] p-5 flex-grow flex flex-col justify-between min-h-0 overflow-y-auto custom-scrollbar rounded-none-forced">
+                class="bg-black border border-[#3c3c3c] p-5 flex-grow flex flex-col justify-between min-h-0 overflow-y-auto custom-scrollbar rounded-none-forced quiz-battle-panel">
 
                 <!-- Boss Timer Visualizer (Visible during Boss Combat) -->
                 <div id="bossBattleTimerHeader"
@@ -1159,7 +1171,7 @@
                 </div>
 
                 <!-- Combat Spell Slot Shortcut Bar -->
-                <div class="bg-[#0d0d0d] border border-[#3c3c3c] p-2.5 rounded-none-forced">
+                <div class="bg-[#0d0d0d] border border-[#3c3c3c] p-2.5 rounded-none-forced quiz-skill-panel">
                     <div class="flex justify-between items-center text-[9px] text-gray-400 font-bold uppercase mb-1.5">
                         <span class="flex items-center gap-1"><i data-lucide="zap" class="w-3 h-3 text-pink-400"></i> 장착된 영단어 비기 스킬 (전투 슬롯)</span>
                     </div>
@@ -1170,7 +1182,7 @@
 
                 <!-- Bottom Guide Banner -->
                 <div
-                    class="bg-[#0d0d0d] p-2.5 border border-[#3c3c3c] text-[11px] text-[#bbbbbb] flex items-start gap-2 rounded-none-forced mt-2">
+                    class="quiz-bottom-guide bg-[#0d0d0d] p-2.5 border border-[#3c3c3c] text-[11px] text-[#bbbbbb] flex items-start gap-2 rounded-none-forced mt-2">
                     <i data-lucide="swords" class="w-4 h-4 text-[#e22718] flex-shrink-0 mt-0.5"></i>
                     <p class="leading-snug"><strong>약점 퀴즈 격파 및 스킬 장착 가이드:</strong> 퀴즈를 풀면 무작위 등급의 <strong>마법 스킬</strong>을 획득하며, <strong>[스킬] 탭</strong>에서 직접 장착해야 전투에서 수동으로 시전할 수 있습니다.</p>
                 </div>
@@ -3219,7 +3231,5 @@
     </div>
 </body>
 </html>
-
-
 
 

@@ -11,7 +11,10 @@ const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const EPOCH_MONDAY_MS = Date.UTC(2024, 6, 1);
 const WEEKLY_REWARD_FP_AT_FULL_CONTRIBUTION = 100000;
 const RAID_ANSWER_INTERVAL_MS = 1200;
-const RAID_MAX_REPORTED_ANSWERS = 120;
+// 실제 전투는 3분이며, 결과 전송 지연만 별도 유예한다.
+const RAID_PLAY_DURATION_MS = 3 * 60 * 1000;
+const RAID_SUBMIT_GRACE_MS = 30 * 1000;
+const RAID_MAX_REPORTED_ANSWERS = Math.floor(RAID_PLAY_DURATION_MS / RAID_ANSWER_INTERVAL_MS);
 // 피해를 보스 체력의 일정 비율로 자르지 않고 저장된 전투력·정답·시간으로 검증한다.
 const RAID_DAMAGE_PER_POWER_PER_ANSWER = 2000;
 const RAID_MIN_VERIFIABLE_POWER = 10000;
@@ -131,7 +134,8 @@ async function start(uid) {
   const token = secret();
   const tokenHash = secretHash(token);
   const now = Date.now();
-  const expiresAt = Timestamp.fromMillis(now + 15 * 60 * 1000);
+  const playEndsAt = Timestamp.fromMillis(now + RAID_PLAY_DURATION_MS);
+  const expiresAt = Timestamp.fromMillis(now + RAID_PLAY_DURATION_MS + RAID_SUBMIT_GRACE_MS);
   await adminDb.runTransaction(async (tx) => {
     const [contributionSnap, sessionSnap] = await Promise.all([
       tx.get(bossRef(week).collection('contributions').doc(uid)),
@@ -140,11 +144,11 @@ async function start(uid) {
     if (contributionSnap.data()?.lastPlayedKstDay === day) throw apiError(409, 'RAID_ALREADY_COMPLETED', "오늘의 월드보스 참전은 이미 완료했어요.");
     const existing = sessionSnap.data();
     if (existing?.day === day && existing?.expiresAt?.toMillis?.() > now && !existing.submitted) {
-      throw apiError(409, 'RAID_ALREADY_STARTED', '같은 기기에서 이어하거나 15분 뒤에 다시 시작해 주세요.');
+      throw apiError(409, 'RAID_ALREADY_STARTED', '진행 중인 3분 전투를 이어해 주세요. 결과 전송 유예가 끝나면 다시 시작할 수 있어요.');
     }
-    tx.set(ref, { uid, week, day, tokenHash, startedAtMs: now, submitted: false, createdAt: FieldValue.serverTimestamp(), expiresAt });
+    tx.set(ref, { uid, week, day, tokenHash, startedAtMs: now, submitted: false, createdAt: FieldValue.serverTimestamp(), playEndsAt, expiresAt });
   });
-  return { week, day, token, expiresAt: expiresAt.toDate().toISOString() };
+  return { week, day, token, playDurationSeconds: RAID_PLAY_DURATION_MS / 1000, playEndsAt: playEndsAt.toDate().toISOString(), expiresAt: expiresAt.toDate().toISOString() };
 }
 function rewardsForAppliedDamage(appliedDamage) {
   const applied = safeInt(appliedDamage, 0, 0);
@@ -187,7 +191,12 @@ async function contribute(uid, body) {
       throw apiError(409, 'RAID_SESSION_INVALID', '월드보스 참전 시간이 끝났어요. 새로 시작해 주세요.');
     }
     const elapsedMs = Math.max(0, now - startedAtMs);
-    const allowedAnswersByElapsedTime = Math.min(RAID_MAX_REPORTED_ANSWERS, Math.floor(elapsedMs / RAID_ANSWER_INTERVAL_MS));
+    if (elapsedMs > RAID_PLAY_DURATION_MS + RAID_SUBMIT_GRACE_MS) {
+      throw apiError(409, 'RAID_SESSION_EXPIRED', '3분 전투의 결과 전송 시간이 끝났어요.');
+    }
+    // 제출 유예 시간에는 정답 수가 더 증가할 수 없다.
+    const verifiedPlayMs = Math.min(elapsedMs, RAID_PLAY_DURATION_MS);
+    const allowedAnswersByElapsedTime = Math.min(RAID_MAX_REPORTED_ANSWERS, Math.floor(verifiedPlayMs / RAID_ANSWER_INTERVAL_MS));
     if (reportedCorrectAnswers > allowedAnswersByElapsedTime) {
       throw apiError(409, 'RAID_ANSWER_RATE_INVALID', '정답 기록의 시간 검증에 실패했어요. 새로고침 후 다시 참전해 주세요.');
     }
@@ -208,7 +217,9 @@ async function contribute(uid, body) {
     if (requested > plausibleDamage) {
       throw apiError(409, 'RAID_DAMAGE_VERIFICATION_FAILED', '전투력과 정답 기록으로 확인할 수 없는 피해량이에요. 전투 기록은 반영되지 않았습니다.');
     }
-    const applied = Math.min(requested, Math.max(0, maxHp - currentTotal));
+    // 개인 기록은 실제 전투 피해를 온전히 인정한다. 보스 공용 체력만 0 아래로 내려가지 않도록 별도 제한한다.
+    const applied = requested;
+    const bossApplied = Math.min(requested, Math.max(0, maxHp - currentTotal));
     const { rewardGold, rewardTokens } = rewardsForAppliedDamage(applied);
     const accountState = account.state && typeof account.state === 'object' && !Array.isArray(account.state) ? account.state : {};
     const currentGold = safeInt(accountState.gold, 0, 0);
@@ -219,7 +230,7 @@ async function contribute(uid, body) {
       accGold: safeInt(currentAccGold + rewardGold, currentAccGold, 0),
       bossTokens: safeInt(currentBossTokens + rewardTokens, currentBossTokens, 0)
     };
-    const secureDamageTotal = safeInt(boss.secureDamageTotal, 0, 0) + applied;
+    const secureDamageTotal = safeInt(boss.secureDamageTotal, 0, 0) + bossApplied;
     tx.set(ref, { maxHp, curHp: Math.max(0, maxHp - legacyTotal(boss) - secureDamageTotal), secureDamageTotal, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
     tx.set(contributionRef, {
       damage: safeInt(previous.damage, 0, 0) + applied,

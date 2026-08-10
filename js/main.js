@@ -1449,18 +1449,17 @@
             root.replaceChildren();
             const isBattleTag = root.id === "heroNameTag";
             root.className = isBattleTag
-                ? "inline-flex min-w-0 max-w-[220px] flex-col items-center justify-center gap-0.5 align-middle text-[9px] font-bold tracking-wider"
+                ? "inline-flex min-w-0 max-w-[220px] items-center justify-center gap-1 align-middle text-[9px] font-bold tracking-wider"
                 : "inline-flex min-w-0 max-w-full items-center gap-1 align-middle";
             const guildName = typeof gameState.activeGuildName === "string" ? gameState.activeGuildName.trim() : "";
             const activeTitle = gameState.equippedTitle || gameState.wbTitle || "";
             const titlePresentation = getTitlePresentation(activeTitle);
-            const guildRow = isBattleTag ? document.createElement("span") : root;
+            const guildRow = isBattleTag ? null : root;
             const heroRow = isBattleTag ? document.createElement("span") : root;
             if (isBattleTag) {
-                guildRow.className = "inline-flex min-w-0 max-w-full items-center justify-center gap-1";
                 heroRow.className = "inline-flex min-w-0 max-w-full items-center justify-center gap-1";
             }
-            if (guildName) {
+            if (guildName && !isBattleTag) {
                 const guildLogoUrl = typeof gameState.activeGuildLogoUrl === "string" ? gameState.activeGuildLogoUrl.trim() : "";
                 if (guildLogoUrl) {
                     const logo = document.createElement("img");
@@ -1487,7 +1486,6 @@
             nickname.textContent = gameState.name || "새 용사";
             heroRow.append(nickname);
             if (isBattleTag) {
-                if (guildName) root.append(guildRow);
                 root.append(heroRow);
             }
         }
@@ -1950,6 +1948,12 @@
             const slimeBonus = slimeLvl * PET_PARAMS['slime'].goldBonus;
             const relicGoldBonus = getEquippedRelicBonus("relic_compass") / 100;
             const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus + (getPotentialStatBonus('goldBonus') / 100);
+            // 장착한 영단어 비기의 실제 배수도 종합 전투력에 반영합니다.
+            // 등급·티어·별 강화가 모두 반영된 getSkillMultiplier 값을 사용합니다.
+            const equippedSkillPower = (gameState.equippedSkills || []).reduce((sum, skillId) => {
+                const skill = (gameState.skillsInventory || []).find((entry) => entry.id === skillId);
+                return sum + (skill ? Number(getSkillMultiplier(skill) || 0) : 0);
+            }, 0);
 
             return Math.floor(
                 clickAtk + 
@@ -1957,7 +1961,8 @@
                 (totalSkillBonusPct * 50) + 
                 (critRate * 100) + 
                 (bossDmgBonus * 80) + 
-                (goldMultiplier * 200)
+                (goldMultiplier * 200) +
+                (equippedSkillPower * 50)
             );
         }
         window.getPlayerCombatPower = calculatePlayerCP;
@@ -3608,7 +3613,7 @@
             refresh();
         }
 
-        function renderChoices(choices, correctChoice) {
+        function renderChoices(choices, correctChoice, formatAsWord = true) {
             showQuizChoiceMode();
             currentQuizChoices = [...choices].slice(0, 4);
             currentQuizChoices.sort(() => 0.5 - Math.random());
@@ -3618,7 +3623,9 @@
             const buttons = document.getElementsByClassName("choice-btn");
             for (let i = 0; i < buttons.length; i++) {
                 const value = currentQuizChoices[i] ?? "";
-                buttons[i].querySelector(".choice-text").innerText = /^[A-Za-z]+(?:\s+[A-Za-z]+)*$/.test(String(value || "")) ? formatEnglishWordDisplay(value) : value;
+                buttons[i].querySelector(".choice-text").innerText = formatAsWord && /^[A-Za-z]+(?:\s+[A-Za-z]+)*$/.test(String(value || ""))
+                    ? formatEnglishWordDisplay(value)
+                    : String(value || "").toLowerCase();
                 buttons[i].className = "choice-btn p-3.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group";
             }
         }
@@ -3696,7 +3703,7 @@
                     const alphabet = "abcdefghijklmnopqrstuvwxyz".split("").filter((letter) => letter !== correctLetter).sort(() => 0.5 - Math.random());
                     prompt.style.whiteSpace = "pre-line";
                     prompt.innerText = `뜻: ${current.meaning}\n${capitalizeFirstLetter(word.slice(0, blankIndex) + "_" + word.slice(blankIndex + 1))}`;
-                    renderChoices([correctLetter, ...alphabet.slice(0, 3)], correctLetter);
+                    renderChoices([correctLetter, ...alphabet.slice(0, 3)], correctLetter, false);
                     return;
                 }
             }
@@ -6038,7 +6045,14 @@
                     let msg = /android|iphone|ipad|ipod/i.test(navigator.userAgent) 
                         ? "(뒤로가기를 두 번 누르거나 폰의 홈 버튼을 눌러주세요)" 
                         : "(열려있는 브라우저 탭을 직접 닫아주세요)";
-                    document.body.innerHTML = `<div style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#000;color:#fff;font-size:24px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.5;">영웅의 영혼석에 기록이<br>안전하게 각인되었습니다!<br><br>이제 게임을 종료하셔도 됩니다.<br><br><span style="font-size:14px;color:#888;">${msg}</span></div>`;
+                    let screen = document.getElementById("safeExitScreen");
+                    if (!screen) {
+                        screen = document.createElement("div");
+                        screen.id = "safeExitScreen";
+                        screen.style.cssText = "position:fixed;inset:0;z-index:99999;display:flex;justify-content:center;align-items:center;min-height:100dvh;background:#000;color:#fff;font-size:24px;text-align:center;font-weight:bold;flex-direction:column;padding:20px;line-height:1.5;";
+                        document.body.appendChild(screen);
+                    }
+                    screen.innerHTML = `영웅의 영혼석에 기록이<br>안전하게 각인되었습니다!<br><br>이제 게임을 종료하셔도 됩니다.<br><br><span style="font-size:14px;color:#888;">${msg}</span>`;
                 }, 500);
             };
 
@@ -8487,7 +8501,9 @@
 
         function showToast(message) {
             const toast = document.getElementById("toastMessage");
-            document.getElementById("toastText").innerText = message;
+            const text = document.getElementById("toastText");
+            if (!toast || !text) return;
+            text.innerText = message;
             toast.classList.remove("opacity-0", "pointer-events-none");
             toast.classList.add("opacity-100");
 

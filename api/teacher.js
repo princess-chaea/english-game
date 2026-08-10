@@ -8,15 +8,15 @@ const accounts = adminDb.collection('accounts');
 const classes = adminDb.collection('classes');
 const invites = adminDb.collection('classInvites');
 const verificationRequests = adminDb.collection('teacherVerificationRequests');
-const MANAGER_INVITE_LENGTH = 24;
+const INVITE_CODE_LENGTH = 6;
 const MANAGER_INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const DELETE_QUERY_PAGE_SIZE = 100;
 
 function normalizeInviteCode(value) {
   return text(value, 32).toUpperCase().replace(/[^A-Z0-9]/g, '');
 }
-function managerInviteCode() {
-  return Array.from(randomBytes(MANAGER_INVITE_LENGTH), (byte) => MANAGER_INVITE_ALPHABET[byte & 31]).join('');
+function guildInviteCode() {
+  return Array.from(randomBytes(INVITE_CODE_LENGTH), (byte) => MANAGER_INVITE_ALPHABET[byte & 31]).join('');
 }
 async function queryAllDocs(baseQuery, pageSize = DELETE_QUERY_PAGE_SIZE) {
   const docs = [];
@@ -551,7 +551,7 @@ async function listGuildMembers(uid, body) {
   const classSnap = await ownedClass(uid, classId);
   const data = classSnap.data();
   const membersSnap = await classSnap.ref.collection('members')
-    .select('nickname', 'learningGrade', 'stage', 'totalCorrect', 'totalQuizTries', 'conqueredCount', 'masteredCount', 'combatPower', 'titleName', 'guildCoins', 'guildPoints', 'guildCorrectCount', 'guildStageClears', 'guildBossDamage', 'guildBossPointTotal', 'guildTrialCorrect', 'trialAttempts', 'trialRetries', 'trialHintsUsed', 'trialHintedCorrect', 'trialUnassistedCorrect', 'trialUnassistedTries', 'lastActiveAt', 'assignedWordPackIds', 'questionTypes', 'questionTypeStats', 'dailyLearning')
+    .select('nickname', 'learningGrade', 'stage', 'totalCorrect', 'totalQuizTries', 'conqueredCount', 'masteredCount', 'combatPower', 'titleName', 'guildCoins', 'guildPoints', 'guildCorrectCount', 'guildStageClears', 'guildBossDamage', 'guildBossPointTotal', 'guildTrialCorrect', 'trialAttempts', 'trialRetries', 'trialHintsUsed', 'trialHintedCorrect', 'trialUnassistedCorrect', 'trialUnassistedTries', 'lastActiveAt', 'assignedWordPackIds', 'questionTypes', 'usesGuildLearningDefaults', 'questionTypeStats', 'dailyLearning')
     .limit(200).get();
   const members = membersSnap.docs.map((member) => {
     const value = member.data() || {};
@@ -589,8 +589,9 @@ async function listGuildMembers(uid, body) {
       trialUnassistedTries,
       trialUnassistedAccuracy: percent(trialUnassistedCorrect, trialUnassistedTries),
       dailyLearning: safeDailyLearning(value.dailyLearning),
-      assignedWordPackIds: normalizeWordPackIds(value.assignedWordPackIds || data.wordPackIds || data.wordPackId, value.learningGrade || data.grade),
-      questionTypes: normalizeQuestionTypes(value.questionTypes || data.defaultQuestionTypes),
+      usesGuildLearningDefaults: value.usesGuildLearningDefaults !== false,
+      assignedWordPackIds: normalizeWordPackIds(value.usesGuildLearningDefaults === false ? value.assignedWordPackIds : (data.wordPackIds || data.wordPackId), value.learningGrade || data.grade),
+      questionTypes: normalizeQuestionTypes(value.usesGuildLearningDefaults === false ? value.questionTypes : data.defaultQuestionTypes),
       questionTypeStats: safeQuestionTypeStats(value.questionTypeStats),
       lastActiveAt: value.lastActiveAt?.toDate?.().toISOString?.() || null
     };
@@ -684,6 +685,7 @@ async function updateMemberLearningSettings(uid, body) {
   memberDocs.forEach((member) => batch.set(member.ref, {
     assignedWordPackIds: wordPackIds,
     questionTypes,
+    usesGuildLearningDefaults: body.applyAll === true && body.applyToFuture !== false,
     learningSettingsVersion: 1,
     learningSettingsUpdatedBy: uid,
     learningSettingsUpdatedAt: FieldValue.serverTimestamp()
@@ -794,8 +796,12 @@ async function memberLearningReport(uid, body) {
     const entry = wordByKey.get(key);
     if (entry) learningRows.push({ ...entry, correctCount: 0, wrongCount: safeInt(rawCount, 0, 0, 1000000), tries: safeInt(rawCount, 0, 0, 1000000), accuracy: 0, streak: 0, bestStreak: 0, mastered: false, byType: {}, lastSeenAt: 0 });
   });
-  learningRows.sort((a, b) => b.wrongCount - a.wrongCount || b.tries - a.tries || a.word.localeCompare(b.word));
-  const wrongWords = learningRows.filter((entry) => entry.wrongCount > 0).slice(0, 100);
+  const reviewWords = learningRows.filter((entry) => !entry.mastered && (entry.wrongCount > 0 || entry.accuracy < 80))
+    .sort((a, b) => b.wrongCount - a.wrongCount || a.accuracy - b.accuracy || b.tries - a.tries || a.word.localeCompare(b.word));
+  const masteredWords = learningRows.filter((entry) => entry.mastered)
+    .sort((a, b) => b.lastSeenAt - a.lastSeenAt || b.tries - a.tries || a.word.localeCompare(b.word));
+  learningRows.sort((a, b) => b.lastSeenAt - a.lastSeenAt || b.tries - a.tries || a.word.localeCompare(b.word));
+  const wrongWords = reviewWords.filter((entry) => entry.wrongCount > 0).slice(0, 100);
   const masteredCount = learningRows.filter((entry) => entry.mastered).length;
   const trialHintsUsed = safeInt(member.trialHintsUsed, 0, 0, 1000000);
   const trialHintedCorrect = Math.min(trialHintsUsed, safeInt(member.trialHintedCorrect, 0, 0, 1000000));
@@ -815,6 +821,9 @@ async function memberLearningReport(uid, body) {
     masteredCount,
     masteryCriteria: { correctThreshold: WORD_MASTERY_CORRECT_THRESHOLD, accuracyThreshold: WORD_MASTERY_ACCURACY_THRESHOLD * 100 },
     wordLearning: learningRows.slice(0, 300),
+    wordLearningSort: '최근 학습순',
+    reviewWords: reviewWords.slice(0, 300),
+    masteredWords: masteredWords.slice(0, 300),
     guildPoints: safeInt(member.guildPoints, 0, 0),
     guildCoins: safeInt(member.guildCoins, 0, 0),
     guildBossDamage: safeInt(member.guildBossDamage, 0, 0),
@@ -833,22 +842,24 @@ async function memberLearningReport(uid, body) {
     },
     trialDailyResults: safeTrialDailyResults(member.trialDailyResults),
     dailySeries: dailySeriesForMembers([{ dailyLearning: safeDailyLearning(member.dailyLearning) }], 120),
-    assignedWordPackIds: normalizeWordPackIds(member.assignedWordPackIds || classSnap.data().wordPackIds || classSnap.data().wordPackId, member.learningGrade || classSnap.data().grade),
-    questionTypes: normalizeQuestionTypes(member.questionTypes || classSnap.data().defaultQuestionTypes),
+    usesGuildLearningDefaults: member.usesGuildLearningDefaults !== false,
+    assignedWordPackIds: normalizeWordPackIds(member.usesGuildLearningDefaults === false ? member.assignedWordPackIds : (classSnap.data().wordPackIds || classSnap.data().wordPackId), member.learningGrade || classSnap.data().grade),
+    questionTypes: normalizeQuestionTypes(member.usesGuildLearningDefaults === false ? member.questionTypes : classSnap.data().defaultQuestionTypes),
     questionTypeStats: safeQuestionTypeStats(state.questionTypeStats || member.questionTypeStats),
     wrongWords,
     lastActiveAt: member.lastActiveAt?.toDate?.().toISOString?.() || null
   };
-}const TRIAL_TYPES = new Set(['meaning-choice', 'word-choice', 'spelling', 'unscramble']);
+}const TRIAL_TYPES = new Set(['meaning-choice', 'fill-blank', 'word-choice', 'listen-meaning', 'word-order', 'short-answer', 'spelling', 'unscramble']);
 async function activeTrialStats(classRef, classData) {
   const trialId = text(classData?.activeTrialId, 128);
   if (!trialId) return null;
   const trialRef = classRef.collection('trials').doc(trialId);
   const trialSnap = await trialRef.get();
   if (!trialSnap.exists) return null;
-  const [progress, completions] = await Promise.all([
+  const [progress, completions, members] = await Promise.all([
     trialRef.collection('progress').limit(200).get(),
-    trialRef.collection('completions').limit(200).get()
+    trialRef.collection('completions').limit(200).get(),
+    classRef.collection('members').select('nickname').limit(200).get()
   ]);
   let attemptCount = 0; let retryCount = 0; let hintCount = 0;
   progress.docs.forEach((doc) => {
@@ -857,6 +868,16 @@ async function activeTrialStats(classRef, classData) {
     hintCount += safeInt(doc.data()?.hintsUsed, 0, 0, 10000);
   });
   const trial = trialSnap.data();
+  const progressById = new Map(progress.docs.map((doc) => [doc.id, doc.data() || {}]));
+  const completedIds = new Set(completions.docs.map((doc) => doc.id));
+  const participants = members.docs.filter((doc) => progressById.has(doc.id)).map((doc) => {
+    const item = progressById.get(doc.id) || {};
+    const history = safeTrialAttemptHistory(item.attemptHistory);
+    const latest = history.at(-1) || {};
+    return { memberId: doc.id, nickname: text(doc.data()?.nickname, 30) || '이름 없는 용사', attemptCount: history.length, correctCount: safeInt(latest.correctCount, 0, 0, 20), questionCount: safeInt(latest.questionCount, safeInt(trial.questionCount, 0, 0, 20), 0, 20), accuracy: Number(latest.accuracy) || 0, hintsUsed: history.reduce((sum, row) => sum + safeInt(row.hintsUsed, 0, 0, 20), 0), overcome: completedIds.has(doc.id) };
+  });
+  const nonParticipants = members.docs.filter((doc) => !progressById.has(doc.id)).map((doc) => ({ memberId: doc.id, nickname: text(doc.data()?.nickname, 30) || '이름 없는 용사' }));
+  const averageAccuracy = participants.length ? Math.round(participants.reduce((sum, row) => sum + row.accuracy, 0) / participants.length * 10) / 10 : 0;
   return {
     id: trialId,
     questionCount: safeInt(trial.questionCount, 0, 0, 20),
@@ -866,6 +887,11 @@ async function activeTrialStats(classRef, classData) {
     attemptCount,
     retryCount,
     hintCount,
+    participationRate: members.size ? Math.round(participants.length / members.size * 1000) / 10 : 0,
+    averageAccuracy,
+    participants,
+    nonParticipants,
+    overcomeNames: participants.filter((row) => row.overcome).map((row) => row.nickname),
     expired: isExpired(trial.expiresAt)
   };
 }
@@ -1024,6 +1050,29 @@ async function listGuildManagers(uid, body) {
   const byId = new Map(snapshots.map((snap) => [snap.id, snap.data() || {}]));
   return { classId, isOwner: data.ownerId === uid, managers: managerIds.map((id) => ({ uid: id, teacherName: text(byId.get(id)?.teacherName || byId.get(id)?.displayName, 40) || '이름 미확인', isOwner: id === data.ownerId, isMe: id === uid })) };
 }
+async function removeGuildMember(uid, body) {
+  const classId = text(body.classId, 128);
+  const targetUid = text(body.memberUid || body.targetUid, 128);
+  if (!targetUid) throw apiError(400, 'INVALID_GUILD_MEMBER', '내보낼 길드원을 선택해 주세요.');
+  const classSnap = await ownedClass(uid, classId);
+  const memberRef = classSnap.ref.collection('members').doc(targetUid);
+  const accountRef = accounts.doc(targetUid);
+  await adminDb.runTransaction(async (transaction) => {
+    const [memberSnap, accountSnap] = await Promise.all([transaction.get(memberRef), transaction.get(accountRef)]);
+    if (!memberSnap.exists) throw apiError(404, 'GUILD_MEMBER_NOT_FOUND', '길드원을 찾지 못했어요.');
+    transaction.delete(memberRef);
+    if (accountSnap.exists) {
+      const update = { classIds: FieldValue.arrayRemove(classId), updatedAt: FieldValue.serverTimestamp() };
+      if (accountSnap.data()?.activeClassId === classId) Object.assign(update, {
+        activeClassId: FieldValue.delete(),
+        activeGuildName: FieldValue.delete(),
+        activeGuildLogoUrl: FieldValue.delete()
+      });
+      transaction.update(accountRef, update);
+    }
+  });
+  return { classId, memberUid: targetUid, removed: true };
+}
 async function removeGuildManager(uid, body) {
   const classId = text(body.classId, 128);
   const targetUid = text(body.targetUid, 128);
@@ -1106,7 +1155,7 @@ async function invite(uid, body) {
   if (type === 'manager' && !classSchoolKey) throw apiError(409, 'GUILD_SCHOOL_REQUIRED', '학교 인증이 연결된 길드에서만 공동 관리자를 초대할 수 있어요.');
   const rotate = body.rotate === true;
   const currentCode = normalizeInviteCode(classSnap.data()?.inviteCodes?.[type]?.code);
-  const currentCodeIsValid = type === 'manager' ? currentCode.length === MANAGER_INVITE_LENGTH : currentCode.length >= 6;
+  const currentCodeIsValid = currentCode.length === INVITE_CODE_LENGTH;
   if (!rotate && currentCodeIsValid) {
     const currentSnap = await invites.doc(hash(currentCode)).get();
     const currentSchoolKey = text(currentSnap.data()?.schoolKey, 48).toUpperCase();
@@ -1116,8 +1165,8 @@ async function invite(uid, body) {
   }
   let code; let ref; let available = false;
   for (let index = 0; index < 5; index += 1) {
-    code = type === 'manager' ? managerInviteCode() : randomCode();
-    if ((type === 'manager' && code.length !== MANAGER_INVITE_LENGTH) || (type === 'student' && code.length < 6)) continue;
+    code = guildInviteCode();
+    if (code.length !== INVITE_CODE_LENGTH) continue;
     ref = invites.doc(hash(code));
     if (!(await ref.get()).exists) { available = true; break; }
   }
@@ -1132,7 +1181,7 @@ async function invite(uid, body) {
 }
 async function joinManager(uid, body) {
   const code = normalizeInviteCode(body.code);
-  if (code.length !== MANAGER_INVITE_LENGTH) throw apiError(400, 'INVALID_INVITE', '24자리 공동 관리자 코드를 확인해 주세요.');
+  if (code.length !== INVITE_CODE_LENGTH) throw apiError(400, 'INVALID_INVITE', '6자리 공동 관리자 초대 코드를 확인해 주세요.');
   const ref = invites.doc(hash(code));
   return adminDb.runTransaction(async (transaction) => {
     const invite = await transaction.get(ref);
@@ -1220,7 +1269,7 @@ export default async function handler(req, res) {
     else if (body.action === 'reviewSchoolGuildJoin') response = { review: await reviewSchoolGuildJoin(token.uid, body) };
     else if (body.action === 'createGuild' || body.action === 'createClass') response = { classroom: await createGuild(token.uid, body) };
     else if (body.action === 'listClasses') response = { classes: await listClasses(token.uid) };
-    else if (body.action === 'listWordPacks') response = { wordPacks: WORD_PACKS, questionTypes: [{ id: 'meaning-choice', label: '뜻 찾기 (4지선다)', default: true }, { id: 'fill-blank', label: '빈칸 넣기' }, { id: 'word-choice', label: '영어 단어 찾기 (4지선다)' }, { id: 'listen-meaning', label: '발음 듣고 뜻 찾기' }, { id: 'word-order', label: '철자 순서 맞추기' }, { id: 'short-answer', label: '영어 단답식' }] };
+    else if (body.action === 'listWordPacks') response = { wordPacks: WORD_PACKS, questionTypes: [{ id: 'meaning-choice', label: '뜻 찾기', default: true }, { id: 'fill-blank', label: '빈칸 넣기' }, { id: 'word-choice', label: '영어 단어 찾기' }, { id: 'listen-meaning', label: '발음 듣고 뜻 찾기' }, { id: 'word-order', label: '철자 순서 맞추기' }, { id: 'short-answer', label: '영어 단답식' }] };
     else if (body.action === 'wordPackPreview') response = { wordPack: await wordPackPreview(body) };
     else if (body.action === 'guildMembers') response = { details: await listGuildMembers(token.uid, body) };
     else if (body.action === 'guildReport') response = { report: await guildLearningReport(token.uid, body) };
@@ -1232,6 +1281,7 @@ export default async function handler(req, res) {
     else if (body.action === 'guildWrongWords') response = { analysis: await wrongWordSummary(token.uid, body) };
     else if (body.action === 'createGuildTrial') response = { trial: await createGuildTrial(token.uid, body) };
     else if (body.action === 'listGuildManagers') response = { management: await listGuildManagers(token.uid, body) };
+    else if (body.action === 'removeGuildMember') response = { membership: await removeGuildMember(token.uid, body) };
     else if (body.action === 'removeGuildManager') response = { management: await removeGuildManager(token.uid, body) };
     else if (body.action === 'transferGuildOwnership') response = { management: await transferGuildOwnership(token.uid, body) };
     else if (body.action === 'deleteGuild') response = { deletion: await deleteGuild(token.uid, body) };

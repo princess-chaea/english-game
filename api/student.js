@@ -177,9 +177,12 @@ async function assignedWordPack(uid) {
     const classroom = classSnap.data();
     const member = memberSnap.data() || {};
     const grade = safeInt(member.learningGrade, safeInt(classroom.grade, account.learningGrade, 3, 6), 3, 6);
-    const wordPackIds = normalizedPackIds(member.assignedWordPackIds || classroom.wordPackIds || classroom.wordPackId, grade);
-    const questionTypes = normalizedQuestionTypes(member.questionTypes || classroom.defaultQuestionTypes);
-    return { classId, classLabel: classroom.guildName || classroom.classLabel || '길드', guildLogoUrl: safeGuildLogoUrl(classroom.guildLogoUrl), wordPackId: wordPackIds[0], wordPackIds, wordPacks: assignedPackMetadata(wordPackIds), questionTypes };
+    const hasMemberOverride = member.usesGuildLearningDefaults === false;
+    const rawPackIds = hasMemberOverride ? member.assignedWordPackIds : (classroom.wordPackIds || classroom.wordPackId);
+    const rawQuestionTypes = hasMemberOverride ? member.questionTypes : classroom.defaultQuestionTypes;
+    const wordPackIds = normalizedPackIds(rawPackIds, grade);
+    const questionTypes = normalizedQuestionTypes(rawQuestionTypes);
+    return { classId, classLabel: classroom.guildName || classroom.classLabel || '길드', guildLogoUrl: safeGuildLogoUrl(classroom.guildLogoUrl), wordPackId: wordPackIds[0], wordPackIds, wordPacks: assignedPackMetadata(wordPackIds), questionTypes, assignmentSource: hasMemberOverride ? 'member' : 'guild' };
   }
   return { wordPackId: null, wordPackIds: [], questionTypes: ['meaning-choice'], guildLogoUrl: null };
 }function normalizedTrialAnswer(value) { return text(value, 160).normalize('NFKC').trim().toLowerCase().replace(/[^a-z0-9가-힣]/g, ''); }
@@ -192,6 +195,14 @@ function safeActiveTrialQuestions(value, wordCount) {
     seen.add(id);
     return { id, sourceIndex };
   }).filter(Boolean);
+}
+function safeActiveTrialAnswerResults(value) {
+  if (!Array.isArray(value)) return [];
+  return value.slice(-20).map((entry) => ({
+    questionId: text(entry?.questionId, 80).toLowerCase(),
+    answer: text(entry?.answer, 160),
+    correct: Boolean(entry?.correct)
+  })).filter((entry) => entry.questionId);
 }
 function createActiveTrialQuestions(words) {
   return words.map((_entry, sourceIndex) => ({ id: randomUUID().toLowerCase(), sourceIndex })).sort((a, b) => a.id.localeCompare(b.id));
@@ -236,10 +247,11 @@ function trialQuestionSpec(words, question, attemptId) {
     if (letters.join('') === baseLetters) letters.reverse();
     const isOrder = type === 'unscramble' || type === 'word-order';
     publicQuestion.prompt = isOrder
-      ? `뜻: ${meaning}\n철자 배열: ${letters.join(' · ')}`
+      ? `뜻: ${meaning}`
       : type === 'fill-blank'
         ? `뜻: ${meaning}\n빈칸: ${baseLetters.replace(/[a-z]/g, '_ ')}`
         : `뜻: ${meaning}\n알맞은 영어 단어를 입력하세요.`;
+    if (isOrder) publicQuestion.letters = letters;
   }
   return { publicQuestion, expected, correctOptionId, word };
 }
@@ -303,6 +315,13 @@ async function loadGuildTrial(uid) {
     membersRef.count().get()
   ]);
   if (!classSnap.exists || !ownMemberSnap.exists) return { ...guild, memberCount: 0, guildTotalCorrect: 0, guildMasteredCount: 0, members: [] };
+  const classData = classSnap.data() || {};
+  const staffIds = [...new Set([text(classData.ownerId, 128), ...(Array.isArray(classData.managerIds) ? classData.managerIds : [])].filter(Boolean))].slice(0, 30);
+  const staffSnaps = await Promise.all(staffIds.map((id) => teachers.doc(id).get()));
+  const staff = staffSnaps.filter((snap) => snap.exists).map((snap) => ({
+    name: text(snap.data()?.teacherName, 40) || '선생님',
+    role: snap.id === classData.ownerId ? 'master' : 'manager'
+  }));
   const members = membersSnap.docs.map((member) => {
     const data = member.data() || {};
     return {
@@ -328,8 +347,8 @@ async function loadGuildTrial(uid) {
   }).sort((a, b) => b.guildPoints - a.guildPoints || b.totalCorrect - a.totalCorrect || a.nickname.localeCompare(b.nickname));
   return {
     ...guild,
-    guildName: text(classSnap.data()?.guildName || classSnap.data()?.classLabel, 40) || guild.guildName,
-    guildLogoUrl: safeGuildLogoUrl(classSnap.data()?.guildLogoUrl),
+    guildName: text(classData.guildName || classData.classLabel, 40) || guild.guildName,
+    guildLogoUrl: safeGuildLogoUrl(classData.guildLogoUrl),
     memberCount: safeInt(memberCountSnap.data()?.count, members.length, 0),
     guildTotalCorrect: members.reduce((sum, member) => sum + member.totalCorrect, 0),
     guildConqueredCount: members.reduce((sum, member) => sum + member.conqueredCount, 0),
@@ -339,6 +358,8 @@ async function loadGuildTrial(uid) {
     wordPackIds: assignment.wordPackIds,
     assignedWordPacks: assignment.wordPacks || [],
     questionTypes: assignment.questionTypes,
+    assignmentSource: assignment.assignmentSource,
+    staff,
     members
   };
 }
@@ -348,7 +369,8 @@ async function guildTrialEvent(uid, body) {
   const requestedAttemptId = text(body.attemptId, 128);
   const proposedAttemptId = randomUUID().toLowerCase();
   const questionKey = text(body.questionKey, 80).toLowerCase();
-  if (!trialId || !['start', 'hint'].includes(event) || (event === 'hint' && (requestedAttemptId.length < 8 || !questionKey))) throw apiError(400, 'INVALID_TRIAL_EVENT', '시련 진행 정보를 확인해 주세요.');
+  const submittedAnswer = text(body.answer, 160);
+  if (!trialId || !['start', 'hint', 'answer'].includes(event) || (event !== 'start' && (requestedAttemptId.length < 8 || !questionKey)) || (event === 'answer' && !submittedAnswer)) throw apiError(400, 'INVALID_TRIAL_EVENT', '시련 진행 정보를 확인해 주세요.');
   const assignment = await assignedWordPack(uid);
   if (!assignment.classId) throw apiError(403, 'GUILD_REQUIRED', '참여 중인 길드가 없어요.');
   const classRef = classes.doc(assignment.classId);
@@ -376,8 +398,8 @@ async function guildTrialEvent(uid, body) {
       const canResume = existingAttemptId.length >= 8 && existingQuestions.length === trialWords.length;
       const attemptId = canResume ? existingAttemptId : proposedAttemptId;
       const activeQuestions = canResume ? existingQuestions : createActiveTrialQuestions(trialWords);
-      if (!canResume) tx.set(progressRef, { uid, activeAttemptId: attemptId, activeQuestions, hintKeys: FieldValue.delete(), activeAttemptStartedAt: FieldValue.serverTimestamp(), startedAt: current.startedAt || FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-      return { attemptId, questions: publicTrialQuestions(trialWords, activeQuestions, attemptId), completed: false, exhausted: false, attemptCount, retryCount: Math.max(0, attemptCount - 1), remainingAttempts: Math.max(0, TRIAL_MAX_ATTEMPTS - attemptCount), attemptHistory: history };
+      if (!canResume) tx.set(progressRef, { uid, activeAttemptId: attemptId, activeQuestions, activeAnswerResults: [], hintKeys: FieldValue.delete(), activeAttemptStartedAt: FieldValue.serverTimestamp(), startedAt: current.startedAt || FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+      return { attemptId, questions: publicTrialQuestions(trialWords, activeQuestions, attemptId), answerResults: canResume ? safeActiveTrialAnswerResults(current.activeAnswerResults) : [], completed: false, exhausted: false, attemptCount, retryCount: Math.max(0, attemptCount - 1), remainingAttempts: Math.max(0, TRIAL_MAX_ATTEMPTS - attemptCount), attemptHistory: history };
     }
     if (completed) return { completed: true, exhausted: false, attemptCount, retryCount: Math.max(0, attemptCount - 1), remainingAttempts: 0, attemptHistory: history };
     if (attemptCount >= TRIAL_MAX_ATTEMPTS) throw apiError(409, 'TRIAL_ATTEMPTS_EXHAUSTED', '이번 시련의 도전 기회를 모두 사용했어요.');
@@ -387,6 +409,14 @@ async function guildTrialEvent(uid, body) {
     const activeQuestion = activeQuestions.find((question) => question.id === questionKey);
     if (!activeQuestion) throw apiError(400, 'INVALID_TRIAL_QUESTION', '현재 시련 문제를 다시 불러와 주세요.');
     const spec = trialQuestionSpec(trialWords, activeQuestion, attemptId);
+    if (event === 'answer') {
+      const expected = spec.correctOptionId || spec.expected;
+      const correct = normalizedTrialAnswer(submittedAnswer) === normalizedTrialAnswer(expected);
+      const results = safeActiveTrialAnswerResults(current.activeAnswerResults).filter((entry) => entry.questionId !== questionKey);
+      results.push({ questionId: questionKey, answer: submittedAnswer, correct });
+      tx.set(progressRef, { uid, activeAnswerResults: results.slice(-20), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+      return { completed: false, exhausted: false, answerResult: { questionId: questionKey, correct, correctAnswer: Array.isArray(spec.publicQuestion.options) ? spec.publicQuestion.options.find((option) => option.id === spec.correctOptionId)?.label : spec.word } };
+    }
     const hintKey = `${attemptId}:${questionKey}`;
     const hintKeys = [...new Set((Array.isArray(current.hintKeys) ? current.hintKeys : []).map((value) => text(value, 220)).filter(Boolean))].slice(-60);
     if (!hintKeys.includes(hintKey)) hintKeys.push(hintKey);
@@ -548,7 +578,7 @@ async function completeGuildTrial(uid, body) {
     const prunedDaily = safeTrialDailyResults(daily);
     const rewardGuildCoins = overcome ? safeInt(trial.rewardGuildCoins, words.length * 5, 0, 1000) : 0;
     const guildCoins = currentCoins + rewardGuildCoins;
-    tx.set(progressRef, { uid, activeAttemptId: FieldValue.delete(), activeQuestions: FieldValue.delete(), activeAttemptStartedAt: FieldValue.delete(), attemptCount: nextHistory.length, retryCount: Math.max(0, nextHistory.length - 1), attemptHistory: nextHistory, hintKeys: FieldValue.delete(), hintsUsed: nextHistory.reduce((sum, entry) => sum + entry.hintsUsed, 0), lastWrongCount: words.length - correctCount, lastAttemptAt: FieldValue.serverTimestamp(), status: overcome ? 'overcome' : nextHistory.length >= TRIAL_MAX_ATTEMPTS ? 'exhausted' : 'retry-available', updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    tx.set(progressRef, { uid, activeAttemptId: FieldValue.delete(), activeQuestions: FieldValue.delete(), activeAnswerResults: FieldValue.delete(), activeAttemptStartedAt: FieldValue.delete(), attemptCount: nextHistory.length, retryCount: Math.max(0, nextHistory.length - 1), attemptHistory: nextHistory, hintKeys: FieldValue.delete(), hintsUsed: nextHistory.reduce((sum, entry) => sum + entry.hintsUsed, 0), lastWrongCount: words.length - correctCount, lastAttemptAt: FieldValue.serverTimestamp(), status: overcome ? 'overcome' : nextHistory.length >= TRIAL_MAX_ATTEMPTS ? 'exhausted' : 'retry-available', updatedAt: FieldValue.serverTimestamp() }, { merge: true });
     const memberUpdate = { trialAttempts: FieldValue.increment(1), trialRetries: FieldValue.increment(attemptNo > 1 ? 1 : 0), trialHintsUsed: FieldValue.increment(hintsUsed), trialHintedCorrect: FieldValue.increment(correctAfterHint), trialUnassistedCorrect: FieldValue.increment(unassistedCorrect), trialUnassistedTries: FieldValue.increment(unassistedTries), trialDailyResults: prunedDaily, lastTrialActivityAt: FieldValue.serverTimestamp() };
     if (overcome) {
       Object.assign(memberUpdate, { guildCoins, guildTrialCorrect: FieldValue.increment(words.length), guildPoints: FieldValue.increment(words.length * 10), lastTrialCompletedAt: FieldValue.serverTimestamp() });
@@ -672,7 +702,7 @@ async function joinClass(uid, body) {
     const account=accountSnap.data(),classLabel=text(classSnap.data().guildName||classSnap.data().classLabel||invite.classLabel,40)||'길드',guildLogoUrl=safeGuildLogoUrl(classSnap.data().guildLogoUrl),correct=safeInt(account.state?.totalQuizCorrect,0,0),stage=safeInt(account.state?.stage,1,1,9999);
     const classroom=classSnap.data()||{},defaultPacks=normalizedPackIds(classroom.wordPackIds||classroom.wordPackId,account.learningGrade),defaultTypes=normalizedQuestionTypes(classroom.defaultQuestionTypes);
     const conqueredCount=Array.isArray(account.state?.masteredWords)?account.state.masteredWords.length:0,mastery=wordMasterySummary(account.state?.wordLearningStats,conqueredCount);const base={nickname:account.nickname,learningGrade:account.learningGrade,totalCorrect:correct,totalQuizTries:safeInt(account.state?.totalQuizTries,correct,correct,1000000000),questionTypeStats:safeQuestionTypeStats(account.state?.questionTypeStats),wrongWordCounts:safeWrongWordCounts(account.state?.wrongWordCounts),wordLearningStats:mastery.stats,conqueredCount,masteredCount:mastery.masteredCount,combatPower:safeInt(account.state?.combatPower,0,0,9999999999999),titleName:text(account.state?.equippedTitle||account.state?.wbTitle,80)||null,stage,lastActiveAt:FieldValue.serverTimestamp()};
-    if(!memberSnap.exists)Object.assign(base,{assignedWordPackIds:defaultPacks,questionTypes:defaultTypes,countedCorrect:correct,countedTries:base.totalQuizTries,countedStage:stage,dailyLearning:{},guildCorrectCount:0,guildStageClears:0,guildBossDamage:0,guildBossPointTotal:0,guildTrialCorrect:0,trialAttempts:0,trialRetries:0,trialHintsUsed:0,guildPoints:0,guildCoins:0,joinedAt:FieldValue.serverTimestamp()});
+    if(!memberSnap.exists)Object.assign(base,{usesGuildLearningDefaults:true,assignedWordPackIds:defaultPacks,questionTypes:defaultTypes,countedCorrect:correct,countedTries:base.totalQuizTries,countedStage:stage,dailyLearning:{},guildCorrectCount:0,guildStageClears:0,guildBossDamage:0,guildBossPointTotal:0,guildTrialCorrect:0,trialAttempts:0,trialRetries:0,trialHintsUsed:0,guildPoints:0,guildCoins:0,joinedAt:FieldValue.serverTimestamp()});
     (Array.isArray(account.classIds)?account.classIds:[]).slice(0,100).filter(id=>id&&id!==invite.classId).forEach(id=>tx.delete(classes.doc(id).collection('members').doc(uid)));
     tx.set(memberRef,base,{merge:true});tx.update(accountRef,{classIds:[invite.classId],activeClassId:invite.classId,activeGuildName:classLabel,activeGuildLogoUrl:guildLogoUrl,updatedAt:FieldValue.serverTimestamp()});return {classId:invite.classId,classLabel,guildLogoUrl};
   });

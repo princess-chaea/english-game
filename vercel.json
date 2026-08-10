@@ -3,7 +3,7 @@
   "functions": {
     "api/teacher.js": {
       "maxDuration": 30,
-      "includeFiles": "node_modules/{@napi-rs,@tesseract.js-data,tesseract.js-core,pdfjs-dist}/**"
+      "includeFiles": "{data/word-packs.json,node_modules/{@napi-rs,@tesseract.js-data,tesseract.js-core,pdfjs-dist}/**}"
     }
   },
   "crons": [

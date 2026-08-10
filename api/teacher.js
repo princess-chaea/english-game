@@ -46,7 +46,12 @@ async function deleteRefsInBatches(refs) {
   }
 }
 
-const packCatalog = JSON.parse(readFileSync(new URL('../data/word-packs.json', import.meta.url), 'utf8'));
+let packCatalog = { packs: [] };
+try {
+  packCatalog = JSON.parse(readFileSync(new URL('../data/word-packs.json', import.meta.url), 'utf8'));
+} catch (error) {
+  console.error('[api/teacher.js] Failed to load word-packs.json:', error);
+}
 const wordByKey = new Map();
 const packWordsById = new Map();
 (packCatalog.packs || []).forEach((pack) => {

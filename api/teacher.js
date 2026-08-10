@@ -398,17 +398,26 @@ function classPack(grade, wordPackId) {
 async function bootstrap(uid, token) {
   const ref = teachers.doc(uid);
   const snap = await ref.get();
+  const now = FieldValue.serverTimestamp();
   if (!snap.exists) {
-    await ref.set({ role: 'teacher', lastLoginAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+    await ref.set({ role: 'teacher', lastLoginAt: now, updatedAt: now }, { merge: true });
   } else {
-    const update = { role: 'teacher', lastLoginAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() };
-    if (snap.get('displayName') !== undefined) update.displayName = FieldValue.delete();
-    if (snap.get('email') !== undefined) update.email = FieldValue.delete();
-    if (snap.get('googleDisplayName') !== undefined) update.googleDisplayName = FieldValue.delete();
-    await ref.update(update);
+    const data = snap.data() || {};
+    const update = { role: 'teacher', lastLoginAt: now, updatedAt: now };
+    if ('displayName' in data) update.displayName = FieldValue.delete();
+    if ('email' in data) update.email = FieldValue.delete();
+    if ('googleDisplayName' in data) update.googleDisplayName = FieldValue.delete();
+    try {
+      await ref.update(update);
+    } catch (e) {
+      console.warn('[bootstrap update fallback]', e);
+      await ref.set({ role: 'teacher', lastLoginAt: now, updatedAt: now }, { merge: true });
+    }
   }
   const data = (await ref.get()).data() || {};
-  return { displayName: text(data.teacherName, 40) || '교사', teacherName: text(data.teacherName, 40), schoolName: text(data.schoolName, 80), verificationStatus: text(data.verificationStatus, 20) || 'unverified', needsProfile: !data.teacherName || !['pending','verified'].includes(data.verificationStatus), isReviewer: isReviewer(token), guildIds: Array.isArray(data.classIds) ? data.classIds : [] };
+  const teacherName = text(data.teacherName, 40);
+  const displayName = teacherName || text(token?.name, 40) || '교사';
+  return { displayName, teacherName, schoolName: text(data.schoolName, 80), verificationStatus: text(data.verificationStatus, 20) || 'unverified', needsProfile: !teacherName || !['pending', 'verified'].includes(data.verificationStatus), isReviewer: isReviewer(token), guildIds: Array.isArray(data.classIds) ? data.classIds : [] };
 }
 async function ownedClass(uid, id) {
   const snap = await classes.doc(id).get();

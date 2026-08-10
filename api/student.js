@@ -319,7 +319,7 @@ async function loadGuildTrial(uid) {
   const staffIds = [...new Set([text(classData.ownerId, 128), ...(Array.isArray(classData.managerIds) ? classData.managerIds : [])].filter(Boolean))].slice(0, 30);
   const staffSnaps = await Promise.all(staffIds.map((id) => teachers.doc(id).get()));
   const staff = staffSnaps.filter((snap) => snap.exists).map((snap) => ({
-    name: text(snap.data()?.teacherName, 40) || '선생님',
+    name: text(snap.data()?.teacherName || snap.data()?.displayName || snap.data()?.googleDisplayName, 40) || '선생님',
     role: snap.id === classData.ownerId ? 'master' : 'manager'
   }));
   const members = membersSnap.docs.map((member) => {

@@ -198,7 +198,7 @@ if (secureContributionAt < 0 || authoritativeStateAt < secureContributionAt || c
 }
 if (worldBossApi.includes('RAID_MAX_DAMAGE_RATE') || worldBossApi.includes('hardDamageCap') || worldBossApi.includes('verificationScale')) throw new Error('World-boss damage must not use a personal percentage or elapsed-time reduction cap.');
 if (!worldBossApi.includes("throw apiError(409, 'RAID_ANSWER_RATE_INVALID'") || !worldBossApi.includes("throw apiError(409, 'RAID_DAMAGE_VERIFICATION_FAILED'")) throw new Error('World-boss answer-rate and damage plausibility rejection checks are missing.');
-if (!worldBossApi.includes('const applied = Math.min(requested, Math.max(0, maxHp - currentTotal));')) throw new Error('World-boss must apply the full verified requested damage, limited only by remaining boss HP.');
+if (!worldBossApi.includes('const bossApplied = Math.min(requested, Math.max(0, maxHp - currentTotal));')) throw new Error('World-boss must apply the full verified requested damage, limited only by remaining boss HP.');
 if (!worldBossApi.includes('const savedPower = safeInt(account.state?.combatPower') || !worldBossApi.includes('verifiedCorrectAnswers + 4')) throw new Error('World-boss plausibility verification must use server-saved combat power and verified answers.');
 const raidRegressionRemainingHp = 12_000_000_000;
 const raidRegressionRequestedDamage = 1_000_000_000;
@@ -225,7 +225,7 @@ if (!teacherApi.includes("body.action === 'deleteTeacherAccount'") || !teacherAp
 if (!teacherApi.includes('PROOF_DATE_EXPIRED')) throw new Error('Manual teacher-proof freshness enforcement is missing.');
 if (!teacherApi.includes('extractImageProofText') || !teacherApi.includes('image_ocr') || !teacherApi.includes(`source: 'pdf_ocr'`)) throw new Error('Teacher image/PDF proof OCR screening is missing.');
 if (teacherApi.includes("outcome = 'auto_approved'") || teacherApi.includes("screening.outcome === 'auto_approved'")) throw new Error('Teacher proof must require manual reviewer approval.');
-if (!teacherApi.includes('MANAGER_INVITE_LENGTH = 24') || !teacherApi.includes("teacherSchoolKey !== guildSchoolKey") || !teacherApi.includes("teacherSchoolKey !== inviteSchoolKey")) throw new Error('Manager invite entropy or school binding is incomplete.');
+if (!teacherApi.includes('INVITE_CODE_LENGTH = 6') || !teacherApi.includes("teacherSchoolKey !== guildSchoolKey") || !teacherApi.includes("teacherSchoolKey !== inviteSchoolKey")) throw new Error('Manager invite entropy or school binding is incomplete.');
 const submitProofStart = teacherApi.indexOf('async function submitTeacherVerification');
 const submitProofEnd = teacherApi.indexOf('async function listVerificationRequests', submitProofStart);
 const submitProofBlock = submitProofStart >= 0 && submitProofEnd > submitProofStart ? teacherApi.slice(submitProofStart, submitProofEnd) : '';

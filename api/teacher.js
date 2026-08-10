@@ -849,7 +849,23 @@ async function memberLearningReport(uid, body) {
     wrongWords,
     lastActiveAt: member.lastActiveAt?.toDate?.().toISOString?.() || null
   };
-}const TRIAL_TYPES = new Set(['meaning-choice', 'fill-blank', 'word-choice', 'listen-meaning', 'word-order', 'short-answer', 'spelling', 'unscramble']);
+function safeTrialAttemptHistory(value) {
+  if (!Array.isArray(value)) return [];
+  return value.slice(-TRIAL_MAX_ATTEMPTS).map((raw) => ({
+    attemptId: text(raw?.attemptId, 128),
+    attemptNo: safeInt(raw?.attemptNo, 1, 1, TRIAL_MAX_ATTEMPTS),
+    correctCount: safeInt(raw?.correctCount, 0, 0, 20),
+    questionCount: safeInt(raw?.questionCount, 0, 0, 20),
+    accuracy: Math.max(0, Math.min(100, Number(raw?.accuracy) || 0)),
+    hintsUsed: safeInt(raw?.hintsUsed, 0, 0, 20),
+    correctAfterHint: safeInt(raw?.correctAfterHint, 0, 0, 20),
+    unassistedCorrect: safeInt(raw?.unassistedCorrect, 0, 0, 20),
+    unassistedTries: safeInt(raw?.unassistedTries, 0, 0, 20),
+    completedAtMs: safeInt(raw?.completedAtMs, 0, 0, 9999999999999),
+    overcome: Boolean(raw?.overcome)
+  })).filter((entry) => entry.attemptId && entry.questionCount > 0);
+}
+const TRIAL_TYPES = new Set(['meaning-choice', 'fill-blank', 'word-choice', 'listen-meaning', 'word-order', 'short-answer', 'spelling', 'unscramble']);
 async function activeTrialStats(classRef, classData) {
   const trialId = text(classData?.activeTrialId, 128);
   if (!trialId) return null;

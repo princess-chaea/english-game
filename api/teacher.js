@@ -13,6 +13,12 @@ const MANAGER_INVITE_LENGTH = 24;
 const MANAGER_INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const DELETE_QUERY_PAGE_SIZE = 100;
 
+function guildCoManagerCount(data) {
+  const ownerId = text(data?.ownerId, 128);
+  const managerIds = Array.isArray(data?.managerIds) ? data.managerIds : [];
+  return managerIds.filter((id) => text(id, 128) && text(id, 128) !== ownerId).length;
+}
+
 function normalizeInviteCode(value) {
   return text(value, 32).toUpperCase().replace(/[^A-Z0-9]/g, '');
 }
@@ -439,7 +445,7 @@ async function listClasses(uid) {
     let totalCorrect = 0; let guildPoints = 0;
     let activeStudentCount = 0;
     members.docs.forEach((member) => { const correct = safeInt(member.data()?.totalCorrect, 0, 0); const points = safeInt(member.data()?.guildPoints, 0, 0); totalCorrect += correct; guildPoints += points; if (points > 0) activeStudentCount += 1; });
-    result.push({ id: snap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), ownerId: text(data.ownerId, 128), isOwner: data.ownerId === uid, managerCount: (data.managerIds || []).length, studentCount: members.size, activeStudentCount, totalCorrect, guildPoints, guildRank: rankMap.get(snap.id) || null, wordPackId: classPack(data.grade, data.wordPackId), wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade), questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes) });
+    result.push({ id: snap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), ownerId: text(data.ownerId, 128), isOwner: data.ownerId === uid, managerCount: guildCoManagerCount(data), studentCount: members.size, activeStudentCount, totalCorrect, guildPoints, guildRank: rankMap.get(snap.id) || null, wordPackId: classPack(data.grade, data.wordPackId), wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade), questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes) });
   }
   return result;
 }
@@ -606,7 +612,7 @@ async function listGuildMembers(uid, body) {
       wordPackId: classPack(data.grade, data.wordPackId),
       wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade),
       questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes),
-      managerCount: Array.isArray(data.managerIds) ? data.managerIds.length : 0
+      managerCount: guildCoManagerCount(data)
     },
     members
   };
@@ -968,7 +974,7 @@ async function listSchoolGuilds(uid) {
     const managed = Array.isArray(data.managerIds) && data.managerIds.includes(uid);
     const ownRequest = managed ? null : await classSnap.ref.collection('managerRequests').doc(uid).get();
     const masterName = ownerNames.get(text(data.ownerId, 128)) || '마스터';
-    guilds.push({ id: classSnap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), managerCount: Array.isArray(data.managerIds) ? data.managerIds.length : 0, masterName: managed ? masterName : maskedTeacherName(masterName), managed, requestStatus: ownRequest?.data()?.status || '' });
+    guilds.push({ id: classSnap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), managerCount: guildCoManagerCount(data), masterName: managed ? masterName : maskedTeacherName(masterName), managed, requestStatus: ownRequest?.data()?.status || '' });
     if (managed) {
       const requests = await classSnap.ref.collection('managerRequests').where('status', '==', 'pending').limit(50).get();
       requests.docs.forEach((request) => incomingRequests.push({ id: request.id, classId: classSnap.id, guildName: guildName(data), teacherName: text(request.data()?.teacherName, 40) || '이름 미확인', requestedAt: request.data()?.requestedAt?.toDate?.().toISOString?.() || null }));
@@ -995,7 +1001,7 @@ async function schoolGuildPreview(uid, body) {
   const ownerTData = ownerTSnap.data() || {};
   const ownerAData = ownerASnap.data() || {};
   const masterName = text(ownerTData.teacherName || ownerTData.displayName || ownerTData.googleDisplayName || ownerTData.name || ownerAData.nickname || ownerAData.teacherName || ownerAData.displayName, 40) || '마스터';
-  return { id: classSnap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), memberCount: safeInt(memberCountSnap.data()?.count, 0, 0, 100000), managerCount: Array.isArray(data.managerIds) ? data.managerIds.length : 0, masterName: managed ? masterName : maskedTeacherName(masterName), managed, requestStatus: ownRequest?.data()?.status || '' };
+  return { id: classSnap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), memberCount: safeInt(memberCountSnap.data()?.count, 0, 0, 100000), managerCount: guildCoManagerCount(data), masterName: managed ? masterName : maskedTeacherName(masterName), managed, requestStatus: ownRequest?.data()?.status || '' };
 }async function requestSchoolGuildJoin(uid, body) {
   const teacherSnap = await verifiedTeacher(uid);
   const teacher = teacherSnap.data();

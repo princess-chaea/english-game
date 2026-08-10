@@ -14,7 +14,12 @@ const REVIEW_PACK_ID = 'elementary-800-missing-review';
 const TIER_WORD_PACK_IDS = [3,4,5,6].flatMap((grade) => ['low','mid','high'].map((level) => 'grade-' + grade + '-' + level));
 const ASSIGNABLE_WORD_PACK_IDS = new Set(['grade-3-current','grade-4-current','grade-5-current','grade-6-current','curriculum-2022-grade-3','curriculum-2022-grade-4','curriculum-2022-grade-5','curriculum-2022-grade-6',...TIER_WORD_PACK_IDS,REVIEW_PACK_ID]);
 const LEARNING_QUESTION_TYPES = new Set(['meaning-choice','fill-blank','word-choice','listen-meaning','word-order','short-answer']);
-const STUDENT_WORD_PACKS = JSON.parse(readFileSync(new URL('../data/word-packs.json', import.meta.url), 'utf8')).packs || [];
+let STUDENT_WORD_PACKS = [];
+try {
+  STUDENT_WORD_PACKS = JSON.parse(readFileSync(new URL('../data/word-packs.json', import.meta.url), 'utf8')).packs || [];
+} catch (error) {
+  console.error('[api/student.js] Failed to load word-packs.json:', error);
+}
 const STUDENT_WORD_PACK_BY_ID = new Map(STUDENT_WORD_PACKS.map((pack) => [pack.id, pack]));
 const safeGuildLogoUrl = (value) => { const url=text(value,1200);return /^https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/[A-Za-z0-9._-]+\/o\//.test(url)?url:null; };
 const defaultWordPack = (grade) => 'grade-' + grade + '-mid';

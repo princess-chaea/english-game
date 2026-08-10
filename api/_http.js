@@ -31,7 +31,7 @@ export async function requireUser(req, { googleOnly = false } = {}) {
   const value = /^Bearer\s+(.+)$/i.exec(req.headers.authorization || '')?.[1];
   if (!value) throw apiError(401, 'AUTH_REQUIRED', '로그인이 필요해요.');
   let token;
-  try { token = await adminAuth.verifyIdToken(value, true); } catch { throw apiError(401, 'INVALID_TOKEN', '로그인이 만료되었어요. 다시 로그인해 주세요.'); }
+  try { token = await adminAuth.verifyIdToken(value, false); } catch (err) { console.error('[requireUser verifyIdToken error]', err); throw apiError(401, 'INVALID_TOKEN', '로그인이 만료되었어요. 다시 로그인해 주세요.'); }
   if (googleOnly && token.firebase?.sign_in_provider !== 'google.com') throw apiError(403, 'GOOGLE_REQUIRED', '교사 기능은 Google 로그인이 필요해요.');
   return token;
 }

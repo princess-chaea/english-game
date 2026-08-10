@@ -3,12 +3,21 @@ import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 import { FieldValue, getFirestore, Timestamp } from 'firebase-admin/firestore';
 
+function sanitizeKey(key) {
+  if (!key) return '';
+  let str = String(key).trim();
+  if ((str.startsWith('"') && str.endsWith('"')) || (str.startsWith("'") && str.endsWith("'"))) {
+    str = str.slice(1, -1).trim();
+  }
+  return str.replace(/\\n/g, '\n');
+}
+
 function createFirebaseApp() {
   if (getApps().length) return getApp();
   // Support both the documented uppercase names and the existing Vercel names.
-  const projectId = process.env.FIREBASE_PROJECT_ID || process.env.project_id;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL || process.env.client_email;
-  const privateKey = (process.env.FIREBASE_PRIVATE_KEY || process.env.private_key)?.replace(/\\n/g, '\n');
+  const projectId = String(process.env.FIREBASE_PROJECT_ID || process.env.project_id || '').trim();
+  const clientEmail = String(process.env.FIREBASE_CLIENT_EMAIL || process.env.client_email || '').trim();
+  const privateKey = sanitizeKey(process.env.FIREBASE_PRIVATE_KEY || process.env.private_key);
   if (projectId && clientEmail && privateKey) {
     return initializeApp({ credential: cert({ projectId, clientEmail, privateKey }), storageBucket: process.env.FIREBASE_STORAGE_BUCKET || (projectId + '.firebasestorage.app') });
   }

@@ -64,14 +64,18 @@ function publicGuildEffectCatalog(effects) {
     return { ...definition, level, currentValue: Number((level * definition.valuePerLevel).toFixed(2)), nextCost: level < definition.maxLevel ? guildEffectLevelCost(level) : null, totalInvested: effects[definition.id]?.totalInvested || 0 };
   });
 }
-function calculateGuildCosmeticEffects(value) {
-  const cosmetics=safeGuildCosmetics(value),totals={attackPct:0,defensePct:0,goldPct:0,forgePctPoint:0,fortunePctPoint:0};
-  const rarity=GUILD_SKIN_RARITY_BY_ID.get(cosmetics.equippedVariantKey?.split(':')[1]);if(rarity)Object.keys(totals).forEach((key)=>{totals[key]+=Number(rarity[key]||0);});
-  const skinProgress={};cosmetics.ownedVariantKeys.forEach((key)=>{const id=key.split(':')[0];skinProgress[id]=(skinProgress[id]||0)+1;});
-  Object.values(skinProgress).forEach((count)=>{const scale=count>=5?1:count===4?0.7:count===3?0.45:count===2?0.2:0;totals.attackPct+=.06*scale;totals.defensePct+=.06*scale;totals.goldPct+=.12*scale;totals.forgePctPoint+=.012*scale;totals.fortunePctPoint+=.006*scale;});
-  Object.keys(totals).forEach((key)=>{totals[key]=Number(totals[key].toFixed(3));});return {...totals,equippedVariantKey:cosmetics.equippedVariantKey,completedVariants:cosmetics.ownedVariantKeys.length,totalVariants:275,skinProgress};
+function guildSkinCollectionEffects(count) {
+  const scale=count>=5?1:count===4?0.7:count===3?0.45:count===2?0.2:0;
+  return {attackPct:.06*scale,defensePct:.06*scale,goldPct:.12*scale,forgePctPoint:.012*scale,fortunePctPoint:.006*scale};
 }
-function publicGuildSkinCatalog(){return {skins:GUILD_SKIN_DEFINITIONS.map((skin)=>({...skin})),rarities:GUILD_SKIN_RARITIES.map((rarity)=>({...rarity})),summonCosts:GUILD_SKIN_SUMMON_COST,shardUnlockCosts:{...GUILD_SKIN_SHARD_UNLOCK_COST},totalVariants:275};}
+function calculateGuildCosmeticEffects(value) {
+  const cosmetics=safeGuildCosmetics(value),totals={attackPct:0,defensePct:0,goldPct:0,forgePctPoint:0,fortunePctPoint:0},equippedEffects={attackPct:0,defensePct:0,goldPct:0,forgePctPoint:0,fortunePctPoint:0},collectionEffects={attackPct:0,defensePct:0,goldPct:0,forgePctPoint:0,fortunePctPoint:0};
+  const rarity=GUILD_SKIN_RARITY_BY_ID.get(cosmetics.equippedVariantKey?.split(':')[1]);if(rarity)Object.keys(totals).forEach((key)=>{equippedEffects[key]=Number(rarity[key]||0);totals[key]+=equippedEffects[key];});
+  const skinProgress={};cosmetics.ownedVariantKeys.forEach((key)=>{const id=key.split(':')[0];skinProgress[id]=(skinProgress[id]||0)+1;});
+  Object.values(skinProgress).forEach((count)=>{const bonus=guildSkinCollectionEffects(count);Object.keys(totals).forEach((key)=>{collectionEffects[key]+=bonus[key];totals[key]+=bonus[key];});});
+  for(const group of [totals,equippedEffects,collectionEffects])Object.keys(group).forEach((key)=>{group[key]=Number(group[key].toFixed(4));});return {...totals,equippedEffects,collectionEffects,equippedVariantKey:cosmetics.equippedVariantKey,completedVariants:cosmetics.ownedVariantKeys.length,totalVariants:275,skinProgress};
+}
+function publicGuildSkinCatalog(){return {skins:GUILD_SKIN_DEFINITIONS.map((skin)=>({...skin})),rarities:GUILD_SKIN_RARITIES.map((rarity)=>({...rarity})),summonCosts:GUILD_SKIN_SUMMON_COST,shardUnlockCosts:{...GUILD_SKIN_SHARD_UNLOCK_COST},collectionBonuses:Object.fromEntries([1,2,3,4,5].map((count)=>[count,guildSkinCollectionEffects(count)])),totalVariants:275};}
 const leaderboard = adminDb.collection('leaderboard');
 const invites = adminDb.collection('classInvites');
 const legacyUsers = adminDb.collection('users');

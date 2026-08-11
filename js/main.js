@@ -6708,7 +6708,7 @@
                 id: "rich",
                 name: "불멸의 흑마법 리치",
                 img: "media/worldbose/worldbose_rich.webp",
-                desc: "20초마다 스킬 위치를 섞고 하나를 봉인하는 저주받은 마왕! 봉인 스킬의 영단어 미니퀴즈를 풀거나 마법 비기 4회·10연속 정답으로 정화하라!",
+                desc: "입장 시 장착 스킬을 모두 봉인하고, 이후 20초마다 풀린 스킬 하나를 다시 봉인하는 저주받은 마왕! 봉인 해제 즉시 스킬을 시전해 4회·10연속 정답으로 정화하라!",
                 debuffName: "🔮 사령의 저주 (스펠 교란·봉인 & 오답 HP 흡혈)",
                 weaknessName: "✨ 성수 폭발 (마법 스킬 4회 시전 / 10연속 정답)",
                 weaknessEffect: "15초간 저주·봉인 해제, 스킬 피해 +150% 및 모든 쿨타임 즉시 초기화! (종료 후 20초 뒤 저주 재발동)",
@@ -6944,7 +6944,7 @@
             if (debuffDescEl) {
                 debuffDescEl.innerHTML = (bossInfo.id === 'fafnir') ? "선다형 보기나 순서맞추기 단어칸에 불꽃이 일렁여 시야를 방해합니다.<br><span class='text-yellow-300 font-bold'>👉 (불꽃이 일렁이는 정답을 타격하면 비늘이 깨집니다!)</span>" :
                                          (bossInfo.id === 'golem') ? "단단한 암석 피부로 일반 타격 데미지를 60% 감소(0.4배)합니다.<br><span class='text-yellow-300 font-bold'>👉 (6글자 이상 철자 조합 정답 또는 10콤보 달성 시 외피가 붕괴됩니다!)</span>" :
-                                         "20초마다 장착 스킬 위치를 섞고 스킬 하나를 쇠사슬로 봉인합니다. 봉인 스킬을 누르면 단어·뜻 4지선다, 철자 순서 맞추기, 빈칸 알파벳 선택 중 하나가 무작위로 열리며 푸는 동안 전투 타이머가 멈춥니다.<br><span class='text-red-400 font-bold'>👉 (일반 퀴즈 오답: 최대 HP 10% 흡혈·보스 회복·스킬 봉인 / 해제 퀴즈 오답: 최대 HP 8% 피해·보스 회복)</span><br><span class='text-yellow-300 font-bold'>✨ 마법 스킬 4회 시전 또는 10연속 정답: 15초 정화·모든 봉인 해제·쿨타임 초기화·스킬 피해 +150%</span>";
+                                         "입장 시 장착 스킬 4개를 모두 쇠사슬로 봉인하고, 이후 20초마다 현재 풀린 스킬 하나의 위치를 섞어 다시 봉인합니다. 봉인 해제 퀴즈에 성공하면 쿨타임이 아닌 스킬은 즉시 시전되며, 푸는 동안 전투 타이머가 멈춥니다.<br><span class='text-red-400 font-bold'>👉 (일반 퀴즈 오답: 최대 HP 10% 흡혈·보스 회복·스킬 봉인 / 해제 퀴즈 오답: 최대 HP 8% 피해·보스 회복)</span><br><span class='text-yellow-300 font-bold'>✨ 실제 마법 스킬 4회 시전 또는 10연속 정답: 15초 정화·모든 봉인 해제·쿨타임 초기화·스킬 피해 +150%</span>";
             }
             const weakNameEl = document.getElementById("wbGuideWeaknessName");
             if (weakNameEl) weakNameEl.innerText = bossInfo.weaknessName;
@@ -7445,7 +7445,7 @@
                     stateBadge.innerText = "🔥 [심연의 화염] 보기 가림";
                 } else {
                     stateBadge.className = "bg-purple-950 text-purple-300 border border-purple-600 text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider";
-                    stateBadge.innerText = "🔮 [사령의 저주] 스펠 교란";
+                    stateBadge.innerText = `🔮 [사령의 저주] 스킬 시전 ${wbSkillCastCount}/4`;
                 }
             }
 
@@ -7499,11 +7499,13 @@
             const todayStr = getKstDayString();
             const inProgressKey = `vocahero_wb_progress_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
             let loadedHintRemaining = null;
+            let restoredRaidProgress = false;
             try {
                 const savedJson = localStorage.getItem(inProgressKey);
                 if (savedJson) {
                     const saved = JSON.parse(savedJson);
                     if (saved.date === todayStr) {
+                        restoredRaidProgress = true;
                         const savedTimerRemaining = Math.max(0, Math.min(180, Number(saved.wbTimerRemaining) || 0));
                         wbTimerRemaining = secureTimerRemaining === null
                             ? savedTimerRemaining
@@ -7566,6 +7568,9 @@
 
             const seasonIdx = getWeeklyBossIndex();
             const bossInfo = WORLD_BOSS_SEASONS[seasonIdx] || WORLD_BOSS_SEASONS[0];
+            if (bossInfo.id === 'rich' && !restoredRaidProgress) {
+                wbRichLockedSkillIds = new Set((gameState.equippedSkills || []).map(String));
+            }
             const bossImg = document.getElementById("wbActiveBossImg");
             if (bossImg) bossImg.src = bossInfo.img;
             const bgImg = document.getElementById("wbStageBackdrop");
@@ -7628,7 +7633,7 @@
                     bossId: timerBossInfo.id,
                     bossState: wbBossState,
                     gracePeriodTimer: wbGracePeriodTimer,
-                    ultimateEventActive: wbUltimateEventActive,
+                    ultimateEventActive: wbUltimateEventActive || wbRichUnlockQuizActive,
                     timer: wbRichCurseTimer,
                     delta: 0.1
                 });
@@ -7839,10 +7844,16 @@
 
         function resolveWorldBossRichUnlockQuiz(skill, correct) {
             if (correct) {
-                wbRichLockedSkillIds.delete(String(skill.id));
+                const skillId = String(skill.id);
+                wbRichLockedSkillIds.delete(skillId);
                 updateWorldBossSkillCooldownsUI();
                 playSoundEffect('correct');
-                showWorldBossFxNotice(`✨ [봉인 해제] ${capitalizeFirstLetter(skill.word)} 스킬을 다시 사용할 수 있습니다!`, 'text-emerald-300 border-emerald-500');
+                if (!(wbSkillCooldowns[skillId] > 0)) {
+                    showWorldBossFxNotice(`✨ [봉인 해제·즉시 시전] ${capitalizeFirstLetter(skill.word)} (${wbSkillCastCount + 1}/4)`, 'text-emerald-300 border-emerald-500');
+                    setTimeout(() => castWorldBossSkill(skillId), 0);
+                } else {
+                    showWorldBossFxNotice(`✨ [봉인 해제] ${capitalizeFirstLetter(skill.word)} · 쿨타임 종료 후 사용 가능`, 'text-emerald-300 border-emerald-500');
+                }
                 return;
             }
             const curseDamage = Math.max(1, Math.floor(wbPlayerMaxHp * 0.08));

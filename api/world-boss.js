@@ -71,6 +71,13 @@ async function status(uid) {
     top
   };
 }
+async function raidStatus() {
+  const week = currentWeek();
+  const boss = (await bossRef(week).get()).data() || {};
+  const maxHp = maxHpForWeek(week);
+  const totalDamage = Math.min(maxHp, legacyTotal(boss) + safeInt(boss.secureDamageTotal, 0, 0));
+  return { week, day: kstDay(), maxHp, curHp: Math.max(0, maxHp - totalDamage) };
+}
 async function claimWeeklyReward(uid) {
   const week = currentWeek() - 1;
   const ref = bossRef(week);
@@ -136,19 +143,27 @@ async function start(uid) {
   const now = Date.now();
   const playEndsAt = Timestamp.fromMillis(now + RAID_PLAY_DURATION_MS);
   const expiresAt = Timestamp.fromMillis(now + RAID_PLAY_DURATION_MS + RAID_SUBMIT_GRACE_MS);
-  await adminDb.runTransaction(async (tx) => {
-    const [contributionSnap, sessionSnap] = await Promise.all([
-      tx.get(bossRef(week).collection('contributions').doc(uid)),
-      tx.get(ref)
+  const boss = await adminDb.runTransaction(async (tx) => {
+    const bossDocumentRef = bossRef(week);
+    const [contributionSnap, sessionSnap, bossSnap] = await Promise.all([
+      tx.get(bossDocumentRef.collection('contributions').doc(uid)),
+      tx.get(ref),
+      tx.get(bossDocumentRef)
     ]);
     if (contributionSnap.data()?.lastPlayedKstDay === day) throw apiError(409, 'RAID_ALREADY_COMPLETED', "오늘의 월드보스 참전은 이미 완료했어요.");
     const existing = sessionSnap.data();
     if (existing?.day === day && existing?.expiresAt?.toMillis?.() > now && !existing.submitted) {
       throw apiError(409, 'RAID_ALREADY_STARTED', '진행 중인 3분 전투를 이어해 주세요. 결과 전송 유예가 끝나면 다시 시작할 수 있어요.');
     }
+    const bossData = bossSnap.data() || {};
+    const maxHp = maxHpForWeek(week);
+    const totalDamage = Math.min(maxHp, legacyTotal(bossData) + safeInt(bossData.secureDamageTotal, 0, 0));
+    const curHp = Math.max(0, maxHp - totalDamage);
+    if (curHp <= 0) throw apiError(409, 'WORLD_BOSS_DEFEATED', '이번 주 월드보스는 이미 토벌됐어요.');
     tx.set(ref, { uid, week, day, tokenHash, startedAtMs: now, submitted: false, createdAt: FieldValue.serverTimestamp(), playEndsAt, expiresAt });
+    return { week, day, maxHp, curHp };
   });
-  return { week, day, token, playDurationSeconds: RAID_PLAY_DURATION_MS / 1000, playEndsAt: playEndsAt.toDate().toISOString(), expiresAt: expiresAt.toDate().toISOString() };
+  return { week, day, token, playDurationSeconds: RAID_PLAY_DURATION_MS / 1000, playEndsAt: playEndsAt.toDate().toISOString(), expiresAt: expiresAt.toDate().toISOString(), boss };
 }
 function rewardsForAppliedDamage(appliedDamage) {
   const applied = safeInt(appliedDamage, 0, 0);
@@ -287,8 +302,12 @@ export default async function handler(req, res) {
     const body = await readBody(req);
     let response;
     if (body.action === 'status') response = { boss: await status(user.uid) };
+    else if (body.action === 'raidStatus') response = { boss: await raidStatus() };
     else if (body.action === 'weeklyReward') response = { reward: await claimWeeklyReward(user.uid) };
-    else if (body.action === 'start') response = { raid: await start(user.uid) };
+    else if (body.action === 'start') {
+      const { boss, ...raid } = await start(user.uid);
+      response = { raid, boss };
+    }
     else if (body.action === 'contribute') response = await contribute(user.uid, body);
     else throw apiError(400, 'UNKNOWN_ACTION', '알 수 없는 요청입니다.');
     sendJson(res, 200, { ok: true, ...response });

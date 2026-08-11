@@ -263,6 +263,19 @@ for (const block of [removeManagerBlock, deleteGuildBlock, deleteTeacherBlock]) 
   if (block.includes('data()?.ownerId !== uid') || block.includes('data()?.ownerId === uid')) throw new Error('Legacy guild owner actions must use the managerIds[0] compatibility fallback.');
 }
 if (!mainJs.includes('wbSkillCastCount = 0;') || !mainJs.includes('wbSkillCastCount,\n                            wbComboCount,')) throw new Error('Rich curse purification or reconnect state persistence is incomplete.');
+if (!mainJs.includes('/^[A-Za-z\\s]*$/.test(raw)') || !mainJs.includes('inputEl.value = "";') || !mainJs.includes('showToast("⚠️ 영어 알파벳만 입력할 수 있어요. 띄어쓰기는 입력하지 않아도 정답으로 인정돼요.")')) throw new Error('English text inputs must allow spaces while clearing invalid characters without scoring an answer.');
+for (const [startName, endName] of [['offlineAnswerFIB', '_offlineNextQuestion'], ['submitConstructedQuizAnswer', 'renderQuizConstructedInput'], ['submitCriticalDefense', 'populateMasteredVocabulary'], ['submitWbShortAnswer', 'handleWorldBossAnswer']]) {
+  const startAt = mainJs.indexOf(`function ${startName}`);
+  const endAt = mainJs.indexOf(`function ${endName}`, startAt);
+  const block = startAt >= 0 && endAt > startAt ? mainJs.slice(startAt, endAt) : '';
+  if (!block.includes('formatEnglishWordInput(')) throw new Error(`English answer path must validate and clear invalid input before scoring: ${startName}`);
+}
+if (!mainJs.includes('button.textContent = entry.char;') || mainJs.includes('button.textContent = entry.char.toUpperCase();')) throw new Error('Word-order letter tiles must remain lowercase.');
+if (!mainJs.includes('formatEnglishWordDisplay(selected.map((entry) => entry.char).join(""))') || !mainJs.includes('formatEnglishWordDisplay(word) : "_ _ _ _"')) throw new Error('Constructed-word answer displays must use initial-cap sentence casing.');
+if (!mainJs.includes('normalizeEnglishAnswer(wbUnscrambleCurrentTiles.map(t => t.char).join(""))')) throw new Error('World-boss spelling comparison must ignore spacing consistently.');
+if (!worldBossApi.includes("body.action === 'raidStatus'") || !worldBossApi.includes('return { week, day: kstDay(), maxHp, curHp: Math.max(0, maxHp - totalDamage) };') || !worldBossApi.includes('response = { raid, boss };')) throw new Error('World-boss raid start and lightweight polling must return authoritative current/max HP.');
+if (!secureAccount.includes('secureWorldBossRaidStatus') || !secureAccount.includes('window._applySecureWorldBossRaidHp?.(boss)') || !mainJs.includes('wbBattleHpSyncInterval = setInterval')) throw new Error('World-boss battle HP must initialize from the server and refresh during the raid.');
+if (!mainJs.includes('const currentRemHp = Math.max(0, wbCurBossHp - wbTotalDamageDealt);')) throw new Error('World-boss battle HP must include both shared remaining HP and local unsubmitted damage.');
 const genericScriptHeaderAt = vercel.headers?.findIndex((route) => route.source === '/(.*)\\.(css|js)') ?? -1;
 const finalServiceWorkerHeaderAt = vercel.headers?.map((route) => route.source).lastIndexOf('/sw.js') ?? -1;
 const finalServiceWorkerHeaders = finalServiceWorkerHeaderAt >= 0 ? vercel.headers[finalServiceWorkerHeaderAt]?.headers || [] : [];

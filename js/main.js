@@ -1784,8 +1784,8 @@
 
             _offlineQuizState = {
                 questions: [
-                    { type: 'mcq', prompt: `"${q1word.word}"의 뜻은?`, answer: q1word.meaning, choices: mcq1.choices, correctIdx: mcq1.correctIdx },
-                    { type: 'mcq', prompt: `"${q2word.word}"의 뜻은?`, answer: q2word.meaning, choices: mcq2.choices, correctIdx: mcq2.correctIdx },
+                    { type: 'mcq', prompt: `"${formatEnglishWordDisplay(q1word.word)}"의 뜻은?`, answer: q1word.meaning, choices: mcq1.choices, correctIdx: mcq1.correctIdx },
+                    { type: 'mcq', prompt: `"${formatEnglishWordDisplay(q2word.word)}"의 뜻은?`, answer: q2word.meaning, choices: mcq2.choices, correctIdx: mcq2.correctIdx },
                     { type: 'fib', prompt: `"${q3word.meaning}"을(를) 영어로?`, answer: q3word.word }
                 ],
                 current: 0,
@@ -3501,13 +3501,16 @@
         function formatEnglishWordInput(inputEl) {
             if (!inputEl) return false;
             const raw = String(inputEl.value || "").normalize("NFKC");
-            if (!/^[A-Za-z]*$/.test(raw)) {
+            if (!/^[A-Za-z\s]*$/.test(raw)) {
                 inputEl.value = "";
                 showToast("⚠️ 영어 알파벳만 입력할 수 있어요. 띄어쓰기는 입력하지 않아도 정답으로 인정돼요.");
                 return false;
             }
             const lower = raw.toLowerCase();
-            inputEl.value = lower ? lower.charAt(0).toUpperCase() + lower.slice(1) : "";
+            const firstLetterIndex = lower.search(/[a-z]/);
+            inputEl.value = firstLetterIndex >= 0
+                ? lower.slice(0, firstLetterIndex) + lower.charAt(firstLetterIndex).toUpperCase() + lower.slice(firstLetterIndex + 1)
+                : lower;
             return true;
         }
         function formatEnglishWordDisplay(value) {
@@ -3543,8 +3546,11 @@
 
         function submitConstructedQuizAnswer(value, current) {
             if (isEvaluatingQuiz) return;
-            const answer = String(value || "");
-            if (!/^[A-Za-z]+$/.test(answer.trim())) {
+            const inputEl = value && typeof value === "object" && "value" in value ? value : null;
+            if (inputEl && !formatEnglishWordInput(inputEl)) return;
+            const answer = String(inputEl ? inputEl.value : value || "");
+            if (!/^[A-Za-z\s]+$/.test(answer.trim())) {
+                if (inputEl) inputEl.value = "";
                 showToast("⚠️ 영어 알파벳만 입력할 수 있어요. 띄어쓰기는 입력하지 않아도 정답으로 인정돼요.");
                 return;
             }
@@ -3571,9 +3577,9 @@
                 submit.type = "button";
                 submit.className = "shrink-0 border border-sky-500 bg-sky-950/40 px-4 text-xs font-black text-sky-100";
                 submit.textContent = "정답 확인";
-                submit.onclick = () => submitConstructedQuizAnswer(input.value, current);
+                submit.onclick = () => submitConstructedQuizAnswer(input, current);
                 input.oninput = () => formatEnglishWordInput(input);
-                input.onkeydown = (event) => { if (event.key === "Enter" && !event.isComposing) submitConstructedQuizAnswer(input.value, current); };
+                input.onkeydown = (event) => { if (event.key === "Enter" && !event.isComposing) submitConstructedQuizAnswer(input, current); };
                 form.append(input,submit);
                 area.append(form);
                 setTimeout(() => input.focus(), 50);
@@ -3593,12 +3599,12 @@
             submit.textContent = "정답 확인";
             const source = [...normalized].map((char,index) => ({char,index})).sort(() => Math.random() - .5);
             if (source.map((entry) => entry.char).join("") === normalized) source.reverse();
-            const refresh = () => { answer.textContent = selected.length ? selected.map((entry) => entry.char).join(" ") : "철자를 차례대로 선택하세요"; };
+            const refresh = () => { answer.textContent = selected.length ? formatEnglishWordDisplay(selected.map((entry) => entry.char).join("")) : "철자를 차례대로 선택하세요"; };
             source.forEach((entry) => {
                 const button = document.createElement("button");
                 button.type = "button";
                 button.className = "min-w-10 border border-sky-700 bg-[#111] px-3 py-2 text-sm font-black text-white hover:border-sky-300";
-                button.textContent = entry.char.toUpperCase();
+                button.textContent = entry.char;
                 button.onclick = () => { if (button.disabled) return; button.disabled = true; button.classList.add("opacity-30"); selected.push({...entry,button}); refresh(); };
                 tiles.append(button);
             });
@@ -5018,6 +5024,7 @@
             const rIdx = Math.floor(Math.random() * gearKeys.length);
             const targetGear = gearKeys[rIdx];
             const targetName = gearNames[rIdx];
+            const displayCriticalWord = formatEnglishWordDisplay(currentCriticalWord);
 
             const shieldRate = getEquippedRelicBonus("relic_shield");
             if (shieldRate > 0 && Math.random() * 100 < shieldRate) {
@@ -5029,15 +5036,15 @@
 
             if (gameState[targetGear] > 1) {
                 gameState[targetGear] -= 1;
-                const msg = `❌ 방어 실패! ${targetName}의 강화 수치가 -1 되었습니다.<br>(정답: <span class="text-white">${currentCriticalWord}</span>)`;
+                const msg = `❌ 방어 실패! ${targetName}의 강화 수치가 -1 되었습니다.<br>(정답: <span class="text-white">${displayCriticalWord}</span>)`;
                 errorEl.innerHTML = msg;
                 showBattleToast(`💥 방어 실패! ${targetName} -1강 하락!`);
-                showDamageOverlay(`❌ 방어 실패! ${targetName}의 강화 수치가 -1 되었습니다.\n(정답: ${currentCriticalWord})`);
+                showDamageOverlay(`❌ 방어 실패! ${targetName}의 강화 수치가 -1 되었습니다.\n(정답: ${displayCriticalWord})`);
             } else {
-                const msg = `❌ 방어 실패! 치명적인 공격을 받았습니다!<br>(정답: <span class="text-white">${currentCriticalWord}</span>)`;
+                const msg = `❌ 방어 실패! 치명적인 공격을 받았습니다!<br>(정답: <span class="text-white">${displayCriticalWord}</span>)`;
                 errorEl.innerHTML = msg;
                 showBattleToast("💥 크리티컬 피격!");
-                showDamageOverlay(`❌ 방어 실패! 치명적인 공격을 받았습니다!\n(정답: ${currentCriticalWord})`);
+                showDamageOverlay(`❌ 방어 실패! 치명적인 공격을 받았습니다!\n(정답: ${displayCriticalWord})`);
             }
             errorEl.classList.remove("hidden");
             
@@ -6576,6 +6583,7 @@
         let wbPlayerHp = 100;
         let wbPlayerMaxHp = 100;
         let wbTimerInterval = null;
+        let wbBattleHpSyncInterval = null;
         let wbTotalDamageDealt = 0;
         let wbCorrectAnswers = 0;
         let wbCurrentWordObj = null;
@@ -7261,7 +7269,17 @@
 
         // (Removed duplicate HP declarations)
 
-        function updateWorldBossBattleHpBar() {
+        function applySecureWorldBossRaidHp(boss) {
+            const maxHp = Number(boss?.maxHp);
+            const curHp = Number(boss?.curHp);
+            if (!Number.isFinite(maxHp) || maxHp <= 0 || !Number.isFinite(curHp)) return;
+            wbMaxBossHp = Math.max(1, maxHp);
+            wbCurBossHp = Math.max(0, Math.min(wbMaxBossHp, curHp));
+            if (isWorldBossRaidActive) updateWorldBossBattleHpBar();
+        }
+        window._applySecureWorldBossRaidHp = applySecureWorldBossRaidHp;
+
+        function updateWorldBossBattleHpBar(allowRaidEnd = true) {
             const hpTextEl = document.getElementById("wbBattleBossHpText");
             const hpBarEl = document.getElementById("wbBattleBossHpBar");
             const currentRemHp = Math.max(0, wbCurBossHp - wbTotalDamageDealt);
@@ -7275,7 +7293,7 @@
             }
 
             // 보스 잔여 HP가 0이 되는 즉시 제한시간에 관계없이 즉시 완전 클리어 판정!
-            if (currentRemHp <= 0 && isWorldBossRaidActive) {
+            if (allowRaidEnd && currentRemHp <= 0 && isWorldBossRaidActive) {
                 endWorldBossRaid("🎉 전 학년 용사들의 합심으로 월드보스를 완벽히 정복하여 토벌에 성공했습니다!");
             }
         }
@@ -7409,6 +7427,14 @@
             if (timerText) timerText.innerText = "180.0초";
             const hpText = document.getElementById("wbPlayerHpText");
             if (hpText) hpText.innerText = `${wbPlayerHp} / ${wbPlayerMaxHp} HP`;
+            updateWorldBossBattleHpBar(false);
+            if (wbBattleHpSyncInterval) clearInterval(wbBattleHpSyncInterval);
+            if (window._secureWorldBossRaidStatus) {
+                wbBattleHpSyncInterval = setInterval(() => {
+                    if (!isWorldBossRaidActive) return;
+                    window._secureWorldBossRaidStatus().catch((error) => console.error('World boss battle HP sync error:', error));
+                }, 15000);
+            }
 
             const defOverlay = document.getElementById("wbDefeatedOverlay");
             if (defOverlay) defOverlay.classList.add("hidden");
@@ -7794,8 +7820,7 @@
             if (dragonLvl >= slimeLvl && dragonLvl >= fairyLvl) bestPet = '드래곤';
             else if (slimeLvl >= dragonLvl && slimeLvl >= fairyLvl) bestPet = '슬라임';
 
-            const word = wbCurrentWordObj.word.toLowerCase();
-            const wordUpper = word.toUpperCase();
+            const word = normalizeEnglishAnswer(wbCurrentWordObj.word);
             const wordLen = word.length;
 
             // 동일 문제에서 몇 번째 힌트인지 추적
@@ -7805,7 +7830,7 @@
             }
             
             wbCurrentHintLetterIndex = Math.min(wordLen, wbCurrentHintLetterIndex + 1);
-            const revealedSubstr = wordUpper.slice(0, wbCurrentHintLetterIndex);
+            const revealedSubstr = word.slice(0, wbCurrentHintLetterIndex);
 
             let hintMsg = `🧚 [${bestPet}] "${wbCurrentHintLetterIndex}번째 철자 힌트: '${revealedSubstr}'" (총 ${wordLen}글자 / 뜻: ${wbCurrentWordObj.meaning})`;
             showWorldBossFxNotice(hintMsg, "text-yellow-300 border-yellow-400");
@@ -7822,11 +7847,11 @@
             // 2. [철자 조합] 문제인 경우: 공개된 순서대로 블록 자동 정렬 조립
             if (wbCurrentQuizType === "unscramble") {
                 resetWbUnscramble();
-                const targetLetters = word.slice(0, wbCurrentHintLetterIndex).split("");
+                const targetLetters = [...normalizeEnglishAnswer(word)].slice(0, wbCurrentHintLetterIndex);
                 
                 targetLetters.forEach(char => {
                     // 아직 클릭 안 한 타일 중 해당 글자 타일 찾아서 클릭 처리
-                    const letters = wbCurrentWordObj.word.toLowerCase().split("");
+                    const letters = [...normalizeEnglishAnswer(wbCurrentWordObj.word)];
                     for (let idx = 0; idx < letters.length; idx++) {
                         const tileId = `wbTile_${idx}`;
                         const btn = document.getElementById(tileId);
@@ -8110,7 +8135,7 @@
                     }
                 }
                 if (quizWordEl) quizWordEl.innerText = `[철자 조합] ${wbCurrentWordObj.meaning}`;
-                const letters = wbCurrentWordObj.word.toLowerCase().split("");
+                const letters = [...normalizeEnglishAnswer(wbCurrentWordObj.word)];
                 letters.sort(() => 0.5 - Math.random());
                 wbUnscrambleCurrentTiles = [];
 
@@ -8161,8 +8186,8 @@
 
             renderWbUnscrambleAnswer();
 
-            const userWord = wbUnscrambleCurrentTiles.map(t => t.char).join("").toLowerCase();
-            const targetWord = wbCurrentWordObj ? wbCurrentWordObj.word.toLowerCase() : "";
+            const userWord = normalizeEnglishAnswer(wbUnscrambleCurrentTiles.map(t => t.char).join(""));
+            const targetWord = wbCurrentWordObj ? normalizeEnglishAnswer(wbCurrentWordObj.word) : "";
             if (userWord === targetWord) {
                 submitWbUnscramble();
             }
@@ -8171,8 +8196,8 @@
         function renderWbUnscrambleAnswer() {
             const display = document.getElementById("wbUnscrambleAnswerDisplay");
             if (!display) return;
-            const str = wbUnscrambleCurrentTiles.map(t => t.char).join(" ");
-            display.innerText = str.length > 0 ? str : "_ _ _ _";
+            const word = wbUnscrambleCurrentTiles.map(t => t.char).join("");
+            display.innerText = word ? formatEnglishWordDisplay(word) : "_ _ _ _";
         }
 
         function resetWbUnscramble() {
@@ -8188,8 +8213,8 @@
         }
 
         function submitWbUnscramble() {
-            const userWord = wbUnscrambleCurrentTiles.map(t => t.char).join("").toLowerCase();
-            const targetWord = wbCurrentWordObj ? wbCurrentWordObj.word.toLowerCase() : "";
+            const userWord = normalizeEnglishAnswer(wbUnscrambleCurrentTiles.map(t => t.char).join(""));
+            const targetWord = wbCurrentWordObj ? normalizeEnglishAnswer(wbCurrentWordObj.word) : "";
             handleWorldBossAnswer(userWord === targetWord);
         }
 
@@ -8455,6 +8480,8 @@
 
         function endWorldBossRaid(reasonMessage) {
             clearInterval(wbTimerInterval);
+            if (wbBattleHpSyncInterval) clearInterval(wbBattleHpSyncInterval);
+            wbBattleHpSyncInterval = null;
             isWorldBossRaidActive = false;
 
             const arena = document.getElementById("worldBossBattleArena");

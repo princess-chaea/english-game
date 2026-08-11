@@ -41,8 +41,44 @@ function legacyTotal(data) {
   // the aggregate HP effect, and never return or add to that data map.
   return safeInt(data?.legacyDamageTotal, 0, 0, 100000000000) + Object.values(data?.damages || {}).reduce((sum, value) => sum + safeInt(value, 0, 0, 100000000000), 0);
 }
+async function finalizeRolledOverRaid(uid, week) {
+  const raidSessionRef = sessionRef(uid, week);
+  return adminDb.runTransaction(async (tx) => {
+    const sessionSnap = await tx.get(raidSessionRef);
+    const session = sessionSnap.data();
+    if (!session || session.submitted || session.day === kstDay() || !session.checkpointDamage) return 0;
+    const ref = bossRef(week);
+    const contributionRef = ref.collection('contributions').doc(uid);
+    const accountRef = accounts.doc(uid);
+    const [bossSnap, contributionSnap, accountSnap] = await Promise.all([tx.get(ref), tx.get(contributionRef), tx.get(accountRef)]);
+    const boss = bossSnap.data() || {};
+    const previous = contributionSnap.data() || {};
+    const account = accountSnap.data() || {};
+    const maxHp = maxHpForWeek(week);
+    const requested = safeInt(session.checkpointDamage, 0, 0, Number.MAX_SAFE_INTEGER);
+    const currentTotal = legacyTotal(boss) + safeInt(boss.secureDamageTotal, 0, 0);
+    const bossApplied = Math.min(requested, Math.max(0, maxHp - currentTotal));
+    const secureDamageTotal = safeInt(boss.secureDamageTotal, 0, 0) + bossApplied;
+    tx.set(ref, { maxHp, curHp: Math.max(0, maxHp - legacyTotal(boss) - secureDamageTotal), secureDamageTotal, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    tx.set(contributionRef, {
+      damage: safeInt(previous.damage, 0, 0) + requested,
+      lastPlayedKstDay: session.day,
+      publicLeaderboard: Boolean(account.leaderboardOptIn),
+      publicNickname: account.leaderboardOptIn ? account.nickname : null,
+      publicGuildName: account.leaderboardOptIn && typeof account.activeGuildName === 'string' ? account.activeGuildName : null,
+      publicGuildLogoUrl: account.leaderboardOptIn && account.activeGuildName ? guildLogoUrl(account.activeGuildLogoUrl) : null,
+      publicTitleName: account.leaderboardOptIn ? (typeof account.state?.equippedTitle === 'string' ? account.state.equippedTitle : (typeof account.state?.wbTitle === 'string' ? account.state.wbTitle : null)) : null,
+      reportedCorrectAnswers: FieldValue.increment(safeInt(session.checkpointCorrectAnswers, 0, 0, RAID_MAX_REPORTED_ANSWERS)),
+      verifiedCorrectAnswers: FieldValue.increment(safeInt(session.checkpointCorrectAnswers, 0, 0, RAID_MAX_REPORTED_ANSWERS)),
+      updatedAt: FieldValue.serverTimestamp()
+    }, { merge: true });
+    tx.update(raidSessionRef, { submitted: true, autoFinalizedAtRollover: true, submittedAt: FieldValue.serverTimestamp() });
+    return requested;
+  });
+}
 async function status(uid) {
   const week = currentWeek();
+  await Promise.all([finalizeRolledOverRaid(uid, week), finalizeRolledOverRaid(uid, week - 1)]);
   const ref = bossRef(week);
   const [bossSnap, contributionSnap, topSnap] = await Promise.all([
     ref.get(),
@@ -80,6 +116,7 @@ async function raidStatus() {
 }
 async function claimWeeklyReward(uid) {
   const week = currentWeek() - 1;
+  await finalizeRolledOverRaid(uid, week);
   const ref = bossRef(week);
   const contributionRef = ref.collection('contributions').doc(uid);
   const claimRef = ref.collection('rewardClaims').doc(uid);
@@ -136,6 +173,7 @@ async function claimWeeklyReward(uid) {
 }
 async function start(uid) {
   const week = currentWeek();
+  await Promise.all([finalizeRolledOverRaid(uid, week), finalizeRolledOverRaid(uid, week - 1)]);
   const day = kstDay();
   const ref = sessionRef(uid, week);
   const token = secret();
@@ -164,6 +202,34 @@ async function start(uid) {
     return { week, day, maxHp, curHp };
   });
   return { week, day, token, playDurationSeconds: RAID_PLAY_DURATION_MS / 1000, playEndsAt: playEndsAt.toDate().toISOString(), expiresAt: expiresAt.toDate().toISOString(), boss };
+}
+async function checkpoint(uid, body) {
+  const week = currentWeek();
+  const raidSessionRef = sessionRef(uid, week);
+  const accountRef = accounts.doc(uid);
+  const token = typeof body.raidToken === 'string' ? body.raidToken : '';
+  const requested = safeInt(body.damage, 0, 0, Number.MAX_SAFE_INTEGER);
+  const reportedCorrectAnswers = safeInt(body.correctAnswers, 0, 0, RAID_MAX_REPORTED_ANSWERS);
+  if (token.length < 20) throw apiError(400, 'INVALID_RAID_TOKEN', '먼저 월드보스 참전을 시작해 주세요.');
+  await adminDb.runTransaction(async (tx) => {
+    const [sessionSnap, accountSnap] = await Promise.all([tx.get(raidSessionRef), tx.get(accountRef)]);
+    const session = sessionSnap.data();
+    const account = accountSnap.data() || {};
+    const now = Date.now();
+    const startedAtMs = safeInt(session?.startedAtMs || session?.createdAt?.toMillis?.(), 0, 0, now);
+    if (!session || !startedAtMs || session.day !== kstDay(now) || session.submitted || session.expiresAt?.toMillis?.() <= now || session.tokenHash !== secretHash(token)) throw apiError(409, 'RAID_SESSION_INVALID', '월드보스 참전 시간이 끝났어요.');
+    const verifiedPlayMs = Math.min(Math.max(0, now - startedAtMs), RAID_PLAY_DURATION_MS);
+    const allowedAnswers = Math.min(RAID_MAX_REPORTED_ANSWERS, Math.floor(verifiedPlayMs / RAID_ANSWER_INTERVAL_MS));
+    if (reportedCorrectAnswers > allowedAnswers) throw apiError(409, 'RAID_ANSWER_RATE_INVALID', '정답 기록의 시간 검증에 실패했어요.');
+    const savedPower = safeInt(account.state?.combatPower, 0, 0, 9999999999999);
+    const verifiablePower = Math.max(RAID_MIN_VERIFIABLE_POWER, savedPower);
+    const plausibleDamage = Math.max(verifiablePower * 40, verifiablePower * Math.max(1, reportedCorrectAnswers + 4) * RAID_DAMAGE_PER_POWER_PER_ANSWER);
+    if (requested > plausibleDamage) throw apiError(409, 'RAID_DAMAGE_VERIFICATION_FAILED', '전투력과 정답 기록으로 확인할 수 없는 피해량이에요.');
+    const previousDamage = safeInt(session.checkpointDamage, 0, 0, Number.MAX_SAFE_INTEGER);
+    const previousCorrect = safeInt(session.checkpointCorrectAnswers, 0, 0, RAID_MAX_REPORTED_ANSWERS);
+    tx.update(raidSessionRef, { checkpointDamage: Math.max(previousDamage, requested), checkpointCorrectAnswers: Math.max(previousCorrect, reportedCorrectAnswers), checkpointedAt: FieldValue.serverTimestamp() });
+  });
+  return { boss: await raidStatus() };
 }
 function rewardsForAppliedDamage(appliedDamage) {
   const applied = safeInt(appliedDamage, 0, 0);
@@ -314,6 +380,7 @@ export default async function handler(req, res) {
       const { boss, ...raid } = await start(user.uid);
       response = { raid, boss };
     }
+    else if (body.action === 'checkpoint') response = await checkpoint(user.uid, body);
     else if (body.action === 'contribute') response = await contribute(user.uid, body);
     else throw apiError(400, 'UNKNOWN_ACTION', '알 수 없는 요청입니다.');
     sendJson(res, 200, { ok: true, ...response });

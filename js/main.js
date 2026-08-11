@@ -1222,7 +1222,20 @@
                 const innerHtml = `<defs><filter id="guildSkinGlow" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="0" stdDeviation="${glowStrength}" flood-color="${rarityColor}" flood-opacity=".95"/></filter></defs><ellipse cx="50" cy="108" rx="32" ry="7" fill="${rarityColor}" opacity="${glowStrength?'.28':'.08'}"/><image href="${imageUrl}" x="0" y="0" width="100" height="120" preserveAspectRatio="xMidYMid meet" filter="url(#guildSkinGlow)" />`;
                 svg.innerHTML = innerHtml;
                 const wbSvg = document.getElementById("wbHeroSvg");
-                if (wbSvg) wbSvg.innerHTML = innerHtml;
+                if (wbSvg) {
+                    wbSvg.innerHTML = innerHtml;
+                    wbSvg.classList.add('hidden');
+                    let wbSkinImage = document.getElementById('wbGuildHeroSkinImage');
+                    if (!wbSkinImage) {
+                        wbSkinImage = document.createElement('img');
+                        wbSkinImage.id = 'wbGuildHeroSkinImage';
+                        wbSkinImage.className = 'absolute inset-0 h-full w-full object-contain [image-rendering:pixelated]';
+                        wbSvg.parentElement?.append(wbSkinImage);
+                    }
+                    wbSkinImage.src = imageUrl;
+                    wbSkinImage.alt = '장착한 차원 영웅 외형';
+                    wbSkinImage.style.filter = glowStrength ? `drop-shadow(0 0 ${glowStrength * 2}px ${rarityColor})` : '';
+                }
                 return;
             }
 
@@ -1359,6 +1372,8 @@
 
             const wbSvg = document.getElementById("wbHeroSvg");
             if (wbSvg) {
+                document.getElementById('wbGuildHeroSkinImage')?.remove();
+                wbSvg.classList.remove('hidden');
                 wbSvg.innerHTML = innerHtml;
             }
         }
@@ -6650,6 +6665,7 @@
         let wbPlayerMaxHp = 100;
         let wbTimerInterval = null;
         let wbBattleHpSyncInterval = null;
+        let wbCheckpointLifecycleBound = false;
         let wbTotalDamageDealt = 0;
         let wbCorrectAnswers = 0;
         let wbCurrentWordObj = null;
@@ -6866,6 +6882,10 @@
 
         function hasWorldBossResumeProgress(day = getKstDayString()) {
             try {
+                const secureKey = `vocahero_secure_wb_raid_${gameState.uid || 'guest'}`;
+                const secureRaid = JSON.parse(localStorage.getItem(secureKey) || 'null');
+                const secureExpiry = Date.parse(secureRaid?.expiresAt);
+                if (secureRaid?.token && secureRaid?.day === day && Number.isFinite(secureExpiry) && secureExpiry > Date.now()) return true;
                 const saved = JSON.parse(localStorage.getItem(getWorldBossProgressKey()) || "null");
                 return Boolean(saved && saved.date === day);
             } catch (error) {
@@ -6924,7 +6944,7 @@
             if (debuffDescEl) {
                 debuffDescEl.innerHTML = (bossInfo.id === 'fafnir') ? "선다형 보기나 순서맞추기 단어칸에 불꽃이 일렁여 시야를 방해합니다.<br><span class='text-yellow-300 font-bold'>👉 (불꽃이 일렁이는 정답을 타격하면 비늘이 깨집니다!)</span>" :
                                          (bossInfo.id === 'golem') ? "단단한 암석 피부로 일반 타격 데미지를 60% 감소(0.4배)합니다.<br><span class='text-yellow-300 font-bold'>👉 (6글자 이상 철자 조합 정답 또는 10콤보 달성 시 외피가 붕괴됩니다!)</span>" :
-                                         "20초마다 장착 스킬 위치를 섞고 스킬 하나를 봉인합니다. 봉인 스킬을 누르면 뜻을 보고 영단어를 입력하는 해제 미니퀴즈가 열립니다.<br><span class='text-red-400 font-bold'>👉 (일반 퀴즈 오답: 최대 HP 10% 흡혈·보스 회복·스킬 봉인 / 해제 퀴즈 오답: 최대 HP 8% 피해·보스 회복)</span><br><span class='text-yellow-300 font-bold'>✨ 마법 스킬 4회 시전 또는 10연속 정답: 15초 정화·모든 봉인 해제·쿨타임 초기화·스킬 피해 +150%</span>";
+                                         "20초마다 장착 스킬 위치를 섞고 스킬 하나를 쇠사슬로 봉인합니다. 봉인 스킬을 누르면 단어·뜻 4지선다, 철자 순서 맞추기, 빈칸 알파벳 선택 중 하나가 무작위로 열리며 푸는 동안 전투 타이머가 멈춥니다.<br><span class='text-red-400 font-bold'>👉 (일반 퀴즈 오답: 최대 HP 10% 흡혈·보스 회복·스킬 봉인 / 해제 퀴즈 오답: 최대 HP 8% 피해·보스 회복)</span><br><span class='text-yellow-300 font-bold'>✨ 마법 스킬 4회 시전 또는 10연속 정답: 15초 정화·모든 봉인 해제·쿨타임 초기화·스킬 피해 +150%</span>";
             }
             const weakNameEl = document.getElementById("wbGuideWeaknessName");
             if (weakNameEl) weakNameEl.innerText = bossInfo.weaknessName;
@@ -7388,6 +7408,7 @@
         let wbSkillCastCount = 0;
         let wbRichCurseTimer = 20.0;
         let wbRichLockedSkillIds = new Set();
+        let wbRichUnlockQuizActive = false;
 
         function updateWorldBossHudUI() {
             const seasonIdx = getWeeklyBossIndex();
@@ -7442,9 +7463,11 @@
         }
 
         async function startWorldBossRaid() {
+            let secureRaid = null;
             if (window._secureWorldBossStart) {
                 const started = await window._secureWorldBossStart();
                 if (!started) return;
+                secureRaid = started.raid || null;
             }
             isWorldBossRaidActive = true;
             wbTimerRemaining = 180.0;
@@ -7460,11 +7483,18 @@
             wbSkillCastCount = 0;
             wbRichCurseTimer = 20.0;
             wbRichLockedSkillIds = new Set();
+            wbRichUnlockQuizActive = false;
             wbTotalDamageDealt = 0;
             wbCorrectAnswers = 0;
             wbSkillCooldowns = {};
             wbPlayerMaxHp = calculatePlayerRaidMaxHp();
             wbPlayerHp = wbPlayerMaxHp;
+
+            const securePlayEndsAt = Date.parse(secureRaid?.playEndsAt);
+            const secureTimerRemaining = Number.isFinite(securePlayEndsAt)
+                ? Math.max(0, Math.min(180, (securePlayEndsAt - Date.now()) / 1000))
+                : null;
+            if (secureTimerRemaining !== null) wbTimerRemaining = secureTimerRemaining;
 
             const todayStr = getKstDayString();
             const inProgressKey = `vocahero_wb_progress_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
@@ -7474,7 +7504,10 @@
                 if (savedJson) {
                     const saved = JSON.parse(savedJson);
                     if (saved.date === todayStr) {
-                        wbTimerRemaining = saved.wbTimerRemaining ?? 180.0;
+                        const savedTimerRemaining = Math.max(0, Math.min(180, Number(saved.wbTimerRemaining) || 0));
+                        wbTimerRemaining = secureTimerRemaining === null
+                            ? savedTimerRemaining
+                            : Math.min(savedTimerRemaining, secureTimerRemaining);
                         wbTotalDamageDealt = saved.wbTotalDamageDealt ?? 0;
                         wbCorrectAnswers = Math.max(0, Math.floor(Number(saved.wbCorrectAnswers) || 0));
                         wbPlayerHp = saved.wbPlayerHp ?? wbPlayerMaxHp;
@@ -7511,9 +7544,15 @@
             updateWorldBossBattleHpBar(false);
             if (wbBattleHpSyncInterval) clearInterval(wbBattleHpSyncInterval);
             if (window._secureWorldBossRaidStatus) {
+                if (!wbCheckpointLifecycleBound) {
+                    wbCheckpointLifecycleBound = true;
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'hidden' && isWorldBossRaidActive) window._secureWorldBossRaidStatus(wbTotalDamageDealt, wbCorrectAnswers).catch(() => {});
+                    });
+                }
                 wbBattleHpSyncInterval = setInterval(() => {
                     if (!isWorldBossRaidActive) return;
-                    window._secureWorldBossRaidStatus().catch((error) => console.error('World boss battle HP sync error:', error));
+                    window._secureWorldBossRaidStatus(wbTotalDamageDealt, wbCorrectAnswers).catch((error) => console.error('World boss battle checkpoint error:', error));
                 }, 15000);
             }
 
@@ -7545,6 +7584,7 @@
             updateWorldBossHudUI();
             
             renderWorldBossPetStage();
+            drawHeroAvatar();
 
             generateWorldBossQuiz();
             renderWorldBossRaidSkills();
@@ -7554,13 +7594,13 @@
             if (wbTimerInterval) clearInterval(wbTimerInterval);
             wbTimerInterval = setInterval(() => {
                 // 필살기 저지 이벤트 중에는 레이드 메인 타이머 일시 중지!
-                if (!wbUltimateEventActive) {
+                if (!wbUltimateEventActive && !wbRichUnlockQuizActive) {
                     wbTimerRemaining -= 0.1;
                 }
                 
                 const tText = document.getElementById("wbTimerText");
                 if (tText) {
-                    tText.innerText = wbUltimateEventActive 
+                    tText.innerText = (wbUltimateEventActive || wbRichUnlockQuizActive)
                         ? `${wbTimerRemaining.toFixed(1)}초 (⏸️ 일시중지)`
                         : `${wbTimerRemaining.toFixed(1)}초`;
                 }
@@ -7761,7 +7801,7 @@
             return skill;
         }
 
-        function attemptWorldBossRichSkillUnlock(skill) {
+        function attemptWorldBossRichSkillUnlockLegacy(skill) {
             showInputModal({
                 icon: "🔮",
                 title: "사령의 저주 해제 미니퀴즈",
@@ -7795,6 +7835,71 @@
                     if (wbPlayerHp <= 0) endWorldBossRaid("💀 사령의 저주 해제에 실패해 리치에게 쓰러졌습니다!");
                 }
             });
+        }
+
+        function resolveWorldBossRichUnlockQuiz(skill, correct) {
+            if (correct) {
+                wbRichLockedSkillIds.delete(String(skill.id));
+                updateWorldBossSkillCooldownsUI();
+                playSoundEffect('correct');
+                showWorldBossFxNotice(`✨ [봉인 해제] ${capitalizeFirstLetter(skill.word)} 스킬을 다시 사용할 수 있습니다!`, 'text-emerald-300 border-emerald-500');
+                return;
+            }
+            const curseDamage = Math.max(1, Math.floor(wbPlayerMaxHp * 0.08));
+            const healAmount = Math.floor(calculatePlayerCP() * 150);
+            wbPlayerHp -= curseDamage;
+            wbTotalDamageDealt = Math.max(0, wbTotalDamageDealt - healAmount);
+            updateWorldBossBattleHpBar();
+            const hpText = document.getElementById('wbPlayerHpText');
+            if (hpText) hpText.innerText = `${Math.max(0, wbPlayerHp)} / ${wbPlayerMaxHp} HP`;
+            playSoundEffect('incorrect');
+            triggerWorldBossAttackAnim(`🔮 해제 오답! -${curseDamage} HP · 리치 +${healAmount.toLocaleString()} HP 회복 · 스킬 봉인 유지`);
+            if (wbPlayerHp <= 0) endWorldBossRaid('💀 사령의 저주 해제에 실패해 리치에게 쓰러졌습니다!');
+        }
+
+        function attemptWorldBossRichSkillUnlock(skill) {
+            if (wbRichUnlockQuizActive) return;
+            wbRichUnlockQuizActive = true;
+            const quizTypes = ['meaning-choice', 'word-choice', 'word-order', 'fill-blank'];
+            const quizType = quizTypes[Math.floor(Math.random() * quizTypes.length)];
+            const pool = (gameState.wordsPool || []).filter((row) => row && normalizeEnglishAnswer(row.word) !== normalizeEnglishAnswer(skill.word));
+            const shuffled = (items) => { const copy = [...items]; for (let i = copy.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [copy[i], copy[j]] = [copy[j], copy[i]]; } return copy; };
+            const overlay = document.createElement('div'), panel = document.createElement('section'), title = document.createElement('h2'), typeLabel = document.createElement('p'), prompt = document.createElement('div'), answerArea = document.createElement('div'), cancel = document.createElement('button');
+            overlay.id = 'wbRichUnlockQuizModal';
+            overlay.className = 'fixed inset-0 z-[100001] flex items-center justify-center bg-black/85 p-4';
+            panel.className = 'w-full max-w-lg border-2 border-purple-500 bg-[#09070d] p-5 shadow-[0_0_40px_rgba(168,85,247,.55)]';
+            title.className = 'text-lg font-black text-purple-200';
+            title.textContent = '⛓️ 사령의 저주 봉인 해제';
+            typeLabel.className = 'mt-2 text-[10px] font-bold text-yellow-300';
+            prompt.className = 'mt-3 border border-purple-900/70 bg-black p-4 text-center text-base font-black text-white';
+            answerArea.className = 'mt-3 grid grid-cols-2 gap-2';
+            cancel.type = 'button'; cancel.className = 'mt-3 w-full border border-gray-700 py-2 text-xs font-bold text-gray-400'; cancel.textContent = '나중에';
+            const close = (correct = null) => { overlay.remove(); wbRichUnlockQuizActive = false; if (correct !== null) resolveWorldBossRichUnlockQuiz(skill, correct); };
+            cancel.onclick = () => close(null);
+            const addChoice = (label, correct) => { const button = document.createElement('button'); button.type = 'button'; button.className = 'min-h-12 border border-purple-700 bg-purple-950/25 px-3 py-2 text-sm font-bold text-white hover:bg-purple-900/50'; button.textContent = label; button.onclick = () => close(correct); answerArea.append(button); };
+            if (quizType === 'meaning-choice') {
+                typeLabel.textContent = '단어를 보고 알맞은 뜻을 고르세요 · 타이머 일시정지';
+                prompt.textContent = capitalizeFirstLetter(skill.word);
+                shuffled([{ label: String(skill.meaning || ''), correct: true }, ...shuffled(pool).slice(0, 3).map((row) => ({ label: String(row.meaning || ''), correct: false }))]).forEach((row) => addChoice(row.label, row.correct));
+            } else if (quizType === 'word-choice') {
+                typeLabel.textContent = '뜻을 보고 알맞은 영단어를 고르세요 · 타이머 일시정지';
+                prompt.textContent = String(skill.meaning || '');
+                shuffled([{ label: capitalizeFirstLetter(skill.word), correct: true }, ...shuffled(pool).slice(0, 3).map((row) => ({ label: capitalizeFirstLetter(row.word), correct: false }))]).forEach((row) => addChoice(row.label, row.correct));
+            } else if (quizType === 'word-order') {
+                typeLabel.textContent = '철자를 순서대로 눌러 단어를 완성하세요 · 타이머 일시정지';
+                const answer = normalizeEnglishAnswer(skill.word), letters = shuffled(answer.split('')); let built = '';
+                prompt.textContent = '_ '.repeat(answer.length).trim();
+                answerArea.className = 'mt-3 flex flex-wrap justify-center gap-2';
+                letters.forEach((letter) => { const button = document.createElement('button'); button.type = 'button'; button.className = 'h-11 w-11 border border-purple-500 bg-purple-950/40 text-lg font-black text-white'; button.textContent = letter; button.onclick = () => { built += letter; button.disabled = true; button.classList.add('opacity-30'); prompt.textContent = built + ' ' + '_ '.repeat(Math.max(0, answer.length - built.length)).trim(); }; answerArea.append(button); });
+                const actions = document.createElement('div'), reset = document.createElement('button'), confirm = document.createElement('button'); actions.className = 'mt-3 grid grid-cols-2 gap-2'; reset.type = confirm.type = 'button'; reset.className = 'border border-gray-600 py-2 text-xs font-bold'; confirm.className = 'border border-yellow-500 bg-yellow-950/30 py-2 text-xs font-black text-yellow-200'; reset.textContent = '다시 배열'; confirm.textContent = '확인'; reset.onclick = () => { built = ''; prompt.textContent = '_ '.repeat(answer.length).trim(); answerArea.querySelectorAll('button').forEach((button) => { button.disabled = false; button.classList.remove('opacity-30'); }); }; confirm.onclick = () => close(built === answer); panel.append(title, typeLabel, prompt, answerArea, actions, cancel); actions.append(reset, confirm); overlay.append(panel); document.body.append(overlay); return;
+            } else {
+                typeLabel.textContent = '빈칸에 들어갈 알파벳을 고르세요 · 타이머 일시정지';
+                const answer = normalizeEnglishAnswer(skill.word), index = Math.floor(Math.random() * Math.max(1, answer.length)), letter = answer[index] || answer[0] || 'a';
+                prompt.textContent = answer.split('').map((char, charIndex) => charIndex === index ? '_' : char).join('') + ` · ${String(skill.meaning || '')}`;
+                const distractors = shuffled('abcdefghijklmnopqrstuvwxyz'.split('').filter((char) => char !== letter)).slice(0, 3);
+                shuffled([{ label: letter, correct: true }, ...distractors.map((char) => ({ label: char, correct: false }))]).forEach((row) => addChoice(row.label, row.correct));
+            }
+            panel.append(title, typeLabel, prompt, answerArea, cancel); overlay.append(panel); document.body.append(overlay);
         }
 
         function renderWorldBossRaidSkills() {
@@ -7854,23 +7959,31 @@
 
                 const cdOverlay = btn.querySelector('.wb-cd-overlay');
                 const cdTimerText = btn.querySelector('.wb-cd-timer');
+                let curseLockOverlay = btn.querySelector('.wb-rich-curse-lock');
 
                 if (isRichLocked) {
                     btn.disabled = false;
                     btn.classList.remove("opacity-60", "cursor-not-allowed");
-                    btn.classList.add("border-purple-400", "shadow-[0_0_14px_rgba(168,85,247,.8)]");
+                    btn.classList.add("border-purple-300", "bg-purple-950/60", "shadow-[inset_0_0_20px_rgba(88,28,135,.8),0_0_18px_rgba(168,85,247,.9)]");
+                    if (!curseLockOverlay) {
+                        curseLockOverlay = document.createElement('span');
+                        curseLockOverlay.className = 'wb-rich-curse-lock pointer-events-none absolute inset-0 z-20 flex items-center justify-center overflow-hidden bg-purple-950/55';
+                        curseLockOverlay.innerHTML = '<span class="absolute -left-2 rotate-[-18deg] text-3xl opacity-90">⛓️</span><span class="text-2xl drop-shadow-[0_0_8px_#d8b4fe]">🔒</span><span class="absolute -right-2 rotate-[18deg] text-3xl opacity-90">⛓️</span>';
+                        btn.append(curseLockOverlay);
+                    }
                     if (cdOverlay) {
                         cdOverlay.style.display = "block";
                         cdOverlay.style.width = "100%";
                         cdOverlay.className = "wb-cd-overlay absolute bottom-0 left-0 h-1 bg-purple-500 transition-all pointer-events-none";
                     }
                     if (cdTimerText) {
-                        cdTimerText.innerText = "🔒 해제 퀴즈";
+                        cdTimerText.innerText = "⛓️🔒";
                         cdTimerText.className = "wb-cd-timer text-[8px] text-purple-200 font-black animate-pulse z-10";
                     }
                 } else if (isCd) {
+                    curseLockOverlay?.remove();
                     btn.disabled = true;
-                    btn.classList.remove("border-purple-400", "shadow-[0_0_14px_rgba(168,85,247,.8)]");
+                    btn.classList.remove("border-purple-300", "bg-purple-950/60", "shadow-[inset_0_0_20px_rgba(88,28,135,.8),0_0_18px_rgba(168,85,247,.9)]");
                     btn.classList.add("opacity-60", "cursor-not-allowed");
                     if (cdOverlay) {
                         cdOverlay.className = "wb-cd-overlay absolute bottom-0 left-0 h-1 bg-red-600 transition-all pointer-events-none";
@@ -7882,8 +7995,9 @@
                         cdTimerText.className = "wb-cd-timer text-[8px] text-red-400 font-bold  animate-pulse z-10";
                     }
                 } else {
+                    curseLockOverlay?.remove();
                     btn.disabled = false;
-                    btn.classList.remove("border-purple-400", "shadow-[0_0_14px_rgba(168,85,247,.8)]");
+                    btn.classList.remove("border-purple-300", "bg-purple-950/60", "shadow-[inset_0_0_20px_rgba(88,28,135,.8),0_0_18px_rgba(168,85,247,.9)]");
                     btn.classList.remove("opacity-60", "cursor-not-allowed");
                     if (cdOverlay) {
                         cdOverlay.className = "wb-cd-overlay absolute bottom-0 left-0 h-1 bg-red-600 transition-all pointer-events-none";

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { randomBytes, randomUUID } from 'node:crypto';
-import { adminAuth, adminDb, adminStorage, FieldValue, Timestamp } from './_firebase-admin.js';
+import { adminAuth, adminDb, adminStorage, AggregateField, FieldValue, Timestamp } from './_firebase-admin.js';
 import { apiError, handleApiError, hash, isExpired, randomCode, readBody, requireMethod, requireTeacher, safeInt, sendJson, text } from './_http.js';
 
 const teachers = adminDb.collection('teachers');
@@ -433,9 +433,8 @@ async function teacherGuildRankMap() {
   if (teacherGuildRankCache.expiresAt > now) return teacherGuildRankCache.ranks;
   const guildSnaps = await classes.limit(100).get();
   const rows = await Promise.all(guildSnaps.docs.map(async (guildSnap) => {
-    const members = await guildSnap.ref.collection('members').select('guildPoints').limit(500).get();
-    const guildPoints = members.docs.reduce((sum, member) => sum + safeInt(member.data()?.guildPoints, 0, 0), 0);
-    return { id: guildSnap.id, memberCount: members.size, guildPoints, name: guildName(guildSnap.data()) };
+    const totals = await guildSnap.ref.collection('members').limit(500).aggregate({ memberCount: AggregateField.count(), guildPoints: AggregateField.sum('guildPoints') }).get();
+    return { id: guildSnap.id, memberCount: safeInt(totals.data()?.memberCount, 0, 0), guildPoints: safeInt(totals.data()?.guildPoints, 0, 0), name: guildName(guildSnap.data()) };
   }));
   const ranked = rows.filter((row) => row.memberCount > 0).sort((a, b) => b.guildPoints - a.guildPoints || a.name.localeCompare(b.name));
   const ranks = new Map(ranked.map((row, index) => [row.id, index + 1]));
@@ -446,18 +445,21 @@ async function listClasses(uid) {
   const teacher = await teachers.doc(uid).get();
   const ids = (teacher.data()?.classIds || []).slice(0, 100);
   const [snapshots, rankMap] = await Promise.all([Promise.all(ids.map((id) => classes.doc(id).get())), teacherGuildRankMap()]);
-  const result = [];
-  for (const snap of snapshots) {
+  const managedSnapshots = snapshots.filter((snap) => snap.exists && snap.data()?.managerIds?.includes(uid));
+  return Promise.all(managedSnapshots.map(async (snap) => {
     const data = snap.data();
-    if (!snap.exists || !data.managerIds?.includes(uid)) continue;
-    const members = await snap.ref.collection('members').select('totalCorrect', 'guildPoints').get();
-    let totalCorrect = 0; let guildPoints = 0;
-    let activeStudentCount = 0;
-    members.docs.forEach((member) => { const correct = safeInt(member.data()?.totalCorrect, 0, 0); const points = safeInt(member.data()?.guildPoints, 0, 0); totalCorrect += correct; guildPoints += points; if (points > 0) activeStudentCount += 1; });
+    const members = snap.ref.collection('members');
+    const [totals, active] = await Promise.all([
+      members.aggregate({ studentCount: AggregateField.count(), totalCorrect: AggregateField.sum('totalCorrect'), guildPoints: AggregateField.sum('guildPoints') }).get(),
+      members.where('guildPoints', '>', 0).count().get()
+    ]);
+    const studentCount = safeInt(totals.data()?.studentCount, 0, 0);
+    const totalCorrect = safeInt(totals.data()?.totalCorrect, 0, 0);
+    const guildPoints = safeInt(totals.data()?.guildPoints, 0, 0);
+    const activeStudentCount = safeInt(active.data()?.count, 0, 0);
     const ownerId = text(data.ownerId || data.managerIds?.[0], 128);
-    result.push({ id: snap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), ownerId, isOwner: ownerId === uid, managerCount: guildCoManagerCount(data), studentCount: members.size, activeStudentCount, totalCorrect, guildPoints, guildRank: rankMap.get(snap.id) || null, wordPackId: classPack(data.grade, data.wordPackId), wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade), questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes) });
-  }
-  return result;
+    return { id: snap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), ownerId, isOwner: ownerId === uid, managerCount: guildCoManagerCount(data), studentCount, activeStudentCount, totalCorrect, guildPoints, guildRank: rankMap.get(snap.id) || null, wordPackId: classPack(data.grade, data.wordPackId), wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade), questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes) };
+  }));
 }
 function safeQuestionTypeStats(value) {
   const result = {};
@@ -563,12 +565,14 @@ function dailySeriesForMembers(members, days = 14) {
     return { day, ...totals, accuracy: totals.tries ? Math.round(totals.correct / totals.tries * 1000) / 10 : 0 };
   });
 }
-async function listGuildMembers(uid, body) {
+async function listGuildMembers(uid, body, includeWrongWords = false) {
   const classId = text(body.classId, 128);
   const classSnap = await ownedClass(uid, classId);
   const data = classSnap.data();
+  const memberFields = ['nickname', 'learningGrade', 'stage', 'totalCorrect', 'totalQuizTries', 'conqueredCount', 'masteredCount', 'combatPower', 'titleName', 'guildCoins', 'guildPoints', 'guildCorrectCount', 'guildStageClears', 'guildBossDamage', 'guildBossPointTotal', 'guildTrialCorrect', 'trialAttempts', 'trialRetries', 'trialHintsUsed', 'trialHintedCorrect', 'trialUnassistedCorrect', 'trialUnassistedTries', 'lastActiveAt', 'assignedWordPackIds', 'questionTypes', 'questionTypeStats', 'dailyLearning'];
+  if (includeWrongWords) memberFields.push('wrongWordCounts');
   const membersSnap = await classSnap.ref.collection('members')
-    .select('nickname', 'learningGrade', 'stage', 'totalCorrect', 'totalQuizTries', 'conqueredCount', 'masteredCount', 'combatPower', 'titleName', 'guildCoins', 'guildPoints', 'guildCorrectCount', 'guildStageClears', 'guildBossDamage', 'guildBossPointTotal', 'guildTrialCorrect', 'trialAttempts', 'trialRetries', 'trialHintsUsed', 'trialHintedCorrect', 'trialUnassistedCorrect', 'trialUnassistedTries', 'lastActiveAt', 'assignedWordPackIds', 'questionTypes', 'questionTypeStats', 'dailyLearning')
+    .select(...memberFields)
     .limit(200).get();
   const members = membersSnap.docs.map((member) => {
     const value = member.data() || {};
@@ -609,7 +613,8 @@ async function listGuildMembers(uid, body) {
       assignedWordPackIds: normalizeWordPackIds(value.assignedWordPackIds || data.wordPackIds || data.wordPackId, value.learningGrade || data.grade),
       questionTypes: normalizeQuestionTypes(value.questionTypes || data.defaultQuestionTypes),
       questionTypeStats: safeQuestionTypeStats(value.questionTypeStats),
-      lastActiveAt: value.lastActiveAt?.toDate?.().toISOString?.() || null
+      lastActiveAt: value.lastActiveAt?.toDate?.().toISOString?.() || null,
+      ...(includeWrongWords ? { wrongWordCounts: value.wrongWordCounts } : {})
     };
   }).sort((a, b) => b.guildPoints - a.guildPoints || b.totalCorrect - a.totalCorrect || a.nickname.localeCompare(b.nickname));
   return {
@@ -725,8 +730,8 @@ async function wordPackPreview(body) {
   return { ...meta, words: [...words.values()].slice(0, 1000) };
 }
 async function guildLearningReport(uid, body) {
-  const details = await listGuildMembers(uid, body);
-  const analysis = await wrongWordSummary(uid, body);
+  const details = await listGuildMembers(uid, body, true);
+  const analysis = await wrongWordSummary(uid, body, details.members);
   const members = details.members;
   const now = Date.now();
   const questionTypeStats = {};
@@ -790,7 +795,7 @@ async function guildLearningReport(uid, body) {
     supportMembers,
     topWrongWords: analysis.words.slice(0, 20),
     activeTrial: analysis.activeTrial,
-    members: members.map(({ dailyLearning, ...member }) => member)
+    members: members.map(({ dailyLearning, wrongWordCounts, ...member }) => member)
   };
 }
 async function memberLearningReport(uid, body) {
@@ -889,16 +894,16 @@ async function activeTrialStats(classRef, classData) {
     expired: isExpired(trial.expiresAt)
   };
 }
-async function wrongWordSummary(uid, body) {
+async function wrongWordSummary(uid, body, memberRows = null) {
   const classId = text(body.classId, 128);
   const classSnap = await ownedClass(uid, classId);
   const eligibleWords = wordByKey;
-  const members = await classSnap.ref.collection('members').select('wrongWordCounts').limit(200).get();
-  const memberIds = members.docs.map((member) => member.id).slice(0, 200);
+  const rows = Array.isArray(memberRows) ? memberRows.slice(0, 200).map((member) => ({ id: member.memberId, wrongWordCounts: member.wrongWordCounts })) : (await classSnap.ref.collection('members').select('wrongWordCounts').limit(200).get()).docs.map((member) => ({ id: member.id, wrongWordCounts: member.data()?.wrongWordCounts }));
+  const memberIds = rows.map((member) => member.id);
   const totals = new Map();
   const missing = [];
-  members.docs.forEach((member) => {
-    const wrong = member.data()?.wrongWordCounts;
+  rows.forEach((member) => {
+    const wrong = member.wrongWordCounts;
     if (!wrong || typeof wrong !== 'object' || Array.isArray(wrong)) {
       missing.push(member.id);
       return;
@@ -980,19 +985,21 @@ async function listSchoolGuilds(uid) {
     return { id, name };
   })) : [];
   const ownerNames = new Map(ownerSnaps.map((item) => [item.id, item.name]));
-  const guilds = [];
-  const incomingRequests = [];
-  for (const classSnap of snapshot.docs) {
+  const rows = await Promise.all(snapshot.docs.map(async (classSnap) => {
     const data = classSnap.data();
     const managed = Array.isArray(data.managerIds) && data.managerIds.includes(uid);
-    const ownRequest = managed ? null : await classSnap.ref.collection('managerRequests').doc(uid).get();
+    const [ownRequest, requests] = await Promise.all([
+      managed ? Promise.resolve(null) : classSnap.ref.collection('managerRequests').doc(uid).get(),
+      managed ? classSnap.ref.collection('managerRequests').where('status', '==', 'pending').limit(50).get() : Promise.resolve(null)
+    ]);
     const masterName = ownerNames.get(text(data.ownerId || data.managerIds?.[0], 128)) || '마스터';
-    guilds.push({ id: classSnap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), managerCount: guildCoManagerCount(data), masterName: managed ? masterName : maskedTeacherName(masterName), managed, requestStatus: ownRequest?.data()?.status || '' });
-    if (managed) {
-      const requests = await classSnap.ref.collection('managerRequests').where('status', '==', 'pending').limit(50).get();
-      requests.docs.forEach((request) => incomingRequests.push({ id: request.id, classId: classSnap.id, guildName: guildName(data), teacherName: text(request.data()?.teacherName, 40) || '이름 미확인', requestedAt: request.data()?.requestedAt?.toDate?.().toISOString?.() || null }));
-    }
-  }
+    return {
+      guild: { id: classSnap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), managerCount: guildCoManagerCount(data), masterName: managed ? masterName : maskedTeacherName(masterName), managed, requestStatus: ownRequest?.data()?.status || '' },
+      incomingRequests: requests ? requests.docs.map((request) => ({ id: request.id, classId: classSnap.id, guildName: guildName(data), teacherName: text(request.data()?.teacherName, 40) || '이름 미확인', requestedAt: request.data()?.requestedAt?.toDate?.().toISOString?.() || null })) : []
+    };
+  }));
+  const guilds = rows.map((row) => row.guild);
+  const incomingRequests = rows.flatMap((row) => row.incomingRequests);
   return { schoolName: teacher.schoolName, guilds: guilds.sort((a, b) => Number(b.managed) - Number(a.managed) || a.guildName.localeCompare(b.guildName)), incomingRequests };
 }
 async function schoolGuildPreview(uid, body) {

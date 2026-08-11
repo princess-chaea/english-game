@@ -40,6 +40,23 @@ if (!createBlock || /schoolName|classNum|studentNum|pinHash|\bemail\b|realName|s
 for (const label of ['길드 정보', '길드원 정보', '길드원 관리', '시련', '길드 및 초대관리']) {
   if (!secureAccount.includes(`data-teacher-guild-section="${({ '길드 정보': 'info', '길드원 정보': 'members', '길드원 관리': 'manage', '시련': 'trial', '길드 및 초대관리': 'invite' })[label]}"`)) throw new Error(`Teacher guild tab is missing: ${label}`);
 }
+if (!secureAccount.includes('legacyShortcuts?.remove()') || secureAccount.includes("$('secureTeacherOpenTrial').onclick") || secureAccount.includes("$('secureTeacherStudentInvite').onclick") || secureAccount.includes("$('secureTeacherManagerInvite').onclick")) throw new Error('Teacher guild duplicate shortcut actions must stay removed.');
+if (!secureAccount.includes('#secureTeacherGuildNav{display:flex!important') || !secureAccount.includes('#secureTeacherGlobalSummary{grid-template-columns:repeat(4,minmax(0,1fr))!important')) throw new Error('Teacher mobile navigation and summary must remain single-row compact layouts.');
+if (!secureAccount.includes('#secureTeacherSelectedGuildLogoButton{display:flex!important') || secureAccount.includes('#secureTeacherSelectedGuildLogoButton{display:none!important')) throw new Error('Teacher mobile guild logo must remain visible.');
+if (!secureAccount.includes(`teacherCatalogStorageKey='vocahero_teacher_catalog_v20260811'`) || !secureAccount.includes('teacherGuildReportPromises=new Map()') || !secureAccount.includes('teacherCacheFresh(cached,teacherListCacheMs)')) throw new Error('Teacher catalog and report request caches must remain enabled.');
+if (!secureAccount.includes(`Promise.all([refreshClasses(),teacher.verificationStatus==='verified'?refreshTeacherSchoolData():Promise.resolve()])`)) throw new Error('Teacher dashboard data must load in parallel after login.');
+const listClassesStart = teacherApi.indexOf('async function listClasses(uid)');
+const listClassesEnd = teacherApi.indexOf('function safeQuestionTypeStats', listClassesStart);
+const listClassesBlock = listClassesStart >= 0 && listClassesEnd > listClassesStart ? teacherApi.slice(listClassesStart, listClassesEnd) : '';
+if (!listClassesBlock.includes('return Promise.all(managedSnapshots.map(async (snap) =>') || !listClassesBlock.includes(`AggregateField.sum('guildPoints')`) || listClassesBlock.includes(`select('totalCorrect', 'guildPoints').get()`)) throw new Error('Teacher guild member summaries must use parallel aggregate queries.');
+const listSchoolStart = teacherApi.indexOf('async function listSchoolGuilds(uid)');
+const listSchoolEnd = teacherApi.indexOf('async function schoolGuildPreview', listSchoolStart);
+const listSchoolBlock = listSchoolStart >= 0 && listSchoolEnd > listSchoolStart ? teacherApi.slice(listSchoolStart, listSchoolEnd) : '';
+if (!listSchoolBlock.includes('Promise.all(snapshot.docs.map(async (classSnap) =>')) throw new Error('School guild request summaries must load in parallel.');
+const guildReportStart = teacherApi.indexOf('async function guildLearningReport(uid, body)');
+const guildReportEnd = teacherApi.indexOf('async function memberLearningReport', guildReportStart);
+const guildReportBlock = guildReportStart >= 0 && guildReportEnd > guildReportStart ? teacherApi.slice(guildReportStart, guildReportEnd) : '';
+if (!guildReportBlock.includes('listGuildMembers(uid, body, true)') || !guildReportBlock.includes('wrongWordSummary(uid, body, details.members)') || !guildReportBlock.includes('dailyLearning, wrongWordCounts, ...member')) throw new Error('Guild reports must reuse internal wrong-word fields without returning them.');
 const relicDrawStart = mainJs.indexOf('function drawRelicCapsule');
 const relicDrawEnd = mainJs.indexOf('function getRelicDrawResultPresentation', relicDrawStart);
 const relicDrawBlock = relicDrawStart >= 0 && relicDrawEnd > relicDrawStart ? mainJs.slice(relicDrawStart, relicDrawEnd) : '';

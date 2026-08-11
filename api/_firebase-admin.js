@@ -1,7 +1,7 @@
 import { applicationDefault, cert, getApp, getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
-import { FieldValue, getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { AggregateField, FieldValue, getFirestore, Timestamp } from 'firebase-admin/firestore';
 
 function createFirebaseApp() {
   if (getApps().length) return getApp();
@@ -21,4 +21,4 @@ const app = createFirebaseApp();
 export const adminAuth = getAuth(app);
 export const adminDb = getFirestore(app);
 export const adminStorage = getStorage(app);
-export { FieldValue, Timestamp };
+export { AggregateField, FieldValue, Timestamp };

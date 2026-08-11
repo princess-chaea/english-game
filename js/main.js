@@ -8814,6 +8814,7 @@
             const toast = document.getElementById("toastMessage");
             const text = document.getElementById("toastText");
             if (!toast || !text) return;
+            toast.style.zIndex = "2147483647";
             text.innerText = message;
             toast.classList.remove("opacity-0", "pointer-events-none");
             toast.classList.add("opacity-100");

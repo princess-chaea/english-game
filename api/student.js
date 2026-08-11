@@ -182,7 +182,7 @@ async function assignedWordPack(uid) {
     const rawQuestionTypes = hasMemberOverride ? member.questionTypes : classroom.defaultQuestionTypes;
     const wordPackIds = normalizedPackIds(rawPackIds, grade);
     const questionTypes = normalizedQuestionTypes(rawQuestionTypes);
-    return { classId, classLabel: classroom.guildName || classroom.classLabel || '길드', guildLogoUrl: safeGuildLogoUrl(classroom.guildLogoUrl), wordPackId: wordPackIds[0], wordPackIds, wordPacks: assignedPackMetadata(wordPackIds), questionTypes, assignmentSource: hasMemberOverride ? 'member' : 'guild' };
+    return { classId, classLabel: classroom.guildName || classroom.classLabel || '길드', guildLogoUrl: safeGuildLogoUrl(classroom.guildLogoUrl), wordPackId: wordPackIds[0], wordPackIds, wordPacks: assignedPackMetadata(wordPackIds), questionTypes, assignmentSource: hasMemberOverride ? 'member' : 'guild', learningSettingsVersion: safeInt(hasMemberOverride ? member.learningSettingsVersion : classroom.learningSettingsVersion, 0, 0) };
   }
   return { wordPackId: null, wordPackIds: [], questionTypes: ['meaning-choice'], guildLogoUrl: null };
 }function normalizedTrialAnswer(value) { return text(value, 160).normalize('NFKC').trim().toLowerCase().replace(/[^a-z0-9가-힣]/g, ''); }
@@ -259,21 +259,22 @@ function publicTrialQuestions(words, questions, attemptId) {
   // Only presentation-safe fields are returned to the browser.
   return questions.map((question) => trialQuestionSpec(words, question, attemptId).publicQuestion);
 }
-async function loadGuildTrial(uid) {
-  const assignment = await assignedWordPack(uid);
+async function loadGuildTrial(uid, prefetchedAssignment = null) {
+  const assignment = prefetchedAssignment || await assignedWordPack(uid);
+  const assignmentPayload = { wordPackId: assignment.wordPackId || null, wordPackIds: assignment.wordPackIds || [], questionTypes: assignment.questionTypes || ['meaning-choice'], assignmentSource: assignment.assignmentSource || null, learningSettingsVersion: safeInt(assignment.learningSettingsVersion, 0, 0) };
   if (!assignment.classId) return { guildName: null, guildLogoUrl: null, wordPackId: null, guildCoins: 0, trial: null };
   const classRef = adminDb.collection('classes').doc(assignment.classId);
   const memberRef = classRef.collection('members').doc(uid);
   const [classSnap, memberSnap] = await Promise.all([classRef.get(), memberRef.get()]);
-  if (!classSnap.exists || !memberSnap.exists) return { guildName: assignment.classLabel || null, guildLogoUrl: assignment.guildLogoUrl || null, wordPackId: assignment.wordPackId || null, guildCoins: 0, trial: null };
+  if (!classSnap.exists || !memberSnap.exists) return { guildName: assignment.classLabel || null, guildLogoUrl: assignment.guildLogoUrl || null, ...assignmentPayload, guildCoins: 0, trial: null };
   const guildCoins = safeInt(memberSnap.data()?.guildCoins, 0, 0, 1000000000);
   const trialId = text(classSnap.data()?.activeTrialId, 128);
-  if (!trialId) return { guildName: assignment.classLabel, guildLogoUrl: assignment.guildLogoUrl || null, wordPackId: assignment.wordPackId, guildCoins, trial: null };
+  if (!trialId) return { guildName: assignment.classLabel, guildLogoUrl: assignment.guildLogoUrl || null, ...assignmentPayload, guildCoins, trial: null };
   const trialRef = classRef.collection('trials').doc(trialId);
   const [trialSnap, completionSnap, progressSnap] = await Promise.all([trialRef.get(), trialRef.collection('completions').doc(uid).get(), trialRef.collection('progress').doc(uid).get()]);
-  if (!trialSnap.exists) return { guildName: assignment.classLabel, guildLogoUrl: assignment.guildLogoUrl || null, wordPackId: assignment.wordPackId, guildCoins, trial: null };
+  if (!trialSnap.exists) return { guildName: assignment.classLabel, guildLogoUrl: assignment.guildLogoUrl || null, ...assignmentPayload, guildCoins, trial: null };
   const trial = trialSnap.data();
-  if (trial.status !== 'active' || isExpired(trial.expiresAt) || !Array.isArray(trial.words)) return { guildName: assignment.classLabel, guildLogoUrl: assignment.guildLogoUrl || null, wordPackId: assignment.wordPackId, guildCoins, trial: null };
+  if (trial.status !== 'active' || isExpired(trial.expiresAt) || !Array.isArray(trial.words)) return { guildName: assignment.classLabel, guildLogoUrl: assignment.guildLogoUrl || null, ...assignmentPayload, guildCoins, trial: null };
   const history = safeTrialAttemptHistory(progressSnap.data()?.attemptHistory);
   const attemptCount = Math.max(history.length, safeInt(progressSnap.data()?.attemptCount, 0, 0, TRIAL_MAX_ATTEMPTS));
   const overcome = completionSnap.exists;
@@ -281,7 +282,7 @@ async function loadGuildTrial(uid) {
   return {
     guildName: assignment.classLabel,
     guildLogoUrl: assignment.guildLogoUrl || null,
-    wordPackId: assignment.wordPackId,
+    ...assignmentPayload,
     guildCoins,
     trial: {
       id: trialId,
@@ -303,8 +304,8 @@ async function loadGuildTrial(uid) {
     }
   };
 }async function loadGuildOverview(uid) {
-  const guild = await loadGuildTrial(uid);
   const assignment = await assignedWordPack(uid);
+  const guild = await loadGuildTrial(uid, assignment);
   if (!assignment.classId) return { ...guild, memberCount: 0, guildTotalCorrect: 0, guildMasteredCount: 0, members: [] };
   const classRef = classes.doc(assignment.classId);
   const membersRef = classRef.collection('members');

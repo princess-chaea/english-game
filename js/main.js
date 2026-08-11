@@ -7385,6 +7385,13 @@
                         wbCorrectAnswers = Math.max(0, Math.floor(Number(saved.wbCorrectAnswers) || 0));
                         wbPlayerHp = saved.wbPlayerHp ?? wbPlayerMaxHp;
                         wbSkillCooldowns = saved.wbSkillCooldowns || {};
+                        wbBossState = saved.wbBossState === 'weakness_shattered' ? 'weakness_shattered' : 'normal';
+                        wbWeaknessTimer = Math.max(0, Number(saved.wbWeaknessTimer) || 0);
+                        wbGracePeriodTimer = Math.max(0, Number(saved.wbGracePeriodTimer) || 0);
+                        wbSkillCastCount = Math.min(3, Math.max(0, Math.floor(Number(saved.wbSkillCastCount) || 0)));
+                        wbComboCount = Math.max(0, Math.floor(Number(saved.wbComboCount) || 0));
+                        wbWrongCount = Math.max(0, Math.floor(Number(saved.wbWrongCount) || 0));
+                        if (wbBossState === 'weakness_shattered' && wbWeaknessTimer <= 0) wbBossState = 'normal';
                         wbRichCurseTimer = Math.max(0.1, Number(saved.wbRichCurseTimer) || 10.0);
                         if (typeof saved.wbPetHintRemaining === 'number') {
                             loadedHintRemaining = saved.wbPetHintRemaining;
@@ -7543,6 +7550,12 @@
                             wbCorrectAnswers,
                             wbPlayerHp,
                             wbSkillCooldowns,
+                            wbBossState,
+                            wbWeaknessTimer,
+                            wbGracePeriodTimer,
+                            wbSkillCastCount,
+                            wbComboCount,
+                            wbWrongCount,
                             wbRichCurseTimer,
                             wbPetHintRemaining
                         }));
@@ -8290,6 +8303,7 @@
                     wbWeaknessTimer = (bossInfo.id === 'rich' ? 15.0 : bossInfo.id === 'fafnir' ? 10.0 : 12.0);
                     // 콤보 소모 여부는 정답 피해와 협공 연출이 끝난 뒤 경로별로 처리한다.
                     if (bossInfo.id === 'rich') {
+                        wbSkillCastCount = 0;
                         wbSkillCooldowns = {};
                         updateWorldBossSkillCooldownsUI();
                         showWorldBossFxNotice("✨ [결계 정화!] 리치의 저주 파쇄 & 모든 스킬 쿨타임 즉시 초기화! (스킬 피해 +150%)", "text-purple-300 border-purple-500 animate-bounce");
@@ -8392,7 +8406,7 @@
                     let extraNotice = "";
 
                     // 🔮 불멸의 리치 고유 디버프: 내 HP 10% 흡혈 + 보스 체력 회복 (내 1회 정답 공격량인 전투력*300 복구)
-                    if (bossInfo.id === 'rich') {
+                    if (bossInfo.id === 'rich' && wbBossState === 'normal' && wbGracePeriodTimer <= 0) {
                         const vampDmg = Math.max(bossDmg, Math.floor(wbPlayerMaxHp * 0.10));
                         bossDmg = vampDmg;
                         const healAmount = Math.floor(calculatePlayerCP() * 300);

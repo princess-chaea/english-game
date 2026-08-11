@@ -14,9 +14,13 @@ const MANAGER_INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const DELETE_QUERY_PAGE_SIZE = 100;
 
 function guildCoManagerCount(data) {
-  const ownerId = text(data?.ownerId || data?.managerIds?.[0], 128);
+  const ownerId = guildOwnerId(data);
   const managerIds = Array.isArray(data?.managerIds) ? data.managerIds : [];
   return managerIds.filter((id) => text(id, 128) && text(id, 128) !== ownerId).length;
+}
+
+function guildOwnerId(data) {
+  return text(data?.ownerId || data?.managerIds?.[0], 128);
 }
 
 function normalizeInviteCode(value) {
@@ -693,22 +697,25 @@ async function updateMemberLearningSettings(uid, body) {
     memberDocs = snapshots;
   }
   if (!memberDocs.length) throw apiError(409, 'NO_GUILD_MEMBERS', '설정을 적용할 길드원이 아직 없어요.');
+  const followsGuildDefaults = body.applyAll === true && body.applyToFuture !== false;
   const batch = adminDb.batch();
   memberDocs.forEach((member) => batch.set(member.ref, {
     assignedWordPackIds: wordPackIds,
     questionTypes,
-    learningSettingsVersion: 1,
+    usesGuildLearningDefaults: followsGuildDefaults,
+    learningSettingsVersion: FieldValue.increment(1),
     learningSettingsUpdatedBy: uid,
     learningSettingsUpdatedAt: FieldValue.serverTimestamp()
   }, { merge: true }));
-  if (body.applyAll === true && body.applyToFuture !== false) batch.update(classSnap.ref, {
+  if (followsGuildDefaults) batch.update(classSnap.ref, {
     wordPackId: wordPackIds[0],
     wordPackIds,
     defaultQuestionTypes: questionTypes,
+    learningSettingsVersion: FieldValue.increment(1),
     updatedAt: FieldValue.serverTimestamp()
   });
   await batch.commit();
-  return { classId, updatedCount: memberDocs.length, wordPackIds, questionTypes, futureMembersUpdated: body.applyAll === true && body.applyToFuture !== false };
+  return { classId, updatedCount: memberDocs.length, wordPackIds, questionTypes, futureMembersUpdated: followsGuildDefaults };
 }
 async function wordPackPreview(body) {
   const wordPackId = text(body.wordPackId, 80);
@@ -1086,8 +1093,9 @@ async function removeGuildManager(uid, body) {
   const classRef = classes.doc(classId);
   const targetTeacherRef = teachers.doc(targetUid);
   const [classSnap, targetTeacherSnap] = await Promise.all([classRef.get(), targetTeacherRef.get()]);
-  if (!classSnap.exists || classSnap.data()?.ownerId !== uid) throw apiError(403, 'GUILD_OWNER_REQUIRED', '길드 마스터만 공동 관리자를 내보낼 수 있어요.');
-  if (!targetUid || targetUid === uid || targetUid === classSnap.data()?.ownerId) throw apiError(400, 'INVALID_MANAGER_REMOVAL', '길드 마스터는 내보낼 수 없어요.');
+  const ownerId = classSnap.exists ? guildOwnerId(classSnap.data()) : '';
+  if (!classSnap.exists || ownerId !== uid) throw apiError(403, 'GUILD_OWNER_REQUIRED', '길드 마스터만 공동 관리자를 내보낼 수 있어요.');
+  if (!targetUid || targetUid === uid || targetUid === ownerId) throw apiError(400, 'INVALID_MANAGER_REMOVAL', '길드 마스터는 내보낼 수 없어요.');
   if (!(classSnap.data()?.managerIds || []).includes(targetUid)) throw apiError(404, 'MANAGER_NOT_FOUND', '공동 관리자를 찾지 못했어요.');
   const batch = adminDb.batch();
   batch.update(classRef, { managerIds: FieldValue.arrayRemove(targetUid), updatedAt: FieldValue.serverTimestamp() });
@@ -1102,7 +1110,7 @@ async function transferGuildOwnership(uid, body) {
   const classRef = classes.doc(classId);
   await adminDb.runTransaction(async (transaction) => {
     const classSnap = await transaction.get(classRef);
-    if (!classSnap.exists || classSnap.data()?.ownerId !== uid) throw apiError(403, 'GUILD_OWNER_REQUIRED', '길드 마스터만 마스터 권한을 위임할 수 있어요.');
+    if (!classSnap.exists || guildOwnerId(classSnap.data()) !== uid) throw apiError(403, 'GUILD_OWNER_REQUIRED', '길드 마스터만 마스터 권한을 위임할 수 있어요.');
     const data = classSnap.data();
     if (!(data.managerIds || []).includes(targetUid)) throw apiError(404, 'MANAGER_NOT_FOUND', '위임할 공동 관리자를 찾지 못했어요.');
     const targetTeacher = await transaction.get(teachers.doc(targetUid));
@@ -1116,7 +1124,7 @@ async function deleteGuild(uid, body) {
   const classId = text(body.classId, 128);
   const classRef = classes.doc(classId);
   const classSnap = await classRef.get();
-  if (!classSnap.exists || classSnap.data()?.ownerId !== uid) throw apiError(403, 'GUILD_OWNER_REQUIRED', '길드 마스터만 길드를 폐쇄할 수 있어요.');
+  if (!classSnap.exists || guildOwnerId(classSnap.data()) !== uid) throw apiError(403, 'GUILD_OWNER_REQUIRED', '길드 마스터만 길드를 폐쇄할 수 있어요.');
   const data = classSnap.data();
   const name = guildName(data);
   if (text(body.confirmGuildName, 40) !== name) throw apiError(400, 'GUILD_NAME_CONFIRMATION_REQUIRED', '폐쇄할 길드 이름을 정확히 입력해 주세요.');
@@ -1217,7 +1225,7 @@ async function deleteTeacherAccount(uid) {
   const classIds = Array.isArray(teacher.classIds) ? [...new Set(teacher.classIds.map((id) => text(id, 128)).filter(Boolean))] : [];
   const managedClasses = await getAllInChunks(classIds.map((id) => classes.doc(id)));
   const blockedGuilds = managedClasses.filter((snap) => {
-    if (!snap.exists || snap.data()?.ownerId !== uid) return false;
+    if (!snap.exists || guildOwnerId(snap.data()) !== uid) return false;
     return !(snap.data()?.managerIds || []).some((managerId) => managerId !== uid);
   });
   if (blockedGuilds.length) {
@@ -1227,7 +1235,7 @@ async function deleteTeacherAccount(uid) {
 
   for (const classSnap of managedClasses) {
     if (!classSnap.exists || !(classSnap.data()?.managerIds || []).includes(uid)) continue;
-    const nextOwner = classSnap.data()?.ownerId === uid
+    const nextOwner = guildOwnerId(classSnap.data()) === uid
       ? (classSnap.data()?.managerIds || []).find((managerId) => managerId !== uid)
       : null;
     const update = { managerIds: FieldValue.arrayRemove(uid), updatedAt: FieldValue.serverTimestamp() };

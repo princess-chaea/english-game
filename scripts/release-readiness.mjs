@@ -257,6 +257,12 @@ if (!createGuildBlock.includes('batch.create(ref, data)') || !createGuildBlock.i
 if (!cleanupApi.includes('const clearedProofIds = new Set()') || !cleanupApi.includes('if (clearedProofIds.has(doc.id)) update.objectPath = FieldValue.delete()') || cleanupApi.includes(".delete({ ignoreNotFound: true }).catch(() => {})")) throw new Error('Expired teacher proof deletion must preserve objectPath for retry on storage failure.');
 if (!studentApi.includes("!Object.hasOwn(data,'activeGuildLogoUrl')")) throw new Error('A guild with the default null logo must not trigger a Firestore repair write on every login.');
 if (!vercel.headers?.some((route) => route.source === '/data/(.*)\\.(json|txt)' && route.headers?.some((header) => header.key === 'Vercel-CDN-Cache-Control' && header.value.includes('immutable')))) throw new Error('Versioned data CDN cache header is missing.');
+if (!teacherApi.includes('usesGuildLearningDefaults: followsGuildDefaults') || !teacherApi.includes('learningSettingsVersion: FieldValue.increment(1)') || !studentApi.includes('member.usesGuildLearningDefaults === false')) throw new Error('Teacher member assignments must override guild defaults and carry a monotonic settings version.');
+if (!secureAccount.includes('function syncAssignedLearningSettings') || !secureAccount.includes('startBackgroundStudentSync()')) throw new Error('Student assignment refresh is missing.');
+for (const block of [removeManagerBlock, deleteGuildBlock, deleteTeacherBlock]) {
+  if (block.includes('data()?.ownerId !== uid') || block.includes('data()?.ownerId === uid')) throw new Error('Legacy guild owner actions must use the managerIds[0] compatibility fallback.');
+}
+if (!mainJs.includes('wbSkillCastCount = 0;') || !mainJs.includes('wbSkillCastCount,\n                            wbComboCount,')) throw new Error('Rich curse purification or reconnect state persistence is incomplete.');
 const genericScriptHeaderAt = vercel.headers?.findIndex((route) => route.source === '/(.*)\\.(css|js)') ?? -1;
 const finalServiceWorkerHeaderAt = vercel.headers?.map((route) => route.source).lastIndexOf('/sw.js') ?? -1;
 const finalServiceWorkerHeaders = finalServiceWorkerHeaderAt >= 0 ? vercel.headers[finalServiceWorkerHeaderAt]?.headers || [] : [];

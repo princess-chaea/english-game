@@ -49,7 +49,9 @@ if (!secureAccount.includes(`Promise.all([refreshClasses(),teacher.verificationS
 const listClassesStart = teacherApi.indexOf('async function listClasses(uid)');
 const listClassesEnd = teacherApi.indexOf('function safeQuestionTypeStats', listClassesStart);
 const listClassesBlock = listClassesStart >= 0 && listClassesEnd > listClassesStart ? teacherApi.slice(listClassesStart, listClassesEnd) : '';
-if (!listClassesBlock.includes('return Promise.all(managedSnapshots.map(async (snap) =>') || !listClassesBlock.includes(`AggregateField.sum('guildPoints')`) || listClassesBlock.includes(`select('totalCorrect', 'guildPoints').get()`)) throw new Error('Teacher guild member summaries must use parallel aggregate queries.');
+if (!listClassesBlock.includes('return Promise.all(managedSnapshots.map(async (snap) =>') || !teacherApi.includes('async function guildMemberSummary') || !teacherApi.includes('[TeacherGuildSummary] Aggregate fallback') || !teacherApi.includes(`select('totalCorrect', 'guildPoints').limit(500).get()`)) throw new Error('Teacher guild summaries must use parallel aggregation with a bounded compatibility fallback.');
+if ((teacherApi.match(/guildManagerIds\(snap\.data\(\)\)\.includes\(uid\)/g)||[]).length<2) throw new Error('Teacher guild ownership checks must preserve legacy manager compatibility.');
+if (!listClassesBlock.includes('[TeacherGuildRank] Ranking unavailable during login') || !listClassesBlock.includes('return new Map();')) throw new Error('Teacher login must remain available when global guild ranking aggregation is temporarily unavailable.');
 const listSchoolStart = teacherApi.indexOf('async function listSchoolGuilds(uid)');
 const listSchoolEnd = teacherApi.indexOf('async function schoolGuildPreview', listSchoolStart);
 const listSchoolBlock = listSchoolStart >= 0 && listSchoolEnd > listSchoolStart ? teacherApi.slice(listSchoolStart, listSchoolEnd) : '';

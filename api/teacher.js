@@ -22,6 +22,10 @@ function guildCoManagerCount(data) {
 function guildOwnerId(data) {
   return text(data?.ownerId || data?.managerIds?.[0], 128);
 }
+function guildManagerIds(data) {
+  const ownerId = guildOwnerId(data);
+  return [...new Set([ownerId, ...(Array.isArray(data?.managerIds) ? data.managerIds : [])].map((id) => text(id, 128)).filter(Boolean))];
+}
 
 function normalizeInviteCode(value) {
   return text(value, 32).toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -408,7 +412,7 @@ async function bootstrap(uid, token) {
 async function ownedClass(uid, id) {
   const snap = await classes.doc(id).get();
   if (!snap.exists) throw apiError(404, 'GUILD_NOT_FOUND', '길드를 찾지 못했어요.');
-  if (!snap.data().managerIds?.includes(uid)) throw apiError(403, 'NOT_GUILD_MANAGER', '이 길드의 관리자가 아니에요.');
+  if (!guildManagerIds(snap.data()).includes(uid)) throw apiError(403, 'NOT_GUILD_MANAGER', '이 길드의 관리자가 아니에요.');
   return snap;
 }
 async function createGuild(uid, body) {
@@ -428,13 +432,40 @@ async function createGuild(uid, body) {
   return { id: ref.id, guildName: name, guildSubtitle, guildLogoUrl: null, grade, wordPackId: data.wordPackId, wordPackIds: data.wordPackIds, questionTypes: data.defaultQuestionTypes };
 }
 let teacherGuildRankCache = { expiresAt: 0, ranks: new Map() };
+async function guildMemberSummary(guildRef) {
+  const members = guildRef.collection('members');
+  try {
+    const [totals, active] = await Promise.all([
+      members.limit(500).aggregate({ studentCount: AggregateField.count(), totalCorrect: AggregateField.sum('totalCorrect'), guildPoints: AggregateField.sum('guildPoints') }).get(),
+      members.where('guildPoints', '>', 0).limit(500).count().get()
+    ]);
+    return {
+      studentCount: safeInt(totals.data()?.studentCount, 0, 0, 500),
+      activeStudentCount: safeInt(active.data()?.count, 0, 0, 500),
+      totalCorrect: safeInt(totals.data()?.totalCorrect, 0, 0, 1000000000),
+      guildPoints: safeInt(totals.data()?.guildPoints, 0, 0, 1000000000)
+    };
+  } catch (error) {
+    console.warn('[TeacherGuildSummary] Aggregate fallback', { classId: guildRef.id, code: error?.code || null, message: error?.message || String(error) });
+    const snapshot = await members.select('totalCorrect', 'guildPoints').limit(500).get();
+    return snapshot.docs.reduce((summary, member) => {
+      const totalCorrect = safeInt(member.data()?.totalCorrect, 0, 0, 1000000000);
+      const guildPoints = safeInt(member.data()?.guildPoints, 0, 0, 1000000000);
+      summary.studentCount += 1;
+      summary.totalCorrect += totalCorrect;
+      summary.guildPoints += guildPoints;
+      if (guildPoints > 0) summary.activeStudentCount += 1;
+      return summary;
+    }, { studentCount: 0, activeStudentCount: 0, totalCorrect: 0, guildPoints: 0 });
+  }
+}
 async function teacherGuildRankMap() {
   const now = Date.now();
   if (teacherGuildRankCache.expiresAt > now) return teacherGuildRankCache.ranks;
   const guildSnaps = await classes.limit(100).get();
   const rows = await Promise.all(guildSnaps.docs.map(async (guildSnap) => {
-    const totals = await guildSnap.ref.collection('members').limit(500).aggregate({ memberCount: AggregateField.count(), guildPoints: AggregateField.sum('guildPoints') }).get();
-    return { id: guildSnap.id, memberCount: safeInt(totals.data()?.memberCount, 0, 0), guildPoints: safeInt(totals.data()?.guildPoints, 0, 0), name: guildName(guildSnap.data()) };
+    const totals = await guildMemberSummary(guildSnap.ref);
+    return { id: guildSnap.id, memberCount: totals.studentCount, guildPoints: totals.guildPoints, name: guildName(guildSnap.data()) };
   }));
   const ranked = rows.filter((row) => row.memberCount > 0).sort((a, b) => b.guildPoints - a.guildPoints || a.name.localeCompare(b.name));
   const ranks = new Map(ranked.map((row, index) => [row.id, index + 1]));
@@ -444,21 +475,19 @@ async function teacherGuildRankMap() {
 async function listClasses(uid) {
   const teacher = await teachers.doc(uid).get();
   const ids = (teacher.data()?.classIds || []).slice(0, 100);
-  const [snapshots, rankMap] = await Promise.all([Promise.all(ids.map((id) => classes.doc(id).get())), teacherGuildRankMap()]);
-  const managedSnapshots = snapshots.filter((snap) => snap.exists && snap.data()?.managerIds?.includes(uid));
+  const [snapshots, rankMap] = await Promise.all([
+    Promise.all(ids.map((id) => classes.doc(id).get())),
+    teacherGuildRankMap().catch((error) => {
+      console.warn('[TeacherGuildRank] Ranking unavailable during login', { code: error?.code || null, message: error?.message || String(error) });
+      return new Map();
+    })
+  ]);
+  const managedSnapshots = snapshots.filter((snap) => snap.exists && guildManagerIds(snap.data()).includes(uid));
   return Promise.all(managedSnapshots.map(async (snap) => {
     const data = snap.data();
-    const members = snap.ref.collection('members');
-    const [totals, active] = await Promise.all([
-      members.aggregate({ studentCount: AggregateField.count(), totalCorrect: AggregateField.sum('totalCorrect'), guildPoints: AggregateField.sum('guildPoints') }).get(),
-      members.where('guildPoints', '>', 0).count().get()
-    ]);
-    const studentCount = safeInt(totals.data()?.studentCount, 0, 0);
-    const totalCorrect = safeInt(totals.data()?.totalCorrect, 0, 0);
-    const guildPoints = safeInt(totals.data()?.guildPoints, 0, 0);
-    const activeStudentCount = safeInt(active.data()?.count, 0, 0);
-    const ownerId = text(data.ownerId || data.managerIds?.[0], 128);
-    return { id: snap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), ownerId, isOwner: ownerId === uid, managerCount: guildCoManagerCount(data), studentCount, activeStudentCount, totalCorrect, guildPoints, guildRank: rankMap.get(snap.id) || null, wordPackId: classPack(data.grade, data.wordPackId), wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade), questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes) };
+    const totals = await guildMemberSummary(snap.ref);
+    const ownerId = guildOwnerId(data);
+    return { id: snap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), ownerId, isOwner: ownerId === uid, managerCount: guildCoManagerCount(data), ...totals, guildRank: rankMap.get(snap.id) || null, wordPackId: classPack(data.grade, data.wordPackId), wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade), questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes) };
   }));
 }
 function safeQuestionTypeStats(value) {

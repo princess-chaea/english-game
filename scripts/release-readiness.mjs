@@ -8,7 +8,7 @@ const requiredEnvironment = [
   { label: 'TEACHER_REVIEWER_EMAILS', names: ['TEACHER_REVIEWER_EMAILS'] }
 ];
 const missing = requiredEnvironment.filter((entry) => !entry.names.some((name) => process.env[name])).map((entry) => entry.label);
-const guildSkinFiles = ['azure', 'sakura', 'neon', 'lion', 'crimson', 'frost', 'inventor', 'moon', 'starlight', 'dragon'].map((name) => `media/player/guild_skin_${name}.webp`);
+const guildSkinFiles = ['azure','sakura','neon','lion','crimson','frost','inventor','moon','starlight','dragon','clockwork','cloud','deepsea','candy','dino','rhythm','origami','comet','scarab','lantern','skypirate','mushroom','volcanic','mecha','chess','galaxywhale','phoenix','leviathan','chronomancer','prismatic','mirror','dreamlibrary','glaciertrain','constellation','coral','jungle','aurora','toybox','cosmicchef','camera','gravity','crystalsinger','thundercloud','fourseasons','glassknight','starpost','detective','festival','observatory','runegarden','seastar','ballerina','dragonfruit','moonexplorer','rainbowrider'].map((name) => `media/player/guild_skin_${name}.webp`);
 const files = ['firebase.json', 'firestore.rules', 'firestore.indexes.json', 'storage.rules', 'vercel.json', 'privacy.html', 'package-lock.json', 'data/word-packs.json', 'data/word-packs.js', 'data/curriculum-3000-review-catalog.json', ...Array.from({ length: 5 }, (_, index) => `media/test/test${index + 1}.webp`), ...guildSkinFiles];
 for (const file of files) await access(file);
 const firebase = JSON.parse(await readFile('firebase.json', 'utf8'));
@@ -95,7 +95,7 @@ if (!relicDrawCommitBlock || !relicCraftBlock || relicDrawResultAt < 0 || relicD
   throw new Error('Relic draw and mythic craft completion must immediately persist relic state.');
 }
 const trialServerMarkers = [
-  "import { randomUUID } from 'node:crypto';",
+  "randomUUID } from 'node:crypto';",
   "event === 'start' ? randomUUID()",
   'activeAttemptId: attemptId',
   'entry?.questionId',
@@ -282,9 +282,12 @@ const guildSkinEnd = studentApi.indexOf('async function guildTrialEvent', guildS
 const guildSkinBlock = guildSkinStart >= 0 && guildSkinEnd > guildSkinStart ? studentApi.slice(guildSkinStart, guildSkinEnd) : '';
 if (!guildEffectBlock.includes('adminDb.runTransaction') || !guildEffectBlock.includes('guildCoins: coins - cost') || !guildEffectBlock.includes("collection('effectInvestments')")) throw new Error('Guild effect investment must atomically deduct coins and preserve contribution records.');
 if (!guildSkinBlock.includes('adminDb.runTransaction') || !guildSkinBlock.includes('guildCosmetics: cosmetics') || !guildSkinBlock.includes('SKIN_NOT_OWNED')) throw new Error('Guild skin purchase and equip actions must remain server-authoritative.');
-if ((studentApi.match(/id: '(azure-scholar|sakura-blade|neon-shadow|golden-lion|crimson-rune|frost-wolf|arcane-inventor|moon-rabbit|starlight-sage|dragon-captain)'/g) || []).length !== 10) throw new Error('The guild shop must publish exactly ten approved full-body skins.');
-if (!secureAccount.includes('길드 상점 및 효과') || !secureAccount.includes('function renderGuildShop') || !secureAccount.includes("action:'loadGuildRankings'")) throw new Error('Guild shop/effects UI or lazy ranking load is missing.');
-if (!mainJs.includes('if (skinImageUrl)') || !mainJs.includes("getGuildEffectBonus('forge')") || !mainJs.includes("getGuildEffectBonus('vitality')") || !mainJs.includes('rollGuildRewardGrade')) throw new Error('Guild full-body skins or balanced gameplay effects are not connected to runtime formulas.');
+if (!studentApi.includes('totalVariants:275') || !studentApi.includes("['rainbow-dragon-rider','무지개 용기사','rainbowrider']") || !studentApi.includes('GUILD_SKIN_RARITIES') || !studentApi.includes('sinceMythic>=149')) throw new Error('The guild collection must publish 55 appearances across five server-authoritative rarities with pity.');
+const femaleSkinIds=studentApi.match(/const GUILD_SKIN_FEMALE_IDS=new Set\(\[(.*?)\]\);/)?.[1]?.match(/'[^']+'/g)||[];
+if(femaleSkinIds.length!==28)throw new Error('Guild appearance presentation balance must remain 27 male and 28 female.');
+if (!studentApi.includes("id:'forgeGuard'") || !studentApi.includes("resource:'bossTokens'") || !mainJs.includes("consumeGuildBoost('forgeGuard')") || !mainJs.includes("applyGuildPowerRune")) throw new Error('Meaningful guild forge, combat, and currency exchange items must remain connected to runtime logic.');
+if (!secureAccount.includes('외형 변경 · 도감') || !secureAccount.includes('data-secure-guild-tab="effects"') || !secureAccount.includes('function summonGuildSkins') || !secureAccount.includes("action:'loadGuildRankings'")) throw new Error('Six-tab guild shop, collection, effects UI or lazy ranking load is missing.');
+if (!mainJs.includes('if (skinImageUrl)') || !mainJs.includes("getGuildEffectBonus('forge')") || !mainJs.includes("getGuildCosmeticBonus('defensePct')") || !mainJs.includes("getGuildCosmeticBonus('attackPct')") || !mainJs.includes('rollGuildRewardGrade')) throw new Error('Guild skins and balanced cosmetic effects are not connected to runtime formulas.');
 if (!vercel.headers?.some((route) => route.source === '/data/(.*)\\.(json|txt)' && route.headers?.some((header) => header.key === 'Vercel-CDN-Cache-Control' && header.value.includes('immutable')))) throw new Error('Versioned data CDN cache header is missing.');
 if (!teacherApi.includes('usesGuildLearningDefaults: followsGuildDefaults') || !teacherApi.includes('learningSettingsVersion: FieldValue.increment(1)') || !studentApi.includes('member.usesGuildLearningDefaults === false')) throw new Error('Teacher member assignments must override guild defaults and carry a monotonic settings version.');
 if (!secureAccount.includes('function syncAssignedLearningSettings') || !secureAccount.includes('startBackgroundStudentSync()')) throw new Error('Student assignment refresh is missing.');

@@ -1,5 +1,5 @@
 import packCatalog from '../data/word-packs.js';
-import { randomUUID } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 import { adminAuth, adminDb, FieldValue, Timestamp } from './_firebase-admin.js';
 import { apiError, handleApiError, hash, isExpired, normalizeNickname, readBody, requireMethod, requireUser, safeInt, sendJson, text } from './_http.js';
 
@@ -13,19 +13,32 @@ const GUILD_EFFECT_DEFINITIONS = Object.freeze({
   fortune: { id: 'fortune', name: '행운의 서고', icon: 'sparkles', description: '스킬·유물 뽑기의 희귀 이상 등장 확률이 증가합니다.', unit: '%p', valuePerLevel: 0.1, maxLevel: 10 },
   prosperity: { id: 'prosperity', name: '풍요의 등불', icon: 'coins', description: '퀴즈 정답으로 얻는 골드가 증가합니다.', unit: '%', valuePerLevel: 1, maxLevel: 10 }
 });
+const GUILD_SKIN_FEMALE_IDS=new Set(['sakura-blade','frost-wolf','arcane-inventor','moon-rabbit','cloud-shepherd','candy-alchemist','rhythm-bard','comet-striker','sky-pirate','mushroom-druid','chess-monarch','phoenix-herald','prismatic-sovereign','dream-librarian','constellation-archer','coral-princess','aurora-dancer','memory-ranger','crystal-singer','season-elementalist','star-postmage','festival-dancer','rune-gardener','sea-star-witch','clockwork-ballerina','dragonfruit-warrior','moon-relic-explorer','rainbow-dragon-rider']);
 const GUILD_SKIN_DEFINITIONS = Object.freeze([
-  { id: 'azure-scholar', name: '청람의 지식 수호자', price: 50, image: '/media/player/guild_skin_azure.webp?v=20260811-1', description: '푸른 룬 갑옷을 입은 지식 수호자 전신 스킨' },
-  { id: 'sakura-blade', name: '벚꽃 검무사', price: 75, image: '/media/player/guild_skin_sakura.webp?v=20260811-1', description: '벚꽃 갑옷과 부채를 갖춘 화사한 검무사 전신 스킨' },
-  { id: 'neon-shadow', name: '네온 그림자', price: 100, image: '/media/player/guild_skin_neon.webp?v=20260811-1', description: '검은 장비와 푸른 빛을 두른 미래형 도적 전신 스킨' },
-  { id: 'golden-lion', name: '황금 사자 성기사', price: 125, image: '/media/player/guild_skin_lion.webp?v=20260811-1', description: '씩씩한 사자 투구와 태양 방패를 든 전신 스킨' },
-  { id: 'crimson-rune', name: '홍염의 룬 기사', price: 150, image: '/media/player/guild_skin_crimson.webp?v=20260811-1', description: '붉은 마법검과 중갑을 갖춘 룬 기사 전신 스킨' },
-  { id: 'frost-wolf', name: '설원의 늑대 궁수', price: 175, image: '/media/player/guild_skin_frost.webp?v=20260811-1', description: '늑대 후드와 얼음 활을 갖춘 설원 궁수 전신 스킨' },
-  { id: 'arcane-inventor', name: '마도 기계 발명가', price: 200, image: '/media/player/guild_skin_inventor.webp?v=20260811-1', description: '마법 공구와 톱니 방패를 든 발명가 전신 스킨' },
-  { id: 'moon-rabbit', name: '달토끼 치유사', price: 250, image: '/media/player/guild_skin_moon.webp?v=20260811-1', description: '달빛 지팡이와 토끼 후드를 갖춘 치유사 전신 스킨' },
-  { id: 'starlight-sage', name: '별빛의 현자', price: 300, image: '/media/player/guild_skin_starlight.webp?v=20260811-1', description: '별과 단어 마법을 다루는 전신 현자 스킨' },
-  { id: 'dragon-captain', name: '드래곤 학원 대장', price: 350, image: '/media/player/guild_skin_dragon.webp?v=20260811-1', description: '용의 창과 날개 방패를 갖춘 전설급 대장 전신 스킨' }
-]);
+  ['azure-scholar','청람의 지식 수호자','azure'],['sakura-blade','벚꽃 검무사','sakura'],['neon-shadow','네온 그림자','neon'],['golden-lion','황금 사자 성기사','lion'],['crimson-rune','홍염의 룬 기사','crimson'],['frost-wolf','설원의 늑대 궁수','frost'],['arcane-inventor','마도 기계 발명가','inventor'],['moon-rabbit','달토끼 치유사','moon'],['starlight-sage','별빛의 현자','starlight'],['dragon-captain','드래곤 학원 대장','dragon'],
+  ['clockwork-courier','시계태엽 차원 배달부','clockwork'],['cloud-shepherd','구름 목동','cloud'],['deepsea-explorer','심해 탐사대장','deepsea'],['candy-alchemist','사탕 연금술사','candy'],['dino-scout','공룡 차원 정찰병','dino'],['rhythm-bard','리듬 차원 음유시인','rhythm'],['origami-guardian','종이접기 수호자','origami'],['comet-striker','혜성의 돌격대장','comet'],['scarab-lancer','황금 풍뎅이 창기사','scarab'],['lantern-samurai','영등불 무사','lantern'],['sky-pirate','하늘해적 선장','skypirate'],['mushroom-druid','버섯 숲 드루이드','mushroom'],['volcanic-tamer','화산 거인 조련사','volcanic'],['mecha-pilot','사이버 메카 파일럿','mecha'],['chess-monarch','체스판 군주','chess'],['galaxy-whale','은하 고래 항해사','galaxywhale'],['phoenix-herald','태양 불사조 전령','phoenix'],['leviathan-knight','심연 레비아탄 기사','leviathan'],['time-chronomancer','시간룡 크로노맨서','chronomancer'],['prismatic-sovereign','프리즘 차원 군주','prismatic'],
+  ['mirror-duelist','거울 왕국 결투사','mirror'],['dream-librarian','꿈 도서관 정령사','dreamlibrary'],['glacier-conductor','빙하 열차 차장','glaciertrain'],['constellation-archer','별자리 궁수','constellation'],['coral-princess','산호 왕국 기사','coral'],['jungle-pathfinder','정글 유적 길잡이','jungle'],['aurora-dancer','오로라 빙상 무희','aurora'],['toybox-commander','장난감 군단장','toybox'],['cosmic-chef','은하 주방장','cosmicchef'],['memory-ranger','추억 사진 사냥꾼','camera'],['gravity-captain','중력 학원 대장','gravity'],['crystal-singer','수정 동굴 가희','crystalsinger'],['thunder-rider','천둥 구름 기수','thundercloud'],['season-elementalist','사계 정령술사','fourseasons'],['glass-knight','유리 미궁 기사','glassknight'],['star-postmage','별빛 우편 마법사','starpost'],['phantom-detective','유령 도시 탐정','detective'],['festival-dancer','등불 축제 무희','festival'],['observatory-keeper','차원 관측소장','observatory'],['rune-gardener','룬 정원지기','runegarden'],['sea-star-witch','바다별 마녀','seastar'],['clockwork-ballerina','태엽 발레리나','ballerina'],['dragonfruit-warrior','용과꽃 무사','dragonfruit'],['moon-relic-explorer','달빛 유적 탐험가','moonexplorer'],['rainbow-dragon-rider','무지개 용기사','rainbowrider']
+].map(([id,name,file])=>Object.freeze({id,name,presentation:GUILD_SKIN_FEMALE_IDS.has(id)?'female':'male',image:`/media/player/guild_skin_${file}.webp?v=20260811-2`,description:'다른 차원에서 찾아온 전신 영웅 외형'})));
 const GUILD_SKIN_BY_ID = new Map(GUILD_SKIN_DEFINITIONS.map((skin) => [skin.id, skin]));
+const GUILD_SKIN_RARITIES = Object.freeze([
+  {id:'normal',name:'일반',weight:6000,shards:2,color:'#9ca3af',attackPct:.5,defensePct:.5,goldPct:.5,forgePctPoint:.05,fortunePctPoint:.02},
+  {id:'rare',name:'희귀',weight:2500,shards:5,color:'#38bdf8',attackPct:1,defensePct:1,goldPct:1,forgePctPoint:.1,fortunePctPoint:.05},
+  {id:'hero',name:'영웅',weight:1000,shards:15,color:'#a855f7',attackPct:2,defensePct:2,goldPct:2,forgePctPoint:.2,fortunePctPoint:.1},
+  {id:'legendary',name:'전설',weight:400,shards:40,color:'#facc15',attackPct:3.5,defensePct:3.5,goldPct:4,forgePctPoint:.35,fortunePctPoint:.2},
+  {id:'mythic',name:'신화',weight:100,shards:100,color:'#fb7185',attackPct:5,defensePct:5,goldPct:6,forgePctPoint:.6,fortunePctPoint:.35}
+]);
+const GUILD_SKIN_RARITY_BY_ID = new Map(GUILD_SKIN_RARITIES.map((rarity)=>[rarity.id,rarity]));
+const GUILD_SKIN_SUMMON_COST = Object.freeze({1:25,10:225});
+const GUILD_CONSUMABLE_DEFINITIONS=Object.freeze([
+  {id:'forgeCharm',type:'charge',name:'장인의 행운권',cost:45,charges:5,value:5,unit:'%p',description:'다음 장비 강화 5회의 성공 확률 +5%p'},
+  {id:'forgeGuard',type:'charge',name:'강화 수호 인장',cost:60,charges:5,value:100,unit:'%',description:'강화 실패로 단계 하락 판정이 날 때 5회까지 확정 방어 (유물 방패와 별도)'},
+  {id:'powerRune',type:'charge',name:'용사의 강공 룬',cost:50,charges:10,value:10,unit:'%',description:'다음 정답 공격 10회의 최종 피해 +10%'},
+  {id:'skillEssenceExchange',type:'exchange',name:'스킬 정수 교환',cost:30,resource:'skillEssence',amount:5,resourceName:'스킬 각성 정수',description:'길드 코인 30개를 스킬 각성 정수 5개로 교환'},
+  {id:'relicEssenceExchange',type:'exchange',name:'유물 정수 교환',cost:40,resource:'relicEssence',amount:10,resourceName:'고대 신화 정수',description:'길드 코인 40개를 고대 신화 정수 10개로 교환'},
+  {id:'bossTokenExchange',type:'exchange',name:'보스 증표 교환',cost:50,resource:'bossTokens',amount:25,resourceName:'고대 보스 증표',description:'길드 코인 50개를 고대 보스 증표 25개로 교환'}
+]);
+const GUILD_CONSUMABLE_BY_ID=new Map(GUILD_CONSUMABLE_DEFINITIONS.map((item)=>[item.id,item]));
+function safeGuildBoostCharges(value){const source=value&&typeof value==='object'&&!Array.isArray(value)?value:{};return Object.fromEntries(GUILD_CONSUMABLE_DEFINITIONS.filter((item)=>item.type==='charge').map((item)=>[item.id,safeInt(source[item.id],0,0,10000)]));}
 
 function safeGuildEffects(value) {
   const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
@@ -36,9 +49,11 @@ function safeGuildEffects(value) {
 }
 function safeGuildCosmetics(value) {
   const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
-  const ownedSkinIds = [...new Set((Array.isArray(source.ownedSkinIds) ? source.ownedSkinIds : []).map((id) => text(id, 80)).filter((id) => GUILD_SKIN_BY_ID.has(id)))];
-  const equippedSkinId = ownedSkinIds.includes(text(source.equippedSkinId, 80)) ? text(source.equippedSkinId, 80) : null;
-  return { ownedSkinIds, equippedSkinId };
+  const legacy=(Array.isArray(source.ownedSkinIds)?source.ownedSkinIds:[]).map((id)=>`${text(id,80)}:rare`);
+  const ownedVariantKeys=[...new Set([...(Array.isArray(source.ownedVariantKeys)?source.ownedVariantKeys:[]),...legacy].map((key)=>text(key,100)).filter((key)=>{const [skinId,rarity]=key.split(':');return GUILD_SKIN_BY_ID.has(skinId)&&GUILD_SKIN_RARITY_BY_ID.has(rarity);}))].slice(0,275);
+  const legacyEquipped=source.equippedSkinId?`${text(source.equippedSkinId,80)}:rare`:'';
+  const equippedVariantKey=ownedVariantKeys.includes(text(source.equippedVariantKey,100))?text(source.equippedVariantKey,100):(ownedVariantKeys.includes(legacyEquipped)?legacyEquipped:null);
+  return {ownedVariantKeys,equippedVariantKey,skinShards:safeInt(source.skinShards,0,0,1000000000),summonStats:{sinceRare:safeInt(source.summonStats?.sinceRare,0,0,9),sinceLegendary:safeInt(source.summonStats?.sinceLegendary,0,0,49),sinceMythic:safeInt(source.summonStats?.sinceMythic,0,0,149),totalSummons:safeInt(source.summonStats?.totalSummons,0,0,1000000000)}};
 }
 function publicGuildEffectCatalog(effects) {
   return Object.values(GUILD_EFFECT_DEFINITIONS).map((definition) => {
@@ -46,7 +61,14 @@ function publicGuildEffectCatalog(effects) {
     return { ...definition, level, currentValue: Number((level * definition.valuePerLevel).toFixed(2)), nextCost: level < definition.maxLevel ? GUILD_EFFECT_COSTS[level] : null, totalInvested: effects[definition.id]?.totalInvested || 0 };
   });
 }
-function publicGuildSkinCatalog() { return GUILD_SKIN_DEFINITIONS.map((skin) => ({ ...skin })); }
+function calculateGuildCosmeticEffects(value) {
+  const cosmetics=safeGuildCosmetics(value),totals={attackPct:0,defensePct:0,goldPct:0,forgePctPoint:0,fortunePctPoint:0};
+  const rarity=GUILD_SKIN_RARITY_BY_ID.get(cosmetics.equippedVariantKey?.split(':')[1]);if(rarity)Object.keys(totals).forEach((key)=>{totals[key]+=Number(rarity[key]||0);});
+  const skinProgress={};cosmetics.ownedVariantKeys.forEach((key)=>{const id=key.split(':')[0];skinProgress[id]=(skinProgress[id]||0)+1;});
+  Object.values(skinProgress).forEach((count)=>{const scale=count>=5?1:count===4?0.7:count===3?0.45:count===2?0.2:0;totals.attackPct+=.06*scale;totals.defensePct+=.06*scale;totals.goldPct+=.12*scale;totals.forgePctPoint+=.012*scale;totals.fortunePctPoint+=.006*scale;});
+  Object.keys(totals).forEach((key)=>{totals[key]=Number(totals[key].toFixed(3));});return {...totals,equippedVariantKey:cosmetics.equippedVariantKey,completedVariants:cosmetics.ownedVariantKeys.length,totalVariants:275,skinProgress};
+}
+function publicGuildSkinCatalog(){return {skins:GUILD_SKIN_DEFINITIONS.map((skin)=>({...skin})),rarities:GUILD_SKIN_RARITIES.map((rarity)=>({...rarity})),summonCosts:GUILD_SKIN_SUMMON_COST,totalVariants:275};}
 const leaderboard = adminDb.collection('leaderboard');
 const invites = adminDb.collection('classInvites');
 const legacyUsers = adminDb.collection('users');
@@ -164,25 +186,26 @@ function normalizedQuestionTypes(value) { const types=[...new Set((Array.isArray
 function assignedPackMetadata(ids) { return (ids || []).map((id) => STUDENT_WORD_PACK_BY_ID.get(id)).filter(Boolean).map((pack) => ({ id: pack.id, label: text(pack.label, 120) || pack.id, wordCount: safeInt(pack.wordCount, Array.isArray(pack.words) ? pack.words.length : 0, 0, 5000) })); }
 function safeQuestionTypeStats(value) { const result={};LEARNING_QUESTION_TYPES.forEach((type)=>{const row=value&&typeof value==='object'&&!Array.isArray(value)?value[type]:null;result[type]={tries:safeInt(row?.tries,0,0,1000000000),correct:safeInt(row?.correct,0,0,1000000000)};});return result; }
 function classPack(grade, wordPackId) { return ASSIGNABLE_WORD_PACK_IDS.has(wordPackId) ? wordPackId : defaultWordPack(grade); }
-const fields = new Set(['avatarType','gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petType','petLvl','petLevels','stage','progress','totalQuizTries','totalQuizCorrect','masteredWords','currentQuizIndex','skillsInventory','equippedSkills','activeSkillDeck','skillEssence','lockedPotentialSlots','wrongWordCounts','wordLearningStats','questionTypeStats','combatPower','masteryPoints','necklaceLvl','braceletLvl','ringLvl','acquiredRelics','equippedRelicId','gearPotentials','isPotentialUnlocked','equippedTitle','wbTitle','unlockedTitles','bossTokens','relicEssence','relicTranscendLvl','soundSettings','tutorialCompleted','lastSaved']);
+const fields = new Set(['avatarType','gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petType','petLvl','petLevels','stage','progress','totalQuizTries','totalQuizCorrect','masteredWords','currentQuizIndex','skillsInventory','equippedSkills','activeSkillDeck','skillEssence','lockedPotentialSlots','wrongWordCounts','wordLearningStats','questionTypeStats','combatPower','masteryPoints','necklaceLvl','braceletLvl','ringLvl','acquiredRelics','equippedRelicId','gearPotentials','isPotentialUnlocked','equippedTitle','wbTitle','unlockedTitles','bossTokens','relicEssence','relicTranscendLvl','soundSettings','tutorialCompleted','lastSaved','guildBoostCharges']);
 
 function defaultState() { return { avatarType:'male', gold:0, accGold:0, helmetLvl:1, armorLvl:1, weaponLvl:1, shieldLvl:1, shoesLvl:1, stage:1, progress:0, totalQuizTries:0, totalQuizCorrect:0, masteredWords:[], skillsInventory:[], equippedSkills:[], activeSkillDeck:[], skillEssence:0, wrongWordCounts:{}, wordLearningStats:{}, questionTypeStats:{}, combatPower:0, masteryPoints:0, tutorialCompleted:false }; }
 function cleanState(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw apiError(400,'INVALID_STATE','저장할 학습 기록 형식이 올바르지 않아요.');
   const state = {};
   fields.forEach((key) => { if (Object.hasOwn(input,key)) state[key] = input[key]; });
-  ['gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petLvl','stage','progress','totalQuizTries','totalQuizCorrect','currentQuizIndex','masteryPoints','necklaceLvl','braceletLvl','ringLvl','bossTokens','relicEssence','combatPower'].forEach((key) => { if (Object.hasOwn(state,key)) state[key]=safeInt(state[key],0,0,9999999999); });
+  ['gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petLvl','stage','progress','totalQuizTries','totalQuizCorrect','currentQuizIndex','masteryPoints','necklaceLvl','braceletLvl','ringLvl','skillEssence','bossTokens','relicEssence','combatPower'].forEach((key) => { if (Object.hasOwn(state,key)) state[key]=safeInt(state[key],0,0,9999999999); });
   if (Object.hasOwn(state,'relicTranscendLvl')) state.relicTranscendLvl=safeInt(state.relicTranscendLvl,0,0,10000);
   if (state.masteredWords && !Array.isArray(state.masteredWords)) delete state.masteredWords;
   state.wrongWordCounts = safeWrongWordCounts(state.wrongWordCounts);
   state.wordLearningStats = safeWordLearningStats(state.wordLearningStats);
   state.questionTypeStats = safeQuestionTypeStats(state.questionTypeStats);
+  state.guildBoostCharges = safeGuildBoostCharges(state.guildBoostCharges);
   if (state.skillsInventory && !Array.isArray(state.skillsInventory)) delete state.skillsInventory;
   if ((state.masteredWords?.length||0)>5000 || (state.skillsInventory?.length||0)>1000 || Buffer.byteLength(JSON.stringify(state),'utf8')>600000) throw apiError(400,'STATE_TOO_LARGE','저장할 학습 기록이 너무 커요.');
   return state;
 }
 function score(state) { return safeInt(state.totalQuizCorrect,0,0)*1000 + (Array.isArray(state.masteredWords)?state.masteredWords.length:0)*10 + Math.min(safeInt(state.stage,1,1),999); }
-function publicAccount(data) { return { nickname:data.nickname, learningGrade:data.learningGrade, state:{...defaultState(),...(data.state||{})}, freeNicknameChangeUsed:Boolean(data.freeNicknameChangeUsed), renameCount:safeInt(data.renameCount,0,0), leaderboardOptIn:Boolean(data.leaderboardOptIn), classIds:Array.isArray(data.classIds)?data.classIds:[], activeGuildName:text(data.activeGuildName,40)||null, activeGuildLogoUrl:data.activeGuildName?safeGuildLogoUrl(data.activeGuildLogoUrl):null, guildCosmetics:safeGuildCosmetics(data.guildCosmetics), legacyGoogleLinked:Boolean(data.legacyGoogleLinked) }; }
+function publicAccount(data) { const guildCosmetics=safeGuildCosmetics(data.guildCosmetics);return { nickname:data.nickname, learningGrade:data.learningGrade, state:{...defaultState(),...(data.state||{})}, freeNicknameChangeUsed:Boolean(data.freeNicknameChangeUsed), renameCount:safeInt(data.renameCount,0,0), leaderboardOptIn:Boolean(data.leaderboardOptIn), classIds:Array.isArray(data.classIds)?data.classIds:[], activeGuildName:text(data.activeGuildName,40)||null, activeGuildLogoUrl:data.activeGuildName?safeGuildLogoUrl(data.activeGuildLogoUrl):null, guildCosmetics, guildCosmeticEffects:calculateGuildCosmeticEffects(guildCosmetics), legacyGoogleLinked:Boolean(data.legacyGoogleLinked) }; }
 function legacyLearningGrade(data, fallback=4) { return safeInt(data?.grade, safeInt(data?.learningGrade, fallback, 3, 6), 3, 6); }
 async function loadAccount(uid) {
   const ref=accounts.doc(uid),snap=await ref.get();if(!snap.exists)return null;
@@ -425,6 +448,9 @@ async function loadGuildTrial(uid, prefetchedAssignment = null) {
     guildEffectCatalog: publicGuildEffectCatalog(guildEffects),
     guildSkinCatalog: publicGuildSkinCatalog(),
     guildCosmetics: safeGuildCosmetics(accountSnap.data()?.guildCosmetics),
+    guildCosmeticEffects: calculateGuildCosmeticEffects(accountSnap.data()?.guildCosmetics),
+    guildConsumableCatalog:GUILD_CONSUMABLE_DEFINITIONS.map((item)=>({...item})),
+    guildBoostCharges:safeGuildBoostCharges(accountSnap.data()?.state?.guildBoostCharges),
     myGuildInvestment: { contributionByEffect, total: Object.values(contributionByEffect).reduce((sum, value) => sum + value, 0) },
     staff,
     members
@@ -465,10 +491,12 @@ async function investGuildEffect(uid, body) {
 
 async function updateGuildSkin(uid, body) {
   const mode = text(body.mode, 20);
-  const skinId = text(body.skinId, 80);
-  if (!['purchase', 'equip', 'unequip'].includes(mode)) throw apiError(400, 'INVALID_SKIN_ACTION', '스킨 요청을 확인해 주세요.');
-  const skin = GUILD_SKIN_BY_ID.get(skinId);
-  if (mode !== 'unequip' && !skin) throw apiError(400, 'INVALID_GUILD_SKIN', '선택한 영웅 스킨을 찾지 못했어요.');
+  if(mode==='buyConsumable')return buyGuildConsumable(uid,body);
+  const variantKey = text(body.variantKey, 100);
+  const summonCount = safeInt(body.count, 1, 1, 10);
+  if (!['summon', 'equip', 'unequip'].includes(mode)) throw apiError(400, 'INVALID_SKIN_ACTION', '외형 요청을 확인해 주세요.');
+  if(mode==='summon'&&![1,10].includes(summonCount))throw apiError(400,'INVALID_SUMMON_COUNT','소환 횟수를 확인해 주세요.');
+  const rolls=mode==='summon'?Array.from({length:summonCount},()=>({skinIndex:randomInt(GUILD_SKIN_DEFINITIONS.length),rarityRoll:randomInt(10000)})):[];
   const accountRef = accounts.doc(uid);
   return adminDb.runTransaction(async (tx) => {
     const accountSnap = await tx.get(accountRef);
@@ -480,21 +508,48 @@ async function updateGuildSkin(uid, body) {
     if (!memberSnap.exists) throw apiError(403, 'GUILD_REQUIRED', '현재 길드 소속을 확인해 주세요.');
     const cosmetics = safeGuildCosmetics(accountSnap.data()?.guildCosmetics);
     let coins = safeInt(memberSnap.data()?.guildCoins, 0, 0, 1000000000);
-    if (mode === 'purchase') {
-      if (cosmetics.ownedSkinIds.includes(skinId)) throw apiError(409, 'SKIN_ALREADY_OWNED', '이미 보유한 영웅 스킨이에요.');
-      if (coins < skin.price) throw apiError(409, 'GUILD_COIN_SHORTAGE', `길드 코인이 ${skin.price - coins}개 부족해요.`);
-      coins -= skin.price;
-      cosmetics.ownedSkinIds.push(skinId);
-      cosmetics.equippedSkinId = skinId;
+    const summonResults=[];
+    if (mode === 'summon') {
+      const cost=GUILD_SKIN_SUMMON_COST[summonCount];if(coins<cost)throw apiError(409,'GUILD_COIN_SHORTAGE',`길드 코인이 ${cost-coins}개 부족해요.`);coins-=cost;
+      rolls.forEach((roll)=>{let rarityIndex=0,cursor=0;for(let i=0;i<GUILD_SKIN_RARITIES.length;i+=1){cursor+=GUILD_SKIN_RARITIES[i].weight;if(roll.rarityRoll<cursor){rarityIndex=i;break;}}
+        if(cosmetics.summonStats.sinceMythic>=149)rarityIndex=4;else if(cosmetics.summonStats.sinceLegendary>=49)rarityIndex=Math.max(rarityIndex,3);else if(cosmetics.summonStats.sinceRare>=9)rarityIndex=Math.max(rarityIndex,1);
+        const rarity=GUILD_SKIN_RARITIES[rarityIndex],skin=GUILD_SKIN_DEFINITIONS[roll.skinIndex],key=`${skin.id}:${rarity.id}`,duplicate=cosmetics.ownedVariantKeys.includes(key);let shardsGained=0;
+        if(duplicate){shardsGained=rarity.shards;cosmetics.skinShards+=shardsGained;}else cosmetics.ownedVariantKeys.push(key);
+        cosmetics.summonStats.totalSummons+=1;cosmetics.summonStats.sinceRare=rarityIndex>=1?0:cosmetics.summonStats.sinceRare+1;cosmetics.summonStats.sinceLegendary=rarityIndex>=3?0:cosmetics.summonStats.sinceLegendary+1;cosmetics.summonStats.sinceMythic=rarityIndex>=4?0:cosmetics.summonStats.sinceMythic+1;
+        if(!cosmetics.equippedVariantKey&&!duplicate)cosmetics.equippedVariantKey=key;summonResults.push({skinId:skin.id,rarity:rarity.id,variantKey:key,duplicate,shardsGained});
+      });
       tx.update(memberRef, { guildCoins: coins, lastActiveAt: FieldValue.serverTimestamp() });
     } else if (mode === 'equip') {
-      if (!cosmetics.ownedSkinIds.includes(skinId)) throw apiError(403, 'SKIN_NOT_OWNED', '보유한 스킨만 장착할 수 있어요.');
-      cosmetics.equippedSkinId = skinId;
+      if (!cosmetics.ownedVariantKeys.includes(variantKey)) throw apiError(403, 'SKIN_NOT_OWNED', '보유한 외형 등급만 장착할 수 있어요.');
+      cosmetics.equippedVariantKey = variantKey;
     } else {
-      cosmetics.equippedSkinId = null;
+      cosmetics.equippedVariantKey = null;
     }
     tx.update(accountRef, { guildCosmetics: cosmetics, updatedAt: FieldValue.serverTimestamp() });
-    return { guildCoins: coins, guildCosmetics: cosmetics, guildSkinCatalog: publicGuildSkinCatalog() };
+    return { guildCoins: coins, guildCosmetics: cosmetics, guildCosmeticEffects:calculateGuildCosmeticEffects(cosmetics), guildSkinCatalog: publicGuildSkinCatalog(), summonResults };
+  });
+}
+
+async function buyGuildConsumable(uid,body){
+  const item=GUILD_CONSUMABLE_BY_ID.get(text(body.itemId,40));
+  if(!item)throw apiError(400,'INVALID_GUILD_ITEM','구입할 효과 아이템을 확인해 주세요.');
+  const accountRef=accounts.doc(uid);
+  return adminDb.runTransaction(async(tx)=>{
+    const accountSnap=await tx.get(accountRef);
+    if(!accountSnap.exists)throw apiError(404,'PROFILE_NOT_FOUND','용사 기록을 찾지 못했어요.');
+    const classId=text(accountSnap.data()?.activeClassId,128);
+    if(!classId)throw apiError(403,'GUILD_REQUIRED','참여 중인 길드가 없어요.');
+    const memberRef=classes.doc(classId).collection('members').doc(uid),memberSnap=await tx.get(memberRef);
+    if(!memberSnap.exists)throw apiError(403,'GUILD_REQUIRED','현재 길드 소속을 확인해 주세요.');
+    const coins=safeInt(memberSnap.data()?.guildCoins,0,0,1000000000);
+    if(coins<item.cost)throw apiError(409,'GUILD_COIN_SHORTAGE',`길드 코인이 ${item.cost-coins}개 부족해요.`);
+    const accountData=accountSnap.data(),state={...defaultState(),...(accountData.state||{})},charges=safeGuildBoostCharges(state.guildBoostCharges);
+    if(item.type==='exchange')state[item.resource]=Math.min(9999999999,safeInt(state[item.resource],0,0,9999999999)+item.amount);
+    else charges[item.id]=Math.min(10000,charges[item.id]+item.charges);
+    state.guildBoostCharges=charges;
+    tx.update(memberRef,{guildCoins:coins-item.cost,lastActiveAt:FieldValue.serverTimestamp()});
+    tx.update(accountRef,{state,updatedAt:FieldValue.serverTimestamp()});
+    return {guildCoins:coins-item.cost,guildBoostCharges:charges,resources:{skillEssence:safeInt(state.skillEssence,0,0,9999999999),relicEssence:safeInt(state.relicEssence,0,0,9999999999),bossTokens:safeInt(state.bossTokens,0,0,9999999999)},guildConsumableCatalog:GUILD_CONSUMABLE_DEFINITIONS.map((row)=>({...row}))};
   });
 }
 

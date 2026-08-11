@@ -1174,15 +1174,30 @@
             'arcane-inventor': '/media/player/guild_skin_inventor.webp?v=20260811-1',
             'moon-rabbit': '/media/player/guild_skin_moon.webp?v=20260811-1',
             'starlight-sage': '/media/player/guild_skin_starlight.webp?v=20260811-1',
-            'dragon-captain': '/media/player/guild_skin_dragon.webp?v=20260811-1'
+            'dragon-captain': '/media/player/guild_skin_dragon.webp?v=20260811-1',
+            'clockwork-courier':'/media/player/guild_skin_clockwork.webp?v=20260811-2','cloud-shepherd':'/media/player/guild_skin_cloud.webp?v=20260811-2','deepsea-explorer':'/media/player/guild_skin_deepsea.webp?v=20260811-2','candy-alchemist':'/media/player/guild_skin_candy.webp?v=20260811-2','dino-scout':'/media/player/guild_skin_dino.webp?v=20260811-2','rhythm-bard':'/media/player/guild_skin_rhythm.webp?v=20260811-2','origami-guardian':'/media/player/guild_skin_origami.webp?v=20260811-2','comet-striker':'/media/player/guild_skin_comet.webp?v=20260811-2','scarab-lancer':'/media/player/guild_skin_scarab.webp?v=20260811-2','lantern-samurai':'/media/player/guild_skin_lantern.webp?v=20260811-2','sky-pirate':'/media/player/guild_skin_skypirate.webp?v=20260811-2','mushroom-druid':'/media/player/guild_skin_mushroom.webp?v=20260811-2','volcanic-tamer':'/media/player/guild_skin_volcanic.webp?v=20260811-2','mecha-pilot':'/media/player/guild_skin_mecha.webp?v=20260811-2','chess-monarch':'/media/player/guild_skin_chess.webp?v=20260811-2','galaxy-whale':'/media/player/guild_skin_galaxywhale.webp?v=20260811-2','phoenix-herald':'/media/player/guild_skin_phoenix.webp?v=20260811-2','leviathan-knight':'/media/player/guild_skin_leviathan.webp?v=20260811-2','time-chronomancer':'/media/player/guild_skin_chronomancer.webp?v=20260811-2','prismatic-sovereign':'/media/player/guild_skin_prismatic.webp?v=20260811-2',
+            'mirror-duelist':'/media/player/guild_skin_mirror.webp?v=20260811-2','dream-librarian':'/media/player/guild_skin_dreamlibrary.webp?v=20260811-2','glacier-conductor':'/media/player/guild_skin_glaciertrain.webp?v=20260811-2','constellation-archer':'/media/player/guild_skin_constellation.webp?v=20260811-2','coral-princess':'/media/player/guild_skin_coral.webp?v=20260811-2','jungle-pathfinder':'/media/player/guild_skin_jungle.webp?v=20260811-2','aurora-dancer':'/media/player/guild_skin_aurora.webp?v=20260811-2','toybox-commander':'/media/player/guild_skin_toybox.webp?v=20260811-2','cosmic-chef':'/media/player/guild_skin_cosmicchef.webp?v=20260811-2','memory-ranger':'/media/player/guild_skin_camera.webp?v=20260811-2','gravity-captain':'/media/player/guild_skin_gravity.webp?v=20260811-2','crystal-singer':'/media/player/guild_skin_crystalsinger.webp?v=20260811-2','thunder-rider':'/media/player/guild_skin_thundercloud.webp?v=20260811-2','season-elementalist':'/media/player/guild_skin_fourseasons.webp?v=20260811-2','glass-knight':'/media/player/guild_skin_glassknight.webp?v=20260811-2','star-postmage':'/media/player/guild_skin_starpost.webp?v=20260811-2','phantom-detective':'/media/player/guild_skin_detective.webp?v=20260811-2','festival-dancer':'/media/player/guild_skin_festival.webp?v=20260811-2','observatory-keeper':'/media/player/guild_skin_observatory.webp?v=20260811-2','rune-gardener':'/media/player/guild_skin_runegarden.webp?v=20260811-2','sea-star-witch':'/media/player/guild_skin_seastar.webp?v=20260811-2','clockwork-ballerina':'/media/player/guild_skin_ballerina.webp?v=20260811-2','dragonfruit-warrior':'/media/player/guild_skin_dragonfruit.webp?v=20260811-2','moon-relic-explorer':'/media/player/guild_skin_moonexplorer.webp?v=20260811-2','rainbow-dragon-rider':'/media/player/guild_skin_rainbowrider.webp?v=20260811-2'
         });
         const GUILD_EFFECT_PER_LEVEL = Object.freeze({ vitality: 0.5, forge: 0.2, fortune: 0.1, prosperity: 1 });
         function getGuildEffectBonus(effectId) {
             const level = Math.max(0, Math.min(10, Number(gameState.guildEffects?.[effectId]?.level || 0)));
             return level * Number(GUILD_EFFECT_PER_LEVEL[effectId] || 0);
         }
+        function getGuildCosmeticBonus(key){return Math.max(0,Number(gameState.guildCosmeticEffects?.[key]||0));}
+        function getGuildBoostCharge(id){return Math.max(0,Math.floor(Number(gameState.guildBoostCharges?.[id]||0)));}
+        function consumeGuildBoost(id){
+            const current=getGuildBoostCharge(id);
+            if(current<=0)return false;
+            gameState.guildBoostCharges={...(gameState.guildBoostCharges||{}),[id]:current-1};
+            return true;
+        }
+        function applyGuildPowerRune(damage){
+            if(getGuildBoostCharge('powerRune')<=0)return Math.floor(damage);
+            consumeGuildBoost('powerRune');
+            return Math.floor(damage*1.1);
+        }
         function rollGuildRewardGrade(roll = Math.random()) {
-            const bonus = Math.min(0.01, getGuildEffectBonus('fortune') / 100);
+            const bonus = Math.min(0.015, (getGuildEffectBonus('fortune') + getGuildCosmeticBonus('fortunePctPoint')) / 100);
             if (roll < 0.0005 + bonus * 0.03) return 'mythic';
             if (roll < 0.02 + bonus * 0.25) return 'legendary';
             if (roll < 0.07 + bonus * 0.65) return 'hero';
@@ -1200,7 +1215,9 @@
             const imageUrl = skinImageUrl || (isMale ? "media/player/male_warrior.webp" : "media/player/female_warrior.webp");
 
             if (skinImageUrl) {
-                const innerHtml = `<image href="${imageUrl}" x="0" y="0" width="100" height="120" preserveAspectRatio="xMidYMid meet" />`;
+                const rarityColor = ({ normal:'#9ca3af', rare:'#38bdf8', hero:'#a855f7', legendary:'#facc15', mythic:'#fb7185' })[h.guildSkinRarity] || '#9ca3af';
+                const glowStrength = ({ normal:0, rare:1.5, hero:2.5, legendary:3.5, mythic:5 })[h.guildSkinRarity] || 0;
+                const innerHtml = `<defs><filter id="guildSkinGlow" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="0" stdDeviation="${glowStrength}" flood-color="${rarityColor}" flood-opacity=".95"/></filter></defs><ellipse cx="50" cy="108" rx="32" ry="7" fill="${rarityColor}" opacity="${glowStrength?'.28':'.08'}"/><image href="${imageUrl}" x="0" y="0" width="100" height="120" preserveAspectRatio="xMidYMid meet" filter="url(#guildSkinGlow)" />`;
                 svg.innerHTML = innerHtml;
                 const wbSvg = document.getElementById("wbHeroSvg");
                 if (wbSvg) wbSvg.innerHTML = innerHtml;
@@ -1670,7 +1687,7 @@
                 const slimeLvl = gameState.petLevels['slime'];
                 slimeAutoGold = Math.floor(slimeLvl * (stage * 0.5)); // 슬라임 펫 레벨당 초당 자동 골드 획득 보너스 (1/10 튜닝)
             }
-            return Math.floor((stageBase + slimeAutoGold) * relicGoldBonus * potentialGold);
+            return Math.floor((stageBase + slimeAutoGold) * relicGoldBonus * potentialGold * (1 + getGuildCosmeticBonus('goldPct') / 100));
         }
 
         function calculateDPSPower() {
@@ -1691,7 +1708,7 @@
             if (gameState.equippedRelicId === "relic_orb") {
                 totalDps = Math.floor(totalDps * (1.0 + getEquippedRelicBonus("relic_orb") / 100));
             }
-            return totalDps;
+            return Math.floor(totalDps * (1 + getGuildCosmeticBonus('attackPct') / 100));
         }
 
         function calculateGearDPS() {
@@ -1723,7 +1740,7 @@
             const relicMult = 1.0 + (getEquippedRelicBonus("relic_sword") / 100);
 
             const totalBase = baseGearPower + stagePower + potentialClick + braceletClick;
-            return Math.max(1, Math.floor(totalBase * relicMult));
+            return Math.max(1, Math.floor(totalBase * relicMult * (1 + getGuildCosmeticBonus('attackPct') / 100)));
         }
 
         // ========================================
@@ -1984,7 +2001,7 @@
             const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
             const slimeBonus = slimeLvl * PET_PARAMS['slime'].goldBonus;
             const relicGoldBonus = getEquippedRelicBonus("relic_compass") / 100;
-            const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus + (getPotentialStatBonus('goldBonus') / 100) + (getGuildEffectBonus('prosperity') / 100);
+            const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus + (getPotentialStatBonus('goldBonus') / 100) + ((getGuildEffectBonus('prosperity') + getGuildCosmeticBonus('goldPct')) / 100);
             // 장착한 영단어 비기의 실제 배수도 종합 전투력에 반영합니다.
             // 등급·티어·별 강화가 모두 반영된 getSkillMultiplier 값을 사용합니다.
             const equippedSkillPower = (gameState.equippedSkills || []).reduce((sum, skillId) => {
@@ -2207,7 +2224,7 @@
             // 요정 펫 레벨당 강화 성공률 +1% 보정 (최대 95%까지)
             const fairyLvl = (gameState.petLevels && gameState.petLevels['fairy']) || 0;
             const fairyBonus = fairyLvl * PET_PARAMS['fairy'].forgeBonus;
-            const guildForgeBonus = getGuildEffectBonus('forge');
+            const guildForgeBonus = getGuildEffectBonus('forge') + getGuildCosmeticBonus('forgePctPoint') + (getGuildBoostCharge('forgeCharm')>0?5:0);
             return {
                 success: Number((Math.max(5, Math.min(95, success + fairyBonus + guildForgeBonus))).toFixed(1)),
                 dropChance: dropChance
@@ -2327,6 +2344,7 @@
                 gameState.gold -= cost;
 
                 const chanceInfo = getGearUpgradeInfo(currentLvl);
+                consumeGuildBoost('forgeCharm');
                 const roll = Math.random() * 100;
 
                 if (roll <= chanceInfo.success) {
@@ -2342,7 +2360,12 @@
                     const shieldRate = getEquippedRelicBonus("relic_shield");
                     const effectiveDropChance = Math.max(0, chanceInfo.dropChance - shieldRate);
 
-                    if (effectiveDropChance > 0 && dropRoll <= effectiveDropChance) {
+                    if (effectiveDropChance > 0 && dropRoll <= effectiveDropChance && consumeGuildBoost('forgeGuard')) {
+                        showForgeResult(false,
+                            '🛡️ 강화 수호 인장 발동!',
+                            `유물 방패 적용 후 남은 하락 판정을 <strong class="text-emerald-400">확정 방어</strong>했습니다. 강화 단계가 유지됩니다.`,
+                            '#10b981');
+                    } else if (effectiveDropChance > 0 && dropRoll <= effectiveDropChance) {
                         const dropAmt = Math.floor(Math.random() * 3) + 1;
                         const newLvl = Math.max(1, currentLvl - dropAmt);
                         const loss = currentLvl - newLvl;
@@ -4896,7 +4919,7 @@
                 const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
                 const slimeBonus = slimeLvl * PET_PARAMS['slime'].goldBonus;
                 const relicGoldBonus = getEquippedRelicBonus("relic_compass") / 100;
-                const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus + (getGuildEffectBonus('prosperity') / 100);
+                const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus + ((getGuildEffectBonus('prosperity') + getGuildCosmeticBonus('goldPct')) / 100);
                 const reward = Math.floor(baseReward * goldMultiplier);
 
                 gameState.gold += reward; gameState.accGold = (gameState.accGold || gameState.gold || 0) + reward;
@@ -4922,7 +4945,7 @@
                 gameState.quizCombo++;
                 const comboBonus = 1.0 + Math.min(1.0, (gameState.quizCombo - 1) * 0.05);
 
-                const quizDmg = Math.max(10, Math.floor(rawQuizDmg * chaliceMult * bossBonus * comboBonus));
+                const quizDmg = applyGuildPowerRune(Math.max(10, Math.floor(rawQuizDmg * chaliceMult * bossBonus * comboBonus)));
                 processCombatDamage(quizDmg);
                 spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `⚡ 콤보 크리티컬! -${quizDmg.toLocaleString()}`);
 
@@ -5170,7 +5193,7 @@
             const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
             const slimeBonus = slimeLvl * PET_PARAMS['slime'].goldBonus;
             const relicGoldBonus = getEquippedRelicBonus("relic_compass") / 100;
-            const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus + (getPotentialStatBonus('goldBonus') / 100) + (getGuildEffectBonus('prosperity') / 100);
+            const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus + (getPotentialStatBonus('goldBonus') / 100) + ((getGuildEffectBonus('prosperity') + getGuildCosmeticBonus('goldPct')) / 100);
             if (profileGold) profileGold.innerText = `×${goldMultiplier.toFixed(2)}배`;
 
             // 📖 퀴즈 단어 정답 타격 피해 수치 & 증폭률
@@ -6605,7 +6628,7 @@
                                (gameState.shoesLvl || 1);
             // 기본 50 HP + 장비 레벨당 10 HP (예: 전원 10강시 550 HP)
             const baseHp = 50 + (sumGearLvl * 10);
-            return Math.floor(baseHp * (1 + getGuildEffectBonus('vitality') / 100));
+            return Math.floor(baseHp * (1 + (getGuildEffectBonus('vitality') + getGuildCosmeticBonus('defensePct')) / 100));
         }
 
         let wbMaxBossHp = 500000000000; // 월드보스 전 학년 공유 기본 최대 체력: 5,000억 (500B)
@@ -8259,7 +8282,7 @@
                     playSoundEffect('skill');
 
                     let baseHeroDmg = (calculateClickAttackPower() * 400) + (calculateDPSPower() * 100);
-                    let counterDmg = Math.floor(baseHeroDmg * 3.0);
+                    let counterDmg = applyGuildPowerRune(Math.floor(baseHeroDmg * 3.0));
 
                     wbTotalDamageDealt += counterDmg;
                     updateWorldBossBattleHpBar();
@@ -8378,7 +8401,7 @@
                 }
 
                 let baseHeroDmg = (calculateClickAttackPower() * 300) + (calculateDPSPower() * 50);
-                let heroDmg = Math.floor(baseHeroDmg * typeMultiplier);
+                let heroDmg = applyGuildPowerRune(Math.floor(baseHeroDmg * typeMultiplier));
 
                 // 펫 협공 데미지
                 const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;

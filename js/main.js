@@ -1164,13 +1164,48 @@
             }
         }
 
+        const GUILD_HERO_SKIN_IMAGES = Object.freeze({
+            'azure-scholar': '/media/player/guild_skin_azure.webp?v=20260811-1',
+            'sakura-blade': '/media/player/guild_skin_sakura.webp?v=20260811-1',
+            'neon-shadow': '/media/player/guild_skin_neon.webp?v=20260811-1',
+            'golden-lion': '/media/player/guild_skin_lion.webp?v=20260811-1',
+            'crimson-rune': '/media/player/guild_skin_crimson.webp?v=20260811-1',
+            'frost-wolf': '/media/player/guild_skin_frost.webp?v=20260811-1',
+            'arcane-inventor': '/media/player/guild_skin_inventor.webp?v=20260811-1',
+            'moon-rabbit': '/media/player/guild_skin_moon.webp?v=20260811-1',
+            'starlight-sage': '/media/player/guild_skin_starlight.webp?v=20260811-1',
+            'dragon-captain': '/media/player/guild_skin_dragon.webp?v=20260811-1'
+        });
+        const GUILD_EFFECT_PER_LEVEL = Object.freeze({ vitality: 0.5, forge: 0.2, fortune: 0.1, prosperity: 1 });
+        function getGuildEffectBonus(effectId) {
+            const level = Math.max(0, Math.min(10, Number(gameState.guildEffects?.[effectId]?.level || 0)));
+            return level * Number(GUILD_EFFECT_PER_LEVEL[effectId] || 0);
+        }
+        function rollGuildRewardGrade(roll = Math.random()) {
+            const bonus = Math.min(0.01, getGuildEffectBonus('fortune') / 100);
+            if (roll < 0.0005 + bonus * 0.03) return 'mythic';
+            if (roll < 0.02 + bonus * 0.25) return 'legendary';
+            if (roll < 0.07 + bonus * 0.65) return 'hero';
+            if (roll < 0.25 + bonus) return 'rare';
+            return 'normal';
+        }
+
         function drawHeroAvatar() {
             const h = gameState;
             const isMale = h.avatarType === "male";
             const svg = document.getElementById("heroSvg");
 
             // AI 생성 픽셀 아트 이미지 베이스
-            const imageUrl = isMale ? "media/player/male_warrior.webp" : "media/player/female_warrior.webp";
+            const skinImageUrl = GUILD_HERO_SKIN_IMAGES[h.guildSkinId] || '';
+            const imageUrl = skinImageUrl || (isMale ? "media/player/male_warrior.webp" : "media/player/female_warrior.webp");
+
+            if (skinImageUrl) {
+                const innerHtml = `<image href="${imageUrl}" x="0" y="0" width="100" height="120" preserveAspectRatio="xMidYMid meet" />`;
+                svg.innerHTML = innerHtml;
+                const wbSvg = document.getElementById("wbHeroSvg");
+                if (wbSvg) wbSvg.innerHTML = innerHtml;
+                return;
+            }
 
             let overlays = "";
 
@@ -1308,6 +1343,8 @@
                 wbSvg.innerHTML = innerHtml;
             }
         }
+
+        window.drawHeroAvatar = drawHeroAvatar;
 
         function drawPetCompanion() {
             if (!gameState.petLevels) {
@@ -1947,7 +1984,7 @@
             const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
             const slimeBonus = slimeLvl * PET_PARAMS['slime'].goldBonus;
             const relicGoldBonus = getEquippedRelicBonus("relic_compass") / 100;
-            const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus + (getPotentialStatBonus('goldBonus') / 100);
+            const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus + (getPotentialStatBonus('goldBonus') / 100) + (getGuildEffectBonus('prosperity') / 100);
             // 장착한 영단어 비기의 실제 배수도 종합 전투력에 반영합니다.
             // 등급·티어·별 강화가 모두 반영된 getSkillMultiplier 값을 사용합니다.
             const equippedSkillPower = (gameState.equippedSkills || []).reduce((sum, skillId) => {
@@ -2170,8 +2207,9 @@
             // 요정 펫 레벨당 강화 성공률 +1% 보정 (최대 95%까지)
             const fairyLvl = (gameState.petLevels && gameState.petLevels['fairy']) || 0;
             const fairyBonus = fairyLvl * PET_PARAMS['fairy'].forgeBonus;
+            const guildForgeBonus = getGuildEffectBonus('forge');
             return {
-                success: Number((Math.max(5, Math.min(95, success + fairyBonus))).toFixed(1)),
+                success: Number((Math.max(5, Math.min(95, success + fairyBonus + guildForgeBonus))).toFixed(1)),
                 dropChance: dropChance
             };
         }
@@ -3182,14 +3220,7 @@
 
             for (let i = 0; i < drawCount; i++) {
                 const pickedRelicDef = RELIC_DEFINITIONS[Math.floor(Math.random() * RELIC_DEFINITIONS.length)];
-                const roll = Math.random();
-                let rolledGrade = "normal";
-                if (roll < 0.0005) rolledGrade = "mythic";        // 0.05%
-                else if (roll < 0.02) rolledGrade = "legendary";   // 1.95% (0.05%~2.00%)
-                else if (roll < 0.07) rolledGrade = "hero";
-                            
-                                    // 5.00% (2.00%~7.00%)
-                else if (roll < 0.25) rolledGrade = "rare";        // 18.00% (7.00%~25.00%)
+                let rolledGrade = rollGuildRewardGrade();
 
                 let existing = gameState.acquiredRelics.find(item => item.id === pickedRelicDef.id);
                 
@@ -3893,18 +3924,7 @@
         }
 
         function rollAndAcquireSkill(word, meaning) {
-            const roll = Math.random();
-            let rolledGrade = "normal";
-
-            if (roll < 0.0005) { // 0.05%
-                rolledGrade = "mythic";
-            } else if (roll < 0.02) { // 1.95%
-                rolledGrade = "legendary";
-            } else if (roll < 0.07) { // 5%
-                rolledGrade = "hero";
-            } else if (roll < 0.25) { // 18%
-                rolledGrade = "rare";
-            }
+            const rolledGrade = rollGuildRewardGrade();
 
             return addOrLevelUpSkill(word, meaning, rolledGrade);
         }
@@ -3960,12 +3980,7 @@
                         let newCards = 0, duplicates = 0;
                         for (let i = 0; i < drawCount; i++) {
                             const picked = pickSkillReward(fullPool);
-                            const roll = Math.random();
-                            let rolledGrade = "normal";
-                            if (roll < 0.0005) rolledGrade = "mythic";        // 0.05%
-                            else if (roll < 0.02) rolledGrade = "legendary";   // 1.95%
-                            else if (roll < 0.07) rolledGrade = "hero";        // 5.00%
-                            else if (roll < 0.25) rolledGrade = "rare";        // 18.00%
+                            let rolledGrade = rollGuildRewardGrade();
 
                             if (i === (drawCount - 1) && !acquiredList.some(item => item.grade !== "normal")) {
                                 rolledGrade = "rare";
@@ -4096,12 +4111,7 @@
 
             for (let i = 0; i < 10; i++) {
                 const picked = pickSkillReward(fullPool);
-                const roll = Math.random();
-                let rolledGrade = "normal";
-                if (roll < 0.0005) rolledGrade = "mythic";        // 0.05%
-                else if (roll < 0.02) rolledGrade = "legendary";   // 1.95%
-                else if (roll < 0.07) rolledGrade = "hero";        // 5.00%
-                else if (roll < 0.25) rolledGrade = "rare";        // 18.00%
+                let rolledGrade = rollGuildRewardGrade();
 
                 if (i === 9 && !acquiredList.some(item => item.grade !== "normal")) {
                     rolledGrade = "rare";
@@ -4886,7 +4896,7 @@
                 const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
                 const slimeBonus = slimeLvl * PET_PARAMS['slime'].goldBonus;
                 const relicGoldBonus = getEquippedRelicBonus("relic_compass") / 100;
-                const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus;
+                const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus + (getGuildEffectBonus('prosperity') / 100);
                 const reward = Math.floor(baseReward * goldMultiplier);
 
                 gameState.gold += reward; gameState.accGold = (gameState.accGold || gameState.gold || 0) + reward;
@@ -5160,7 +5170,7 @@
             const slimeLvl = (gameState.petLevels && gameState.petLevels['slime']) || 0;
             const slimeBonus = slimeLvl * PET_PARAMS['slime'].goldBonus;
             const relicGoldBonus = getEquippedRelicBonus("relic_compass") / 100;
-            const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus + (getPotentialStatBonus('goldBonus') / 100);
+            const goldMultiplier = 1.0 + slimeBonus + relicGoldBonus + (getPotentialStatBonus('goldBonus') / 100) + (getGuildEffectBonus('prosperity') / 100);
             if (profileGold) profileGold.innerText = `×${goldMultiplier.toFixed(2)}배`;
 
             // 📖 퀴즈 단어 정답 타격 피해 수치 & 증폭률
@@ -6594,7 +6604,8 @@
                                (gameState.weaponLvl || 1) + (gameState.shieldLvl || 1) + 
                                (gameState.shoesLvl || 1);
             // 기본 50 HP + 장비 레벨당 10 HP (예: 전원 10강시 550 HP)
-            return 50 + (sumGearLvl * 10);
+            const baseHp = 50 + (sumGearLvl * 10);
+            return Math.floor(baseHp * (1 + getGuildEffectBonus('vitality') / 100));
         }
 
         let wbMaxBossHp = 500000000000; // 월드보스 전 학년 공유 기본 최대 체력: 5,000억 (500B)

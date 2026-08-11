@@ -6,6 +6,47 @@ import { apiError, handleApiError, hash, isExpired, normalizeNickname, readBody,
 const accounts = adminDb.collection('accounts');
 const teachers = adminDb.collection('teachers');
 const classes = adminDb.collection('classes');
+const GUILD_EFFECT_COSTS = [25, 40, 60, 85, 115, 150, 190, 240, 300, 375];
+const GUILD_EFFECT_DEFINITIONS = Object.freeze({
+  vitality: { id: 'vitality', name: '수호자의 맹세', icon: 'heart-pulse', description: '월드보스와 보스전 최대 HP가 증가합니다.', unit: '%', valuePerLevel: 0.5, maxLevel: 10 },
+  forge: { id: 'forge', name: '장인의 화로', icon: 'anvil', description: '대장간 장비 강화 성공 확률이 소폭 증가합니다.', unit: '%p', valuePerLevel: 0.2, maxLevel: 10 },
+  fortune: { id: 'fortune', name: '행운의 서고', icon: 'sparkles', description: '스킬·유물 뽑기의 희귀 이상 등장 확률이 증가합니다.', unit: '%p', valuePerLevel: 0.1, maxLevel: 10 },
+  prosperity: { id: 'prosperity', name: '풍요의 등불', icon: 'coins', description: '퀴즈 정답으로 얻는 골드가 증가합니다.', unit: '%', valuePerLevel: 1, maxLevel: 10 }
+});
+const GUILD_SKIN_DEFINITIONS = Object.freeze([
+  { id: 'azure-scholar', name: '청람의 지식 수호자', price: 50, image: '/media/player/guild_skin_azure.webp?v=20260811-1', description: '푸른 룬 갑옷을 입은 지식 수호자 전신 스킨' },
+  { id: 'sakura-blade', name: '벚꽃 검무사', price: 75, image: '/media/player/guild_skin_sakura.webp?v=20260811-1', description: '벚꽃 갑옷과 부채를 갖춘 화사한 검무사 전신 스킨' },
+  { id: 'neon-shadow', name: '네온 그림자', price: 100, image: '/media/player/guild_skin_neon.webp?v=20260811-1', description: '검은 장비와 푸른 빛을 두른 미래형 도적 전신 스킨' },
+  { id: 'golden-lion', name: '황금 사자 성기사', price: 125, image: '/media/player/guild_skin_lion.webp?v=20260811-1', description: '씩씩한 사자 투구와 태양 방패를 든 전신 스킨' },
+  { id: 'crimson-rune', name: '홍염의 룬 기사', price: 150, image: '/media/player/guild_skin_crimson.webp?v=20260811-1', description: '붉은 마법검과 중갑을 갖춘 룬 기사 전신 스킨' },
+  { id: 'frost-wolf', name: '설원의 늑대 궁수', price: 175, image: '/media/player/guild_skin_frost.webp?v=20260811-1', description: '늑대 후드와 얼음 활을 갖춘 설원 궁수 전신 스킨' },
+  { id: 'arcane-inventor', name: '마도 기계 발명가', price: 200, image: '/media/player/guild_skin_inventor.webp?v=20260811-1', description: '마법 공구와 톱니 방패를 든 발명가 전신 스킨' },
+  { id: 'moon-rabbit', name: '달토끼 치유사', price: 250, image: '/media/player/guild_skin_moon.webp?v=20260811-1', description: '달빛 지팡이와 토끼 후드를 갖춘 치유사 전신 스킨' },
+  { id: 'starlight-sage', name: '별빛의 현자', price: 300, image: '/media/player/guild_skin_starlight.webp?v=20260811-1', description: '별과 단어 마법을 다루는 전신 현자 스킨' },
+  { id: 'dragon-captain', name: '드래곤 학원 대장', price: 350, image: '/media/player/guild_skin_dragon.webp?v=20260811-1', description: '용의 창과 날개 방패를 갖춘 전설급 대장 전신 스킨' }
+]);
+const GUILD_SKIN_BY_ID = new Map(GUILD_SKIN_DEFINITIONS.map((skin) => [skin.id, skin]));
+
+function safeGuildEffects(value) {
+  const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  return Object.fromEntries(Object.entries(GUILD_EFFECT_DEFINITIONS).map(([id, definition]) => {
+    const row = source[id] && typeof source[id] === 'object' ? source[id] : {};
+    return [id, { level: safeInt(row.level, 0, 0, definition.maxLevel), totalInvested: safeInt(row.totalInvested, 0, 0, 1000000000) }];
+  }));
+}
+function safeGuildCosmetics(value) {
+  const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  const ownedSkinIds = [...new Set((Array.isArray(source.ownedSkinIds) ? source.ownedSkinIds : []).map((id) => text(id, 80)).filter((id) => GUILD_SKIN_BY_ID.has(id)))];
+  const equippedSkinId = ownedSkinIds.includes(text(source.equippedSkinId, 80)) ? text(source.equippedSkinId, 80) : null;
+  return { ownedSkinIds, equippedSkinId };
+}
+function publicGuildEffectCatalog(effects) {
+  return Object.values(GUILD_EFFECT_DEFINITIONS).map((definition) => {
+    const level = effects[definition.id]?.level || 0;
+    return { ...definition, level, currentValue: Number((level * definition.valuePerLevel).toFixed(2)), nextCost: level < definition.maxLevel ? GUILD_EFFECT_COSTS[level] : null, totalInvested: effects[definition.id]?.totalInvested || 0 };
+  });
+}
+function publicGuildSkinCatalog() { return GUILD_SKIN_DEFINITIONS.map((skin) => ({ ...skin })); }
 const leaderboard = adminDb.collection('leaderboard');
 const invites = adminDb.collection('classInvites');
 const legacyUsers = adminDb.collection('users');
@@ -141,7 +182,7 @@ function cleanState(input) {
   return state;
 }
 function score(state) { return safeInt(state.totalQuizCorrect,0,0)*1000 + (Array.isArray(state.masteredWords)?state.masteredWords.length:0)*10 + Math.min(safeInt(state.stage,1,1),999); }
-function publicAccount(data) { return { nickname:data.nickname, learningGrade:data.learningGrade, state:{...defaultState(),...(data.state||{})}, freeNicknameChangeUsed:Boolean(data.freeNicknameChangeUsed), renameCount:safeInt(data.renameCount,0,0), leaderboardOptIn:Boolean(data.leaderboardOptIn), classIds:Array.isArray(data.classIds)?data.classIds:[], activeGuildName:text(data.activeGuildName,40)||null, activeGuildLogoUrl:data.activeGuildName?safeGuildLogoUrl(data.activeGuildLogoUrl):null, legacyGoogleLinked:Boolean(data.legacyGoogleLinked) }; }
+function publicAccount(data) { return { nickname:data.nickname, learningGrade:data.learningGrade, state:{...defaultState(),...(data.state||{})}, freeNicknameChangeUsed:Boolean(data.freeNicknameChangeUsed), renameCount:safeInt(data.renameCount,0,0), leaderboardOptIn:Boolean(data.leaderboardOptIn), classIds:Array.isArray(data.classIds)?data.classIds:[], activeGuildName:text(data.activeGuildName,40)||null, activeGuildLogoUrl:data.activeGuildName?safeGuildLogoUrl(data.activeGuildLogoUrl):null, guildCosmetics:safeGuildCosmetics(data.guildCosmetics), legacyGoogleLinked:Boolean(data.legacyGoogleLinked) }; }
 function legacyLearningGrade(data, fallback=4) { return safeInt(data?.grade, safeInt(data?.learningGrade, fallback, 3, 6), 3, 6); }
 async function loadAccount(uid) {
   const ref=accounts.doc(uid),snap=await ref.get();if(!snap.exists)return null;
@@ -182,7 +223,7 @@ async function assignedWordPack(uid) {
     const rawQuestionTypes = hasMemberOverride ? member.questionTypes : classroom.defaultQuestionTypes;
     const wordPackIds = normalizedPackIds(rawPackIds, grade);
     const questionTypes = normalizedQuestionTypes(rawQuestionTypes);
-    return { classId, classLabel: classroom.guildName || classroom.classLabel || '길드', guildLogoUrl: safeGuildLogoUrl(classroom.guildLogoUrl), wordPackId: wordPackIds[0], wordPackIds, wordPacks: assignedPackMetadata(wordPackIds), questionTypes, assignmentSource: hasMemberOverride ? 'member' : 'guild', learningSettingsVersion: safeInt(hasMemberOverride ? member.learningSettingsVersion : classroom.learningSettingsVersion, 0, 0) };
+    return { classId, classLabel: classroom.guildName || classroom.classLabel || '길드', guildLogoUrl: safeGuildLogoUrl(classroom.guildLogoUrl), guildEffects: safeGuildEffects(classroom.guildEffects), wordPackId: wordPackIds[0], wordPackIds, wordPacks: assignedPackMetadata(wordPackIds), questionTypes, assignmentSource: hasMemberOverride ? 'member' : 'guild', learningSettingsVersion: safeInt(hasMemberOverride ? member.learningSettingsVersion : classroom.learningSettingsVersion, 0, 0) };
   }
   return { wordPackId: null, wordPackIds: [], questionTypes: ['meaning-choice'], guildLogoUrl: null };
 }function normalizedTrialAnswer(value) { return text(value, 160).normalize('NFKC').trim().toLowerCase().replace(/[^a-z0-9가-힣]/g, ''); }
@@ -261,7 +302,7 @@ function publicTrialQuestions(words, questions, attemptId) {
 }
 async function loadGuildTrial(uid, prefetchedAssignment = null) {
   const assignment = prefetchedAssignment || await assignedWordPack(uid);
-  const assignmentPayload = { wordPackId: assignment.wordPackId || null, wordPackIds: assignment.wordPackIds || [], questionTypes: assignment.questionTypes || ['meaning-choice'], assignmentSource: assignment.assignmentSource || null, learningSettingsVersion: safeInt(assignment.learningSettingsVersion, 0, 0) };
+  const assignmentPayload = { wordPackId: assignment.wordPackId || null, wordPackIds: assignment.wordPackIds || [], questionTypes: assignment.questionTypes || ['meaning-choice'], assignmentSource: assignment.assignmentSource || null, learningSettingsVersion: safeInt(assignment.learningSettingsVersion, 0, 0), guildEffects: safeGuildEffects(assignment.guildEffects) };
   if (!assignment.classId) return { guildName: null, guildLogoUrl: null, wordPackId: null, guildCoins: 0, trial: null };
   const classRef = adminDb.collection('classes').doc(assignment.classId);
   const memberRef = classRef.collection('members').doc(uid);
@@ -309,14 +350,19 @@ async function loadGuildTrial(uid, prefetchedAssignment = null) {
   if (!assignment.classId) return { ...guild, memberCount: 0, guildTotalCorrect: 0, guildMasteredCount: 0, members: [] };
   const classRef = classes.doc(assignment.classId);
   const membersRef = classRef.collection('members');
-  const [classSnap, ownMemberSnap, membersSnap, memberCountSnap] = await Promise.all([
+  const [classSnap, ownMemberSnap, membersSnap, memberCountSnap, accountSnap, investmentSnap] = await Promise.all([
     classRef.get(),
     membersRef.doc(uid).get(),
     membersRef.select('nickname', 'learningGrade', 'stage', 'totalCorrect', 'totalQuizTries', 'conqueredCount', 'masteredCount', 'combatPower', 'titleName', 'guildCoins', 'guildPoints', 'guildCorrectCount', 'guildStageClears', 'guildBossDamage', 'guildBossPointTotal', 'guildTrialCorrect', 'lastActiveAt').limit(200).get(),
-    membersRef.count().get()
+    membersRef.count().get(),
+    accounts.doc(uid).get(),
+    classRef.collection('effectInvestments').doc(uid).get()
   ]);
   if (!classSnap.exists || !ownMemberSnap.exists) return { ...guild, memberCount: 0, guildTotalCorrect: 0, guildMasteredCount: 0, members: [] };
   const classData = classSnap.data() || {};
+  const guildEffects = safeGuildEffects(classData.guildEffects);
+  const rawInvestment = investmentSnap.data() || {};
+  const contributionByEffect = Object.fromEntries(Object.keys(GUILD_EFFECT_DEFINITIONS).map((id) => [id, safeInt(rawInvestment.contributionByEffect?.[id], 0, 0, 1000000000)]));
   const ownerId = text(classData.ownerId || classData.managerIds?.[0], 128);
   const rawManagerIds = (Array.isArray(classData.managerIds) ? classData.managerIds : []).map((id) => text(id, 128)).filter(Boolean);
   const coManagerIds = [...new Set(rawManagerIds)].filter((id) => id && id !== ownerId);
@@ -375,10 +421,83 @@ async function loadGuildTrial(uid, prefetchedAssignment = null) {
     assignedWordPacks: assignment.wordPacks || [],
     questionTypes: assignment.questionTypes,
     assignmentSource: assignment.assignmentSource,
+    guildEffects,
+    guildEffectCatalog: publicGuildEffectCatalog(guildEffects),
+    guildSkinCatalog: publicGuildSkinCatalog(),
+    guildCosmetics: safeGuildCosmetics(accountSnap.data()?.guildCosmetics),
+    myGuildInvestment: { contributionByEffect, total: Object.values(contributionByEffect).reduce((sum, value) => sum + value, 0) },
     staff,
     members
   };
 }
+async function investGuildEffect(uid, body) {
+  const effectId = text(body.effectId, 40);
+  const definition = GUILD_EFFECT_DEFINITIONS[effectId];
+  if (!definition) throw apiError(400, 'INVALID_GUILD_EFFECT', '투자할 길드 효과를 확인해 주세요.');
+  const accountRef = accounts.doc(uid);
+  return adminDb.runTransaction(async (tx) => {
+    const accountSnap = await tx.get(accountRef);
+    if (!accountSnap.exists) throw apiError(404, 'PROFILE_NOT_FOUND', '용사 기록을 찾지 못했어요.');
+    const classId = text(accountSnap.data()?.activeClassId, 128);
+    if (!classId) throw apiError(403, 'GUILD_REQUIRED', '참여 중인 길드가 없어요.');
+    const classRef = classes.doc(classId);
+    const memberRef = classRef.collection('members').doc(uid);
+    const investmentRef = classRef.collection('effectInvestments').doc(uid);
+    const [classSnap, memberSnap, investmentSnap] = await Promise.all([tx.get(classRef), tx.get(memberRef), tx.get(investmentRef)]);
+    if (!classSnap.exists || !memberSnap.exists) throw apiError(403, 'GUILD_REQUIRED', '현재 길드 소속을 확인해 주세요.');
+    const effects = safeGuildEffects(classSnap.data()?.guildEffects);
+    const current = effects[effectId];
+    if (current.level >= definition.maxLevel) throw apiError(409, 'GUILD_EFFECT_MAX', '이미 최고 레벨인 길드 효과예요.');
+    const cost = GUILD_EFFECT_COSTS[current.level];
+    const coins = safeInt(memberSnap.data()?.guildCoins, 0, 0, 1000000000);
+    if (coins < cost) throw apiError(409, 'GUILD_COIN_SHORTAGE', `길드 코인이 ${cost - coins}개 부족해요.`);
+    effects[effectId] = { level: current.level + 1, totalInvested: current.totalInvested + cost };
+    const oldInvestment = investmentSnap.data() || {};
+    const contributionByEffect = Object.fromEntries(Object.keys(GUILD_EFFECT_DEFINITIONS).map((id) => [id, safeInt(oldInvestment.contributionByEffect?.[id], 0, 0, 1000000000)]));
+    contributionByEffect[effectId] += cost;
+    const total = Object.values(contributionByEffect).reduce((sum, value) => sum + value, 0);
+    tx.update(memberRef, { guildCoins: coins - cost, lastActiveAt: FieldValue.serverTimestamp() });
+    tx.update(classRef, { guildEffects: effects, guildEffectsUpdatedAt: FieldValue.serverTimestamp() });
+    tx.set(investmentRef, { contributionByEffect, total, lastInvestedAt: FieldValue.serverTimestamp() }, { merge: true });
+    return { guildCoins: coins - cost, effects, catalog: publicGuildEffectCatalog(effects), myGuildInvestment: { contributionByEffect, total } };
+  });
+}
+
+async function updateGuildSkin(uid, body) {
+  const mode = text(body.mode, 20);
+  const skinId = text(body.skinId, 80);
+  if (!['purchase', 'equip', 'unequip'].includes(mode)) throw apiError(400, 'INVALID_SKIN_ACTION', '스킨 요청을 확인해 주세요.');
+  const skin = GUILD_SKIN_BY_ID.get(skinId);
+  if (mode !== 'unequip' && !skin) throw apiError(400, 'INVALID_GUILD_SKIN', '선택한 영웅 스킨을 찾지 못했어요.');
+  const accountRef = accounts.doc(uid);
+  return adminDb.runTransaction(async (tx) => {
+    const accountSnap = await tx.get(accountRef);
+    if (!accountSnap.exists) throw apiError(404, 'PROFILE_NOT_FOUND', '용사 기록을 찾지 못했어요.');
+    const classId = text(accountSnap.data()?.activeClassId, 128);
+    if (!classId) throw apiError(403, 'GUILD_REQUIRED', '참여 중인 길드가 없어요.');
+    const memberRef = classes.doc(classId).collection('members').doc(uid);
+    const memberSnap = await tx.get(memberRef);
+    if (!memberSnap.exists) throw apiError(403, 'GUILD_REQUIRED', '현재 길드 소속을 확인해 주세요.');
+    const cosmetics = safeGuildCosmetics(accountSnap.data()?.guildCosmetics);
+    let coins = safeInt(memberSnap.data()?.guildCoins, 0, 0, 1000000000);
+    if (mode === 'purchase') {
+      if (cosmetics.ownedSkinIds.includes(skinId)) throw apiError(409, 'SKIN_ALREADY_OWNED', '이미 보유한 영웅 스킨이에요.');
+      if (coins < skin.price) throw apiError(409, 'GUILD_COIN_SHORTAGE', `길드 코인이 ${skin.price - coins}개 부족해요.`);
+      coins -= skin.price;
+      cosmetics.ownedSkinIds.push(skinId);
+      cosmetics.equippedSkinId = skinId;
+      tx.update(memberRef, { guildCoins: coins, lastActiveAt: FieldValue.serverTimestamp() });
+    } else if (mode === 'equip') {
+      if (!cosmetics.ownedSkinIds.includes(skinId)) throw apiError(403, 'SKIN_NOT_OWNED', '보유한 스킨만 장착할 수 있어요.');
+      cosmetics.equippedSkinId = skinId;
+    } else {
+      cosmetics.equippedSkinId = null;
+    }
+    tx.update(accountRef, { guildCosmetics: cosmetics, updatedAt: FieldValue.serverTimestamp() });
+    return { guildCoins: coins, guildCosmetics: cosmetics, guildSkinCatalog: publicGuildSkinCatalog() };
+  });
+}
+
 async function guildTrialEvent(uid, body) {
   const trialId = text(body.trialId, 128);
   const event = text(body.event, 24);
@@ -989,6 +1108,7 @@ async function erase(uid) {
   try {
     await forEachQueryPage(classes.select(), async (classSnap) => {
       queueDelete(classSnap.ref.collection('members').doc(uid));
+      queueDelete(classSnap.ref.collection('effectInvestments').doc(uid));
       await forEachQueryPage(classSnap.ref.collection('trials').select(), async (trialSnap) => {
         queueDelete(trialSnap.ref.collection('progress').doc(uid));
         queueDelete(trialSnap.ref.collection('completions').doc(uid));
@@ -1016,4 +1136,4 @@ async function erase(uid) {
     }
   }
 }
-export default async function handler(req,res){try{requireMethod(req,['POST']);const user=await requireUser(req);const body=await readBody(req);let response;if(body.action==='load')response={account:await loadAccount(user.uid)};else if(body.action==='loadAssignedWordPack')response={assignment:await assignedWordPack(user.uid)};else if(body.action==='create')response={account:await create(user.uid,body)};else if(body.action==='save')response={account:await save(user.uid,body)};else if(body.action==='rename')response=await rename(user.uid,body);else if(body.action==='previewGuildInvite')response={guild:await previewGuildInvite(user.uid,body)};else if(body.action==='joinClass')response={membership:await joinClass(user.uid,body)};else if(body.action==='leaveClass')response={account:await leaveClass(user.uid)};else if(body.action==='loadGuildTrial')response={guild:await loadGuildTrial(user.uid)};else if(body.action==='loadGuildOverview')response={guild:await loadGuildOverview(user.uid),rankings:await guildLeaderboard()};else if(body.action==='guildWordPackPreview')response={wordPack:await guildWordPackPreview(user.uid,body)};else if(body.action==='guildTrialEvent')response={progress:await guildTrialEvent(user.uid,body)};else if(body.action==='completeGuildTrial')response={completion:await completeGuildTrial(user.uid,body)};else if(body.action==='migrateLegacy')response={account:await migrate(user.uid,body)};else if(body.action==='recoverMigratedLegacy')response={account:await recoverMigratedLegacy(user.uid,body)};else if(body.action==='migrateLegacyGoogle'){if(user.firebase?.sign_in_provider!=='google.com')throw apiError(403,'GOOGLE_REQUIRED','이전에 연결한 Google 계정으로 먼저 로그인해 주세요.');response={account:await migrateGoogleLegacy(user.uid,body)};}else if(body.action==='prepareGoogleLink')response=await prepareGoogleLink(user.uid);else if(body.action==='markGoogleLinked')response=await markGoogleLinked(user.uid);else if(body.action==='markGoogleUnlinked')response=await markGoogleUnlinked(user.uid);else if(body.action==='claimGoogleLink'){if(user.firebase?.sign_in_provider!=='google.com')throw apiError(403,'GOOGLE_REQUIRED','Google 계정으로 본인 확인 후 연결해 주세요.');response={account:await claimGoogleLink(user.uid,body)};}else if(body.action==='delete'){await erase(user.uid);response={deleted:true};}else throw apiError(400,'UNKNOWN_ACTION','알 수 없는 요청입니다.');sendJson(res,200,{ok:true,...response});}catch(error){handleApiError(res,error);}}
+export default async function handler(req,res){try{requireMethod(req,['POST']);const user=await requireUser(req);const body=await readBody(req);let response;if(body.action==='load')response={account:await loadAccount(user.uid)};else if(body.action==='loadAssignedWordPack')response={assignment:await assignedWordPack(user.uid)};else if(body.action==='create')response={account:await create(user.uid,body)};else if(body.action==='save')response={account:await save(user.uid,body)};else if(body.action==='rename')response=await rename(user.uid,body);else if(body.action==='previewGuildInvite')response={guild:await previewGuildInvite(user.uid,body)};else if(body.action==='joinClass')response={membership:await joinClass(user.uid,body)};else if(body.action==='leaveClass')response={account:await leaveClass(user.uid)};else if(body.action==='loadGuildTrial')response={guild:await loadGuildTrial(user.uid)};else if(body.action==='loadGuildOverview')response={guild:await loadGuildOverview(user.uid)};else if(body.action==='loadGuildRankings')response={rankings:await guildLeaderboard()};else if(body.action==='investGuildEffect')response=await investGuildEffect(user.uid,body);else if(body.action==='updateGuildSkin')response=await updateGuildSkin(user.uid,body);else if(body.action==='guildWordPackPreview')response={wordPack:await guildWordPackPreview(user.uid,body)};else if(body.action==='guildTrialEvent')response={progress:await guildTrialEvent(user.uid,body)};else if(body.action==='completeGuildTrial')response={completion:await completeGuildTrial(user.uid,body)};else if(body.action==='migrateLegacy')response={account:await migrate(user.uid,body)};else if(body.action==='recoverMigratedLegacy')response={account:await recoverMigratedLegacy(user.uid,body)};else if(body.action==='migrateLegacyGoogle'){if(user.firebase?.sign_in_provider!=='google.com')throw apiError(403,'GOOGLE_REQUIRED','이전에 연결한 Google 계정으로 먼저 로그인해 주세요.');response={account:await migrateGoogleLegacy(user.uid,body)};}else if(body.action==='prepareGoogleLink')response=await prepareGoogleLink(user.uid);else if(body.action==='markGoogleLinked')response=await markGoogleLinked(user.uid);else if(body.action==='markGoogleUnlinked')response=await markGoogleUnlinked(user.uid);else if(body.action==='claimGoogleLink'){if(user.firebase?.sign_in_provider!=='google.com')throw apiError(403,'GOOGLE_REQUIRED','Google 계정으로 본인 확인 후 연결해 주세요.');response={account:await claimGoogleLink(user.uid,body)};}else if(body.action==='delete'){await erase(user.uid);response={deleted:true};}else throw apiError(400,'UNKNOWN_ACTION','알 수 없는 요청입니다.');sendJson(res,200,{ok:true,...response});}catch(error){handleApiError(res,error);}}

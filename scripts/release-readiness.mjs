@@ -8,7 +8,8 @@ const requiredEnvironment = [
   { label: 'TEACHER_REVIEWER_EMAILS', names: ['TEACHER_REVIEWER_EMAILS'] }
 ];
 const missing = requiredEnvironment.filter((entry) => !entry.names.some((name) => process.env[name])).map((entry) => entry.label);
-const files = ['firebase.json', 'firestore.rules', 'firestore.indexes.json', 'storage.rules', 'vercel.json', 'privacy.html', 'package-lock.json', 'data/word-packs.json', 'data/word-packs.js', 'data/curriculum-3000-review-catalog.json', ...Array.from({ length: 5 }, (_, index) => `media/test/test${index + 1}.webp`)];
+const guildSkinFiles = ['azure', 'sakura', 'neon', 'lion', 'crimson', 'frost', 'inventor', 'moon', 'starlight', 'dragon'].map((name) => `media/player/guild_skin_${name}.webp`);
+const files = ['firebase.json', 'firestore.rules', 'firestore.indexes.json', 'storage.rules', 'vercel.json', 'privacy.html', 'package-lock.json', 'data/word-packs.json', 'data/word-packs.js', 'data/curriculum-3000-review-catalog.json', ...Array.from({ length: 5 }, (_, index) => `media/test/test${index + 1}.webp`), ...guildSkinFiles];
 for (const file of files) await access(file);
 const firebase = JSON.parse(await readFile('firebase.json', 'utf8'));
 const vercel = JSON.parse(await readFile('vercel.json', 'utf8'));
@@ -273,6 +274,17 @@ const createGuildBlock = createGuildStart >= 0 && createGuildEnd > createGuildSt
 if (!createGuildBlock.includes('batch.create(ref, data)') || !createGuildBlock.includes('batch.set(teachers.doc(uid)') || !createGuildBlock.includes('await batch.commit()') || createGuildBlock.includes('await ref.create(data)')) throw new Error('Guild creation and teacher membership must commit atomically.');
 if (!cleanupApi.includes('const clearedProofIds = new Set()') || !cleanupApi.includes('if (clearedProofIds.has(doc.id)) update.objectPath = FieldValue.delete()') || cleanupApi.includes(".delete({ ignoreNotFound: true }).catch(() => {})")) throw new Error('Expired teacher proof deletion must preserve objectPath for retry on storage failure.');
 if (!studentApi.includes("!Object.hasOwn(data,'activeGuildLogoUrl')")) throw new Error('A guild with the default null logo must not trigger a Firestore repair write on every login.');
+const guildEffectStart = studentApi.indexOf('async function investGuildEffect');
+const guildEffectEnd = studentApi.indexOf('async function updateGuildSkin', guildEffectStart);
+const guildEffectBlock = guildEffectStart >= 0 && guildEffectEnd > guildEffectStart ? studentApi.slice(guildEffectStart, guildEffectEnd) : '';
+const guildSkinStart = studentApi.indexOf('async function updateGuildSkin');
+const guildSkinEnd = studentApi.indexOf('async function guildTrialEvent', guildSkinStart);
+const guildSkinBlock = guildSkinStart >= 0 && guildSkinEnd > guildSkinStart ? studentApi.slice(guildSkinStart, guildSkinEnd) : '';
+if (!guildEffectBlock.includes('adminDb.runTransaction') || !guildEffectBlock.includes('guildCoins: coins - cost') || !guildEffectBlock.includes("collection('effectInvestments')")) throw new Error('Guild effect investment must atomically deduct coins and preserve contribution records.');
+if (!guildSkinBlock.includes('adminDb.runTransaction') || !guildSkinBlock.includes('guildCosmetics: cosmetics') || !guildSkinBlock.includes('SKIN_NOT_OWNED')) throw new Error('Guild skin purchase and equip actions must remain server-authoritative.');
+if ((studentApi.match(/id: '(azure-scholar|sakura-blade|neon-shadow|golden-lion|crimson-rune|frost-wolf|arcane-inventor|moon-rabbit|starlight-sage|dragon-captain)'/g) || []).length !== 10) throw new Error('The guild shop must publish exactly ten approved full-body skins.');
+if (!secureAccount.includes('길드 상점 및 효과') || !secureAccount.includes('function renderGuildShop') || !secureAccount.includes("action:'loadGuildRankings'")) throw new Error('Guild shop/effects UI or lazy ranking load is missing.');
+if (!mainJs.includes('if (skinImageUrl)') || !mainJs.includes("getGuildEffectBonus('forge')") || !mainJs.includes("getGuildEffectBonus('vitality')") || !mainJs.includes('rollGuildRewardGrade')) throw new Error('Guild full-body skins or balanced gameplay effects are not connected to runtime formulas.');
 if (!vercel.headers?.some((route) => route.source === '/data/(.*)\\.(json|txt)' && route.headers?.some((header) => header.key === 'Vercel-CDN-Cache-Control' && header.value.includes('immutable')))) throw new Error('Versioned data CDN cache header is missing.');
 if (!teacherApi.includes('usesGuildLearningDefaults: followsGuildDefaults') || !teacherApi.includes('learningSettingsVersion: FieldValue.increment(1)') || !studentApi.includes('member.usesGuildLearningDefaults === false')) throw new Error('Teacher member assignments must override guild defaults and carry a monotonic settings version.');
 if (!secureAccount.includes('function syncAssignedLearningSettings') || !secureAccount.includes('startBackgroundStudentSync()')) throw new Error('Student assignment refresh is missing.');

@@ -3559,10 +3559,6 @@
             if (grid) grid.classList.add("hidden");
             area.classList.remove("hidden");
             area.replaceChildren();
-            const meaning = document.createElement("p");
-            meaning.className = "mb-3 text-center text-sm font-black text-sky-200";
-            meaning.textContent = `뜻: ${current.meaning}`;
-            area.append(meaning);
             if (type === "short-answer") {
                 const form = document.createElement("div"),input = document.createElement("input"),submit = document.createElement("button");
                 form.className = "flex gap-2";
@@ -3708,7 +3704,7 @@
                 }
             }
             if (currentQuizType === "word-order" || currentQuizType === "short-answer") {
-                prompt.innerText = currentQuizType === "word-order" ? "철자 배열" : "영어 단답식";
+                prompt.innerText = String(current.meaning || "").trim() || "뜻 정보가 없습니다";
                 renderQuizConstructedInput(current, currentQuizType);
                 return;
             }

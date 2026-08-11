@@ -13,10 +13,11 @@ const files = ['firebase.json', 'firestore.rules', 'firestore.indexes.json', 'st
 for (const file of files) await access(file);
 const firebase = JSON.parse(await readFile('firebase.json', 'utf8'));
 const vercel = JSON.parse(await readFile('vercel.json', 'utf8'));
-const [firestoreRules, storageRules, privacy, secureAccount, mainJs, studentApi, teacherApi, worldBossApi, cleanupApi, wordPackText] = await Promise.all([
+const [firestoreRules, storageRules, privacy, indexHtml, secureAccount, mainJs, studentApi, teacherApi, worldBossApi, cleanupApi, wordPackText] = await Promise.all([
   readFile('firestore.rules', 'utf8'),
   readFile('storage.rules', 'utf8'),
   readFile('privacy.html', 'utf8'),
+  readFile('index.html', 'utf8'),
   readFile('js/secure-account.js', 'utf8'),
   readFile('js/main.js', 'utf8'),
   readFile('api/student.js', 'utf8'),
@@ -315,6 +316,12 @@ if (!mainJs.includes('wbSkillCastCount = 0;') || !/wbSkillCastCount,\r?\n\s+wbCo
 if (!mainJs.includes('vocahero_secure_wb_raid_') || !mainJs.includes('Math.min(savedTimerRemaining, secureTimerRemaining)') || !mainJs.includes('World boss battle checkpoint error')) throw new Error('World-boss secure resume and checkpoint flow is incomplete.');
 if (!worldBossApi.includes('finalizeRolledOverRaid') || !worldBossApi.includes('async function checkpoint(uid, body)') || !worldBossApi.includes('autoFinalizedAtRollover: true')) throw new Error('World-boss rollover final-damage settlement is incomplete.');
 if (!secureAccount.includes('showGuildSummonResultsModal') || !secureAccount.includes('secureGuildSummonResultModal') || !secureAccount.includes('changeGuildSkin(\'unequip\'') || !secureAccount.includes('차원 파편')) throw new Error('Guild summon modal, skin toggle, or shard unlock UI is incomplete.');
+if (!secureAccount.includes('guildSummonPending') || !secureAccount.includes('setGuildSummonPending(true)') || !mainJs.includes('relicSummonBusy') || !mainJs.includes('skillSummonBusy') || !mainJs.includes('repeatSkillDraw')) throw new Error('Guild hero, relic, or magic-card summon re-entry lock is missing.');
+if (!mainJs.includes('getGuildRewardGradeRates') || !mainJs.includes('const grade = rollGuildRewardGrade()') || !indexHtml.includes('data-guild-reward-rate-table') || !secureAccount.includes('소환 확률(행운 미적용)')) throw new Error('Guild luck application or actual probability breakdown is incomplete.');
+const guildSkinSummonStart = studentApi.indexOf("if (mode === 'summon')");
+const guildSkinSummonEnd = studentApi.indexOf("} else if (mode === 'equip')", guildSkinSummonStart);
+const guildSkinSummonBlock = guildSkinSummonStart >= 0 && guildSkinSummonEnd > guildSkinSummonStart ? studentApi.slice(guildSkinSummonStart, guildSkinSummonEnd) : '';
+if (!guildSkinSummonBlock || /fortune|guildEffect|guildCosmeticEffect/i.test(guildSkinSummonBlock)) throw new Error('Dimension hero summon must keep its fixed server-side rarity weights without guild luck.');
 if (!studentApi.includes('guildSkinCollectionEffects') || !studentApi.includes('equippedEffects') || !studentApi.includes('collectionEffects') || !secureAccount.includes('외형 등급 +') || !secureAccount.includes('도감 등급 +') || !secureAccount.includes('도감 ${heldCount}/5 · 보유 효과') || !secureAccount.includes('guildMythicPulse')) throw new Error('Guild cosmetic equipped/collection effect breakdown or summon rarity presentation is incomplete.');
 if (!mainJs.includes("['meaning-choice', 'word-choice', 'word-order', 'fill-blank']") || !mainJs.includes('wbRichUnlockQuizActive') || !mainJs.includes('wb-rich-curse-lock') || !mainJs.includes('wbGuildHeroSkinImage')) throw new Error('World-boss curse quiz, lock effect, timer pause, or guild hero skin is incomplete.');
 if (!mainJs.includes("wbRichLockedSkillIds = new Set((gameState.equippedSkills || []).map(String));") || !mainJs.includes('setTimeout(() => castWorldBossSkill(skillId), 0)') || !mainJs.includes('counted >= 4') || !mainJs.includes('wbUltimateEventActive || wbRichUnlockQuizActive')) throw new Error('Rich entry lock, immediate post-unlock cast, four-cast purification, or curse-timer pause is incomplete.');

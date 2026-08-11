@@ -1312,7 +1312,7 @@
                             <h5 class="text-[10px] font-extrabold text-purple-300 mb-2 flex items-center gap-1.5">
                                 🎰 고대 유물 소환 등급 확률 & 스탯 배율
                             </h5>
-                            <table class="w-full text-[9px] text-center border-collapse">
+                            <table data-guild-reward-rate-table class="w-full text-[9px] text-center border-collapse">
                                 <thead>
                                     <tr class="bg-black text-gray-500 border-b border-gray-800 font-bold">
                                         <th class="p-1 text-left">등급</th>
@@ -1354,6 +1354,7 @@
                                     </tr>
                                 </tbody>
                             </table>
+                            <p data-guild-luck-source class="mt-2 text-[8px] leading-relaxed text-violet-300"></p>
                             <div class="text-[8px] text-gray-400 mt-2 space-y-1">
                                 <p>※ <strong class="text-yellow-400">⭐ 유물 한계돌파(승급) 절차:</strong> 1회 소환 = 보스 증표 50개</p>
                                 <ul class="list-disc list-inside text-gray-500 ml-1 leading-relaxed">
@@ -1394,6 +1395,7 @@
                     </div>
                     <p id="skillDeckInfo" class="text-[10px] text-cyan-300 font-medium mb-1"></p>
                     <p class="text-xs text-gray-400 font-medium mb-3">퀴즈로 쌓은 정복 포인트(FP)로 단어 캡슐을 뽑아 마법 필살기를 수집해보세요.</p>
+                    <p data-guild-luck-source class="mb-3 border border-violet-900/50 bg-violet-950/10 p-2 text-[8px] leading-relaxed text-violet-300"></p>
 
                     <!-- Equipped Slots (4 slots) -->
                     <div class="mb-4 bg-[#0d0d0d] p-3 border border-[#3c3c3c] rounded-none-forced">
@@ -2410,7 +2412,7 @@
                     <h4 class="font-extrabold text-yellow-300 mb-2 flex items-center gap-1.5">
                         🎲 1회 재설정 시 등급 출현 확률
                     </h4>
-                    <table class="w-full text-[10px] text-center border-collapse">
+                    <table data-guild-reward-rate-table class="w-full text-[10px] text-center border-collapse">
                         <thead>
                             <tr class="bg-black text-gray-400 border-b border-gray-800 font-bold">
                                 <th class="p-1.5 text-left">등급 (Grade)</th>
@@ -2446,6 +2448,7 @@
                             </tr>
                         </tbody>
                     </table>
+                    <p data-guild-luck-source class="mt-2 text-[8px] leading-relaxed text-violet-300"></p>
                 </div>
 
                 <!-- 2. 옵션 유형별 등급 수치 급간표 (최소~최대 범위) -->
@@ -2726,8 +2729,8 @@
                 <!-- Dynamically filled -->
             </div>
             <div class="flex items-center justify-center gap-3 w-full flex-wrap sm:flex-nowrap">
-                <button onclick="document.getElementById('gacha10xResultModal').classList.remove('flex');document.getElementById('gacha10xResultModal').classList.add('hidden'); drawSkillCapsule(10);" class="px-8 py-3 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-black text-xs uppercase tracking-wider shadow-lg transition w-full sm:w-auto">다시 10연속 소환</button>
-                <button onclick="document.getElementById('gacha10xResultModal').classList.remove('flex');document.getElementById('gacha10xResultModal').classList.add('hidden')" class="px-8 py-3 bg-gray-800 hover:bg-gray-700 text-white font-bold text-xs uppercase tracking-wider transition w-full sm:w-auto">닫기</button>
+                <button onclick="repeatSkillDraw(10)" class="px-8 py-3 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-black text-xs uppercase tracking-wider shadow-lg transition w-full sm:w-auto">다시 10연속 소환</button>
+                <button onclick="closeSkillDrawResultModal(10)" class="px-8 py-3 bg-gray-800 hover:bg-gray-700 text-white font-bold text-xs uppercase tracking-wider transition w-full sm:w-auto">닫기</button>
             </div>
         </div>
     </div>
@@ -2746,8 +2749,8 @@
                 <!-- Dynamically filled -->
             </div>
             <div class="flex items-center justify-center gap-3 w-full flex-wrap sm:flex-nowrap">
-                <button onclick="document.getElementById('gacha100xResultModal').classList.remove('flex');document.getElementById('gacha100xResultModal').classList.add('hidden'); drawSkillCapsule(100);" class="px-8 py-3 bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-400 hover:to-rose-500 text-white font-black text-xs uppercase tracking-wider shadow-lg transition w-full sm:w-auto">⚡ 다시 100연속 연성</button>
-                <button onclick="document.getElementById('gacha100xResultModal').classList.remove('flex');document.getElementById('gacha100xResultModal').classList.add('hidden')" class="px-8 py-3 bg-gray-800 hover:bg-gray-700 text-white font-bold text-xs uppercase tracking-wider transition w-full sm:w-auto">확인</button>
+                <button onclick="repeatSkillDraw(100)" class="px-8 py-3 bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-400 hover:to-rose-500 text-white font-black text-xs uppercase tracking-wider shadow-lg transition w-full sm:w-auto">⚡ 다시 100연속 연성</button>
+                <button onclick="closeSkillDrawResultModal(100)" class="px-8 py-3 bg-gray-800 hover:bg-gray-700 text-white font-bold text-xs uppercase tracking-wider transition w-full sm:w-auto">확인</button>
             </div>
         </div>
     </div>
@@ -2765,7 +2768,7 @@
                 <!-- Dynamically filled -->
             </div>
 
-            <button id="relicDrawResultConfirmBtn" onclick="document.getElementById('relicDrawResultModal').classList.remove('flex');document.getElementById('relicDrawResultModal').classList.add('hidden')" class="px-10 py-3 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-black text-xs tracking-wider transition shadow-lg uppercase">
+            <button id="relicDrawResultConfirmBtn" onclick="closeRelicDrawResultModal()" class="px-10 py-3 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-black text-xs tracking-wider transition shadow-lg uppercase">
                 ✨ 확인 및 유물함 보관
             </button>
         </div>
@@ -3090,7 +3093,7 @@
         }
     </style>
 
-    <script src="js/config.js?v=20260809-29"></script><script src="js/main.js?v=20260812-32"></script><script src="js/secure-account.js?v=20260812-36"></script>
+    <script src="js/config.js?v=20260809-29"></script><script src="js/main.js?v=20260812-33"></script><script src="js/secure-account.js?v=20260812-37"></script>
 
     <!-- Damage Overlay (Scratch & Flash) -->
     <div id="damageOverlay" class="fixed inset-0 pointer-events-none hidden z-[100] flex-col items-center justify-center bg-red-900/60 transition-opacity duration-300">

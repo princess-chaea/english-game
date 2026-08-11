@@ -1207,6 +1207,45 @@
             return 'normal';
         }
 
+        function getGuildRewardGradeRates() {
+            const guildBonus = Math.max(0, getGuildEffectBonus('fortune'));
+            const cosmeticBonus = Math.max(0, getGuildCosmeticBonus('fortunePctPoint'));
+            const appliedBonus = Math.min(2.7, guildBonus + cosmeticBonus);
+            return {
+                sources: { guildBonus, cosmeticBonus, appliedBonus },
+                mythic: { base: 0.05, added: appliedBonus * 0.03 },
+                legendary: { base: 1.95, added: appliedBonus * 0.22 },
+                hero: { base: 5, added: appliedBonus * 0.4 },
+                rare: { base: 18, added: appliedBonus * 0.35 },
+                normal: { base: 75, added: -appliedBonus }
+            };
+        }
+
+        function refreshGuildRewardRateDisplays() {
+            const rates = getGuildRewardGradeRates();
+            const gradeOrder = ['mythic', 'legendary', 'hero', 'rare', 'normal'];
+            document.querySelectorAll('[data-guild-reward-rate-table]').forEach((table) => {
+                Array.from(table.querySelector('tbody')?.rows || []).slice(0, 5).forEach((row, index) => {
+                    const rate = rates[gradeOrder[index]];
+                    const element = row.cells?.[1];
+                    if (!rate || !element) return;
+                    const total = Math.max(0, rate.base + rate.added);
+                    const addedText = rate.added >= 0 ? `+${rate.added.toFixed(3)}%p` : `${rate.added.toFixed(3)}%p`;
+                    element.innerHTML = `${total.toFixed(3)}% <span class="block text-[7px] font-bold text-red-400">(기본 ${rate.base.toFixed(2)}% · ${addedText})</span>`;
+                });
+            });
+            document.querySelectorAll('[data-guild-rate-grade]').forEach((element) => {
+                const rate = rates[element.dataset.guildRateGrade];
+                if (!rate) return;
+                const total = Math.max(0, rate.base + rate.added);
+                const addedText = rate.added >= 0 ? `+${rate.added.toFixed(3)}%p` : `${rate.added.toFixed(3)}%p`;
+                element.innerHTML = `${total.toFixed(3)}% <span class="block text-[7px] font-bold text-red-400">(기본 ${rate.base.toFixed(2)}% · ${addedText})</span>`;
+            });
+            document.querySelectorAll('[data-guild-luck-source]').forEach((element) => {
+                element.innerHTML = `행운 적용 · 길드 효과 <b class="text-red-400">+${rates.sources.guildBonus.toFixed(2)}%p</b> · 외형/도감 <b class="text-red-400">+${rates.sources.cosmeticBonus.toFixed(3)}%p</b><br><span class="text-gray-500">잠재력·유물·마법 카드에만 적용되며 차원 영웅 소환 확률은 고정입니다.</span>`;
+            });
+        }
+
         function drawHeroAvatar() {
             const h = gameState;
             const isMale = h.avatarType === "male";
@@ -2839,14 +2878,8 @@
         }
 
         function generateRandomPotentialOption() {
-            const roll = Math.random();
-            let grade = "normal";
-            let gradeName = "일반";
-
-            if (roll < 0.0005) { grade = "mythic"; gradeName = "신화"; }
-            else if (roll < 0.02) { grade = "legendary"; gradeName = "전설"; }
-            else if (roll < 0.07) { grade = "hero"; gradeName = "영웅"; }
-            else if (roll < 0.25) { grade = "rare"; gradeName = "희귀"; }
+            const grade = rollGuildRewardGrade();
+            const gradeName = SKILL_GRADES[grade]?.name || "일반";
 
             const pool = [
                 { type: "atk", name: "공격력", icon: "⚔️", unit: "%", ranges: { mythic: [9, 12], legendary: [6, 8], hero: [4, 5], rare: [3, 3.5], normal: [2, 2.5] } },
@@ -3243,7 +3276,10 @@
             saveLocalCache();
         }
 
+        let relicSummonBusy = false;
+
         function drawRelicCapsule(drawCount = 1) {
+            if (relicSummonBusy || document.getElementById("relicDrawResultModal")?.classList.contains("flex")) return;
             if (typeof gameState.bossTokens === 'undefined') gameState.bossTokens = 0;
             const cost = drawCount === 10 ? 450 : 50 * drawCount;
 
@@ -3252,6 +3288,7 @@
                 return;
             }
 
+            relicSummonBusy = true;
             gameState.bossTokens -= cost;
             refreshStateVisuals();
 
@@ -3427,13 +3464,37 @@
             }
         }
 
+        function ensureRelicSummonResultStyles() {
+            if (document.getElementById('relicSummonResultStyles')) return;
+            const style = document.createElement('style');
+            style.id = 'relicSummonResultStyles';
+            style.textContent = `
+                @keyframes relicCardAppear{0%{opacity:0;transform:translateY(12px) scale(.94);filter:blur(7px) brightness(1.7)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0) brightness(1)}}
+                @keyframes relicHighReveal{0%{opacity:0;transform:scale(.82);filter:blur(9px) brightness(3)}55%{opacity:1;transform:scale(1.06);filter:blur(1px) brightness(1.8)}100%{opacity:1;transform:scale(1);filter:blur(0) brightness(1)}}
+                @keyframes relicLegendGlow{0%,100%{box-shadow:0 0 18px rgba(250,204,21,.55),inset 0 0 20px rgba(250,204,21,.08)}50%{box-shadow:0 0 38px rgba(250,204,21,.95),0 0 58px rgba(245,158,11,.38),inset 0 0 30px rgba(250,204,21,.18)}}
+                @keyframes relicMythicGlow{0%,100%{box-shadow:0 0 26px rgba(255,45,149,.75),0 0 42px rgba(168,85,247,.4),inset 0 0 25px rgba(255,45,149,.14)}50%{box-shadow:0 0 50px rgba(255,45,149,1),0 0 82px rgba(168,85,247,.8),inset 0 0 42px rgba(255,45,149,.3)}}
+                .relic-result-card{opacity:0;animation:relicCardAppear .72s cubic-bezier(.2,.8,.2,1) forwards}
+                .relic-high-card{overflow:hidden;background:linear-gradient(145deg,#111827,#08090e)}
+                .relic-high-card.is-revealed{opacity:1}
+                .relic-high-card .hidden-overlay{transition:opacity .55s ease,transform .65s ease,filter .55s ease}
+                .relic-high-card.is-revealed .hidden-overlay{opacity:0;pointer-events:none;transform:scale(1.1);filter:blur(8px)}
+                .relic-high-card .relic-actual-content{opacity:0}
+                .relic-high-card.is-revealed .relic-actual-content{animation:relicHighReveal .9s cubic-bezier(.16,.8,.2,1) forwards}
+                .relic-grade-legendary.is-revealed{border-color:#facc15!important;background:radial-gradient(circle at 50% 38%,rgba(250,204,21,.2),#090807 72%);animation:relicLegendGlow 1.6s ease-in-out infinite}
+                .relic-grade-mythic.is-revealed{border:2px solid #ff2d95!important;background:radial-gradient(circle at 50% 35%,rgba(255,45,149,.28),rgba(88,28,135,.22) 45%,#08030b 76%);animation:relicMythicGlow 1.25s ease-in-out infinite}
+                .relic-grade-legendary.is-revealed img{filter:drop-shadow(0 0 10px #facc15) drop-shadow(0 0 20px #f59e0b)!important}
+                .relic-grade-mythic.is-revealed img{filter:drop-shadow(0 0 13px #ff2d95) drop-shadow(0 0 27px #a855f7)!important}
+                .relic-grade-mythic.is-revealed h5{color:#ff70ce!important;text-shadow:0 0 12px rgba(255,45,149,.95)}
+            `;
+            document.head.append(style);
+        }
+
         window.revealHiddenRelic = function(el, colorClass) {
             const overlay = el.querySelector('.hidden-overlay');
             const content = el.querySelector('.relic-actual-content');
             if (overlay && !overlay.classList.contains('pointer-events-none')) {
                 overlay.classList.add('opacity-0', 'pointer-events-none');
-                content.classList.remove('opacity-0');
-                el.className = `border ${colorClass} p-2 text-center flex flex-col justify-between min-h-[120px] rounded-none-forced transition-all duration-700`;
+                el.classList.add('is-revealed', ...String(colorClass || '').split(/\s+/).filter(Boolean));
                 
                 playSoundEffect('success');
                 
@@ -3470,11 +3531,15 @@
         window.__vocaHeroTestHooks = { ...(window.__vocaHeroTestHooks || {}), getRelicDrawResultPresentation };
         function showRelicDrawResultModal(results) {
             const grid = document.getElementById("relicDrawResultGrid");
-            if (!grid) return;
+            if (!grid) {
+                relicSummonBusy = false;
+                return;
+            }
+            ensureRelicSummonResultStyles();
 
             let html = "";
             let hiddenCount = 0;
-            results.forEach(res => {
+            results.forEach((res, index) => {
                 const presentation = getRelicDrawResultPresentation(res);
                 const { rolledGrade, currentGrade, rolledGradeInfo, outcomeText } = presentation;
                 const isHighGrade = (rolledGrade === 'legendary' || rolledGrade === 'mythic');
@@ -3498,10 +3563,10 @@
                 if (isHighGrade) {
                     hiddenCount++;
                     html += `
-                    <div class="border border-yellow-500/50 p-2 text-center flex flex-col justify-between min-h-[140px] rounded-none-forced relative cursor-pointer group" onclick="revealHiddenRelic(this, '${rolledGradeInfo.colorClass}')">
+                    <div class="relic-result-card relic-high-card relic-grade-${rolledGrade} border border-gray-600 p-2 text-center flex flex-col justify-between min-h-[140px] rounded-none-forced relative cursor-pointer group" style="animation-delay:${index * 90}ms" role="button" tabindex="0" onclick="revealHiddenRelic(this, '${rolledGradeInfo.colorClass}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();revealHiddenRelic(this, '${rolledGradeInfo.colorClass}')}">
                         <div class="hidden-overlay absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 flex flex-col items-center justify-center z-10 transition-opacity duration-500 group-hover:brightness-125">
-                            <span class="text-2xl animate-bounce">✨</span>
-                            <span class="text-[8px] text-yellow-400 font-bold mt-1">클릭하여 확인!</span>
+                            <span class="text-2xl animate-pulse">✦</span>
+                            <span class="text-[8px] text-yellow-300 font-bold mt-1">고대의 기운을 확인하세요</span>
                         </div>
                         <div class="relic-actual-content opacity-0 transition-opacity duration-1000 w-full h-full flex flex-col justify-between items-center">
                             ${innerHtml}
@@ -3510,7 +3575,7 @@
                     `;
                 } else {
                     html += `
-                        <div class="border ${rolledGradeInfo.colorClass} p-2 text-center flex flex-col justify-between min-h-[140px] rounded-none-forced items-center">
+                        <div class="relic-result-card relic-grade-${rolledGrade} border ${rolledGradeInfo.colorClass} p-2 text-center flex flex-col justify-between min-h-[140px] rounded-none-forced items-center" style="animation-delay:${index * 90}ms">
                             ${innerHtml}
                         </div>
                     `;
@@ -3538,10 +3603,18 @@
                 modal.classList.add("flex");
             }
         }
+
+        function closeRelicDrawResultModal() {
+            const modal = document.getElementById("relicDrawResultModal");
+            modal?.classList.remove("flex");
+            modal?.classList.add("hidden");
+            relicSummonBusy = false;
+        }
   
           function closeSkillAcquireModal() {
               document.getElementById('skillAcquireModal').classList.remove('flex');
               document.getElementById('skillAcquireModal').classList.add('hidden');
+              skillSummonBusy = false;
               if (typeof tutorialStep !== 'undefined' && !gameState.tutorialCompleted && tutorialStep === 7) {
                   tutorialStep = 8;
                   setTimeout(showTutorialOverlay, 500);
@@ -3974,7 +4047,10 @@
             return addOrLevelUpSkill(word, meaning, rolledGrade);
         }
 
+        let skillSummonBusy = false;
+
         function drawSkillCapsule(drawCount = 1) {
+            if (skillSummonBusy) return;
             if (typeof gameState.masteryPoints === 'undefined') gameState.masteryPoints = 0;
             let isTutorialSkill = false;
             if (!gameState.tutorialCompleted && tutorialStep === 7 && drawCount === 1) {
@@ -3987,6 +4063,7 @@
                 return;
             }
 
+            skillSummonBusy = true;
             gameState.masteryPoints -= cost;
             refreshStateVisuals();
 
@@ -4138,7 +4215,21 @@
             }
         }
 
+        function closeSkillDrawResultModal(drawCount = 10) {
+            const modalId = Number(drawCount) === 100 ? "gacha100xResultModal" : "gacha10xResultModal";
+            const modal = document.getElementById(modalId);
+            modal?.classList.remove("flex");
+            modal?.classList.add("hidden");
+            skillSummonBusy = false;
+        }
+
+        function repeatSkillDraw(drawCount = 10) {
+            closeSkillDrawResultModal(drawCount);
+            drawSkillCapsule(drawCount);
+        }
+
         function drawSkillCapsuleInstantSkip(drawCount = 10) {
+            if (skillSummonBusy) return;
             if (typeof gameState.masteryPoints === 'undefined') gameState.masteryPoints = 0;
             const cost = 450;
 
@@ -4147,6 +4238,7 @@
                 return;
             }
 
+            skillSummonBusy = true;
             gameState.masteryPoints -= cost;
             refreshStateVisuals();
 
@@ -5495,6 +5587,7 @@
 
         function refreshStateVisuals() {
             if (typeof gameState.masteryPoints === 'undefined') gameState.masteryPoints = 0;
+            refreshGuildRewardRateDisplays();
             const goldEl = document.getElementById("goldCount");
             if (goldEl) goldEl.innerText = Math.floor(gameState.gold).toLocaleString();
 
@@ -8818,6 +8911,7 @@
             });
         }
         function openPotentialProbModal() {
+            refreshGuildRewardRateDisplays();
             openModal('potentialProbModal');
         }
 

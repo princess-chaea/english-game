@@ -60,6 +60,7 @@
 
             // Upgraded Advanced Skill Customization System
             skillsInventory: [], // Unlocked skills: { id, word, meaning, grade, cooldownRemaining, maxCooldown }
+            skillTierOrderVersion: 2, // Tier 1 is strongest (v2)
             activeSkillDeck: [], // Small repeatable deck; the complete word bank stays in learning quizzes
             skillEssence: 0, // Universal awakening material from a new skill card
             equippedSkills: [], // Array storing up to 4 skill ids currently placed in combat slots
@@ -3465,7 +3466,7 @@
                 const starsHtml = res.stars > 0 ? "⭐".repeat(res.stars) : "0성";
                 const innerHtml = `
                         <div class="flex justify-between items-center text-[7px] text-gray-300 font-bold mb-1 w-full">
-                            <span class="text-gray-200">추첨 ${rolledGradeInfo.name}</span>
+                            <span class="text-gray-200">${rolledGradeInfo.name}</span>
                             <div class="flex items-center">
                                 ${res.stars < 6 && res.currentExp !== undefined ? `<span class="text-[6px] text-gray-400 font-normal mr-1">(${res.currentExp}/${res.reqExp})</span>` : ""}
                                 <span class="text-yellow-400">${starsHtml}</span>
@@ -3560,8 +3561,11 @@
             if (!inputEl) return false;
             const raw = String(inputEl.value || "").normalize("NFKC");
             if (!/^[A-Za-z\s]*$/.test(raw)) {
-                inputEl.value = "";
-                showToast("⚠️ 영어 알파벳만 입력할 수 있어요. 띄어쓰기는 입력하지 않아도 정답으로 인정돼요.");
+                const now = Date.now();
+                if (!inputEl._vocaInvalidToastAt || now - inputEl._vocaInvalidToastAt > 1200) {
+                    inputEl._vocaInvalidToastAt = now;
+                    showToast("⚠️ 한글·숫자는 정답으로 처리되지 않아요. 잘못 입력한 글자만 지우고 계속 작성해 주세요.");
+                }
                 return false;
             }
             const lower = raw.toLowerCase();
@@ -3608,8 +3612,7 @@
             if (inputEl && !formatEnglishWordInput(inputEl)) return;
             const answer = String(inputEl ? inputEl.value : value || "");
             if (!/^[A-Za-z\s]+$/.test(answer.trim())) {
-                if (inputEl) inputEl.value = "";
-                showToast("⚠️ 영어 알파벳만 입력할 수 있어요. 띄어쓰기는 입력하지 않아도 정답으로 인정돼요.");
+                showToast("⚠️ 한글·숫자는 정답으로 처리되지 않아요. 잘못 입력한 글자만 지우고 계속 작성해 주세요.");
                 return;
             }
             gameState.currentQuizCorrectAnswer = 0;
@@ -3781,11 +3784,11 @@
 
         function getSkillMultiplier(skill) {
             const baseGrade = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
-            const tier = skill.tier || 1;
+            const tier = Math.max(1, Math.min(3, Number(skill.tier) || 3));
             const stars = skill.stars || 0;
 
-            // 세부 급간(Tier 1~3) 보정: Tier 1 (+0%), Tier 2 (+10%), Tier 3 (+20%)
-            const tierFactor = 1 + (tier - 1) * 0.10;
+            // 세부 급간 통일: Tier 1 (+20%), Tier 2 (+10%), Tier 3 (+0%)
+            const tierFactor = 1 + (3 - tier) * 0.10;
 
             // 한계돌파 별(⭐ 1~6개) 완성당 +15% 수치 상승
             const starFactor = 1 + stars * 0.15;
@@ -3852,12 +3855,12 @@
         function addOrLevelUpSkill(word, meaning, rolledGrade, suppressModal = false, rolledTier = null) {
             if (!gameState.skillsInventory) gameState.skillsInventory = [];
 
-            // 🎲 티어(Tier 1~3) 랜덤 롤링 (Tier 1: 70%, Tier 2: 25%, Tier 3: 5%)
+            // 🎲 티어 랜덤 롤링 (최상위 Tier 1: 5%, Tier 2: 25%, Tier 3: 70%)
             if (!rolledTier) {
                 const tierRoll = Math.random();
-                if (tierRoll < 0.05) rolledTier = 3;
+                if (tierRoll < 0.05) rolledTier = 1;
                 else if (tierRoll < 0.30) rolledTier = 2;
-                else rolledTier = 1;
+                else rolledTier = 3;
             }
 
             const existingSkill = gameState.skillsInventory.find(s => s.word === word);
@@ -3866,7 +3869,7 @@
             if (existingSkill) {
                 const existingGradeRank = (SKILL_GRADES[existingSkill.grade] || SKILL_GRADES.normal).rank;
                 const rolledGradeRank = (SKILL_GRADES[rolledGrade] || SKILL_GRADES.normal).rank;
-                const oldTier = existingSkill.tier || 1;
+                const oldTier = existingSkill.tier || 3;
 
                 const rolledReqExp = getRequiredExpForStar(rolledGrade);
                 const oldGradeReqExp = getRequiredExpForStar(existingSkill.grade);
@@ -3877,7 +3880,7 @@
                     existingSkill.grade = rolledGrade;
                     existingSkill.maxExp = getRequiredExpForStar(rolledGrade);
 
-                    if (rolledTier > oldTier) existingSkill.tier = rolledTier;
+                    if (rolledTier < oldTier) existingSkill.tier = rolledTier;
 
                     const newTotalExp = totalOldCardExp + rolledReqExp;
                     existingSkill.stars = Math.floor(newTotalExp / existingSkill.maxExp);
@@ -3892,7 +3895,7 @@
                 } else {
                     // 👑 동일/이하 등급 카드 획득
                     let tierUpMsg = "";
-                    if (rolledGradeRank === existingGradeRank && rolledTier > oldTier) {
+                    if (rolledGradeRank === existingGradeRank && rolledTier < oldTier) {
                         existingSkill.tier = rolledTier;
                         tierUpMsg = ` 👑 (Tier ${oldTier} ➔ Tier ${rolledTier} 덮어씌우기!)`;
                     }
@@ -4030,7 +4033,7 @@
                                     <div class="border-2 ${gradeInfo.colorClass} bg-[#0d0d0d] p-2 text-center flex flex-col justify-between min-h-[90px] rounded-none-forced">
                                         <div>
                                             <div class="flex justify-[#7e7e7e] flex items-center justify-between text-[8px] font-bold">
-                                                <span class="text-gray-200">추첨 ${rolledGradeInfo.name}</span>
+                                                <span class="text-gray-200">${rolledGradeInfo.name}</span>
                                                 <span class="text-yellow-400 font-bold">${starsHtml}</span>
                                             </div>
                                             <p class="text-[11px] font-bold  text-white truncate mt-0.5">${capitalizeFirstLetter(resultSkill.word)}</p>
@@ -4157,7 +4160,7 @@
                     <div class="border-2 ${gradeInfo.colorClass} bg-[#0d0d0d] p-2 text-center flex flex-col justify-between min-h-[90px] rounded-none-forced">
                         <div>
                             <div class="flex items-center justify-between text-[8px] font-bold text-[#7e7e7e]">
-                                <span class="text-gray-200">추첨 ${rolledGradeInfo.name}</span>
+                                <span class="text-gray-200">${rolledGradeInfo.name}</span>
                                 <span class="text-yellow-400 font-bold">${starsHtml}</span>
                             </div>
                             <p class="text-[11px] font-bold  text-white truncate mt-0.5">${capitalizeFirstLetter(resultSkill.word)}</p>
@@ -4246,7 +4249,7 @@
             let upgradedCount = 0;
             let gradeResults = { rare: 0, hero: 0, legendary: 0, mythic: 0 };
 
-            // 💡 1단계: 동일 단어 중복 카드를 찾아 경험치(exp) & 별(⭐) 자동 합산 승급 (6성 달성 시 Tier 1 -> Tier 2 -> Tier 3 승급)
+            // 💡 1단계: 동일 단어 중복 카드를 찾아 경험치(exp) & 별(⭐) 자동 합산 승급 (6성 달성 시 Tier 3 -> Tier 2 -> Tier 1 승급)
             let uniqueMap = {};
             gameState.skillsInventory.forEach(s => {
                 const key = s.word.toLowerCase();
@@ -4260,6 +4263,7 @@
                     const oldRank = (SKILL_GRADES[target.grade] || SKILL_GRADES.normal).rank;
                     const newRank = (SKILL_GRADES[s.grade] || SKILL_GRADES.normal).rank;
                     if (newRank > oldRank) target.grade = s.grade;
+                    target.tier = Math.min(target.tier || 3, s.tier || 3);
 
                     const reqExp = getRequiredExpForStar(target.grade);
                     while (target.exp >= reqExp && (target.stars || 0) < 6) {
@@ -4267,9 +4271,9 @@
                         target.stars = (target.stars || 0) + 1;
                     }
 
-                    // 6성 도달 시 중복 카드를 추가 연성/합성하면 Tier 1 -> Tier 2 -> Tier 3 승급!
-                    if ((target.stars || 0) >= 6 && target.exp >= reqExp && (target.tier || 1) < 3) {
-                        target.tier = (target.tier || 1) + 1;
+                    // 6성 도달 시 중복 카드를 추가 연성/합성하면 Tier 3 -> Tier 2 -> Tier 1 승급!
+                    if ((target.stars || 0) >= 6 && target.exp >= reqExp && (target.tier || 3) > 1) {
+                        target.tier = (target.tier || 3) - 1;
                         target.stars = 0;
                         target.exp = 0;
                     }
@@ -4542,7 +4546,7 @@
                                 </button>
                                 <div class="z-10">
                                     <div class="flex justify-between items-center text-[7px] font-bold text-[#7e7e7e]">
-                                        <span>${gradeInfo.name} T${skill.tier || 1}</span>
+                                        <span>${gradeInfo.name} T${skill.tier || 3}</span>
                                         <span class="text-yellow-400">${starsHtml}</span>
                                     </div>
                                     <p class="text-[10px] font-bold  truncate text-white mt-0.5 ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : ''}">${capitalizeFirstLetter(skill.word)}</p>
@@ -4595,7 +4599,7 @@
                         ${isSelectedForCombine ? '<span class="absolute -top-2 -left-2 bg-yellow-400 text-black text-[8px] font-black px-1.5 py-0.5 z-20 shadow-md animate-bounce">[조합 3개 중 선택됨]</span>' : ''}
                         <div>
                             <div class="flex justify-between items-center text-[8px] font-bold text-[#7e7e7e] mb-0.5">
-                                <span class="truncate">${gradeInfo.name} T${skill.tier || 1}</span>
+                                <span class="truncate">${gradeInfo.name} T${skill.tier || 3}</span>
                                 <span class="text-yellow-400 font-bold flex-shrink-0">${starsHtml}</span>
                             </div>
                             <p class="text-xs font-extrabold  text-white truncate ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : ''}">${capitalizeFirstLetter(skill.word)}</p>
@@ -6856,6 +6860,19 @@
             return `vocahero_wb_cache_${gameState.uid || `${gameState.grade}_${gameState.name}_${gameState.studentNum}`}`;
         }
 
+        function getWorldBossProgressKey() {
+            return `vocahero_wb_progress_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
+        }
+
+        function hasWorldBossResumeProgress(day = getKstDayString()) {
+            try {
+                const saved = JSON.parse(localStorage.getItem(getWorldBossProgressKey()) || "null");
+                return Boolean(saved && saved.date === day);
+            } catch (error) {
+                return false;
+            }
+        }
+
         function getWbExpectedMaxHp() {
             const weekNum = getCurrentWeekNum();
             const relativeWeek = Math.max(0, weekNum - 108); // 이번 주(108주차)부터 100억으로 다시 시작
@@ -6979,7 +6996,7 @@
                             skillHtml += `
                                 <div class="p-1.5 border-2 ${gradeInfo.colorClass} flex flex-col justify-between min-h-[56px] min-w-0">
                                     <div class="flex justify-between items-center text-[8px]">
-                                        <span class="font-bold uppercase tracking-wider text-left">${gradeInfo.name} 티어${s.tier || 1}</span>
+                                        <span class="font-bold uppercase tracking-wider text-left">${gradeInfo.name} 티어${s.tier || 3}</span>
                                         <span class="text-yellow-300 font-bold text-[8px]">${starsHtml}</span>
                                     </div>
                                     <span class="text-[9px] sm:text-[10px] font-bold text-white tracking-tighter truncate block text-center">${capitalizeFirstLetter(s.word)}</span>
@@ -7072,7 +7089,7 @@
             const btn = document.getElementById("startWorldBossBtn");
             const badge = document.getElementById("worldBossEntryBadge");
 
-            let isResume = false;
+            let isResume = hasWorldBossResumeProgress(todayStr);
             if (isTodayDone) {
                 if (btn) {
                     btn.disabled = true;
@@ -7084,12 +7101,6 @@
                     badge.className = "text-[9px] bg-gray-800 text-gray-400 border border-gray-600 px-3 py-1 rounded-none-forced font-bold uppercase tracking-wider";
                 }
             } else {
-                try {
-                    const inProgressKey = `vocahero_wb_progress_${gameState.grade}_${gameState.classNum}_${gameState.studentNum}_${gameState.name}`;
-                    const savedJson = localStorage.getItem(inProgressKey);
-                    if (savedJson && JSON.parse(savedJson).date === todayStr) isResume = true;
-                } catch(e) {}
-
                 if (btn) {
                     btn.disabled = false;
                     btn.className = "w-full py-3.5 bg-gradient-to-r from-red-700 via-pink-700 to-red-600 hover:from-red-600 hover:to-pink-600 text-white font-black text-sm tracking-wider uppercase transition shadow-xl flex items-center justify-center gap-2 cursor-pointer";
@@ -7305,6 +7316,7 @@
             const btn = document.getElementById("startWorldBossBtn");
             const badge = document.getElementById("worldBossEntryBadge");
             const defeated = wbCurBossHp <= 0;
+            const isResume = Boolean(boss.canAttack) && !defeated && hasWorldBossResumeProgress(bossDay);
             if (btn && (!boss.canAttack || defeated)) {
                 btn.disabled = true;
                 btn.className = "w-full py-3.5 bg-[#262626] text-[#7e7e7e] font-bold text-sm tracking-wider uppercase rounded-none-forced cursor-not-allowed border border-red-950";
@@ -7313,7 +7325,9 @@
             if (btn && boss.canAttack && !defeated) {
                 btn.disabled = false;
                 btn.className = "w-full py-4 bg-gradient-to-r from-red-700 via-pink-700 to-red-600 hover:from-red-600 hover:to-pink-600 text-white font-black text-base tracking-wider uppercase transition shadow-xl flex items-center justify-center gap-2 rounded-none-forced";
-                btn.innerHTML = '<i data-lucide="swords" class="w-6 h-6"></i><span>월드보스 토벌전 참전하기 (1일 1회)</span>';
+                btn.innerHTML = isResume
+                    ? '<i data-lucide="swords" class="w-6 h-6"></i><span>월드보스 전투 이어하기 (이탈 기록 발견)</span>'
+                    : '<i data-lucide="swords" class="w-6 h-6"></i><span>월드보스 토벌전 참전하기 (1일 1회)</span>';
                 window.lucide?.createIcons?.();
             }
             if (badge && (!boss.canAttack || defeated)) {
@@ -7321,7 +7335,7 @@
                 badge.className = "text-[9px] bg-yellow-950 text-yellow-400 border border-yellow-600 px-3 py-1 rounded-none-forced font-bold uppercase tracking-wider";
             }
             if (badge && boss.canAttack && !defeated) {
-                badge.innerText = "1일 1회 도전 가능";
+                badge.innerText = isResume ? "진행 중 · 이어하기" : "1일 1회 도전 가능";
                 badge.className = "text-[9px] bg-red-950 text-red-400 border border-red-600 px-3 py-1 rounded-none-forced font-bold uppercase tracking-wider";
             }
             const overlay = document.getElementById("wbDefeatedOverlay");
@@ -8712,7 +8726,7 @@
             const box = document.getElementById("skillAcquireBox");
             const gradeEl = document.getElementById("skillAcquireGrade");
             
-            gradeEl.innerText = `${gradeInfo.name} (T${skill.tier || 1})`;
+            gradeEl.innerText = `${gradeInfo.name} (T${skill.tier || 3})`;
             gradeEl.className = `text-xs font-bold px-3 py-1 mb-2 uppercase tracking-widest ${gradeInfo.colorClass}`;
             
             document.getElementById("skillAcquireWord").innerText = capitalizeFirstLetter(skill.word);

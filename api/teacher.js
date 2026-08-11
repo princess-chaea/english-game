@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
-import { randomBytes, randomUUID } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 import { adminAuth, adminDb, adminStorage, AggregateField, FieldValue, Timestamp } from './_firebase-admin.js';
-import { apiError, handleApiError, hash, isExpired, randomCode, readBody, requireMethod, requireTeacher, safeInt, sendJson, text } from './_http.js';
+import { apiError, handleApiError, hash, isExpired, readBody, requireMethod, requireTeacher, safeInt, sendJson, text } from './_http.js';
 
 const teachers = adminDb.collection('teachers');
 const accounts = adminDb.collection('accounts');
@@ -9,8 +9,9 @@ const classes = adminDb.collection('classes');
 const invites = adminDb.collection('classInvites');
 const verificationRequests = adminDb.collection('teacherVerificationRequests');
 const INVITE_CODE_LENGTH = 6;
-const MANAGER_INVITE_LENGTH = 24;
-const MANAGER_INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const INVITE_CODE_LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+const INVITE_CODE_DIGITS = '23456789';
+const INVITE_CODE_ALPHABET = INVITE_CODE_LETTERS + INVITE_CODE_DIGITS;
 const DELETE_QUERY_PAGE_SIZE = 100;
 
 function guildCoManagerCount(data) {
@@ -30,8 +31,17 @@ function guildManagerIds(data) {
 function normalizeInviteCode(value) {
   return text(value, 32).toUpperCase().replace(/[^A-Z0-9]/g, '');
 }
-function managerInviteCode() {
-  return Array.from(randomBytes(MANAGER_INVITE_LENGTH), (byte) => MANAGER_INVITE_ALPHABET[byte & 31]).join('');
+function guildInviteCode() {
+  const chars = [
+    INVITE_CODE_LETTERS[randomInt(INVITE_CODE_LETTERS.length)],
+    INVITE_CODE_DIGITS[randomInt(INVITE_CODE_DIGITS.length)],
+    ...Array.from({ length: INVITE_CODE_LENGTH - 2 }, () => INVITE_CODE_ALPHABET[randomInt(INVITE_CODE_ALPHABET.length)])
+  ];
+  for (let index = chars.length - 1; index > 0; index -= 1) {
+    const swapIndex = randomInt(index + 1);
+    [chars[index], chars[swapIndex]] = [chars[swapIndex], chars[index]];
+  }
+  return chars.join('');
 }
 async function queryAllDocs(baseQuery, pageSize = DELETE_QUERY_PAGE_SIZE) {
   const docs = [];
@@ -1206,7 +1216,7 @@ async function invite(uid, body) {
   if (type === 'manager' && !classSchoolKey) throw apiError(409, 'GUILD_SCHOOL_REQUIRED', '학교 인증이 연결된 길드에서만 공동 관리자를 초대할 수 있어요.');
   const rotate = body.rotate === true;
   const currentCode = normalizeInviteCode(classSnap.data()?.inviteCodes?.[type]?.code);
-  const currentCodeIsValid = type === 'manager' ? currentCode.length === MANAGER_INVITE_LENGTH : currentCode.length >= 6;
+  const currentCodeIsValid = currentCode.length === INVITE_CODE_LENGTH && /[A-Z]/.test(currentCode) && /\d/.test(currentCode);
   if (!rotate && currentCodeIsValid) {
     const currentSnap = await invites.doc(hash(currentCode)).get();
     const currentSchoolKey = text(currentSnap.data()?.schoolKey, 48).toUpperCase();
@@ -1216,8 +1226,8 @@ async function invite(uid, body) {
   }
   let code; let ref; let available = false;
   for (let index = 0; index < 5; index += 1) {
-    code = type === 'manager' ? managerInviteCode() : randomCode();
-    if ((type === 'manager' && code.length !== MANAGER_INVITE_LENGTH) || (type === 'student' && code.length < 6)) continue;
+    code = guildInviteCode();
+    if (code.length !== INVITE_CODE_LENGTH || !/[A-Z]/.test(code) || !/\d/.test(code)) continue;
     ref = invites.doc(hash(code));
     if (!(await ref.get()).exists) { available = true; break; }
   }
@@ -1232,7 +1242,7 @@ async function invite(uid, body) {
 }
 async function joinManager(uid, body) {
   const code = normalizeInviteCode(body.code);
-  if (code.length !== MANAGER_INVITE_LENGTH) throw apiError(400, 'INVALID_INVITE', '24자리 공동 관리자 코드를 확인해 주세요.');
+  if (code.length !== INVITE_CODE_LENGTH || !/[A-Z]/.test(code) || !/\d/.test(code)) throw apiError(400, 'INVALID_INVITE', '영문·숫자 혼합 6자리 공동 관리자 코드를 확인해 주세요.');
   const ref = invites.doc(hash(code));
   return adminDb.runTransaction(async (transaction) => {
     const invite = await transaction.get(ref);

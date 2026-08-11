@@ -31,6 +31,7 @@ const GUILD_SKIN_RARITIES = Object.freeze([
 ]);
 const GUILD_SKIN_RARITY_BY_ID = new Map(GUILD_SKIN_RARITIES.map((rarity)=>[rarity.id,rarity]));
 const GUILD_SKIN_SUMMON_COST = Object.freeze({1:25,10:225});
+const GUILD_SKIN_SHARD_UNLOCK_COST = Object.freeze({normal:20,rare:60,hero:180,legendary:500,mythic:1500});
 const GUILD_CONSUMABLE_DEFINITIONS=Object.freeze([
   {id:'forgeCharm',type:'charge',name:'장인의 행운권',cost:45,charges:5,value:5,unit:'%p',description:'다음 장비 강화 5회의 성공 확률 +5%p'},
   {id:'forgeGuard',type:'charge',name:'강화 수호 인장',cost:60,charges:5,value:100,unit:'%',description:'강화 실패·강력한 공격 방어 실패의 단계 하락 판정을 5회까지 확정 수호'},
@@ -70,7 +71,7 @@ function calculateGuildCosmeticEffects(value) {
   Object.values(skinProgress).forEach((count)=>{const scale=count>=5?1:count===4?0.7:count===3?0.45:count===2?0.2:0;totals.attackPct+=.06*scale;totals.defensePct+=.06*scale;totals.goldPct+=.12*scale;totals.forgePctPoint+=.012*scale;totals.fortunePctPoint+=.006*scale;});
   Object.keys(totals).forEach((key)=>{totals[key]=Number(totals[key].toFixed(3));});return {...totals,equippedVariantKey:cosmetics.equippedVariantKey,completedVariants:cosmetics.ownedVariantKeys.length,totalVariants:275,skinProgress};
 }
-function publicGuildSkinCatalog(){return {skins:GUILD_SKIN_DEFINITIONS.map((skin)=>({...skin})),rarities:GUILD_SKIN_RARITIES.map((rarity)=>({...rarity})),summonCosts:GUILD_SKIN_SUMMON_COST,totalVariants:275};}
+function publicGuildSkinCatalog(){return {skins:GUILD_SKIN_DEFINITIONS.map((skin)=>({...skin})),rarities:GUILD_SKIN_RARITIES.map((rarity)=>({...rarity})),summonCosts:GUILD_SKIN_SUMMON_COST,shardUnlockCosts:{...GUILD_SKIN_SHARD_UNLOCK_COST},totalVariants:275};}
 const leaderboard = adminDb.collection('leaderboard');
 const invites = adminDb.collection('classInvites');
 const legacyUsers = adminDb.collection('users');
@@ -188,15 +189,16 @@ function normalizedQuestionTypes(value) { const types=[...new Set((Array.isArray
 function assignedPackMetadata(ids) { return (ids || []).map((id) => STUDENT_WORD_PACK_BY_ID.get(id)).filter(Boolean).map((pack) => ({ id: pack.id, label: text(pack.label, 120) || pack.id, wordCount: safeInt(pack.wordCount, Array.isArray(pack.words) ? pack.words.length : 0, 0, 5000) })); }
 function safeQuestionTypeStats(value) { const result={};LEARNING_QUESTION_TYPES.forEach((type)=>{const row=value&&typeof value==='object'&&!Array.isArray(value)?value[type]:null;result[type]={tries:safeInt(row?.tries,0,0,1000000000),correct:safeInt(row?.correct,0,0,1000000000)};});return result; }
 function classPack(grade, wordPackId) { return ASSIGNABLE_WORD_PACK_IDS.has(wordPackId) ? wordPackId : defaultWordPack(grade); }
-const fields = new Set(['avatarType','gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petType','petLvl','petLevels','stage','progress','totalQuizTries','totalQuizCorrect','masteredWords','currentQuizIndex','skillsInventory','equippedSkills','activeSkillDeck','skillEssence','lockedPotentialSlots','wrongWordCounts','wordLearningStats','questionTypeStats','combatPower','masteryPoints','necklaceLvl','braceletLvl','ringLvl','acquiredRelics','equippedRelicId','gearPotentials','isPotentialUnlocked','equippedTitle','wbTitle','unlockedTitles','bossTokens','relicEssence','relicTranscendLvl','soundSettings','tutorialCompleted','lastSaved','guildBoostCharges']);
+const fields = new Set(['avatarType','gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petType','petLvl','petLevels','stage','progress','totalQuizTries','totalQuizCorrect','masteredWords','currentQuizIndex','skillsInventory','skillTierOrderVersion','equippedSkills','activeSkillDeck','skillEssence','lockedPotentialSlots','wrongWordCounts','wordLearningStats','questionTypeStats','combatPower','masteryPoints','necklaceLvl','braceletLvl','ringLvl','acquiredRelics','equippedRelicId','gearPotentials','isPotentialUnlocked','equippedTitle','wbTitle','unlockedTitles','bossTokens','relicEssence','relicTranscendLvl','soundSettings','tutorialCompleted','lastSaved','guildBoostCharges']);
 
-function defaultState() { return { avatarType:'male', gold:0, accGold:0, helmetLvl:1, armorLvl:1, weaponLvl:1, shieldLvl:1, shoesLvl:1, stage:1, progress:0, totalQuizTries:0, totalQuizCorrect:0, masteredWords:[], skillsInventory:[], equippedSkills:[], activeSkillDeck:[], skillEssence:0, wrongWordCounts:{}, wordLearningStats:{}, questionTypeStats:{}, combatPower:0, masteryPoints:0, tutorialCompleted:false }; }
+function defaultState() { return { avatarType:'male', gold:0, accGold:0, helmetLvl:1, armorLvl:1, weaponLvl:1, shieldLvl:1, shoesLvl:1, stage:1, progress:0, totalQuizTries:0, totalQuizCorrect:0, masteredWords:[], skillsInventory:[], skillTierOrderVersion:2, equippedSkills:[], activeSkillDeck:[], skillEssence:0, wrongWordCounts:{}, wordLearningStats:{}, questionTypeStats:{}, combatPower:0, masteryPoints:0, tutorialCompleted:false }; }
 function cleanState(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw apiError(400,'INVALID_STATE','저장할 학습 기록 형식이 올바르지 않아요.');
   const state = {};
   fields.forEach((key) => { if (Object.hasOwn(input,key)) state[key] = input[key]; });
   ['gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petLvl','stage','progress','totalQuizTries','totalQuizCorrect','currentQuizIndex','masteryPoints','necklaceLvl','braceletLvl','ringLvl','skillEssence','bossTokens','relicEssence','combatPower'].forEach((key) => { if (Object.hasOwn(state,key)) state[key]=safeInt(state[key],0,0,9999999999); });
   if (Object.hasOwn(state,'relicTranscendLvl')) state.relicTranscendLvl=safeInt(state.relicTranscendLvl,0,0,10000);
+  if (Object.hasOwn(state,'skillTierOrderVersion')) state.skillTierOrderVersion=safeInt(state.skillTierOrderVersion,2,0,2);
   if (state.masteredWords && !Array.isArray(state.masteredWords)) delete state.masteredWords;
   state.wrongWordCounts = safeWrongWordCounts(state.wrongWordCounts);
   state.wordLearningStats = safeWordLearningStats(state.wordLearningStats);
@@ -208,6 +210,17 @@ function cleanState(input) {
 }
 function score(state) { return safeInt(state.totalQuizCorrect,0,0)*1000 + (Array.isArray(state.masteredWords)?state.masteredWords.length:0)*10 + Math.min(safeInt(state.stage,1,1),999); }
 function publicAccount(data) { const guildCosmetics=safeGuildCosmetics(data.guildCosmetics);return { nickname:data.nickname, learningGrade:data.learningGrade, state:{...defaultState(),...(data.state||{})}, freeNicknameChangeUsed:Boolean(data.freeNicknameChangeUsed), renameCount:safeInt(data.renameCount,0,0), leaderboardOptIn:Boolean(data.leaderboardOptIn), classIds:Array.isArray(data.classIds)?data.classIds:[], activeGuildName:text(data.activeGuildName,40)||null, activeGuildLogoUrl:data.activeGuildName?safeGuildLogoUrl(data.activeGuildLogoUrl):null, guildCosmetics, guildCosmeticEffects:calculateGuildCosmeticEffects(guildCosmetics), legacyGoogleLinked:Boolean(data.legacyGoogleLinked) }; }
+function migrateSkillTierOrder(stateValue) {
+  const state=stateValue&&typeof stateValue==='object'&&!Array.isArray(stateValue)?{...stateValue}:{};
+  if(safeInt(state.skillTierOrderVersion,0,0,2)>=2)return {state,changed:false};
+  state.skillsInventory=Array.isArray(state.skillsInventory)?state.skillsInventory.map((skill)=>{
+    if(!skill||typeof skill!=='object'||Array.isArray(skill))return skill;
+    const previousTier=safeInt(skill.tier,1,1,3);
+    return {...skill,tier:4-previousTier};
+  }):[];
+  state.skillTierOrderVersion=2;
+  return {state,changed:true};
+}
 function legacyLearningGrade(data, fallback=4) { return safeInt(data?.grade, safeInt(data?.learningGrade, fallback, 3, 6), 3, 6); }
 async function loadAccount(uid) {
   const ref=accounts.doc(uid),snap=await ref.get();if(!snap.exists)return null;
@@ -216,6 +229,8 @@ async function loadAccount(uid) {
     try{await finalizeLegacyRecovery(uid,data);data=(await ref.get()).data()||data;}
     catch(error){console.error('Legacy recovery finalization deferred',{uid,message:error?.message||String(error)});throw apiError(503,'RECOVERY_FINALIZING','이전 영웅의 주변 기록을 정리하고 있어요. 잠시 후 다시 시도해 주세요.');}
   }
+  const tierMigration=migrateSkillTierOrder(data.state);
+  if(tierMigration.changed){const update={state:tierMigration.state,updatedAt:FieldValue.serverTimestamp()};await ref.update(update);data={...data,...update};}
   if(data.activeClassId&&(!data.activeGuildName||!Object.hasOwn(data,'activeGuildLogoUrl'))){const assignment=await assignedWordPack(uid);if(assignment.classLabel){const update={activeGuildName:assignment.classLabel,activeGuildLogoUrl:assignment.guildLogoUrl,updatedAt:FieldValue.serverTimestamp()};await ref.update(update);data={...data,...update};}}
   if(!data.legacyMigratedAt&&!data.legacyGoogleMigratedAt)return publicAccount(data);
   const matches=await legacyUsers.where('migratedTo','==',uid).limit(2).get();
@@ -501,7 +516,7 @@ async function updateGuildSkin(uid, body) {
   if(mode==='buyConsumable')return buyGuildConsumable(uid,body);
   const variantKey = text(body.variantKey, 100);
   const summonCount = safeInt(body.count, 1, 1, 10);
-  if (!['summon', 'equip', 'unequip'].includes(mode)) throw apiError(400, 'INVALID_SKIN_ACTION', '외형 요청을 확인해 주세요.');
+  if (!['summon', 'equip', 'unequip', 'unlockVariant'].includes(mode)) throw apiError(400, 'INVALID_SKIN_ACTION', '외형 요청을 확인해 주세요.');
   if(mode==='summon'&&![1,10].includes(summonCount))throw apiError(400,'INVALID_SUMMON_COUNT','소환 횟수를 확인해 주세요.');
   const rolls=mode==='summon'?Array.from({length:summonCount},()=>({skinIndex:randomInt(GUILD_SKIN_DEFINITIONS.length),rarityRoll:randomInt(10000)})):[];
   const accountRef = accounts.doc(uid);
@@ -528,6 +543,15 @@ async function updateGuildSkin(uid, body) {
     } else if (mode === 'equip') {
       if (!cosmetics.ownedVariantKeys.includes(variantKey)) throw apiError(403, 'SKIN_NOT_OWNED', '보유한 외형 등급만 장착할 수 있어요.');
       cosmetics.equippedVariantKey = variantKey;
+    } else if (mode === 'unlockVariant') {
+      const [skinId,rarityId]=variantKey.split(':');
+      if(!GUILD_SKIN_BY_ID.has(skinId)||!GUILD_SKIN_RARITY_BY_ID.has(rarityId))throw apiError(400,'INVALID_SKIN_VARIANT','해금할 차원 영웅 등급을 확인해 주세요.');
+      if(cosmetics.ownedVariantKeys.includes(variantKey))throw apiError(409,'SKIN_ALREADY_OWNED','이미 보유한 차원 영웅 등급이에요.');
+      const shardCost=GUILD_SKIN_SHARD_UNLOCK_COST[rarityId];
+      if(cosmetics.skinShards<shardCost)throw apiError(409,'SKIN_SHARD_SHORTAGE',`차원 파편이 ${shardCost-cosmetics.skinShards}개 부족해요.`);
+      cosmetics.skinShards-=shardCost;
+      cosmetics.ownedVariantKeys.push(variantKey);
+      if(!cosmetics.equippedVariantKey)cosmetics.equippedVariantKey=variantKey;
     } else {
       cosmetics.equippedVariantKey = null;
     }
@@ -886,7 +910,7 @@ async function rename(uid, body) {
 }
 async function previewGuildInvite(uid, body) {
   const code=text(body.code,32).toUpperCase().replace(/[^A-Z0-9]/g,'');
-  if(code.length<6)throw apiError(400,'INVALID_INVITE','길드 초대 코드를 확인해 주세요.');
+  if(code.length!==6||!/[A-Z]/.test(code)||!/\d/.test(code))throw apiError(400,'INVALID_INVITE','영문·숫자 혼합 6자리 길드 초대 코드를 확인해 주세요.');
   const inviteSnap=await invites.doc(hash(code)).get();
   if(!inviteSnap.exists||inviteSnap.data().type!=='student'||isExpired(inviteSnap.data().expiresAt))throw apiError(404,'INVITE_NOT_FOUND','길드 초대 코드를 확인해 주세요.');
   const invite=inviteSnap.data(),classSnap=await classes.doc(invite.classId).get();
@@ -897,7 +921,7 @@ async function previewGuildInvite(uid, body) {
   return {classId:classSnap.id,classLabel:text(classroom.guildName||classroom.classLabel||invite.classLabel,40)||'길드',guildLogoUrl:safeGuildLogoUrl(classroom.guildLogoUrl),memberCount:safeInt(countSnap.data()?.count,0,0,100000),alreadyMember:memberSnap.exists};
 }
 async function joinClass(uid, body) {
-  const code=text(body.code,32).toUpperCase().replace(/[^A-Z0-9]/g,'');if(code.length<6)throw apiError(400,'INVALID_INVITE','길드 초대 코드를 확인해 주세요.');
+  const code=text(body.code,32).toUpperCase().replace(/[^A-Z0-9]/g,'');if(code.length!==6||!/[A-Z]/.test(code)||!/\d/.test(code))throw apiError(400,'INVALID_INVITE','영문·숫자 혼합 6자리 길드 초대 코드를 확인해 주세요.');
   const inviteRef=invites.doc(hash(code));const accountRef=accounts.doc(uid);
   const membership=await adminDb.runTransaction(async tx=>{
     const inviteSnap=await tx.get(inviteRef);

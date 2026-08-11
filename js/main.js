@@ -1178,9 +1178,10 @@
             'clockwork-courier':'/media/player/guild_skin_clockwork.webp?v=20260811-2','cloud-shepherd':'/media/player/guild_skin_cloud.webp?v=20260811-2','deepsea-explorer':'/media/player/guild_skin_deepsea.webp?v=20260811-2','candy-alchemist':'/media/player/guild_skin_candy.webp?v=20260811-2','dino-scout':'/media/player/guild_skin_dino.webp?v=20260811-2','rhythm-bard':'/media/player/guild_skin_rhythm.webp?v=20260811-2','origami-guardian':'/media/player/guild_skin_origami.webp?v=20260811-2','comet-striker':'/media/player/guild_skin_comet.webp?v=20260811-2','scarab-lancer':'/media/player/guild_skin_scarab.webp?v=20260811-2','lantern-samurai':'/media/player/guild_skin_lantern.webp?v=20260811-2','sky-pirate':'/media/player/guild_skin_skypirate.webp?v=20260811-2','mushroom-druid':'/media/player/guild_skin_mushroom.webp?v=20260811-2','volcanic-tamer':'/media/player/guild_skin_volcanic.webp?v=20260811-2','mecha-pilot':'/media/player/guild_skin_mecha.webp?v=20260811-2','chess-monarch':'/media/player/guild_skin_chess.webp?v=20260811-2','galaxy-whale':'/media/player/guild_skin_galaxywhale.webp?v=20260811-2','phoenix-herald':'/media/player/guild_skin_phoenix.webp?v=20260811-2','leviathan-knight':'/media/player/guild_skin_leviathan.webp?v=20260811-2','time-chronomancer':'/media/player/guild_skin_chronomancer.webp?v=20260811-2','prismatic-sovereign':'/media/player/guild_skin_prismatic.webp?v=20260811-2',
             'mirror-duelist':'/media/player/guild_skin_mirror.webp?v=20260811-2','dream-librarian':'/media/player/guild_skin_dreamlibrary.webp?v=20260811-2','glacier-conductor':'/media/player/guild_skin_glaciertrain.webp?v=20260811-2','constellation-archer':'/media/player/guild_skin_constellation.webp?v=20260811-2','coral-princess':'/media/player/guild_skin_coral.webp?v=20260811-2','jungle-pathfinder':'/media/player/guild_skin_jungle.webp?v=20260811-2','aurora-dancer':'/media/player/guild_skin_aurora.webp?v=20260811-2','toybox-commander':'/media/player/guild_skin_toybox.webp?v=20260811-2','cosmic-chef':'/media/player/guild_skin_cosmicchef.webp?v=20260811-2','memory-ranger':'/media/player/guild_skin_camera.webp?v=20260811-2','gravity-captain':'/media/player/guild_skin_gravity.webp?v=20260811-2','crystal-singer':'/media/player/guild_skin_crystalsinger.webp?v=20260811-2','thunder-rider':'/media/player/guild_skin_thundercloud.webp?v=20260811-2','season-elementalist':'/media/player/guild_skin_fourseasons.webp?v=20260811-2','glass-knight':'/media/player/guild_skin_glassknight.webp?v=20260811-2','star-postmage':'/media/player/guild_skin_starpost.webp?v=20260811-2','phantom-detective':'/media/player/guild_skin_detective.webp?v=20260811-2','festival-dancer':'/media/player/guild_skin_festival.webp?v=20260811-2','observatory-keeper':'/media/player/guild_skin_observatory.webp?v=20260811-2','rune-gardener':'/media/player/guild_skin_runegarden.webp?v=20260811-2','sea-star-witch':'/media/player/guild_skin_seastar.webp?v=20260811-2','clockwork-ballerina':'/media/player/guild_skin_ballerina.webp?v=20260811-2','dragonfruit-warrior':'/media/player/guild_skin_dragonfruit.webp?v=20260811-2','moon-relic-explorer':'/media/player/guild_skin_moonexplorer.webp?v=20260811-2','rainbow-dragon-rider':'/media/player/guild_skin_rainbowrider.webp?v=20260811-2'
         });
-        const GUILD_EFFECT_PER_LEVEL = Object.freeze({ vitality: 0.5, forge: 0.2, fortune: 0.1, prosperity: 1 });
+        const GUILD_EFFECT_PER_LEVEL = Object.freeze({ vitality: 0.4, forge: 0.2, fortune: 0.04, prosperity: 0.6 });
+        const GUILD_EFFECT_MAX_LEVEL = Object.freeze({ vitality: 50, forge: 50, fortune: 50, prosperity: 50 });
         function getGuildEffectBonus(effectId) {
-            const level = Math.max(0, Math.min(10, Number(gameState.guildEffects?.[effectId]?.level || 0)));
+            const level = Math.max(0, Math.min(Number(GUILD_EFFECT_MAX_LEVEL[effectId] || 0), Number(gameState.guildEffects?.[effectId]?.level || 0)));
             return level * Number(GUILD_EFFECT_PER_LEVEL[effectId] || 0);
         }
         function getGuildCosmeticBonus(key){return Math.max(0,Number(gameState.guildCosmeticEffects?.[key]||0));}
@@ -1197,7 +1198,7 @@
             return Math.floor(damage*1.1);
         }
         function rollGuildRewardGrade(roll = Math.random()) {
-            const bonus = Math.min(0.015, (getGuildEffectBonus('fortune') + getGuildCosmeticBonus('fortunePctPoint')) / 100);
+            const bonus = Math.min(0.027, (getGuildEffectBonus('fortune') + getGuildCosmeticBonus('fortunePctPoint')) / 100);
             if (roll < 0.0005 + bonus * 0.03) return 'mythic';
             if (roll < 0.02 + bonus * 0.25) return 'legendary';
             if (roll < 0.07 + bonus * 0.65) return 'hero';
@@ -2225,9 +2226,12 @@
             const fairyLvl = (gameState.petLevels && gameState.petLevels['fairy']) || 0;
             const fairyBonus = fairyLvl * PET_PARAMS['fairy'].forgeBonus;
             const guildForgeBonus = getGuildEffectBonus('forge') + getGuildCosmeticBonus('forgePctPoint') + (getGuildBoostCharge('forgeCharm')>0?5:0);
+            const successBeforeGuild = Math.max(5, Math.min(95, success + fairyBonus));
+            const effectiveSuccess = Math.max(5, Math.min(95, successBeforeGuild + guildForgeBonus));
             return {
-                success: Number((Math.max(5, Math.min(95, success + fairyBonus + guildForgeBonus))).toFixed(1)),
-                dropChance: dropChance
+                success: Number(effectiveSuccess.toFixed(1)),
+                dropChance: dropChance,
+                guildForgeBonus: Number(Math.max(0, effectiveSuccess - successBeforeGuild).toFixed(1))
             };
         }
 
@@ -2279,7 +2283,7 @@
                         </div>
                         <div class="text-[9px] text-[#bbbbbb] ">${bonusLine}</div>
                         <div class="text-[9px] mt-0.5 flex flex-col gap-0.5">
-                            <span>성공: <span class="text-green-500 font-bold">${chanceInfo.success}%</span></span>
+                            <span>성공: <span class="text-green-500 font-bold">${chanceInfo.success}%</span>${chanceInfo.guildForgeBonus > 0 ? ` <span class="font-black text-red-500">(+${chanceInfo.guildForgeBonus}%p 길드·아이템)</span>` : ''}</span>
                             ${chanceInfo.dropChance > 0
                                 ? (shieldRate > 0
                                     ? `<span class="text-[#e22718] font-bold">실패 시 ${effectiveDropChance}% 확률 하락 <span class="text-emerald-400 text-[8px]">(방패 -${shieldRate}%)</span></span>`
@@ -5059,15 +5063,18 @@
             const targetName = gearNames[rIdx];
             const displayCriticalWord = formatEnglishWordDisplay(currentCriticalWord);
 
+            const canDrop = gameState[targetGear] > 1;
             const shieldRate = getEquippedRelicBonus("relic_shield");
-            if (shieldRate > 0 && Math.random() * 100 < shieldRate) {
-                showBattleToast(`🛡️ 대지의 수호 방패 발동! 오답 하락 피해 방어 성공! (${shieldRate}%)`);
-                const errorEl = document.getElementById("criticalDefenseError");
-                if (errorEl) errorEl.innerText = "🛡️ 대지의 수호 방패가 장비 등급 하락을 완전 방어했습니다!";
-                return;
-            }
+            const relicShieldTriggered = canDrop && shieldRate > 0 && Math.random() * 100 < shieldRate;
+            const guildGuardTriggered = canDrop && !relicShieldTriggered && consumeGuildBoost('forgeGuard');
 
-            if (gameState[targetGear] > 1) {
+            if (relicShieldTriggered) {
+                errorEl.innerText = "🛡️ 대지의 수호 방패가 장비 강화 수치 하락을 완전 방어했습니다!";
+                showBattleToast(`🛡️ 대지의 수호 방패 발동! 방어 실패 하락 판정 방어! (${shieldRate}%)`);
+            } else if (guildGuardTriggered) {
+                errorEl.innerText = "🛡️ 강화 수호 인장이 방어 실패의 장비 강화 수치 하락을 확정 수호했습니다!";
+                showBattleToast(`🛡️ 강화 수호 인장 발동! ${targetName} -1강 하락 확정 수호!`);
+            } else if (canDrop) {
                 gameState[targetGear] -= 1;
                 const msg = `❌ 방어 실패! ${targetName}의 강화 수치가 -1 되었습니다.<br>(정답: <span class="text-white">${displayCriticalWord}</span>)`;
                 errorEl.innerHTML = msg;
@@ -6455,13 +6462,26 @@
         // ==========================================
         // TITLE EQUIPMENT SYSTEM (칭호 등급 체계: 신화/전설/영웅/희귀/일반)
         // ==========================================
+        function countMasteredLearningWords(gs) {
+            return Object.values(gs.wordLearningStats || {}).filter((entry) => {
+                const correct = Math.max(0, Number(entry?.c || 0));
+                const wrong = Math.max(0, Number(entry?.x || 0));
+                return correct >= 10 && correct / Math.max(1, correct + wrong) >= 0.8;
+            }).length;
+        }
+        function countRecoveredLearningWords(gs) {
+            return Object.values(gs.wordLearningStats || {}).filter((entry) => Number(entry?.x || 0) > 0 && Number(entry?.c || 0) >= 5 && Number(entry?.s || 0) >= 3).length;
+        }
+        function hasBalancedQuestionPractice(gs) {
+            return Object.values(gs.questionTypeStats || {}).filter((row) => Number(row?.tries || 0) >= 20 && Number(row?.correct || 0) / Math.max(1, Number(row?.tries || 0)) >= 0.8).length >= 3;
+        }
         const AVAILABLE_TITLES = [
             // ========================================
             // 🌟 [신화 등급 - Mythic] — 최상위 랭커 전용
             // ========================================
             { id: "수호신", name: "수호신", tier: "신화", desc: "월드보스 완전 격퇴 및 기여도 1위 (주간 결산 시 수여)", condition: (gs) => (gs.unlockedTitles || []).includes("수호신") || gs.wbTitle === "수호신", style: "mythic-aurora-card border-[#f59e0b] text-yellow-300 shadow-[0_0_15px_rgba(245,158,11,0.8)]" },
             { id: "정복왕", name: "정복왕", tier: "신화", desc: "스테이지 정복 랭킹 전체 1위", condition: (gs, res) => res?.myStageRank === 1 && ((gs.stage||1)>1 || (gs.progress||0)>0), style: "mythic-aurora-card border-[#3b82f6] text-sky-300 shadow-[0_0_15px_rgba(59,130,246,0.8)]" },
-            { id: "황금 거상", name: "황금 거상", tier: "신화", desc: "누적 100,000,000(1억) 골드 이상 보유", condition: (gs) => (gs.gold || 0) >= 100000000, style: "mythic-aurora-card border-[#eab308] text-yellow-200 shadow-[0_0_15px_rgba(234,179,8,0.8)]" },
+            { id: "황금 거상", name: "황금 거상", tier: "신화", desc: "누적 골드 획득량 100,000,000(1억) 이상", condition: (gs) => (gs.accGold || gs.gold || 0) >= 100000000, style: "mythic-aurora-card border-[#eab308] text-yellow-200 shadow-[0_0_15px_rgba(234,179,8,0.8)]" },
             { id: "단어의 신", name: "단어의 신", tier: "신화", desc: "단어 정답 1,000개 이상 누적 달성", condition: (gs) => (gs.totalQuizCorrect || 0) >= 1000, style: "mythic-aurora-card border-[#10b981] text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.8)]" },
             { id: "유물의 신", name: "유물의 신", tier: "신화", desc: "고대 유물 10종 수집 및 모두 6성(MAX) 돌파", condition: (gs) => (gs.acquiredRelics || []).filter(r => (r.stars||0) >= 6).length >= 10, style: "mythic-aurora-card border-[#8b5cf6] text-violet-300 shadow-[0_0_15px_rgba(139,92,246,0.8)]" },
             { id: "드래곤 로드", name: "드래곤 로드", tier: "신화", desc: "드래곤 펫 만렙(Lv.100) 달성", condition: (gs) => (gs.petLevels?.dragon || 0) >= 100, style: "mythic-aurora-card border-[#ef4444] text-red-300 shadow-[0_0_15px_rgba(239,68,68,0.8)]" },
@@ -6470,6 +6490,7 @@
             { id: "심연의 정복자", name: "심연의 정복자", tier: "신화", desc: "스테이지 100 이상 돌파", condition: (gs) => (gs.stage || 1) >= 100, style: "mythic-aurora-card border-[#3b82f6] text-sky-300 shadow-[0_0_15px_rgba(59,130,246,0.8)]" },
             { id: "대마법사", name: "대마법사", tier: "신화", desc: "신화(Mythic) 등급 스킬 10개 이상 보유", condition: (gs) => (gs.skillsInventory || []).filter(s => s.grade === 'mythic').length >= 10, style: "mythic-aurora-card border-[#8b5cf6] text-violet-300 shadow-[0_0_15px_rgba(139,92,246,0.8)]" },
             { id: "진정한 마스터", name: "진정한 마스터", tier: "신화", desc: "마스터리 포인트 5,000 돌파", condition: (gs) => (gs.masteryPoints || 0) >= 5000, style: "mythic-aurora-card border-[#10b981] text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.8)]" },
+            { id: "길드의 전설", name: "길드의 전설", tier: "신화", desc: "가입 이후 길드 기여 5,000점 달성", condition: (gs) => (gs.guildTitleStats?.guildPoints || 0) >= 5000, style: "mythic-aurora-card border-[#22d3ee] text-cyan-200 shadow-[0_0_15px_rgba(34,211,238,0.8)]" },
 
             // ========================================
             // 🔥 [전설 등급 - Legendary]
@@ -6484,6 +6505,9 @@
             { id: "펫 마스터", name: "펫 마스터", tier: "전설", desc: "펫 3종 모두 레벨 30 이상 달성", condition: (gs) => { const p = gs.petLevels || {}; return (p.slime||0)>=30 && (p.dragon||0)>=30 && (p.fairy||0)>=30; }, style: "border-[#be185d] bg-gradient-to-r from-[#9d174d] to-[#831843] text-[#fbcfe8] shadow-[0_0_10px_rgba(190,24,93,0.7)]" },
             { id: "장신구 대가", name: "장신구 대가", tier: "전설", desc: "목걸이, 팔찌, 반지 모두 Lv.30 달성", condition: (gs) => (gs.necklaceLvl||0)>=30 && (gs.braceletLvl||0)>=30 && (gs.ringLvl||0)>=30, style: "border-[#d97706] bg-gradient-to-r from-[#b45309] to-[#78350f] text-[#fde68a] shadow-[0_0_10px_rgba(217,119,6,0.7)]" },
             { id: "유물 발굴단장", name: "유물 발굴단장", tier: "전설", desc: "신화(Mythic) 등급 유물 5종 수집", condition: (gs) => (gs.acquiredRelics || []).filter(r => r.grade === 'mythic').length >= 5, style: "border-[#059669] bg-gradient-to-r from-[#047857] to-[#064e3b] text-[#a7f3d0] shadow-[0_0_10px_rgba(5,150,105,0.7)]" },
+            { id: "숙련의 현자", name: "숙련의 현자", tier: "전설", desc: "10회 이상 정답·정답률 80% 이상인 숙련 단어 100개", condition: (gs) => countMasteredLearningWords(gs) >= 100, style: "border-[#6366f1] bg-gradient-to-r from-[#4f46e5] to-[#312e81] text-[#e0e7ff] shadow-[0_0_10px_rgba(99,102,241,0.7)]" },
+            { id: "시련의 현자", name: "시련의 현자", tier: "전설", desc: "길드 오답 정복 시련 누적 100문제 극복", condition: (gs) => (gs.guildTitleStats?.guildTrialCorrect || 0) >= 100, style: "border-[#e11d48] bg-gradient-to-r from-[#9f1239] to-[#4c0519] text-[#fecdd3] shadow-[0_0_10px_rgba(225,29,72,0.7)]" },
+            { id: "차원 도감가", name: "차원 도감가", tier: "전설", desc: "차원 영웅 외형 등급 150종 수집", condition: (gs) => (gs.guildCosmeticCollectionCount || 0) >= 150, style: "border-[#7c3aed] bg-gradient-to-r from-[#6d28d9] to-[#3b0764] text-[#ddd6fe] shadow-[0_0_10px_rgba(124,58,237,0.7)]" },
 
             // ========================================
             // 💜 [영웅 등급 - Hero]
@@ -6494,20 +6518,23 @@
             { id: "완벽주의자", name: "완벽주의자", tier: "영웅", desc: "정복 단어 150개 이상 기록", condition: (gs) => (gs.masteredWords || []).length >= 150, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
             { id: "검성", name: "검성", tier: "영웅", desc: "무기(수호검) 50강(MAX) 달성", condition: (gs) => (gs.weaponLvl || 1) >= 50, style: "border-[#b91c1c] bg-gradient-to-r from-[#991b1b] to-[#7f1d1d] text-[#fca5a5]" },
             { id: "방어의 탑", name: "방어의 탑", tier: "영웅", desc: "방어구(수호갑옷) 50강(MAX) 달성", condition: (gs) => (gs.armorLvl || 1) >= 50, style: "border-[#0369a1] bg-gradient-to-r from-[#075985] to-[#0c4a6e] text-[#7dd3fc]" },
-            { id: "부유한 모험가", name: "부유한 모험가", tier: "영웅", desc: "누적 10,000,000(1천만) 골드 보유", condition: (gs) => (gs.gold || 0) >= 10000000, style: "border-[#d97706] bg-gradient-to-r from-[#b45309] to-[#78350f] text-[#fde68a]" },
+            { id: "부유한 모험가", name: "부유한 모험가", tier: "영웅", desc: "누적 골드 획득량 10,000,000(1천만) 이상", condition: (gs) => (gs.accGold || gs.gold || 0) >= 10000000, style: "border-[#d97706] bg-gradient-to-r from-[#b45309] to-[#78350f] text-[#fde68a]" },
             { id: "유물 사냥꾼", name: "유물 사냥꾼", tier: "영웅", desc: "전설(Legendary) 등급 유물 3종 수집", condition: (gs) => (gs.acquiredRelics || []).filter(r => ['legendary', 'mythic'].includes(r.grade)).length >= 3, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
             { id: "펫의 친구", name: "펫의 친구", tier: "영웅", desc: "펫 1종 이상 레벨 50 달성", condition: (gs) => Object.values(gs.petLevels || {}).some(v => v >= 50), style: "border-[#ec4899] bg-gradient-to-r from-[#db2777] to-[#9d174d] text-[#fbcfe8]" },
             { id: "스킬 수집가", name: "스킬 수집가", tier: "영웅", desc: "보유 스킬 30개 이상 달성", condition: (gs) => (gs.skillsInventory || []).length >= 30, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
             { id: "영웅 전사", name: "영웅 전사", tier: "영웅", desc: "영웅(Hero) 등급 이상 스킬 10개 보유", condition: (gs) => (gs.skillsInventory || []).filter(s => ['hero','legendary','mythic'].includes(s.grade)).length >= 10, style: "border-[#9333ea] bg-gradient-to-r from-[#7e22ce] to-[#581c87] text-[#e9d5ff]" },
             { id: "마스터리 포인트 부자", name: "마스터리 포인트 부자", tier: "영웅", desc: "마스터리 포인트 2,000 이상 보유", condition: (gs) => (gs.masteryPoints || 0) >= 2000, style: "border-[#6366f1] bg-gradient-to-r from-[#4f46e5] to-[#3730a3] text-[#c7d2fe]" },
             { id: "보석 세공사", name: "보석 세공사", tier: "영웅", desc: "장신구(목걸이/팔찌/반지) 중 하나 Lv.30 달성", condition: (gs) => (gs.necklaceLvl||0)>=30 || (gs.braceletLvl||0)>=30 || (gs.ringLvl||0)>=30, style: "border-[#d97706] bg-gradient-to-r from-[#b45309] to-[#78350f] text-[#fde68a]" },
+            { id: "오답 정복자", name: "오답 정복자", tier: "영웅", desc: "틀렸던 단어 50개를 다시 5회 이상 맞히고 3연속 정답", condition: (gs) => countRecoveredLearningWords(gs) >= 50, style: "border-[#db2777] bg-gradient-to-r from-[#be185d] to-[#831843] text-[#fbcfe8]" },
+            { id: "길드의 기둥", name: "길드의 기둥", tier: "영웅", desc: "가입 이후 길드 기여 2,000점 달성", condition: (gs) => (gs.guildTitleStats?.guildPoints || 0) >= 2000, style: "border-[#0891b2] bg-gradient-to-r from-[#0e7490] to-[#164e63] text-[#cffafe]" },
+            { id: "차원 수집가", name: "차원 수집가", tier: "영웅", desc: "차원 영웅 외형 등급 50종 수집", condition: (gs) => (gs.guildCosmeticCollectionCount || 0) >= 50, style: "border-[#7c3aed] bg-gradient-to-r from-[#6d28d9] to-[#4c1d95] text-[#ddd6fe]" },
 
             // ========================================
             // 🔷 [희귀 등급 - Rare]
             // ========================================
             { id: "수호자", name: "수호자", tier: "희귀", desc: "스테이지 20 이상 정복 달성", condition: (gs) => (gs.stage || 1) >= 20, style: "border-[#0284c7] bg-gradient-to-r from-[#0369a1] to-[#0c4a6e] text-[#7dd3fc]" },
             { id: "단어의 지배자", name: "단어의 지배자", tier: "희귀", desc: "단어 정답 150개 이상 정복", condition: (gs) => (gs.totalQuizCorrect || 0) >= 150, style: "border-[#0284c7] bg-gradient-to-r from-[#0369a1] to-[#0c4a6e] text-[#7dd3fc]" },
-            { id: "자산가", name: "자산가", tier: "희귀", desc: "누적 1,000,000(100만) 골드 이상 보유", condition: (gs) => (gs.gold || 0) >= 1000000, style: "border-[#0284c7] bg-gradient-to-r from-[#0369a1] to-[#0c4a6e] text-[#7dd3fc]" },
+            { id: "자산가", name: "자산가", tier: "희귀", desc: "누적 골드 획득량 1,000,000(100만) 이상", condition: (gs) => (gs.accGold || gs.gold || 0) >= 1000000, style: "border-[#0284c7] bg-gradient-to-r from-[#0369a1] to-[#0c4a6e] text-[#7dd3fc]" },
             { id: "칠전팔기", name: "칠전팔기", tier: "희귀", desc: "치열한 도전의 흔적 (오답 300회 극복)", condition: (gs) => ((gs.totalQuizTries || 0) - (gs.totalQuizCorrect || 0)) >= 300, style: "border-[#ea580c] bg-gradient-to-r from-[#c2410c] to-[#9a3412] text-[#fdba74]" },
             { id: "유물 탐험가", name: "유물 탐험가", tier: "희귀", desc: "희귀(Rare) 등급 유물 2종 이상 수집", condition: (gs) => (gs.acquiredRelics || []).filter(r => ['rare','epic','legendary','mythic'].includes(r.grade)).length >= 2, style: "border-[#0284c7] bg-gradient-to-r from-[#0369a1] to-[#0c4a6e] text-[#7dd3fc]" },
             { id: "스테이지 30 돌파자", name: "스테이지 30 돌파자", tier: "희귀", desc: "스테이지 30 이상 달성", condition: (gs) => (gs.stage || 1) >= 30, style: "border-[#0284c7] bg-gradient-to-r from-[#0369a1] to-[#0c4a6e] text-[#7dd3fc]" },
@@ -6515,6 +6542,8 @@
             { id: "펫 보호자", name: "펫 보호자", tier: "희귀", desc: "펫 1종 이상 레벨 20 이상 달성", condition: (gs) => Object.values(gs.petLevels || {}).some(v => v >= 20), style: "border-[#ec4899] bg-gradient-to-r from-[#db2777] to-[#9d174d] text-[#fbcfe8]" },
             { id: "강화 매니아", name: "강화 매니아", tier: "희귀", desc: "아이템 총 강화 레벨 합계 150 이상", condition: (gs) => ((gs.helmetLvl||1)+(gs.armorLvl||1)+(gs.weaponLvl||1)+(gs.shieldLvl||1)+(gs.shoesLvl||1)) >= 150, style: "border-[#ea580c] bg-gradient-to-r from-[#c2410c] to-[#9a3412] text-[#fdba74]" },
             { id: "마스터리 연구자", name: "마스터리 연구자", tier: "희귀", desc: "마스터리 포인트 800 이상 보유", condition: (gs) => (gs.masteryPoints || 0) >= 800, style: "border-[#6366f1] bg-gradient-to-r from-[#4f46e5] to-[#3730a3] text-[#c7d2fe]" },
+            { id: "고른 학습자", name: "고른 학습자", tier: "희귀", desc: "서로 다른 문제 유형 3종에서 각 20회·정답률 80% 달성", condition: (gs) => hasBalancedQuestionPractice(gs), style: "border-[#0d9488] bg-gradient-to-r from-[#0f766e] to-[#134e4a] text-[#ccfbf1]" },
+            { id: "길드 협력자", name: "길드 협력자", tier: "희귀", desc: "가입 이후 길드 기여 500점 달성", condition: (gs) => (gs.guildTitleStats?.guildPoints || 0) >= 500, style: "border-[#0891b2] bg-gradient-to-r from-[#0e7490] to-[#164e63] text-[#cffafe]" },
 
             // ========================================
             // ⚪ [일반 등급 - Normal]
@@ -6659,10 +6688,10 @@
                 id: "rich",
                 name: "불멸의 흑마법 리치",
                 img: "media/worldbose/worldbose_rich.webp",
-                desc: "금단의 영단어 스펠을 교란하는 저주받은 마왕! 장착 마법 비기 스킬 4회를 연사하여 저주를 정화하고 성수 폭발을 일으켜라!",
-                debuffName: "🔮 사령의 저주 (스펠 교란 & HP 흡혈)",
+                desc: "20초마다 스킬 위치를 섞고 하나를 봉인하는 저주받은 마왕! 봉인 스킬의 영단어 미니퀴즈를 풀거나 마법 비기 4회·10연속 정답으로 정화하라!",
+                debuffName: "🔮 사령의 저주 (스펠 교란·봉인 & 오답 HP 흡혈)",
                 weaknessName: "✨ 성수 폭발 (마법 스킬 4회 시전 / 10연속 정답)",
-                weaknessEffect: "사령의 저주 완벽 정화 및 모든 스킬 쿨타임 즉시 초기화! (약점 종료 후 20초간 사령 저주 재가동)",
+                weaknessEffect: "15초간 저주·봉인 해제, 스킬 피해 +150% 및 모든 쿨타임 즉시 초기화! (종료 후 20초 뒤 저주 재발동)",
                 counterSkillName: "🔮 사령 사멸 주문"
             }
         ];
@@ -6768,12 +6797,12 @@
 
         function advanceRichCurseTimer({ bossId, bossState, gracePeriodTimer, ultimateEventActive, timer, delta = 0.1 } = {}) {
             const numericTimer = Number(timer);
-            const currentTimer = Number.isFinite(numericTimer) && numericTimer >= 0 ? numericTimer : 10;
+            const currentTimer = Number.isFinite(numericTimer) && numericTimer >= 0 ? numericTimer : 20;
             const active = bossId === "rich" && bossState === "normal" && Number(gracePeriodTimer || 0) <= 0 && !ultimateEventActive;
             if (!active) return { active, triggered: false, nextTimer: currentTimer };
             const remaining = currentTimer - Math.max(0, Number(delta) || 0);
             const triggered = remaining <= 0;
-            return { active, triggered, nextTimer: triggered ? 10 : remaining };
+            return { active, triggered, nextTimer: triggered ? 20 : remaining };
         }
 
         window.renderWorldBossSettlementModal = renderWorldBossSettlementModal;
@@ -6867,7 +6896,8 @@
             document.getElementById("wbBossDesc").innerText = `"${bossInfo.desc}"`;
             document.getElementById("wbWeekBadge").innerText = getFormattedMonthWeekString();
             document.getElementById("wbGradeTitle").innerText = "전 학년 공유 체력";
-            document.getElementById("playerMaxHpDisplay").innerText = `💖 ${wbPlayerMaxHp} HP (무구 강화 수치에 비례)`;
+            const raidHpBonus = getGuildEffectBonus('vitality') + getGuildCosmeticBonus('defensePct');
+            document.getElementById("playerMaxHpDisplay").innerHTML = `💖 ${wbPlayerMaxHp} HP ${raidHpBonus > 0 ? `<span class="text-red-500">(+${Number(raidHpBonus.toFixed(2))}% 길드)</span>` : ''} <span class="text-green-400">(무구 강화 수치에 비례)</span>`;
 
             const tagEl = document.getElementById("wbGuideBossTag");
             if (tagEl) tagEl.innerText = bossInfo.name;
@@ -6877,7 +6907,7 @@
             if (debuffDescEl) {
                 debuffDescEl.innerHTML = (bossInfo.id === 'fafnir') ? "선다형 보기나 순서맞추기 단어칸에 불꽃이 일렁여 시야를 방해합니다.<br><span class='text-yellow-300 font-bold'>👉 (불꽃이 일렁이는 정답을 타격하면 비늘이 깨집니다!)</span>" :
                                          (bossInfo.id === 'golem') ? "단단한 암석 피부로 일반 타격 데미지를 60% 감소(0.4배)합니다.<br><span class='text-yellow-300 font-bold'>👉 (6글자 이상 철자 조합 정답 또는 10콤보 달성 시 외피가 붕괴됩니다!)</span>" :
-                                         "10초마다 플레이어를 중독시켜 스펠을 교란합니다.<br><span class='text-red-400 font-bold'>👉 (마법 속성 오답 공격 시 플레이어 HP 10%를 소모하여 체력을 회복합니다!)</span>";
+                                         "20초마다 장착 스킬 위치를 섞고 스킬 하나를 봉인합니다. 봉인 스킬을 누르면 뜻을 보고 영단어를 입력하는 해제 미니퀴즈가 열립니다.<br><span class='text-red-400 font-bold'>👉 (일반 퀴즈 오답: 최대 HP 10% 흡혈·보스 회복·스킬 봉인 / 해제 퀴즈 오답: 최대 HP 8% 피해·보스 회복)</span><br><span class='text-yellow-300 font-bold'>✨ 마법 스킬 4회 시전 또는 10연속 정답: 15초 정화·모든 봉인 해제·쿨타임 초기화·스킬 피해 +150%</span>";
             }
             const weakNameEl = document.getElementById("wbGuideWeaknessName");
             if (weakNameEl) weakNameEl.innerText = bossInfo.weaknessName;
@@ -7342,7 +7372,8 @@
         let wbUltimateTimer = 0;
         let wbNextUltimateTime = 135.0;
         let wbSkillCastCount = 0;
-        let wbRichCurseTimer = 10.0;
+        let wbRichCurseTimer = 20.0;
+        let wbRichLockedSkillIds = new Set();
 
         function updateWorldBossHudUI() {
             const seasonIdx = getWeeklyBossIndex();
@@ -7389,7 +7420,7 @@
                 if (wbCurrentQuizType === 'english') mult = 1.2;
                 if (wbCurrentQuizType === 'unscramble') mult = 1.6;
                 if (wbUltimateEventActive) mult = 3.0;
-                if (wbBossState === 'weakness_shattered') mult *= (bossInfo.id === 'fafnir' ? 2.5 : bossInfo.id === 'golem' ? 10.0 : 3.0);
+                if (wbBossState === 'weakness_shattered') mult *= (bossInfo.id === 'golem' ? 10.0 : 2.5);
                 if (bossInfo.id === 'golem' && wbBossState === 'normal') mult *= 0.4;
                 
                 multBadge.innerText = `⚡ ${mult.toFixed(1)}x`;
@@ -7413,7 +7444,8 @@
             wbUltimateTimer = 0;
             wbNextUltimateTime = 135.0;
             wbSkillCastCount = 0;
-            wbRichCurseTimer = 10.0;
+            wbRichCurseTimer = 20.0;
+            wbRichLockedSkillIds = new Set();
             wbTotalDamageDealt = 0;
             wbCorrectAnswers = 0;
             wbSkillCooldowns = {};
@@ -7440,7 +7472,8 @@
                         wbComboCount = Math.max(0, Math.floor(Number(saved.wbComboCount) || 0));
                         wbWrongCount = Math.max(0, Math.floor(Number(saved.wbWrongCount) || 0));
                         if (wbBossState === 'weakness_shattered' && wbWeaknessTimer <= 0) wbBossState = 'normal';
-                        wbRichCurseTimer = Math.max(0.1, Number(saved.wbRichCurseTimer) || 10.0);
+                        wbRichCurseTimer = Math.max(0.1, Number(saved.wbRichCurseTimer) || 20.0);
+                        wbRichLockedSkillIds = new Set((Array.isArray(saved.wbRichLockedSkillIds) ? saved.wbRichLockedSkillIds : []).map(String));
                         if (typeof saved.wbPetHintRemaining === 'number') {
                             loadedHintRemaining = saved.wbPetHintRemaining;
                         }
@@ -7530,12 +7563,12 @@
                         const sIdx = getWeeklyBossIndex();
                         const bInfo = WORLD_BOSS_SEASONS[sIdx] || WORLD_BOSS_SEASONS[0];
                         wbGracePeriodTimer = (bInfo.id === 'golem' ? 0.0 : 20.0); // 파브니르/리치는 20초 쿨타임, 골렘은 항시
-                        if (bInfo.id === 'rich') wbRichCurseTimer = 10.0;
+                        if (bInfo.id === 'rich') wbRichCurseTimer = 0.1;
                         showWorldBossFxNotice(`🛡️ 보스의 약점 무력화 상태가 종료되어 외피/저주를 재가동합니다. (${bInfo.id === 'golem' ? '즉시 재시도 가능' : '20초 재정비'})`, "text-gray-400 border-gray-600");
                     }
                 }
 
-                // 리치 고유 패턴: 저주가 활성화된 동안 10초마다 장착 스킬의 화면 위치를 교란합니다.
+                // 리치 고유 패턴: 저주가 활성화된 동안 20초마다 스킬 위치를 교란하고 하나를 봉인합니다.
                 const timerBossInfo = WORLD_BOSS_SEASONS[getWeeklyBossIndex()] || WORLD_BOSS_SEASONS[0];
                 const richCurseTick = advanceRichCurseTimer({
                     bossId: timerBossInfo.id,
@@ -7613,6 +7646,7 @@
                             wbComboCount,
                             wbWrongCount,
                             wbRichCurseTimer,
+                            wbRichLockedSkillIds: [...wbRichLockedSkillIds],
                             wbPetHintRemaining
                         }));
                     } catch(e) {}
@@ -7688,7 +7722,7 @@
             const container = document.getElementById("wbRaidSkillsContainer");
             if (!container) return;
             const cards = Array.from(container.querySelectorAll('button[id^="wb-skill-btn-"]'));
-            if (cards.length < 2) return;
+            if (!cards.length) return;
             for (let i = cards.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [cards[i], cards[j]] = [cards[j], cards[i]];
@@ -7698,8 +7732,55 @@
                 card.classList.add('animate-pulse');
                 setTimeout(() => card.classList.remove('animate-pulse'), 700);
             });
+            const lockedSkill = lockRandomWorldBossRichSkill();
+            updateWorldBossSkillCooldownsUI();
             playSoundEffect('alert');
-            showWorldBossFxNotice("🔮 [사령의 저주] 장착 마법 스킬의 위치가 뒤섞였습니다!", "text-purple-300 border-purple-500 animate-pulse");
+            showWorldBossFxNotice(`🔮 [사령의 저주] 스킬 위치 교란! ${lockedSkill ? capitalizeFirstLetter(lockedSkill.word) + ' 봉인' : '새 봉인 대상 없음'}`, "text-purple-300 border-purple-500 animate-pulse");
+        }
+
+        function lockRandomWorldBossRichSkill() {
+            const equipped = (gameState.equippedSkills || []).map(String);
+            const available = (gameState.skillsInventory || []).filter((skill) => equipped.includes(String(skill.id)) && !wbRichLockedSkillIds.has(String(skill.id)));
+            if (!available.length) return null;
+            const skill = available[Math.floor(Math.random() * available.length)];
+            wbRichLockedSkillIds.add(String(skill.id));
+            return skill;
+        }
+
+        function attemptWorldBossRichSkillUnlock(skill) {
+            showInputModal({
+                icon: "🔮",
+                title: "사령의 저주 해제 미니퀴즈",
+                message: `뜻이 <b class="text-purple-300">${String(skill.meaning || '')}</b>인 영단어를 입력하세요.<br><span class="text-[10px] text-gray-400">띄어쓰기와 대소문자는 무시합니다. 오답이면 리치가 HP를 흡수해 회복합니다.</span>`,
+                inputType: "text",
+                inputPlaceholder: "영단어 입력",
+                confirmLabel: "저주 해제",
+                cancelLabel: "나중에",
+                onConfirm: (rawAnswer) => {
+                    const normalizedRaw = String(rawAnswer || "").normalize("NFKC").trim();
+                    if (!/^[A-Za-z\s]+$/.test(normalizedRaw)) {
+                        showToast("⚠️ 영어 알파벳만 입력할 수 있어요. 숫자·한글은 정답 시도로 처리하지 않았어요.");
+                        return;
+                    }
+                    if (normalizeEnglishAnswer(normalizedRaw) === normalizeEnglishAnswer(skill.word)) {
+                        wbRichLockedSkillIds.delete(String(skill.id));
+                        updateWorldBossSkillCooldownsUI();
+                        playSoundEffect('correct');
+                        showWorldBossFxNotice(`✨ [봉인 해제] ${capitalizeFirstLetter(skill.word)} 스킬을 다시 사용할 수 있습니다!`, "text-emerald-300 border-emerald-500");
+                        return;
+                    }
+                    const curseDamage = Math.max(1, Math.floor(wbPlayerMaxHp * 0.08));
+                    const healAmount = Math.floor(calculatePlayerCP() * 150);
+                    wbPlayerHp -= curseDamage;
+                    wbTotalDamageDealt = Math.max(0, wbTotalDamageDealt - healAmount);
+                    updateWorldBossBattleHpBar();
+                    const hpText = document.getElementById("wbPlayerHpText");
+                    if (hpText) hpText.innerText = `${Math.max(0, wbPlayerHp)} / ${wbPlayerMaxHp} HP`;
+                    playSoundEffect('incorrect');
+                    triggerWorldBossAttackAnim(`🔮 해제 오답! -${curseDamage} HP · 리치 +${healAmount.toLocaleString()} HP 회복 · 스킬 봉인 유지`);
+                    if (wbPlayerHp <= 0) endWorldBossRaid("💀 사령의 저주 해제에 실패해 리치에게 쓰러졌습니다!");
+                }
+            });
         }
 
         function renderWorldBossRaidSkills() {
@@ -7753,16 +7834,32 @@
 
                 const cdLeft = wbSkillCooldowns[String(s.id)] || wbSkillCooldowns[id] || 0;
                 const isCd = cdLeft > 0;
+                const isRichLocked = wbRichLockedSkillIds.has(String(s.id));
                 const maxCd = s.maxCooldown || 30.0;
                 const pct = isCd ? Math.round((cdLeft / maxCd) * 100) : 0;
 
                 const cdOverlay = btn.querySelector('.wb-cd-overlay');
                 const cdTimerText = btn.querySelector('.wb-cd-timer');
 
-                if (isCd) {
+                if (isRichLocked) {
+                    btn.disabled = false;
+                    btn.classList.remove("opacity-60", "cursor-not-allowed");
+                    btn.classList.add("border-purple-400", "shadow-[0_0_14px_rgba(168,85,247,.8)]");
+                    if (cdOverlay) {
+                        cdOverlay.style.display = "block";
+                        cdOverlay.style.width = "100%";
+                        cdOverlay.className = "wb-cd-overlay absolute bottom-0 left-0 h-1 bg-purple-500 transition-all pointer-events-none";
+                    }
+                    if (cdTimerText) {
+                        cdTimerText.innerText = "🔒 해제 퀴즈";
+                        cdTimerText.className = "wb-cd-timer text-[8px] text-purple-200 font-black animate-pulse z-10";
+                    }
+                } else if (isCd) {
                     btn.disabled = true;
+                    btn.classList.remove("border-purple-400", "shadow-[0_0_14px_rgba(168,85,247,.8)]");
                     btn.classList.add("opacity-60", "cursor-not-allowed");
                     if (cdOverlay) {
+                        cdOverlay.className = "wb-cd-overlay absolute bottom-0 left-0 h-1 bg-red-600 transition-all pointer-events-none";
                         cdOverlay.style.display = "block";
                         cdOverlay.style.width = `${pct}%`;
                     }
@@ -7772,8 +7869,10 @@
                     }
                 } else {
                     btn.disabled = false;
+                    btn.classList.remove("border-purple-400", "shadow-[0_0_14px_rgba(168,85,247,.8)]");
                     btn.classList.remove("opacity-60", "cursor-not-allowed");
                     if (cdOverlay) {
+                        cdOverlay.className = "wb-cd-overlay absolute bottom-0 left-0 h-1 bg-red-600 transition-all pointer-events-none";
                         cdOverlay.style.display = "none";
                         cdOverlay.style.width = "0%";
                     }
@@ -7904,6 +8003,10 @@
             if (!skill) return;
 
             const cdKey = String(skill.id);
+            if (wbRichLockedSkillIds.has(cdKey)) {
+                attemptWorldBossRichSkillUnlock(skill);
+                return;
+            }
             if (wbSkillCooldowns[cdKey] > 0) return;
             let richWeaknessTriggeredBySkill = false;
 
@@ -7923,6 +8026,7 @@
                         richWeaknessTriggeredBySkill = true;
                         updateCurrentWbQuizOptionTheme();
                         wbWeaknessTimer = 15.0;
+                        wbRichLockedSkillIds.clear();
                         wbSkillCooldowns = {};
                         updateWorldBossSkillCooldownsUI();
                         const shatterOverlay = document.getElementById("wbWeaknessShatterOverlay");
@@ -8359,6 +8463,7 @@
                     // 콤보 소모 여부는 정답 피해와 협공 연출이 끝난 뒤 경로별로 처리한다.
                     if (bossInfo.id === 'rich') {
                         wbSkillCastCount = 0;
+                        wbRichLockedSkillIds.clear();
                         wbSkillCooldowns = {};
                         updateWorldBossSkillCooldownsUI();
                         showWorldBossFxNotice("✨ [결계 정화!] 리치의 저주 파쇄 & 모든 스킬 쿨타임 즉시 초기화! (스킬 피해 +150%)", "text-purple-300 border-purple-500 animate-bounce");
@@ -8466,8 +8571,10 @@
                         bossDmg = vampDmg;
                         const healAmount = Math.floor(calculatePlayerCP() * 300);
                         wbTotalDamageDealt = Math.max(0, wbTotalDamageDealt - healAmount);
+                        const lockedSkill = lockRandomWorldBossRichSkill();
+                        updateWorldBossSkillCooldownsUI();
                         updateWorldBossBattleHpBar();
-                        extraNotice = ` (🔮 HP 10% 흡혈 & +${healAmount.toLocaleString()} HP 회복!)`;
+                        extraNotice = ` (🔮 HP 10% 흡혈 · +${healAmount.toLocaleString()} HP 회복${lockedSkill ? ` · ${capitalizeFirstLetter(lockedSkill.word)} 봉인` : ''}!)`;
                     }
 
                     wbPlayerHp -= bossDmg;

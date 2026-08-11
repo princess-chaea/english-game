@@ -6,12 +6,14 @@ import { apiError, handleApiError, hash, isExpired, normalizeNickname, readBody,
 const accounts = adminDb.collection('accounts');
 const teachers = adminDb.collection('teachers');
 const classes = adminDb.collection('classes');
-const GUILD_EFFECT_COSTS = [25, 40, 60, 85, 115, 150, 190, 240, 300, 375];
+const GUILD_EFFECT_BASE_COST = 100;
+const GUILD_EFFECT_LEVEL_COST_STEP = 20;
+const guildEffectLevelCost = (level) => GUILD_EFFECT_BASE_COST + safeInt(level, 0, 0, 49) * GUILD_EFFECT_LEVEL_COST_STEP;
 const GUILD_EFFECT_DEFINITIONS = Object.freeze({
-  vitality: { id: 'vitality', name: '수호자의 맹세', icon: 'heart-pulse', description: '월드보스와 보스전 최대 HP가 증가합니다.', unit: '%', valuePerLevel: 0.5, maxLevel: 10 },
-  forge: { id: 'forge', name: '장인의 화로', icon: 'anvil', description: '대장간 장비 강화 성공 확률이 소폭 증가합니다.', unit: '%p', valuePerLevel: 0.2, maxLevel: 10 },
-  fortune: { id: 'fortune', name: '행운의 서고', icon: 'sparkles', description: '스킬·유물 뽑기의 희귀 이상 등장 확률이 증가합니다.', unit: '%p', valuePerLevel: 0.1, maxLevel: 10 },
-  prosperity: { id: 'prosperity', name: '풍요의 등불', icon: 'coins', description: '퀴즈 정답으로 얻는 골드가 증가합니다.', unit: '%', valuePerLevel: 1, maxLevel: 10 }
+  vitality: { id: 'vitality', name: '수호자의 맹세', icon: 'heart-pulse', description: '월드보스와 보스전 최대 HP가 증가합니다.', unit: '%', valuePerLevel: 0.4, maxLevel: 50 },
+  forge: { id: 'forge', name: '장인의 화로', icon: 'anvil', description: '대장간 장비 강화 성공 확률이 증가합니다.', unit: '%p', valuePerLevel: 0.2, maxLevel: 50 },
+  fortune: { id: 'fortune', name: '행운의 서고', icon: 'sparkles', description: '스킬·유물 뽑기의 희귀 이상 등장 확률이 증가합니다.', unit: '%p', valuePerLevel: 0.04, maxLevel: 50 },
+  prosperity: { id: 'prosperity', name: '풍요의 등불', icon: 'coins', description: '퀴즈 정답으로 얻는 골드가 증가합니다.', unit: '%', valuePerLevel: 0.6, maxLevel: 50 }
 });
 const GUILD_SKIN_FEMALE_IDS=new Set(['sakura-blade','frost-wolf','arcane-inventor','moon-rabbit','cloud-shepherd','candy-alchemist','rhythm-bard','comet-striker','sky-pirate','mushroom-druid','chess-monarch','phoenix-herald','prismatic-sovereign','dream-librarian','constellation-archer','coral-princess','aurora-dancer','memory-ranger','crystal-singer','season-elementalist','star-postmage','festival-dancer','rune-gardener','sea-star-witch','clockwork-ballerina','dragonfruit-warrior','moon-relic-explorer','rainbow-dragon-rider']);
 const GUILD_SKIN_DEFINITIONS = Object.freeze([
@@ -31,11 +33,11 @@ const GUILD_SKIN_RARITY_BY_ID = new Map(GUILD_SKIN_RARITIES.map((rarity)=>[rarit
 const GUILD_SKIN_SUMMON_COST = Object.freeze({1:25,10:225});
 const GUILD_CONSUMABLE_DEFINITIONS=Object.freeze([
   {id:'forgeCharm',type:'charge',name:'장인의 행운권',cost:45,charges:5,value:5,unit:'%p',description:'다음 장비 강화 5회의 성공 확률 +5%p'},
-  {id:'forgeGuard',type:'charge',name:'강화 수호 인장',cost:60,charges:5,value:100,unit:'%',description:'강화 실패로 단계 하락 판정이 날 때 5회까지 확정 방어 (유물 방패와 별도)'},
+  {id:'forgeGuard',type:'charge',name:'강화 수호 인장',cost:60,charges:5,value:100,unit:'%',description:'강화 실패·강력한 공격 방어 실패의 단계 하락 판정을 5회까지 확정 수호'},
   {id:'powerRune',type:'charge',name:'용사의 강공 룬',cost:50,charges:10,value:10,unit:'%',description:'다음 정답 공격 10회의 최종 피해 +10%'},
-  {id:'skillEssenceExchange',type:'exchange',name:'스킬 정수 교환',cost:30,resource:'skillEssence',amount:5,resourceName:'스킬 각성 정수',description:'길드 코인 30개를 스킬 각성 정수 5개로 교환'},
-  {id:'relicEssenceExchange',type:'exchange',name:'유물 정수 교환',cost:40,resource:'relicEssence',amount:10,resourceName:'고대 신화 정수',description:'길드 코인 40개를 고대 신화 정수 10개로 교환'},
-  {id:'bossTokenExchange',type:'exchange',name:'보스 증표 교환',cost:50,resource:'bossTokens',amount:25,resourceName:'고대 보스 증표',description:'길드 코인 50개를 고대 보스 증표 25개로 교환'}
+  {id:'masteryPointsExchange',type:'exchange',name:'단어정복 포인트 교환',cost:50,resource:'masteryPoints',amount:200,resourceName:'단어정복 포인트(FP)',description:'길드 코인 50개를 단어정복 포인트(FP) 200개로 교환'},
+  {id:'relicEssenceExchange',type:'exchange',name:'고대 신화 정수 교환',cost:50,resource:'relicEssence',amount:5,resourceName:'고대 신화 정수',description:'길드 코인 50개를 6성 유물 중복 획득 화폐인 고대 신화 정수 5개로 교환'},
+  {id:'bossTokenExchange',type:'exchange',name:'보스 증표 교환',cost:50,resource:'bossTokens',amount:100,resourceName:'고대 보스 증표',description:'길드 코인 50개를 고대 보스 증표 100개로 교환'}
 ]);
 const GUILD_CONSUMABLE_BY_ID=new Map(GUILD_CONSUMABLE_DEFINITIONS.map((item)=>[item.id,item]));
 function safeGuildBoostCharges(value){const source=value&&typeof value==='object'&&!Array.isArray(value)?value:{};return Object.fromEntries(GUILD_CONSUMABLE_DEFINITIONS.filter((item)=>item.type==='charge').map((item)=>[item.id,safeInt(source[item.id],0,0,10000)]));}
@@ -53,12 +55,12 @@ function safeGuildCosmetics(value) {
   const ownedVariantKeys=[...new Set([...(Array.isArray(source.ownedVariantKeys)?source.ownedVariantKeys:[]),...legacy].map((key)=>text(key,100)).filter((key)=>{const [skinId,rarity]=key.split(':');return GUILD_SKIN_BY_ID.has(skinId)&&GUILD_SKIN_RARITY_BY_ID.has(rarity);}))].slice(0,275);
   const legacyEquipped=source.equippedSkinId?`${text(source.equippedSkinId,80)}:rare`:'';
   const equippedVariantKey=ownedVariantKeys.includes(text(source.equippedVariantKey,100))?text(source.equippedVariantKey,100):(ownedVariantKeys.includes(legacyEquipped)?legacyEquipped:null);
-  return {ownedVariantKeys,equippedVariantKey,skinShards:safeInt(source.skinShards,0,0,1000000000),summonStats:{sinceRare:safeInt(source.summonStats?.sinceRare,0,0,9),sinceLegendary:safeInt(source.summonStats?.sinceLegendary,0,0,49),sinceMythic:safeInt(source.summonStats?.sinceMythic,0,0,149),totalSummons:safeInt(source.summonStats?.totalSummons,0,0,1000000000)}};
+  return {ownedVariantKeys,equippedVariantKey,skinShards:safeInt(source.skinShards,0,0,1000000000),summonStats:{totalSummons:safeInt(source.summonStats?.totalSummons,0,0,1000000000)}};
 }
 function publicGuildEffectCatalog(effects) {
   return Object.values(GUILD_EFFECT_DEFINITIONS).map((definition) => {
     const level = effects[definition.id]?.level || 0;
-    return { ...definition, level, currentValue: Number((level * definition.valuePerLevel).toFixed(2)), nextCost: level < definition.maxLevel ? GUILD_EFFECT_COSTS[level] : null, totalInvested: effects[definition.id]?.totalInvested || 0 };
+    return { ...definition, level, currentValue: Number((level * definition.valuePerLevel).toFixed(2)), nextCost: level < definition.maxLevel ? guildEffectLevelCost(level) : null, totalInvested: effects[definition.id]?.totalInvested || 0 };
   });
 }
 function calculateGuildCosmeticEffects(value) {
@@ -246,7 +248,8 @@ async function assignedWordPack(uid) {
     const rawQuestionTypes = hasMemberOverride ? member.questionTypes : classroom.defaultQuestionTypes;
     const wordPackIds = normalizedPackIds(rawPackIds, grade);
     const questionTypes = normalizedQuestionTypes(rawQuestionTypes);
-    return { classId, classLabel: classroom.guildName || classroom.classLabel || '길드', guildLogoUrl: safeGuildLogoUrl(classroom.guildLogoUrl), guildEffects: safeGuildEffects(classroom.guildEffects), wordPackId: wordPackIds[0], wordPackIds, wordPacks: assignedPackMetadata(wordPackIds), questionTypes, assignmentSource: hasMemberOverride ? 'member' : 'guild', learningSettingsVersion: safeInt(hasMemberOverride ? member.learningSettingsVersion : classroom.learningSettingsVersion, 0, 0) };
+    const guildTitleStats = { guildPoints: safeInt(member.guildPoints, 0, 0, 1000000000), guildCorrectCount: safeInt(member.guildCorrectCount, 0, 0, 1000000000), guildStageClears: safeInt(member.guildStageClears, 0, 0, 1000000), guildBossPointTotal: safeInt(member.guildBossPointTotal, 0, 0, 1000000000), guildTrialCorrect: safeInt(member.guildTrialCorrect, 0, 0, 1000000), guildLearningCoinTotal: safeInt(member.guildLearningCoinTotal, 0, 0, 1000000000) };
+    return { classId, classLabel: classroom.guildName || classroom.classLabel || '길드', guildLogoUrl: safeGuildLogoUrl(classroom.guildLogoUrl), guildEffects: safeGuildEffects(classroom.guildEffects), guildTitleStats, wordPackId: wordPackIds[0], wordPackIds, wordPacks: assignedPackMetadata(wordPackIds), questionTypes, assignmentSource: hasMemberOverride ? 'member' : 'guild', learningSettingsVersion: safeInt(hasMemberOverride ? member.learningSettingsVersion : classroom.learningSettingsVersion, 0, 0) };
   }
   return { wordPackId: null, wordPackIds: [], questionTypes: ['meaning-choice'], guildLogoUrl: null };
 }function normalizedTrialAnswer(value) { return text(value, 160).normalize('NFKC').trim().toLowerCase().replace(/[^a-z0-9가-힣]/g, ''); }
@@ -325,7 +328,7 @@ function publicTrialQuestions(words, questions, attemptId) {
 }
 async function loadGuildTrial(uid, prefetchedAssignment = null) {
   const assignment = prefetchedAssignment || await assignedWordPack(uid);
-  const assignmentPayload = { wordPackId: assignment.wordPackId || null, wordPackIds: assignment.wordPackIds || [], questionTypes: assignment.questionTypes || ['meaning-choice'], assignmentSource: assignment.assignmentSource || null, learningSettingsVersion: safeInt(assignment.learningSettingsVersion, 0, 0), guildEffects: safeGuildEffects(assignment.guildEffects) };
+  const assignmentPayload = { wordPackId: assignment.wordPackId || null, wordPackIds: assignment.wordPackIds || [], questionTypes: assignment.questionTypes || ['meaning-choice'], assignmentSource: assignment.assignmentSource || null, learningSettingsVersion: safeInt(assignment.learningSettingsVersion, 0, 0), guildEffects: safeGuildEffects(assignment.guildEffects), guildTitleStats: assignment.guildTitleStats || {} };
   if (!assignment.classId) return { guildName: null, guildLogoUrl: null, wordPackId: null, guildCoins: 0, trial: null };
   const classRef = adminDb.collection('classes').doc(assignment.classId);
   const memberRef = classRef.collection('members').doc(uid);
@@ -451,6 +454,7 @@ async function loadGuildTrial(uid, prefetchedAssignment = null) {
     guildCosmeticEffects: calculateGuildCosmeticEffects(accountSnap.data()?.guildCosmetics),
     guildConsumableCatalog:GUILD_CONSUMABLE_DEFINITIONS.map((item)=>({...item})),
     guildBoostCharges:safeGuildBoostCharges(accountSnap.data()?.state?.guildBoostCharges),
+    guildContributionPoints: Math.max(0, safeInt(ownMemberSnap.data()?.guildPoints, 0, 0, 1000000000) - safeInt(ownMemberSnap.data()?.guildEffectPointsSpent, 0, 0, 1000000000)),
     myGuildInvestment: { contributionByEffect, total: Object.values(contributionByEffect).reduce((sum, value) => sum + value, 0) },
     staff,
     members
@@ -474,18 +478,21 @@ async function investGuildEffect(uid, body) {
     const effects = safeGuildEffects(classSnap.data()?.guildEffects);
     const current = effects[effectId];
     if (current.level >= definition.maxLevel) throw apiError(409, 'GUILD_EFFECT_MAX', '이미 최고 레벨인 길드 효과예요.');
-    const cost = GUILD_EFFECT_COSTS[current.level];
+    const cost = guildEffectLevelCost(current.level);
     const coins = safeInt(memberSnap.data()?.guildCoins, 0, 0, 1000000000);
-    if (coins < cost) throw apiError(409, 'GUILD_COIN_SHORTAGE', `길드 코인이 ${cost - coins}개 부족해요.`);
+    const lifetimePoints = safeInt(memberSnap.data()?.guildPoints, 0, 0, 1000000000);
+    const spentPoints = safeInt(memberSnap.data()?.guildEffectPointsSpent, 0, 0, lifetimePoints);
+    const availablePoints = Math.max(0, lifetimePoints - spentPoints);
+    if (availablePoints < cost) throw apiError(409, 'GUILD_POINT_SHORTAGE', `사용 가능한 길드 기여 포인트가 ${cost - availablePoints}P 부족해요.`);
     effects[effectId] = { level: current.level + 1, totalInvested: current.totalInvested + cost };
     const oldInvestment = investmentSnap.data() || {};
     const contributionByEffect = Object.fromEntries(Object.keys(GUILD_EFFECT_DEFINITIONS).map((id) => [id, safeInt(oldInvestment.contributionByEffect?.[id], 0, 0, 1000000000)]));
     contributionByEffect[effectId] += cost;
     const total = Object.values(contributionByEffect).reduce((sum, value) => sum + value, 0);
-    tx.update(memberRef, { guildCoins: coins - cost, lastActiveAt: FieldValue.serverTimestamp() });
+    tx.update(memberRef, { guildEffectPointsSpent: spentPoints + cost, lastActiveAt: FieldValue.serverTimestamp() });
     tx.update(classRef, { guildEffects: effects, guildEffectsUpdatedAt: FieldValue.serverTimestamp() });
     tx.set(investmentRef, { contributionByEffect, total, lastInvestedAt: FieldValue.serverTimestamp() }, { merge: true });
-    return { guildCoins: coins - cost, effects, catalog: publicGuildEffectCatalog(effects), myGuildInvestment: { contributionByEffect, total } };
+    return { guildCoins: coins, guildContributionPoints: availablePoints - cost, effects, catalog: publicGuildEffectCatalog(effects), myGuildInvestment: { contributionByEffect, total } };
   });
 }
 
@@ -512,10 +519,9 @@ async function updateGuildSkin(uid, body) {
     if (mode === 'summon') {
       const cost=GUILD_SKIN_SUMMON_COST[summonCount];if(coins<cost)throw apiError(409,'GUILD_COIN_SHORTAGE',`길드 코인이 ${cost-coins}개 부족해요.`);coins-=cost;
       rolls.forEach((roll)=>{let rarityIndex=0,cursor=0;for(let i=0;i<GUILD_SKIN_RARITIES.length;i+=1){cursor+=GUILD_SKIN_RARITIES[i].weight;if(roll.rarityRoll<cursor){rarityIndex=i;break;}}
-        if(cosmetics.summonStats.sinceMythic>=149)rarityIndex=4;else if(cosmetics.summonStats.sinceLegendary>=49)rarityIndex=Math.max(rarityIndex,3);else if(cosmetics.summonStats.sinceRare>=9)rarityIndex=Math.max(rarityIndex,1);
         const rarity=GUILD_SKIN_RARITIES[rarityIndex],skin=GUILD_SKIN_DEFINITIONS[roll.skinIndex],key=`${skin.id}:${rarity.id}`,duplicate=cosmetics.ownedVariantKeys.includes(key);let shardsGained=0;
         if(duplicate){shardsGained=rarity.shards;cosmetics.skinShards+=shardsGained;}else cosmetics.ownedVariantKeys.push(key);
-        cosmetics.summonStats.totalSummons+=1;cosmetics.summonStats.sinceRare=rarityIndex>=1?0:cosmetics.summonStats.sinceRare+1;cosmetics.summonStats.sinceLegendary=rarityIndex>=3?0:cosmetics.summonStats.sinceLegendary+1;cosmetics.summonStats.sinceMythic=rarityIndex>=4?0:cosmetics.summonStats.sinceMythic+1;
+        cosmetics.summonStats.totalSummons+=1;
         if(!cosmetics.equippedVariantKey&&!duplicate)cosmetics.equippedVariantKey=key;summonResults.push({skinId:skin.id,rarity:rarity.id,variantKey:key,duplicate,shardsGained});
       });
       tx.update(memberRef, { guildCoins: coins, lastActiveAt: FieldValue.serverTimestamp() });
@@ -549,7 +555,7 @@ async function buyGuildConsumable(uid,body){
     state.guildBoostCharges=charges;
     tx.update(memberRef,{guildCoins:coins-item.cost,lastActiveAt:FieldValue.serverTimestamp()});
     tx.update(accountRef,{state,updatedAt:FieldValue.serverTimestamp()});
-    return {guildCoins:coins-item.cost,guildBoostCharges:charges,resources:{skillEssence:safeInt(state.skillEssence,0,0,9999999999),relicEssence:safeInt(state.relicEssence,0,0,9999999999),bossTokens:safeInt(state.bossTokens,0,0,9999999999)},guildConsumableCatalog:GUILD_CONSUMABLE_DEFINITIONS.map((row)=>({...row}))};
+    return {guildCoins:coins-item.cost,guildBoostCharges:charges,resources:{masteryPoints:safeInt(state.masteryPoints,0,0,9999999999),relicEssence:safeInt(state.relicEssence,0,0,9999999999),bossTokens:safeInt(state.bossTokens,0,0,9999999999)},guildConsumableCatalog:GUILD_CONSUMABLE_DEFINITIONS.map((row)=>({...row}))};
   });
 }
 
@@ -638,6 +644,15 @@ async function guildTrialEvent(uid, body) {
       const day = seoulDayKey();
       const dailyLearning = safeDailyLearning(member.dailyLearning);
       const currentDay = dailyLearning[day] || { tries: 0, correct: 0, stageClears: 0 };
+      const previousDailyCorrect = safeInt(currentDay.correct, 0, 0, 1000000);
+      const nextDailyCorrect = previousDailyCorrect + correctGain;
+      const correctCoinRemainder = safeInt(member.guildCoinCorrectRemainder, 0, 0, 4);
+      const correctCoinProgress = correctCoinRemainder + correctGain;
+      const correctCoinGain = Math.floor(correctCoinProgress / 5);
+      const nextCorrectCoinRemainder = correctCoinProgress % 5;
+      const dailyConsistencyBonus = previousDailyCorrect < 10 && nextDailyCorrect >= 10 ? 5 : 0;
+      const stageCoinGain = stageGain * 5;
+      const guildCoinGain = correctCoinGain + dailyConsistencyBonus + stageCoinGain;
       dailyLearning[day] = {
         tries: currentDay.tries + triesGain,
         correct: currentDay.correct + correctGain,
@@ -668,6 +683,9 @@ async function guildTrialEvent(uid, body) {
         guildCorrectCount: FieldValue.increment(correctGain),
         guildStageClears: FieldValue.increment(stageGain),
         guildPoints: FieldValue.increment(correctGain + stageGain * 20),
+        guildCoins: FieldValue.increment(guildCoinGain),
+        guildLearningCoinTotal: FieldValue.increment(guildCoinGain),
+        guildCoinCorrectRemainder: nextCorrectCoinRemainder,
         lastActiveAt: FieldValue.serverTimestamp()
       }, { merge: true });
     });

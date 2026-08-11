@@ -270,12 +270,18 @@ async function contribute(uid, body) {
       const member = memberSnap.data() || {};
       const previousDaily = member.guildBossPointDay === day ? safeInt(member.guildBossPointDayAmount, 0, 0, 100) : 0;
       const earned = Math.max(0, Math.min(100 - previousDaily, Math.floor(applied / 1000000)));
+      const previousCoinProgress = safeInt(member.guildBossCoinPointRemainder, 0, 0, 9);
+      const coinProgress = previousCoinProgress + earned;
+      const earnedGuildCoins = Math.floor(coinProgress / 10);
       tx.set(memberRef, {
         guildBossDamage: FieldValue.increment(applied),
         guildBossPointTotal: FieldValue.increment(earned),
         guildBossPointDay: day,
         guildBossPointDayAmount: previousDaily + earned,
         guildPoints: FieldValue.increment(earned),
+        guildCoins: FieldValue.increment(earnedGuildCoins),
+        guildBossCoinTotal: FieldValue.increment(earnedGuildCoins),
+        guildBossCoinPointRemainder: coinProgress % 10,
         lastActiveAt: FieldValue.serverTimestamp()
       }, { merge: true });
     }

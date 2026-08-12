@@ -962,6 +962,7 @@
             // 📚 정복 단어, 칭호, 퀴즈 통계 복원
             gameState.wrongWordCounts = extra.wrongWordCounts || data.wrongWordCounts || {};
             gameState.wordLearningStats = extra.wordLearningStats || data.wordLearningStats || {};
+            gameState.questionTypeStats = extra.questionTypeStats || data.questionTypeStats || {};
             gameState.equippedTitle = extra.equippedTitle || data.equippedTitle || "";
             gameState.wbTitle = extra.wbTitle || data.wbTitle || "";
             gameState.unlockedTitles = extra.unlockedTitles || data.unlockedTitles || [];
@@ -1039,6 +1040,7 @@
                 masteredWords: gameState.masteredWords || [],
                 wrongWordCounts: gameState.wrongWordCounts || {},
                 wordLearningStats: gameState.wordLearningStats || {},
+                questionTypeStats: gameState.questionTypeStats || {},
                 soundSettings: gameState.soundSettings || { masterMute: false, sfxAttack: true, sfxQuiz: true, sfxLevelup: true }
             });
         }
@@ -3417,6 +3419,7 @@
         window.__vocaHeroTestHooks = { ...(window.__vocaHeroTestHooks || {}), selectMythicCraftTarget };
 
         function craftMythicRelicFromEssence() {
+            if (relicSummonBusy || document.getElementById("relicDrawResultModal")?.classList.contains("flex")) return;
             if (typeof gameState.relicEssence === 'undefined') gameState.relicEssence = 0;
             const cost = 500;
             if (gameState.relicEssence < cost) {
@@ -3424,35 +3427,46 @@
                 return;
             }
 
+            relicSummonBusy = true;
             gameState.relicEssence -= cost;
             if (!gameState.acquiredRelics) gameState.acquiredRelics = [];
+            refreshStateVisuals();
 
-            // 아직 6성 신화가 아닌 유물 중 가장 상위 등급 유물을 100% 확정 6성 신화로 승급!
-            let targetRelic = selectMythicCraftTarget(gameState.acquiredRelics);
-            if (!targetRelic) {
-                const unacquiredDef = RELIC_DEFINITIONS.find(def => !gameState.acquiredRelics.some(r => r.id === def.id));
-                if (unacquiredDef) {
-                    targetRelic = { id: unacquiredDef.id, grade: 'mythic', stars: 6, exp: 0 };
-                    gameState.acquiredRelics.push(targetRelic);
+            const pickedRelicDef = RELIC_DEFINITIONS[Math.floor(Math.random() * RELIC_DEFINITIONS.length)];
+            const rolledGrade = 'mythic';
+            const expMap = { normal: 1, rare: 3, hero: 9, legendary: 27, mythic: 81 };
+            const rolledExp = expMap[rolledGrade];
+            let existing = gameState.acquiredRelics.find(item => item.id === pickedRelicDef.id);
+            let result;
+
+            if (!existing) {
+                existing = { id: pickedRelicDef.id, grade: rolledGrade, stars: 0, exp: 0 };
+                gameState.acquiredRelics.push(existing);
+                result = { def: pickedRelicDef, grade: rolledGrade, rolledGrade, currentGrade: rolledGrade, stars: 0, currentExp: 0, reqExp: rolledExp, gainedExp: 0, previousGrade: null, previousStars: 0, previousExp: 0, isNew: true };
+            } else {
+                const previousGrade = Object.prototype.hasOwnProperty.call(SKILL_GRADES, existing.grade) ? existing.grade : 'normal';
+                const previousStars = Math.min(6, Math.max(0, Math.floor(Number(existing.stars) || 0)));
+                const previousExp = Math.max(0, Math.floor(Number(existing.exp) || 0));
+                existing.grade = previousGrade;
+                existing.stars = previousStars;
+                existing.exp = previousExp;
+
+                if (previousGrade === 'mythic' && previousStars >= 6) {
+                    const refundAmount = 5;
+                    gameState.relicEssence += refundAmount;
+                    result = { def: pickedRelicDef, grade: rolledGrade, rolledGrade, currentGrade: previousGrade, stars: 6, currentExp: 0, reqExp: rolledExp, gainedExp: 0, previousGrade, previousStars, previousExp, isDuplicate: true, isEssenceRefund: true, refundAmount };
+                } else {
+                    const oldReqExp = expMap[previousGrade] || 1;
+                    const totalExp = previousStars * oldReqExp + previousExp + rolledExp;
+                    existing.grade = rolledGrade;
+                    existing.stars = Math.min(6, Math.floor(totalExp / rolledExp));
+                    existing.exp = existing.stars >= 6 ? 0 : totalExp % rolledExp;
+                    result = { def: pickedRelicDef, grade: rolledGrade, rolledGrade, currentGrade: rolledGrade, stars: existing.stars, currentExp: existing.exp, reqExp: rolledExp, gainedExp: rolledExp, previousGrade, previousStars, previousExp, isDuplicate: true, isGradePromotion: previousGrade !== rolledGrade };
                 }
             }
 
-            if (targetRelic) {
-                targetRelic.grade = 'mythic';
-                targetRelic.stars = 6;
-                targetRelic.exp = 0;
-                const rDef = RELIC_DEFINITIONS.find(d => d.id === targetRelic.id);
-                const rName = rDef ? rDef.name : "고대 유물";
-                playSoundEffect('levelup');
-                showToast(`✨ [고대 신화 연성 성공] [${rName}] 유물이 100% 확정 6성 신화 등급으로 완벽 승급되었습니다!`);
-            } else {
-                gameState.relicTranscendLvl = (gameState.relicTranscendLvl || 0) + 1;
-                playSoundEffect('levelup');
-                showToast(`🌟 [유물 한계 초월 연마] 모든 유물이 이미 6성 신화입니다! 유물 초월 Lv.${gameState.relicTranscendLvl} 달성! (전체 유물 스탯 +10% 중첩 적용)`);
-            }
-
-            renderRelicsUI();
-            refreshStateVisuals();
+            playSoundEffect('levelup');
+            showRelicDrawResultModal([result]);
             saveRelicStateImmediately();
         }
 
@@ -3609,10 +3623,16 @@
         }
 
         function closeRelicDrawResultModal() {
+            if (Number(window.wbRelicsToReveal || 0) > 0) {
+                showToast("✨ 신화·전설 유물 카드를 먼저 뒤집어 확인해 주세요.");
+                return;
+            }
             const modal = document.getElementById("relicDrawResultModal");
             modal?.classList.remove("flex");
             modal?.classList.add("hidden");
             relicSummonBusy = false;
+            renderRelicsUI();
+            refreshStateVisuals();
         }
   
           function closeSkillAcquireModal() {
@@ -5540,7 +5560,10 @@
                 </div>`;
             const wrongHtml = wrongRows.length ? wrongRows.slice(0, 12).map((row, index) => `<article class="border border-[#3a252a] bg-black p-2.5"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><b class="block truncate text-[10px] text-white">${index + 1}. ${esc(row.word)}</b><span class="mt-0.5 block truncate text-[8px] text-gray-400">${esc(row.meaning || "뜻 정보 없음")}</span></div><span class="shrink-0 text-[9px] font-bold text-rose-300">오답 ${row.wrong}회</span></div><div class="mt-2 flex items-center justify-between border-t border-[#311d22] pt-1.5 text-[8px]"><span class="text-sky-300">정답 ${row.correct}회</span><span class="text-gray-500">정답률 ${row.accuracy.toFixed(0)}%</span></div></article>`).join("") : '<p class="col-span-full border border-dashed border-emerald-900/60 p-5 text-center text-[10px] text-emerald-300">아직 기록된 오답 단어가 없어요.</p>';
             const masteredHtml = [...masteredRows].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 20).map((row) => `<article class="border border-emerald-900/60 bg-black p-2.5"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><b class="block truncate text-[10px] text-emerald-200">${esc(row.word)}</b><span class="mt-0.5 block truncate text-[8px] text-gray-400">${esc(row.meaning || "뜻 정보 없음")}</span></div><span class="shrink-0 text-[9px] font-bold text-emerald-300">숙련</span></div><p class="mt-2 border-t border-[#173128] pt-1.5 text-[8px] text-gray-500">정답 ${row.correct}회 · 정답률 ${row.accuracy.toFixed(0)}%</p></article>`).join("") || '<p class="col-span-full border border-dashed border-emerald-900/60 p-5 text-center text-[10px] text-gray-500">정답 10회·정답률 80%를 달성하면 숙련 단어가 나타나요.</p>';
-            const detailRows = [...learningRows].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 300).map((row) => `<div class="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2 border-b border-[#1f2933] py-2 text-[9px]"><span class="truncate text-gray-200">${esc(row.word)} · ${esc(row.meaning)}</span><span class="text-sky-300">${row.correct}정답</span><span class="${row.mastered ? "text-emerald-300" : row.wrong ? "text-rose-300" : "text-gray-400"}">${row.mastered ? "숙련" : row.wrong + "오답"}</span></div>`).join("");
+            const detailRows = [...learningRows].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 300).map((row) => {
+                const typeBreakdown = Object.entries(row.byType || {}).filter(([, values]) => Array.isArray(values) && Number(values[0] || 0) > 0).map(([type, values]) => `${typeLabels[type] || type} ${Math.max(0, Number(values[1] || 0))}/${Math.max(0, Number(values[0] || 0))}`).join(" · ");
+                return `<div class="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 border-b border-[#1f2933] py-2 text-[9px]"><span class="min-w-0"><b class="block truncate font-medium text-gray-200">${esc(row.word)} · ${esc(row.meaning)}</b><small class="mt-0.5 block truncate text-[8px] text-violet-300">${esc(typeBreakdown || "유형별 기록 없음")}</small></span><span class="text-sky-300">${row.correct}정답</span><span class="${row.mastered ? "text-emerald-300" : row.wrong ? "text-rose-300" : "text-gray-400"}">${row.mastered ? "숙련" : row.wrong + "오답"}</span></div>`;
+            }).join("");
             listDiv.innerHTML = `${insightCards}<div class="mt-3 grid gap-3 lg:grid-cols-2"><section class="border border-rose-900/50 bg-rose-950/5 p-3"><div class="flex items-center justify-between"><b class="text-xs text-rose-300">내가 많이 틀린 단어</b><span class="text-[8px] text-gray-500">오답 횟수 높은 순</span></div><div class="mt-2 grid gap-2 sm:grid-cols-2">${wrongHtml}</div></section><section class="border border-emerald-900/50 bg-emerald-950/5 p-3"><div class="flex items-center justify-between"><b class="text-xs text-emerald-300">숙련 단어</b><span class="text-[8px] text-gray-500">최근 숙련 순</span></div><div class="mt-2 grid gap-2 sm:grid-cols-2">${masteredHtml}</div></section></div><details class="mt-3 border border-[#27323a] bg-black"><summary class="cursor-pointer px-3 py-2 text-[10px] font-bold text-gray-300">전체 단어 학습 기록 펼쳐보기 (${learningRows.length}개)</summary><div class="max-h-64 overflow-y-auto px-3 pb-3">${detailRows || '<p class="py-4 text-center text-[10px] text-gray-500">아직 단어별 학습 기록이 없어요.</p>'}</div></details>`;
         }
         // ==========================================

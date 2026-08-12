@@ -97,6 +97,32 @@ const relicCraftSaveAt = relicCraftBlock.lastIndexOf('saveRelicStateImmediately(
 if (!relicDrawCommitBlock || !relicCraftBlock || relicDrawResultAt < 0 || relicDrawSaveAt < relicDrawResultAt || relicCraftRefreshAt < 0 || relicCraftSaveAt < relicCraftRefreshAt) {
   throw new Error('Relic draw and mythic craft completion must immediately persist relic state.');
 }
+if (
+  !relicCraftBlock.includes("const rolledGrade = 'mythic';")
+  || !relicCraftBlock.includes('showRelicDrawResultModal([result]);')
+  || relicCraftBlock.includes('targetRelic.stars = 6')
+) {
+  throw new Error('Mythic guaranteed summon must use actual progression and the reveal result modal.');
+}
+const relicResultCloseStart = mainJs.indexOf('function closeRelicDrawResultModal');
+const relicResultCloseEnd = mainJs.indexOf('function closeSkillAcquireModal', relicResultCloseStart);
+const relicResultCloseBlock = relicResultCloseStart >= 0 && relicResultCloseEnd > relicResultCloseStart ? mainJs.slice(relicResultCloseStart, relicResultCloseEnd) : '';
+if (!relicResultCloseBlock.includes('Number(window.wbRelicsToReveal || 0) > 0') || !relicResultCloseBlock.includes('renderRelicsUI();')) {
+  throw new Error('High-grade relic results must stay open until revealed and refresh after closing.');
+}
+const learningTypes = ['meaning-choice', 'fill-blank', 'word-choice', 'listen-meaning', 'word-order', 'short-answer'];
+const learningRecordStart = mainJs.indexOf('function recordWordLearningResult');
+const learningRecordEnd = mainJs.indexOf('function getWordMasterySummary', learningRecordStart);
+const learningRecordBlock = learningRecordStart >= 0 && learningRecordEnd > learningRecordStart ? mainJs.slice(learningRecordStart, learningRecordEnd) : '';
+const learningEvaluateStart = mainJs.indexOf('function evaluateAnswer(index)');
+const learningEvaluateEnd = mainJs.indexOf('let currentCriticalWord', learningEvaluateStart);
+const learningEvaluateBlock = learningEvaluateStart >= 0 && learningEvaluateEnd > learningEvaluateStart ? mainJs.slice(learningEvaluateStart, learningEvaluateEnd) : '';
+if (learningTypes.some((type) => !learningRecordBlock.includes(`"${type}"`)) || !learningEvaluateBlock.includes('recordWordLearningResult(current, currentQuizType,')) {
+  throw new Error('Every main quiz type must record per-word learning results through the shared evaluator.');
+}
+if (!mainJs.includes('gameState.questionTypeStats = extra.questionTypeStats || data.questionTypeStats || {};') || !relicSerializeBlock.includes('questionTypeStats: gameState.questionTypeStats || {}')) {
+  throw new Error('Question-type learning statistics must be restored and serialized in legacy save data.');
+}
 const trialServerMarkers = [
   "randomUUID } from 'node:crypto';",
   "event === 'start' ? randomUUID()",

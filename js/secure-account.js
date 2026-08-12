@@ -149,7 +149,14 @@ function openSignup(){hide('secureWelcomeModal');const main=$('secureStudentMain
     '전설':'장착 효과 · 공격·방어 +3.5% · 골드 +4% · 강화 +0.35%p · 행운 +0.2%p',
     '신화':'장착 효과 · 공격·방어 +5% · 골드 +6% · 강화 +0.6%p · 행운 +0.35%p'
   });
-  function formatGuildSummonGuideEffects(guide){if(!guide)return;guide.className='mt-3 border border-violet-900/70 bg-black/40 p-3';guide.querySelectorAll(':scope > div > div').forEach((item)=>{item.classList.add('p-2');const grade=String(item.querySelector('b')?.textContent||''),raw=guildRarityEffectText[grade]||'',parts=raw.replace(/^장착 효과 · /,'').split(' · 강화 '),detail=item.querySelector('span');if(!detail)return;const combat=document.createElement('span'),growth=document.createElement('span');combat.className='block';growth.className='mt-1 block';combat.textContent='장착 효과: '+(parts[0]||'');growth.textContent='강화 '+(parts[1]||'');detail.className='mt-2 block text-[9px] font-bold leading-relaxed text-gray-300 sm:text-[11px]';detail.replaceChildren(combat,growth);});}
+  const guildRarityEffectRows=Object.freeze({
+    '일반':[['공격','0.5%'],['방어','0.5%'],['골드','0.5%'],['강화','0.05%p'],['행운','0.02%p']],
+    '희귀':[['공격','1%'],['방어','1%'],['골드','1%'],['강화','0.1%p'],['행운','0.05%p']],
+    '영웅':[['공격','2%'],['방어','2%'],['골드','2%'],['강화','0.2%p'],['행운','0.1%p']],
+    '전설':[['공격','3.5%'],['방어','3.5%'],['골드','4%'],['강화','0.35%p'],['행운','0.2%p']],
+    '신화':[['공격','5%'],['방어','5%'],['골드','6%'],['강화','0.6%p'],['행운','0.35%p']]
+  });
+  function formatGuildSummonGuideEffects(guide){if(!guide)return;guide.className='mt-3 border border-violet-900/70 bg-black/40 p-3';guide.querySelectorAll(':scope > div > div').forEach((item)=>{item.classList.add('p-2');const grade=String(item.querySelector('b')?.textContent||''),rows=guildRarityEffectRows[grade]||[],detail=item.querySelector('span');if(!detail)return;detail.className='mt-2 grid gap-0.5 text-[8px] font-bold leading-tight text-gray-300 sm:text-[10px]';detail.replaceChildren(...rows.map(([label,value])=>{const row=document.createElement('span');row.className='block whitespace-nowrap';row.innerHTML=`${teacherHtml(label)} <b class="text-red-400">+${teacherHtml(value)}</b>`;return row;}));});}
   function ensureGuildSummonStyles(){
     if($('secureGuildSummonStyles'))return;
     const style=document.createElement('style');style.id='secureGuildSummonStyles';style.textContent=`

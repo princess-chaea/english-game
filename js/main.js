@@ -7239,9 +7239,7 @@
                 document.getElementById("worldBossHpText").innerText = `${cachedWb.curHp.toLocaleString()} / ${cachedWb.maxHp.toLocaleString()} HP (${cachedPct.toFixed(1)}%) [캐시]`;
                 document.getElementById("myWorldBossDmgDisplay").innerText = cachedWb.myDamage.toLocaleString();
                 document.getElementById("myWorldBossShareDisplay").innerText = `${cachedWb.sharePct}%`;
-                const expectedTokensCache = Math.min(500, 200 + Math.floor(cachedWb.myDamage / 10000000) * 20);
-                const expectedFpCache = Math.round(parseFloat(cachedWb.sharePct) * 1000);
-                document.getElementById("myWorldBossRewardDisplay").innerHTML = `처치 시: <span style="color:white">+${expectedFpCache.toLocaleString()} FP</span> | 미처치 시: <span style="color:#9ca3af">+${Math.floor(expectedFpCache / 2).toLocaleString()} FP</span>`;
+                renderWorldBossExpectedReward(cachedWb.myDamage, cachedWb.maxHp);
 
                 // 캐시 기반 클리어 오버레이 즉시 표시
                 const defeatedOverlay = document.getElementById("wbDefeatedOverlay");
@@ -7306,9 +7304,7 @@
                     document.getElementById("myWorldBossDmgDisplay").innerText = myDamage.toLocaleString();
                     document.getElementById("myWorldBossShareDisplay").innerText = `${cappedShare}%`;
                     
-                    const expectedTokens = Math.min(500, 200 + Math.floor(myDamage / 10000000) * 20);
-                    const expectedFp = Math.round(parseFloat(cappedShare) * 1000);
-                    document.getElementById("myWorldBossRewardDisplay").innerHTML = `처치 시: <span style="color:white">+${expectedFp.toLocaleString()} FP</span> | 미처치 시: <span style="color:#9ca3af">+${Math.floor(expectedFp / 2).toLocaleString()} FP</span>`;
+                    renderWorldBossExpectedReward(myDamage, wbMaxBossHp);
 
                     // ✅ 서버 응답 데이터를 로컬 캐시에 저장 (다음 탭 전환 시 즉시 표시용)
                     localStorage.setItem(wbCacheKey, JSON.stringify({
@@ -7402,6 +7398,18 @@
             }
         }
 
+        function renderWorldBossExpectedReward(myDamage, maxHp, rewardTokens = null) {
+            const safeDamage = Math.max(0, Number(myDamage) || 0);
+            const safeMaxHp = Math.max(1, Number(maxHp) || 1);
+            const defeatedFp = Math.round(100000 * Math.min(1, safeDamage / safeMaxHp));
+            const reward = document.getElementById("myWorldBossRewardDisplay");
+            if (!reward) return;
+            const tokenText = Number.isFinite(Number(rewardTokens))
+                ? `<span class="mt-1 block text-[8px] text-yellow-300">이번 참전 증표 +${Math.max(0, Number(rewardTokens)).toLocaleString()}</span>`
+                : '';
+            reward.innerHTML = `처치 시: <span style="color:white">+${defeatedFp.toLocaleString()} FP</span> | 미처치 시: <span style="color:#9ca3af">+${Math.floor(defeatedFp / 2).toLocaleString()} FP</span>${tokenText}`;
+        }
+
         function applySecureWorldBossStatus(boss) {
             if (!boss) return;
             wbCurBossHp = Math.max(0, Number(boss.curHp) || 0);
@@ -7413,15 +7421,11 @@
             const hpText = document.getElementById("worldBossHpText");
             const damage = document.getElementById("myWorldBossDmgDisplay");
             const share = document.getElementById("myWorldBossShareDisplay");
-            const reward = document.getElementById("myWorldBossRewardDisplay");
             if (hpBar) hpBar.style.width = `${pct}%`;
             if (hpText) hpText.innerText = `${wbCurBossHp.toLocaleString()} / ${wbMaxBossHp.toLocaleString()} HP (${pct.toFixed(1)}%)`;
             if (damage) damage.innerText = myDamage.toLocaleString();
             if (share) share.innerText = `${sharePct}%`;
-            if (reward) {
-                const fp = Math.round(Number(sharePct) * 1000);
-                reward.innerHTML = `처치 시: <span style="color:white">+${fp.toLocaleString()} FP</span> | 미처치 시: <span style="color:#9ca3af">+${Math.floor(fp / 2).toLocaleString()} FP</span>`;
-            }
+            renderWorldBossExpectedReward(myDamage, wbMaxBossHp);
             const bossDay = typeof boss.day === 'string' ? boss.day : getKstDayString();
             if (boss.canAttack) clearWorldBossCompletion();
             else markWorldBossCompleted(bossDay);
@@ -8899,8 +8903,11 @@
 
                 const damageDisplay = document.getElementById("myWorldBossDmgDisplay");
                 if (damageDisplay) damageDisplay.innerText = gameState.wbBestDamage.toLocaleString();
-                const rewardDisplay = document.getElementById("myWorldBossRewardDisplay");
-                if (rewardDisplay) rewardDisplay.innerText = `주간 결산 시 FP / 칭호 지급 (증표 +${rewardTokens})`;
+                renderWorldBossExpectedReward(
+                    Math.max(gameState.wbBestDamage, Number(result.boss?.myDamage) || 0),
+                    Number(result.boss?.maxHp) || wbMaxBossHp,
+                    rewardTokens
+                );
 
                 saveSessionToCloud(true);
                 showToast(`${reasonMessage} ⚔️ 실제 피해 ${appliedDamage.toLocaleString()} · 🪙 골드 +${rewardGold.toLocaleString()}G · 🏺 증표 +${rewardTokens}개`);

@@ -1191,6 +1191,10 @@
             const current=getGuildBoostCharge(id);
             if(current<=0)return false;
             gameState.guildBoostCharges={...(gameState.guildBoostCharges||{}),[id]:current-1};
+            saveLocalCache();
+            window.dispatchEvent(new CustomEvent('vocahero:guild-boost-charges-changed',{
+                detail:{id,remaining:current-1,charges:{...gameState.guildBoostCharges}}
+            }));
             return true;
         }
         function applyGuildPowerRune(damage){

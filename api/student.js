@@ -8,6 +8,7 @@ const teachers = adminDb.collection('teachers');
 const classes = adminDb.collection('classes');
 const GUILD_EFFECT_BASE_COST = 100;
 const GUILD_EFFECT_LEVEL_COST_STEP = 20;
+const GUILD_EFFECT_CONTRIBUTION = 25;
 const guildEffectLevelCost = (level) => GUILD_EFFECT_BASE_COST + safeInt(level, 0, 0, 49) * GUILD_EFFECT_LEVEL_COST_STEP;
 const GUILD_EFFECT_DEFINITIONS = Object.freeze({
   vitality: { id: 'vitality', name: '수호자의 맹세', icon: 'heart-pulse', description: '월드보스와 보스전 최대 HP가 증가합니다.', unit: '%', valuePerLevel: 0.4, maxLevel: 50 },
@@ -47,7 +48,20 @@ function safeGuildEffects(value) {
   const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   return Object.fromEntries(Object.entries(GUILD_EFFECT_DEFINITIONS).map(([id, definition]) => {
     const row = source[id] && typeof source[id] === 'object' ? source[id] : {};
-    return [id, { level: safeInt(row.level, 0, 0, definition.maxLevel), totalInvested: safeInt(row.totalInvested, 0, 0, 1000000000) }];
+    const declaredLevel = safeInt(row.level, 0, 0, definition.maxLevel);
+    const minimumTotal = Array.from({ length: declaredLevel }, (_item, level) => guildEffectLevelCost(level)).reduce((sum, cost) => sum + cost, 0);
+    const maximumTotal = Array.from({ length: definition.maxLevel }, (_item, level) => guildEffectLevelCost(level)).reduce((sum, cost) => sum + cost, 0);
+    const totalInvested = Math.min(maximumTotal, Math.max(minimumTotal, safeInt(row.totalInvested, 0, 0, maximumTotal)));
+    let level = 0;
+    let levelProgress = totalInvested;
+    while (level < definition.maxLevel) {
+      const requirement = guildEffectLevelCost(level);
+      if (levelProgress < requirement) break;
+      levelProgress -= requirement;
+      level += 1;
+    }
+    if (level >= definition.maxLevel) levelProgress = 0;
+    return [id, { level, levelProgress, totalInvested }];
   }));
 }
 function safeGuildCosmetics(value) {
@@ -61,7 +75,9 @@ function safeGuildCosmetics(value) {
 function publicGuildEffectCatalog(effects) {
   return Object.values(GUILD_EFFECT_DEFINITIONS).map((definition) => {
     const level = effects[definition.id]?.level || 0;
-    return { ...definition, level, currentValue: Number((level * definition.valuePerLevel).toFixed(2)), nextCost: level < definition.maxLevel ? guildEffectLevelCost(level) : null, totalInvested: effects[definition.id]?.totalInvested || 0 };
+    const levelProgress = level < definition.maxLevel ? safeInt(effects[definition.id]?.levelProgress, 0, 0, guildEffectLevelCost(level) - 1) : 0;
+    const levelRequirement = level < definition.maxLevel ? guildEffectLevelCost(level) : 0;
+    return { ...definition, level, currentValue: Number((level * definition.valuePerLevel).toFixed(2)), contributionAmount: GUILD_EFFECT_CONTRIBUTION, levelProgress, levelRequirement, progressPct: levelRequirement ? Number((levelProgress / levelRequirement * 100).toFixed(2)) : 100, nextCost: level < definition.maxLevel ? levelRequirement : null, totalInvested: effects[definition.id]?.totalInvested || 0 };
   });
 }
 function guildSkinCollectionEffects(count) {
@@ -497,21 +513,23 @@ async function investGuildEffect(uid, body) {
     const effects = safeGuildEffects(classSnap.data()?.guildEffects);
     const current = effects[effectId];
     if (current.level >= definition.maxLevel) throw apiError(409, 'GUILD_EFFECT_MAX', '이미 최고 레벨인 길드 효과예요.');
-    const cost = guildEffectLevelCost(current.level);
+    const contribution = GUILD_EFFECT_CONTRIBUTION;
     const coins = safeInt(memberSnap.data()?.guildCoins, 0, 0, 1000000000);
     const lifetimePoints = safeInt(memberSnap.data()?.guildPoints, 0, 0, 1000000000);
     const spentPoints = safeInt(memberSnap.data()?.guildEffectPointsSpent, 0, 0, lifetimePoints);
     const availablePoints = Math.max(0, lifetimePoints - spentPoints);
-    if (availablePoints < cost) throw apiError(409, 'GUILD_POINT_SHORTAGE', `사용 가능한 길드 기여 포인트가 ${cost - availablePoints}P 부족해요.`);
-    effects[effectId] = { level: current.level + 1, totalInvested: current.totalInvested + cost };
+    if (availablePoints < contribution) throw apiError(409, 'GUILD_POINT_SHORTAGE', `사용 가능한 길드 기여 포인트가 ${contribution - availablePoints}P 부족해요.`);
+    const beforeLevel = current.level;
+    const nextEffects = safeGuildEffects({ ...effects, [effectId]: { ...current, totalInvested: current.totalInvested + contribution } });
+    effects[effectId] = nextEffects[effectId];
     const oldInvestment = investmentSnap.data() || {};
     const contributionByEffect = Object.fromEntries(Object.keys(GUILD_EFFECT_DEFINITIONS).map((id) => [id, safeInt(oldInvestment.contributionByEffect?.[id], 0, 0, 1000000000)]));
-    contributionByEffect[effectId] += cost;
+    contributionByEffect[effectId] += contribution;
     const total = Object.values(contributionByEffect).reduce((sum, value) => sum + value, 0);
-    tx.update(memberRef, { guildEffectPointsSpent: spentPoints + cost, lastActiveAt: FieldValue.serverTimestamp() });
+    tx.update(memberRef, { guildEffectPointsSpent: spentPoints + contribution, lastActiveAt: FieldValue.serverTimestamp() });
     tx.update(classRef, { guildEffects: effects, guildEffectsUpdatedAt: FieldValue.serverTimestamp() });
     tx.set(investmentRef, { contributionByEffect, total, lastInvestedAt: FieldValue.serverTimestamp() }, { merge: true });
-    return { guildCoins: coins, guildContributionPoints: availablePoints - cost, effects, catalog: publicGuildEffectCatalog(effects), myGuildInvestment: { contributionByEffect, total } };
+    return { guildCoins: coins, guildContributionPoints: availablePoints - contribution, contribution, levelsGained: effects[effectId].level - beforeLevel, effects, catalog: publicGuildEffectCatalog(effects), myGuildInvestment: { contributionByEffect, total } };
   });
 }
 

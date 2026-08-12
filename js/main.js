@@ -5118,9 +5118,45 @@
 
         let currentCriticalWord = "";
         let criticalTimerInterval = null;
+        let criticalDefenseResolved = false;
+
+        function setCriticalDefenseLocked(locked) {
+            const input = document.getElementById("criticalDefenseInput");
+            const button = document.getElementById("criticalDefenseSubmit");
+            if (input) input.disabled = locked;
+            if (button) {
+                button.disabled = locked;
+                button.setAttribute("aria-busy", String(locked));
+                button.classList.toggle("opacity-40", locked);
+                button.classList.toggle("cursor-not-allowed", locked);
+            }
+        }
+
+        function showGuildGuardShieldEffect(targetName) {
+            document.getElementById("guildGuardShieldEffect")?.remove();
+            const overlay = document.createElement("div");
+            overlay.id = "guildGuardShieldEffect";
+            overlay.setAttribute("role", "status");
+            overlay.setAttribute("aria-live", "assertive");
+            overlay.className = "fixed inset-0 z-[10050] flex items-center justify-center pointer-events-none";
+            overlay.style.cssText = "background:radial-gradient(circle,rgba(16,185,129,.28),rgba(0,0,0,.72));opacity:0;transition:opacity .16s ease-out";
+            overlay.innerHTML = `<div class="text-center" style="transform:scale(.55);transition:transform .24s cubic-bezier(.2,1.4,.4,1)"><div class="animate-pulse" style="font-size:clamp(8rem,24vw,17rem);line-height:1;filter:drop-shadow(0 0 18px #34d399) drop-shadow(0 0 45px #facc15)">🛡️</div><strong class="mt-2 block text-2xl font-black text-yellow-200 sm:text-4xl" style="text-shadow:0 0 18px #f59e0b">강화 수호 인장!</strong><span class="mt-2 block text-sm font-bold text-emerald-100 sm:text-xl">${targetName} -1강 하락 확정 수호</span></div>`;
+            document.body.append(overlay);
+            requestAnimationFrame(() => {
+                overlay.style.opacity = "1";
+                const content = overlay.firstElementChild;
+                if (content) content.style.transform = "scale(1)";
+            });
+            setTimeout(() => {
+                overlay.style.opacity = "0";
+                setTimeout(() => overlay.remove(), 220);
+            }, 1450);
+        }
 
         function triggerCriticalAttack(word, meaning, isBoss = false) {
-            currentCriticalWord = word.toLowerCase();
+            currentCriticalWord = String(word || "").toLowerCase();
+            criticalDefenseResolved = false;
+            setCriticalDefenseLocked(false);
             document.getElementById("criticalDefenseMeaning").innerText = meaning;
             document.getElementById("criticalDefenseInput").value = "";
             document.getElementById("criticalDefenseError").classList.add("hidden");
@@ -5149,6 +5185,8 @@
             let timeLeft = 200; // 20.0 seconds
             const bar = document.getElementById("criticalDefenseTimerBar");
             const text = document.getElementById("criticalDefenseTimeText");
+            bar.style.width = "100%";
+            text.innerText = "제한시간: 20.0초";
             
             criticalTimerInterval = setInterval(() => {
                 timeLeft -= 1;
@@ -5157,13 +5195,18 @@
                 
                 if (timeLeft <= 0) {
                     clearInterval(criticalTimerInterval);
+                    criticalTimerInterval = null;
                     punishCriticalFailure("시간 초과");
                 }
             }, 100);
         }
 
         function punishCriticalFailure(reason) {
+            if (criticalDefenseResolved) return;
+            criticalDefenseResolved = true;
+            setCriticalDefenseLocked(true);
             if (criticalTimerInterval) clearInterval(criticalTimerInterval);
+            criticalTimerInterval = null;
             playSoundEffect('incorrect');
             const errorEl = document.getElementById("criticalDefenseError");
             
@@ -5185,6 +5228,7 @@
             } else if (guildGuardTriggered) {
                 errorEl.innerText = "🛡️ 강화 수호 인장이 방어 실패의 장비 강화 수치 하락을 확정 수호했습니다!";
                 showBattleToast(`🛡️ 강화 수호 인장 발동! ${targetName} -1강 하락 확정 수호!`);
+                showGuildGuardShieldEffect(targetName);
             } else if (canDrop) {
                 gameState[targetGear] -= 1;
                 const msg = `❌ 방어 실패! ${targetName}의 강화 수치가 -1 되었습니다.<br>(정답: <span class="text-white">${displayCriticalWord}</span>)`;
@@ -5215,6 +5259,7 @@
         }
 
         function submitCriticalDefense() {
+            if (criticalDefenseResolved) return;
             const inputEl = document.getElementById("criticalDefenseInput");
             if (!inputEl || !formatEnglishWordInput(inputEl)) return;
             const inputVal = normalizeEnglishAnswer(inputEl.value);
@@ -5224,7 +5269,10 @@
             }
 
             if (inputVal === normalizeEnglishAnswer(currentCriticalWord)) {
+                criticalDefenseResolved = true;
+                setCriticalDefenseLocked(true);
                 if (criticalTimerInterval) clearInterval(criticalTimerInterval);
+                criticalTimerInterval = null;
                 playSoundEffect('correct');
                 const modal = document.getElementById("criticalDefenseModal");
                 modal.classList.remove("flex");

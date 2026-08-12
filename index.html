@@ -2800,7 +2800,7 @@
                 </div>
             </div>
             <div class="p-5 border-t border-red-900/30 flex justify-end bg-black">
-                <button onclick="submitCriticalDefense()" class="px-8 py-3 bg-red-600 text-white font-bold text-sm tracking-wider transition hover:bg-red-500">방어 시도</button>
+                <button id="criticalDefenseSubmit" type="button" onclick="submitCriticalDefense()" class="px-8 py-3 bg-red-600 text-white font-bold text-sm tracking-wider transition hover:bg-red-500 disabled:hover:bg-red-600">방어 시도</button>
             </div>
         </div>
     </div>
@@ -3093,7 +3093,7 @@
         }
     </style>
 
-    <script src="js/config.js?v=20260809-29"></script><script src="js/main.js?v=20260812-34"></script><script src="js/secure-account.js?v=20260812-42"></script>
+    <script src="js/config.js?v=20260809-29"></script><script src="js/main.js?v=20260812-35"></script><script src="js/secure-account.js?v=20260812-43"></script>
 
     <!-- Damage Overlay (Scratch & Flash) -->
     <div id="damageOverlay" class="fixed inset-0 pointer-events-none hidden z-[100] flex-col items-center justify-center bg-red-900/60 transition-opacity duration-300">

@@ -1,6 +1,6 @@
 {
-  "name": "영단어 키우기 게임",
-  "short_name": "VocaHero",
+  "name": "VOCA HERO! 영단어 용사 키우기",
+  "short_name": "VOCA HERO! 영단어 용사 키우기",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",

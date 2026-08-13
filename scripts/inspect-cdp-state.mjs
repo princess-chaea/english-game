@@ -1,0 +1,10 @@
+const endpoint=process.env.CHROME_DEBUG_URL||'http://127.0.0.1:9334';
+const pages=await fetch(`${endpoint}/json`).then(r=>r.json());
+const page=pages.find(p=>p.type==='page'&&p.url.startsWith('https://english-game-sage.vercel.app/'));
+if(!page)throw new Error('page missing');
+const socket=new WebSocket(page.webSocketDebuggerUrl);let id=0;const pending=new Map();
+socket.addEventListener('message',event=>{const msg=JSON.parse(event.data);if(msg.id&&pending.has(msg.id)){pending.get(msg.id)(msg.result);pending.delete(msg.id)}});
+await new Promise((resolve,reject)=>{socket.addEventListener('open',resolve,{once:true});socket.addEventListener('error',reject,{once:true})});
+const send=(method,params={})=>new Promise(resolve=>{const next=++id;pending.set(next,resolve);socket.send(JSON.stringify({id:next,method,params}))});
+const result=await send('Runtime.evaluate',{expression:`({url:location.href,title:document.title,body:document.body.innerText.slice(0,500),container:document.getElementById('gameContainer')&&({display:getComputedStyle(document.getElementById('gameContainer')).display,rect:document.getElementById('gameContainer').getBoundingClientRect().toJSON()}),ancestors:(()=>{let a=[],n=document.getElementById('rightMainPanel');while(n){a.push({id:n.id,tag:n.tagName,display:getComputedStyle(n).display,hidden:n.classList.contains('hidden'),rect:n.getBoundingClientRect().toJSON()});n=n.parentElement}return a})(),right:document.getElementById('rightMainPanel')?.getBoundingClientRect().toJSON(),tabs:[...document.querySelectorAll('[id$="Tab"]')].map(x=>({id:x.id,display:getComputedStyle(x).display,hidden:x.classList.contains('hidden')})),guild:document.getElementById('secureGuildModal')&&getComputedStyle(document.getElementById('secureGuildModal')).display})`,returnByValue:true});
+console.log(JSON.stringify(result.result.value,null,2));socket.close();

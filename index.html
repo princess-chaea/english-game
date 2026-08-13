@@ -21,6 +21,14 @@
         
             /* 가로 모드(짧은 화면)에서 전투창 상단 UI 강제 축소 (전투화면 비율 확보용) */
         @media (max-height: 700px) {
+            body > header { padding: .35rem .5rem !important; }
+            body > header > div { max-width: none !important; padding-left: .5rem !important; padding-right: .5rem !important; }
+            body > header h1 { font-size: 1rem !important; line-height: 1.1 !important; }
+            body > header #userInfoDisplay { padding: .2rem .4rem !important; }
+            body > header button { padding: .25rem .4rem !important; font-size: .65rem !important; }
+            body > .m-stripe-divider { flex: 0 0 2px !important; min-height: 2px !important; }
+            body > main { height: 0 !important; min-height: 0 !important; flex: 1 1 0% !important; max-width: none !important; padding: .35rem .5rem !important; gap: .5rem !important; }
+            #leftRpgPanel { padding: .45rem !important; }
             #leftRpgPanel .text-lg { font-size: 0.875rem !important; line-height: 1.25rem !important; }
             #leftRpgPanel .my-1\.5 { margin-top: 0.125rem !important; margin-bottom: 0.125rem !important; }
             #leftRpgPanel .mt-1\.5 { margin-top: 0.125rem !important; }
@@ -28,6 +36,9 @@
             #leftRpgPanel .gap-1\.5 { gap: 0.125rem !important; }
             #leftRpgPanel .py-1\.5 { padding-top: 0.125rem !important; padding-bottom: 0.125rem !important; }
             .telemetry-cell { padding: 0.125rem !important; }
+            #rightMainPanel { gap: .3rem !important; padding-right: 0 !important; }
+            #mainTabsNav { gap: .15rem !important; padding: .2rem !important; }
+            #mainTabsNav > button { padding-top: .35rem !important; padding-bottom: .35rem !important; font-size: .68rem !important; }
             .quiz-battle-panel { overflow: hidden !important; padding: .45rem !important; gap: .2rem !important; }
             .quiz-battle-panel > .flex.justify-between { padding-bottom: .25rem !important; }
             #quizContainer { margin: .15rem 0 !important; }
@@ -37,8 +48,8 @@
             #quizChoiceGrid .choice-text { font-size: .72rem !important; }
             .quiz-skill-panel { padding: .35rem !important; }
             .quiz-skill-panel > div:first-child { margin-bottom: .2rem !important; }
-            #quizEquippedSkillsContainer { gap: .25rem !important; }
-            #quizEquippedSkillsContainer > * { min-height: 2.1rem !important; padding: .3rem !important; }
+            #quizEquippedSkillsContainer { grid-template-columns: repeat(4,minmax(0,1fr)) !important; gap: .25rem !important; }
+            #quizEquippedSkillsContainer > * { height: 3rem !important; min-height: 3rem !important; padding: .3rem !important; }
             .quiz-bottom-guide { display: none !important; }
         }
 
@@ -823,15 +834,6 @@
             background: rgba(255, 255, 255, 0.3);
         }
             /* 가로 모드(짧은 화면)에서 전투창 상단 UI 강제 축소 (전투화면 비율 확보용) */
-        @media (max-height: 700px) {
-            #leftRpgPanel .text-lg { font-size: 0.875rem !important; line-height: 1.25rem !important; }
-            #leftRpgPanel .my-1\.5 { margin-top: 0.125rem !important; margin-bottom: 0.125rem !important; }
-            #leftRpgPanel .mt-1\.5 { margin-top: 0.125rem !important; }
-            #leftRpgPanel .p-1\.5 { padding: 0.125rem !important; }
-            #leftRpgPanel .gap-1\.5 { gap: 0.125rem !important; }
-            #leftRpgPanel .py-1\.5 { padding-top: 0.125rem !important; padding-bottom: 0.125rem !important; }
-            .telemetry-cell { padding: 0.125rem !important; }
-        }
     </style>
 </head>
 
@@ -2821,15 +2823,6 @@
             <style>
                 @keyframes chestBounce { 0%,100%{transform:translateY(0) rotate(-5deg)} 50%{transform:translateY(-4px) rotate(5deg)} }
                     /* 가로 모드(짧은 화면)에서 전투창 상단 UI 강제 축소 (전투화면 비율 확보용) */
-        @media (max-height: 700px) {
-            #leftRpgPanel .text-lg { font-size: 0.875rem !important; line-height: 1.25rem !important; }
-            #leftRpgPanel .my-1\.5 { margin-top: 0.125rem !important; margin-bottom: 0.125rem !important; }
-            #leftRpgPanel .mt-1\.5 { margin-top: 0.125rem !important; }
-            #leftRpgPanel .p-1\.5 { padding: 0.125rem !important; }
-            #leftRpgPanel .gap-1\.5 { gap: 0.125rem !important; }
-            #leftRpgPanel .py-1\.5 { padding-top: 0.125rem !important; padding-bottom: 0.125rem !important; }
-            .telemetry-cell { padding: 0.125rem !important; }
-        }
     </style>
 
             <div style="padding: 20px 24px 24px;">
@@ -3082,18 +3075,9 @@
             animation: wbSparkFloat 1.8s ease-in-out infinite;
         }
             /* 가로 모드(짧은 화면)에서 전투창 상단 UI 강제 축소 (전투화면 비율 확보용) */
-        @media (max-height: 700px) {
-            #leftRpgPanel .text-lg { font-size: 0.875rem !important; line-height: 1.25rem !important; }
-            #leftRpgPanel .my-1\.5 { margin-top: 0.125rem !important; margin-bottom: 0.125rem !important; }
-            #leftRpgPanel .mt-1\.5 { margin-top: 0.125rem !important; }
-            #leftRpgPanel .p-1\.5 { padding: 0.125rem !important; }
-            #leftRpgPanel .gap-1\.5 { gap: 0.125rem !important; }
-            #leftRpgPanel .py-1\.5 { padding-top: 0.125rem !important; padding-bottom: 0.125rem !important; }
-            .telemetry-cell { padding: 0.125rem !important; }
-        }
     </style>
 
-    <script src="js/config.js?v=20260809-29"></script><script src="js/main.js?v=20260812-39"></script><script src="js/secure-account.js?v=20260812-45"></script>
+    <script src="js/config.js?v=20260809-29"></script><script src="js/main.js?v=20260813-01"></script><script src="js/secure-account.js?v=20260812-45"></script>
 
     <!-- Damage Overlay (Scratch & Flash) -->
     <div id="damageOverlay" class="fixed inset-0 pointer-events-none hidden z-[100] flex-col items-center justify-center bg-red-900/60 transition-opacity duration-300">

@@ -14,6 +14,8 @@
     <meta property="og:description" content="영단어를 맞추고 몬스터를 물리치며 전설적인 용사로 성장하세요!">
     <meta property="og:image" content="https://english-game-sage.vercel.app/media/logo_v2.webp">
     <meta property="og:url" content="https://english-game-sage.vercel.app/">
+    <link rel="canonical" href="https://english-game-sage.vercel.app/">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"VOCA HERO! 영단어 용사 키우기","applicationCategory":"EducationalApplication","description":"영단어를 퀴즈와 게임으로 배우며 용사를 성장시키는 영어 학습 웹 애플리케이션입니다.","url":"https://english-game-sage.vercel.app/","operatingSystem":"Web"}</script>
     
     <link rel="manifest" href="manifest.json?v=2">
     <link rel="icon" type="image/png" href="media/logo_v2.webp">
@@ -903,6 +905,29 @@
             document.write('<style id="antiFlashStyle">body > header, body > main { display: none !important; }</style>');
         }
     </script>
+    <section id="secureStaticBranding" aria-labelledby="secureStaticBrandingTitle" style="position:fixed;inset:0;z-index:99998;overflow:auto;background:#050506;color:#fff;padding:32px 20px;font-family:system-ui,-apple-system,'Noto Sans KR',sans-serif;">
+        <article style="width:min(100%,720px);margin:0 auto;border:1px solid #4a3a09;background:#090909;padding:clamp(24px,5vw,48px);line-height:1.7;">
+            <img src="media/logo_v2.webp" width="224" height="224" alt="VOCA HERO! 영단어 용사 키우기 로고" style="display:block;width:160px;height:160px;margin:0 auto 20px;object-fit:contain;">
+            <h1 id="secureStaticBrandingTitle" style="margin:0;text-align:center;color:#facc15;font-size:clamp(28px,6vw,42px);line-height:1.2;">VOCA HERO! 영단어 용사 키우기</h1>
+            <p style="margin:14px 0 0;text-align:center;color:#d1d5db;font-size:16px;">영단어를 퀴즈와 게임으로 배우며 용사를 성장시키는 영어 학습 웹 애플리케이션입니다.</p>
+            <div style="margin:28px 0;padding:20px;border:1px solid #164e63;background:#06151c;color:#dbeafe;">
+                <h2 style="margin:0 0 10px;color:#7dd3fc;font-size:19px;">앱의 주요 기능과 Google 로그인 사용 목적</h2>
+                <ul style="margin:0;padding-left:22px;font-size:14px;">
+                    <li>영어 단어 퀴즈, 게임 전투와 용사 성장 기능을 통해 반복 학습을 지원합니다.</li>
+                    <li>학습 진행, 오답 기록과 게임 기록을 저장하고 다른 기기에서도 이어서 이용할 수 있습니다.</li>
+                    <li>Google 로그인은 사용자의 계정을 확인하고 동일한 학습·게임 기록에 안전하게 연결하기 위해 사용합니다.</li>
+                    <li>인증된 교사는 길드를 만들고 학생의 닉네임 기반 학습 현황을 관리할 수 있습니다.</li>
+                </ul>
+            </div>
+            <nav aria-label="서비스 정책" style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px 18px;font-size:14px;font-weight:700;">
+                <a href="/privacy.html" style="color:#38bdf8;text-decoration:underline;">개인정보처리방침</a>
+                <a href="/terms.html" style="color:#38bdf8;text-decoration:underline;">서비스 이용약관</a>
+                <a href="mailto:dltjdrms320@gmail.com" style="color:#38bdf8;text-decoration:underline;">사용자 지원 문의</a>
+            </nav>
+            <noscript><p style="margin:24px 0 0;text-align:center;color:#fca5a5;font-size:13px;">게임을 이용하려면 브라우저에서 JavaScript를 활성화해 주세요.</p></noscript>
+        </article>
+    </section>
+
     <!-- ⏳ FULLSCREEN INITIAL LOADING OVERLAY -->
     <div id="gameLoadingOverlay" class="fixed inset-0 bg-black z-[99999] hidden opacity-0 pointer-events-none flex-col items-center justify-center p-6 transition-opacity duration-500" style="display: none;">
         <div class="max-w-md w-full text-center flex flex-col items-center">
@@ -3136,7 +3161,7 @@
             /* 가로 모드(짧은 화면)에서 전투창 상단 UI 강제 축소 (전투화면 비율 확보용) */
     </style>
 
-    <script src="js/config.js?v=20260809-29"></script><script src="js/main.js?v=20260813-05"></script><script src="js/secure-account.js?v=20260814-01"></script>
+    <script src="js/config.js?v=20260809-29"></script><script src="js/main.js?v=20260813-05"></script><script src="js/secure-account.js?v=20260814-02"></script>
 
     <!-- Damage Overlay (Scratch & Flash) -->
     <div id="damageOverlay" class="fixed inset-0 pointer-events-none hidden z-[100] flex-col items-center justify-center bg-red-900/60 transition-opacity duration-300">

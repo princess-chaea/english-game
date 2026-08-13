@@ -27,7 +27,8 @@
             body > header #userInfoDisplay { padding: .2rem .4rem !important; }
             body > header button { padding: .25rem .4rem !important; font-size: .65rem !important; }
             body > .m-stripe-divider { flex: 0 0 2px !important; min-height: 2px !important; }
-            body > main { height: 0 !important; min-height: 0 !important; flex: 1 1 0% !important; max-width: none !important; padding: .35rem .5rem !important; gap: .5rem !important; }
+            body > main { height: 0 !important; min-height: 0 !important; flex: 1 1 0% !important; max-width: none !important; padding: .35rem .5rem !important; gap: .5rem !important; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr) !important; }
+            #leftRpgPanel, #rightMainPanel { grid-column: auto !important; }
             #leftRpgPanel { padding: .45rem !important; }
             #leftRpgPanel .text-lg { font-size: 0.875rem !important; line-height: 1.25rem !important; }
             #leftRpgPanel .my-1\.5 { margin-top: 0.125rem !important; margin-bottom: 0.125rem !important; }
@@ -35,7 +36,24 @@
             #leftRpgPanel .p-1\.5 { padding: 0.125rem !important; }
             #leftRpgPanel .gap-1\.5 { gap: 0.125rem !important; }
             #leftRpgPanel .py-1\.5 { padding-top: 0.125rem !important; padding-bottom: 0.125rem !important; }
+            #stageHud { min-height: 1.55rem; padding: .12rem .35rem !important; }
+            #currencyTelemetryHud { display: grid !important; grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); align-items: stretch; gap: .2rem; margin: .15rem 0 !important; }
+            #currencySummaryHud { gap: .1rem !important; padding: .12rem !important; }
+            #currencySummaryHud p { font-size: .45rem !important; line-height: .65rem !important; }
+            #currencySummaryHud #goldCount,
+            #currencySummaryHud #masteryPointsCount { font-size: .72rem !important; line-height: .85rem !important; }
+            #currencySummaryHud .mt-0\.5 { margin-top: 0 !important; }
+            #telemetryHud { gap: .1rem !important; margin-top: 0 !important; }
+            #telemetryHud .telemetry-cell { display: flex; min-width: 0; flex-direction: column; justify-content: center; }
+            #telemetryHud .telemetry-cell p:first-child { font-size: .4rem !important; line-height: .55rem !important; letter-spacing: .02em !important; }
+            #telemetryHud .telemetry-cell p:last-child { font-size: .55rem !important; line-height: .7rem !important; }
             .telemetry-cell { padding: 0.125rem !important; }
+            #battleArena { margin: .12rem 0 !important; padding-top: .2rem !important; padding-bottom: .2rem !important; }
+            #monsterCombatant, #heroCombatant { height: 44% !important; }
+            #bossProgressHud { margin-top: .15rem !important; }
+            #bossProgressHud > div:first-child { margin-bottom: .12rem !important; line-height: .7rem !important; }
+            #bossProgressHud > div:nth-child(2) { height: .35rem !important; }
+            #bossTriggerBtn { margin-top: .2rem !important; padding-top: .3rem !important; padding-bottom: .3rem !important; }
             #rightMainPanel { gap: .3rem !important; padding-right: 0 !important; }
             #mainTabsNav { gap: .15rem !important; padding: .2rem !important; }
             #mainTabsNav > button { padding-top: .35rem !important; padding-bottom: .35rem !important; font-size: .68rem !important; }
@@ -51,6 +69,25 @@
             #quizEquippedSkillsContainer { grid-template-columns: repeat(4,minmax(0,1fr)) !important; gap: .25rem !important; }
             #quizEquippedSkillsContainer > * { height: 3rem !important; min-height: 3rem !important; padding: .3rem !important; }
             .quiz-bottom-guide { display: none !important; }
+
+            /* 폰 가로: 길드 제목·현재 길드·재화를 한 줄로 묶어 본문 높이를 확보 */
+            #secureGuildDialog.guild-hub-open { position: relative; max-height: calc(100dvh - .5rem) !important; }
+            #secureGuildDialog.guild-hub-open > header { position: absolute; top: .25rem; right: .25rem; z-index: 40; border: 0 !important; background: transparent !important; padding: 0 !important; }
+            #secureGuildDialog.guild-hub-open > header > div { display: none !important; }
+            #secureGuildDialog.guild-hub-open #secureGuildClose { padding: .28rem .55rem !important; font-size: .6rem !important; }
+            #secureGuildDialog.guild-hub-open #secureGuildCurrent { padding: .28rem 3.6rem .28rem .45rem !important; }
+            #secureGuildDialog.guild-hub-open #secureGuildCurrent > div { display: grid !important; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .45rem !important; }
+            #secureGuildDialog.guild-hub-open #secureGuildCurrent > div::before { content: "🛡 길드"; white-space: nowrap; font-size: .75rem; font-weight: 900; color: #ddd6fe; }
+            #secureGuildDialog.guild-hub-open #secureGuildCurrent > div > div:first-child { gap: .3rem !important; }
+            #secureGuildDialog.guild-hub-open #secureGuildCurrentLogo,
+            #secureGuildDialog.guild-hub-open #secureGuildCurrentLogoFallback { width: 2rem !important; height: 2rem !important; font-size: 1rem !important; }
+            #secureGuildDialog.guild-hub-open #secureGuildCurrentName { font-size: .82rem !important; }
+            #secureGuildDialog.guild-hub-open #secureGuildCurrentCoins { margin-top: 0 !important; font-size: .72rem !important; }
+            #secureGuildDialog.guild-hub-open #secureGuildCurrent > div > div:last-child > p { display: none !important; }
+            #secureGuildDialog.guild-hub-open #secureGuildHub > nav { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
+            #secureGuildDialog.guild-hub-open #secureGuildHub > nav button { padding: .35rem .2rem !important; font-size: .58rem !important; }
+            #secureGuildDialog.guild-hub-open #secureGuildHub > nav i { width: .72rem !important; height: .72rem !important; }
+            #secureGuildDialog.guild-hub-open #secureGuildHub > div:last-child { padding: .45rem !important; }
         }
 
         /* 🐉 월드보스 고유 문항/보기/타일 비주얼 이펙트 */
@@ -904,7 +941,7 @@
             class="md:col-span-5 lg:col-span-4 bg-black border border-[#3c3c3c] p-3 flex flex-col justify-between relative overflow-hidden h-full min-h-0 rounded-none-forced">
             
             <!-- Stage Header & Progress -->
-            <div class="z-10 flex flex-wrap justify-between items-center bg-[#0d0d0d] border border-[#3c3c3c] px-2 py-1.5 rounded-none-forced gap-1 overflow-hidden">
+            <div id="stageHud" class="z-10 flex flex-wrap justify-between items-center bg-[#0d0d0d] border border-[#3c3c3c] px-2 py-1.5 rounded-none-forced gap-1 overflow-hidden">
                 <div class="flex flex-wrap items-center gap-x-2 gap-y-1 w-full sm:w-auto">
                     <span class="font-bold text-[10px] uppercase tracking-widest text-[#0066b1] flex items-center gap-1 shrink-0">
                         <i data-lucide="shield" class="w-3.5 h-3.5 shrink-0"></i>
@@ -926,8 +963,8 @@
             </div>
 
             <!-- Total Currencies Widget -->
-            <div class="z-10 text-center my-1.5">
-                <div class="grid grid-cols-2 gap-1.5 bg-[#0d0d0d] p-1.5 border border-[#3c3c3c] rounded-none-forced">
+            <div id="currencyTelemetryHud" class="z-10 text-center my-1.5">
+                <div id="currencySummaryHud" class="grid grid-cols-2 gap-1.5 bg-[#0d0d0d] p-1.5 border border-[#3c3c3c] rounded-none-forced">
                     <div>
                         <p class="text-[9px] text-[#7e7e7e] font-bold tracking-widest uppercase">보유 골드</p>
                         <div class="flex items-center justify-center gap-1 mt-0.5">
@@ -945,7 +982,7 @@
                 </div>
                 
                 <!-- Telemetry Stats -->
-                <div class="grid grid-cols-3 gap-1 mt-1.5">
+                <div id="telemetryHud" class="grid grid-cols-3 gap-1 mt-1.5">
                     <div class="telemetry-cell text-center rounded-none-forced p-1">
                         <p class="text-[8px] text-[#7e7e7e] font-bold uppercase tracking-widest">자동 골드</p>
                         <p class="text-[10px] font-bold text-amber-300">+<span id="autoGoldCount">0</span>/초</p>
@@ -978,7 +1015,7 @@
                 <div class="absolute right-2 inset-y-0 w-1 bg-[#0066b1] opacity-35 pointer-events-none"></div>
 
                 <!-- Monster Combatant Wrapper (Top) -->
-                <div class="flex flex-col items-center w-full z-10 h-[42%] shrink min-h-0">
+                <div id="monsterCombatant" class="flex flex-col items-center w-full z-10 h-[42%] shrink min-h-0">
                     <span id="monsterNameTag" class="text-[10px] text-[#e22718] font-bold uppercase tracking-widest mb-1">슬라임</span>
                     <!-- Monster HP Tracker bar -->
                     <div class="w-1/2 bg-[#0d0d0d] border border-[#3c3c3c] h-1.5 relative overflow-hidden rounded-none-forced mb-1 shrink-0">
@@ -1000,7 +1037,7 @@
                 </div>
 
                 <!-- Hero Render Component Wrapper (Bottom) -->
-                <div class="flex flex-col items-center w-full z-10 relative h-[42%] shrink min-h-0">
+                <div id="heroCombatant" class="flex flex-col items-center w-full z-10 relative h-[42%] shrink min-h-0">
                     <!-- Floating Pet Companions (Up to 3) -->
                     <div id="petContainer_slime" class="absolute top-[20%] right-[calc(50%+4rem)] h-[40%] max-h-[3.5rem] aspect-square z-20 animate-hover-pet hidden">
                         <svg viewBox="0 0 100 100" class="w-full h-full" id="petSvg_slime"></svg>
@@ -1045,7 +1082,7 @@
             </div>
 
             <!-- Boss Battle Entry Activator -->
-            <div class="z-10 w-full mt-1.5">
+            <div id="bossProgressHud" class="z-10 w-full mt-1.5">
                 <div class="flex justify-between items-center mb-1 text-[9px] font-bold text-[#7e7e7e] uppercase tracking-wider">
                     <span>보스 도전 진행도</span>
                     <span id="bossUnlockRatio">0 / 10</span>
@@ -3077,7 +3114,7 @@
             /* 가로 모드(짧은 화면)에서 전투창 상단 UI 강제 축소 (전투화면 비율 확보용) */
     </style>
 
-    <script src="js/config.js?v=20260809-29"></script><script src="js/main.js?v=20260813-01"></script><script src="js/secure-account.js?v=20260812-45"></script>
+    <script src="js/config.js?v=20260809-29"></script><script src="js/main.js?v=20260813-01"></script><script src="js/secure-account.js?v=20260813-02"></script>
 
     <!-- Damage Overlay (Scratch & Flash) -->
     <div id="damageOverlay" class="fixed inset-0 pointer-events-none hidden z-[100] flex-col items-center justify-center bg-red-900/60 transition-opacity duration-300">

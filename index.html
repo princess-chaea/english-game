@@ -17,6 +17,18 @@
     <meta name="theme-color" content="#0a0a0a">
     <link rel="apple-touch-icon" href="media/logo_v2.webp">
     <style>
+        #gameMainLayout.full-panel-tab-active {
+            grid-template-columns: minmax(0, 1fr) !important;
+        }
+        #gameMainLayout.full-panel-tab-active #leftRpgPanel {
+            display: none !important;
+        }
+        #gameMainLayout.full-panel-tab-active #rightMainPanel {
+            grid-column: 1 / -1 !important;
+            width: 100% !important;
+            max-width: none !important;
+            min-width: 0 !important;
+        }
         /* 모바일 가로 모드(높이가 좁을 때) 스크롤 허용 및 강제 높이 해제 */
         
             /* 가로 모드(짧은 화면)에서 전투창 상단 UI 강제 축소 (전투화면 비율 확보용) */
@@ -934,7 +946,7 @@
     <div class="m-stripe-divider"></div>
 
     <!-- Main RPG Arena & Upgrade Panel Container -->
-    <main class="max-w-[1400px] w-full mx-auto px-4 py-2 md:py-3 flex-grow overflow-hidden flex flex-col md:grid md:grid-cols-12 gap-4 md:gap-6 items-stretch min-h-0" style="grid-template-rows: minmax(0, 1fr);">
+    <main id="gameMainLayout" class="max-w-[1400px] w-full mx-auto px-4 py-2 md:py-3 flex-grow overflow-hidden flex flex-col md:grid md:grid-cols-12 gap-4 md:gap-6 items-stretch min-h-0" style="grid-template-rows: minmax(0, 1fr);">
 
         <!-- LEFT PANEL: Dynamic RPG Battle Arena (4 Cols) -->
         <section id="leftRpgPanel"
@@ -3114,7 +3126,7 @@
             /* 가로 모드(짧은 화면)에서 전투창 상단 UI 강제 축소 (전투화면 비율 확보용) */
     </style>
 
-    <script src="js/config.js?v=20260809-29"></script><script src="js/main.js?v=20260813-01"></script><script src="js/secure-account.js?v=20260813-02"></script>
+    <script src="js/config.js?v=20260809-29"></script><script src="js/main.js?v=20260813-03"></script><script src="js/secure-account.js?v=20260813-02"></script>
 
     <!-- Damage Overlay (Scratch & Flash) -->
     <div id="damageOverlay" class="fixed inset-0 pointer-events-none hidden z-[100] flex-col items-center justify-center bg-red-900/60 transition-opacity duration-300">

@@ -253,7 +253,16 @@ const raidRegressionAppliedDamage = Math.min(raidRegressionRequestedDamage, raid
 if (raidRegressionAppliedDamage !== raidRegressionRequestedDamage) throw new Error('World-boss regression: a verified 1B request must apply the full 1B damage.');
 if (!mainJs.includes('function getKstDayString(now = Date.now())') || !mainJs.includes('월드보스 토벌전 참전하기 (1일 1회)')) throw new Error('KST raid-day logic or the active raid button wording is missing.');
 if (!mainJs.includes('function hasWorldBossResumeProgress') || !mainJs.includes('const isResume = Boolean(boss.canAttack) && !defeated && hasWorldBossResumeProgress(bossDay)') || !mainJs.includes('월드보스 전투 이어하기 (이탈 기록 발견)')) throw new Error('World-boss resume progress must survive the secure status refresh.');
-if (!mainJs.includes('const tierFactor = 1 + (3 - tier) * 0.10') || !mainJs.includes('if (tierRoll < 0.05) rolledTier = 1') || !mainJs.includes('rolledTier < oldTier') || !studentApi.includes('function migrateSkillTierOrder') || !studentApi.includes('tier:4-previousTier')) throw new Error('Skill Tier 1 must remain the strongest without devaluing legacy Tier 3 skills.');
+if (!mainJs.includes('const tierFactor = 1 + (3 - tier) * 0.10') || !mainJs.includes('if (tierRoll < 0.05) return 1') || !mainJs.includes('rolledTier < oldTier') || !studentApi.includes('function migrateSkillTierOrder') || !studentApi.includes('tier:4-previousTier')) throw new Error('Skill Tier 1 must remain the strongest without devaluing legacy Tier 3 skills.');
+const skillDrawStart = mainJs.indexOf('function createSkillDrawSnapshot');
+const skillDrawEnd = mainJs.indexOf('function getSkillSourcePool', skillDrawStart);
+const skillDrawBlock = skillDrawStart >= 0 && skillDrawEnd > skillDrawStart ? mainJs.slice(skillDrawStart, skillDrawEnd) : '';
+if (!skillDrawBlock.includes('grade: SKILL_GRADES[rolledGrade] ? rolledGrade : "normal"') || !skillDrawBlock.includes('tier: Math.max(1, Math.min(3, Number(rolledTier) || 3))') || !skillDrawBlock.includes('data-draw-grade=') || !skillDrawBlock.includes('data-draw-tier=') || !mainJs.includes('createSkillDrawSnapshot(picked.word, picked.meaning, rolledGrade, rolledTier, alreadyOwned)')) {
+  throw new Error('Skill summon results must preserve and render the grade and tier rolled in the current draw.');
+}
+if (!indexHtml.includes('id="gameMainLayout"') || !indexHtml.includes('#gameMainLayout.full-panel-tab-active') || !mainJs.includes('mainLayout?.classList.toggle("full-panel-tab-active", isFullPanelTab)')) {
+  throw new Error('World boss, hall of fame, and hero information tabs must occupy the full game layout.');
+}
 if (mainJs.includes('>추첨 ${rolledGradeInfo.name}</span>')) throw new Error('Relic and skill result cards must show only the two-character rarity name.');
 const englishInputStart = mainJs.indexOf('function formatEnglishWordInput');
 const englishInputEnd = mainJs.indexOf('function formatEnglishWordDisplay', englishInputStart);

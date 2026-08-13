@@ -3914,6 +3914,58 @@
             return expMap[grade] || 1;
         }
 
+        function rollSkillTier() {
+            const tierRoll = Math.random();
+            if (tierRoll < 0.05) return 1;
+            if (tierRoll < 0.30) return 2;
+            return 3;
+        }
+
+        function createSkillDrawSnapshot(word, meaning, rolledGrade, rolledTier, alreadyOwned = false) {
+            const snapshot = {
+                word: String(word || ""),
+                meaning: String(meaning || ""),
+                grade: SKILL_GRADES[rolledGrade] ? rolledGrade : "normal",
+                tier: Math.max(1, Math.min(3, Number(rolledTier) || 3)),
+                stars: 0,
+                exp: 0,
+                maxExp: getRequiredExpForStar(rolledGrade),
+                alreadyOwned: Boolean(alreadyOwned)
+            };
+            snapshot.drawMultiplier = getSkillMultiplier(snapshot);
+            return snapshot;
+        }
+
+        function renderSkillDrawResultCard(drawResult) {
+            const gradeInfo = SKILL_GRADES[drawResult.grade] || SKILL_GRADES.normal;
+            const tier = Math.max(1, Math.min(3, Number(drawResult.tier) || 3));
+            const multiplier = Number(drawResult.drawMultiplier || getSkillMultiplier(drawResult));
+            const acquisitionLabel = drawResult.alreadyOwned ? "중복" : "신규";
+            return `
+                <div class="border-2 ${gradeInfo.colorClass} p-2 text-center flex flex-col justify-between min-h-[90px] rounded-none-forced"
+                     data-draw-grade="${drawResult.grade}" data-draw-tier="${tier}">
+                    <div>
+                        <div class="flex items-center justify-between text-[9px] font-black">
+                            <span>${gradeInfo.name}</span>
+                            <span class="text-yellow-300">T${tier}</span>
+                        </div>
+                        <p class="text-[11px] font-bold text-white truncate mt-0.5">${capitalizeFirstLetter(drawResult.word)}</p>
+                    </div>
+                    <div>
+                        <span class="text-[9px] truncate block text-[#dddddd]">${drawResult.meaning}</span>
+                        <span class="text-[8px] font-bold text-gray-300 block">${acquisitionLabel}</span>
+                        <span class="text-[9px] font-bold text-pink-300 block">×${multiplier}배</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.__vocaHeroTestHooks = {
+            ...(window.__vocaHeroTestHooks || {}),
+            createSkillDrawSnapshot,
+            renderSkillDrawResultCard
+        };
+
         function getSkillSourcePool(preferredPool = null) {
             const source = [];
             const add = (item) => {
@@ -3968,12 +4020,7 @@
             if (!gameState.skillsInventory) gameState.skillsInventory = [];
 
             // 🎲 티어 랜덤 롤링 (최상위 Tier 1: 5%, Tier 2: 25%, Tier 3: 70%)
-            if (!rolledTier) {
-                const tierRoll = Math.random();
-                if (tierRoll < 0.05) rolledTier = 1;
-                else if (tierRoll < 0.30) rolledTier = 2;
-                else rolledTier = 3;
-            }
+            if (!rolledTier) rolledTier = rollSkillTier();
 
             const existingSkill = gameState.skillsInventory.find(s => s.word === word);
             const gradeInfo = SKILL_GRADES[rolledGrade];
@@ -4067,8 +4114,15 @@
 
         function rollAndAcquireSkill(word, meaning) {
             const rolledGrade = rollGuildRewardGrade();
-
-            return addOrLevelUpSkill(word, meaning, rolledGrade);
+            const rolledTier = rollSkillTier();
+            const alreadyOwned = (gameState.skillsInventory || []).some(skill => String(skill.word || "").toLowerCase() === String(word || "").toLowerCase());
+            const storedSkill = addOrLevelUpSkill(word, meaning, rolledGrade, true, rolledTier);
+            const drawResult = createSkillDrawSnapshot(word, meaning, rolledGrade, rolledTier, alreadyOwned);
+            showSkillModal(drawResult, SKILL_GRADES[drawResult.grade] || SKILL_GRADES.normal);
+            buildSkillTabUI();
+            renderSkillsUI();
+            saveLocalCache();
+            return { storedSkill, drawResult };
         }
 
         let skillSummonBusy = false;
@@ -4133,33 +4187,14 @@
                             }
 
                             const alreadyOwned = (gameState.skillsInventory || []).some(skill => String(skill.word || "").toLowerCase() === String(picked.word || "").toLowerCase());
-                            const resultSkill = addOrLevelUpSkill(picked.word, picked.meaning, rolledGrade, true);
+                            const rolledTier = rollSkillTier();
+                            addOrLevelUpSkill(picked.word, picked.meaning, rolledGrade, true, rolledTier);
                             if (alreadyOwned) duplicates++; else newCards++;
-                            const displaySkill = { ...resultSkill, grade: rolledGrade };
+                            const displaySkill = createSkillDrawSnapshot(picked.word, picked.meaning, rolledGrade, rolledTier, alreadyOwned);
                             acquiredList.push(displaySkill);
 
                             if (drawCount === 10) {
-                                const gradeInfo = SKILL_GRADES[resultSkill.grade] || SKILL_GRADES.normal;
-                                const rolledGradeInfo = SKILL_GRADES[rolledGrade] || SKILL_GRADES.normal;
-                                const mult = getSkillMultiplier(resultSkill);
-                                const starsCount = resultSkill.stars || 0;
-                                const starsHtml = starsCount > 0 ? "⭐".repeat(starsCount) : "0성";
-
-                                modalGridHtml += `
-                                    <div class="border-2 ${gradeInfo.colorClass} bg-[#0d0d0d] p-2 text-center flex flex-col justify-between min-h-[90px] rounded-none-forced">
-                                        <div>
-                                            <div class="flex justify-[#7e7e7e] flex items-center justify-between text-[8px] font-bold">
-                                                <span class="text-gray-200">${rolledGradeInfo.name}</span>
-                                                <span class="text-yellow-400 font-bold">${starsHtml}</span>
-                                            </div>
-                                            <p class="text-[11px] font-bold  text-white truncate mt-0.5">${capitalizeFirstLetter(resultSkill.word)}</p>
-                                        </div>
-                                        <div>
-                                            <span class="text-[9px] truncate block text-[#bbbbbb]">${resultSkill.meaning}</span>
-                                            <span class="text-[9px] font-bold text-pink-400 block">×${mult}배</span>
-                                        </div>
-                                    </div>
-                                `;
+                                modalGridHtml += renderSkillDrawResultCard(displaySkill);
                             }
                         }
 
@@ -4208,7 +4243,7 @@
                     <div class="border ${gradeInfo.colorClass} bg-black/80 p-2 text-center flex flex-col justify-between rounded-none-forced min-h-[75px]">
                         <div class="flex justify-between items-center text-[8px] font-bold">
                             <span class="text-yellow-300">${gradeInfo.name}</span>
-                            <span class="text-yellow-400">${s.stars > 0 ? '⭐'.repeat(s.stars) : ''}</span>
+                            <span class="text-yellow-300">T${Math.max(1, Math.min(3, Number(s.tier) || 3))}</span>
                         </div>
                         <div class="text-[10px] sm:text-[11px] font-black text-white  tracking-tighter truncate my-0.5">${capitalizeFirstLetter(s.word)}</div>
                         <div class="text-[9px] text-pink-400 font-bold">×${mult}배</div>
@@ -4278,30 +4313,12 @@
                     rolledGrade = "rare";
                 }
 
-                const resultSkill = addOrLevelUpSkill(picked.word, picked.meaning, rolledGrade, true);
-                acquiredList.push(resultSkill);
-
-                const gradeInfo = SKILL_GRADES[resultSkill.grade] || SKILL_GRADES.normal;
-                const rolledGradeInfo = SKILL_GRADES[rolledGrade] || SKILL_GRADES.normal;
-                const mult = getSkillMultiplier(resultSkill);
-                const starsCount = resultSkill.stars || 0;
-                const starsHtml = starsCount > 0 ? "⭐".repeat(starsCount) : "0성";
-
-                modalGridHtml += `
-                    <div class="border-2 ${gradeInfo.colorClass} bg-[#0d0d0d] p-2 text-center flex flex-col justify-between min-h-[90px] rounded-none-forced">
-                        <div>
-                            <div class="flex items-center justify-between text-[8px] font-bold text-[#7e7e7e]">
-                                <span class="text-gray-200">${rolledGradeInfo.name}</span>
-                                <span class="text-yellow-400 font-bold">${starsHtml}</span>
-                            </div>
-                            <p class="text-[11px] font-bold  text-white truncate mt-0.5">${capitalizeFirstLetter(resultSkill.word)}</p>
-                        </div>
-                        <div>
-                            <span class="text-[9px] truncate block text-[#bbbbbb]">${resultSkill.meaning}</span>
-                            <span class="text-[9px] font-bold text-pink-400 block">×${mult}배</span>
-                        </div>
-                    </div>
-                `;
+                const alreadyOwned = (gameState.skillsInventory || []).some(skill => String(skill.word || "").toLowerCase() === String(picked.word || "").toLowerCase());
+                const rolledTier = rollSkillTier();
+                addOrLevelUpSkill(picked.word, picked.meaning, rolledGrade, true, rolledTier);
+                const drawResult = createSkillDrawSnapshot(picked.word, picked.meaning, rolledGrade, rolledTier, alreadyOwned);
+                acquiredList.push(drawResult);
+                modalGridHtml += renderSkillDrawResultCard(drawResult);
             }
 
             document.getElementById("gacha10xGrid").innerHTML = modalGridHtml;
@@ -6443,8 +6460,11 @@
             }
             const leftPanel = document.getElementById("leftRpgPanel");
             const rightPanel = document.getElementById("rightMainPanel");
+            const mainLayout = document.getElementById("gameMainLayout");
+            const isFullPanelTab = tabId === 'worldBossTab' || tabId === 'hallOfFameTab' || tabId === 'statsTab';
+            mainLayout?.classList.toggle("full-panel-tab-active", isFullPanelTab);
 
-            if (tabId === 'worldBossTab' || tabId === 'hallOfFameTab' || tabId === 'statsTab') {
+            if (isFullPanelTab) {
                 if (leftPanel) leftPanel.classList.add("hidden");
                 if (rightPanel) {
                     rightPanel.classList.remove("md:col-span-7", "lg:col-span-8");

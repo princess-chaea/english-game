@@ -6103,7 +6103,7 @@
 
             const overlay = document.createElement('div');
             overlay.id = 'inputModalOverlay';
-            overlay.className = 'fixed inset-0 bg-black/80 z-[99999] flex items-center justify-center p-4';
+            overlay.className = 'fixed inset-0 bg-black/80 z-[100020] flex items-center justify-center p-4';
             overlay.innerHTML = `
                 <div class="bg-[#0a0a0c] border border-yellow-500/50 max-w-sm w-full p-5 shadow-[0_0_30px_rgba(234,179,8,0.2)] text-white">
                     <div class="flex items-center gap-2 mb-3 border-b border-gray-800 pb-2">

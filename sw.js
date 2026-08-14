@@ -1,9 +1,10 @@
 // VOCA HERO! Service Worker - Edge Request & Cache Optimization
-const CACHE_NAME = 'vocahero-v113';
+const CACHE_NAME = 'vocahero-v114';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/privacy.html',
+  '/privacy',
+  '/terms',
   '/manifest.json',
   '/media/logo_v2.webp'
 ];
@@ -50,7 +51,7 @@ self.addEventListener('fetch', event => {
 
   if (url.origin === self.location.origin) {
     // 화면 HTML과 manifest는 네트워크 우선 (업데이트 반영)
-    if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/privacy.html' || url.pathname === '/manifest.json') {
+    if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/privacy' || url.pathname === '/terms' || url.pathname === '/manifest.json') {
       event.respondWith(
         fetch(event.request).then(networkResp => {
           if (networkResp && networkResp.status === 200) {

@@ -950,7 +950,7 @@
     <header class="bg-black text-white p-4 sticky top-0 z-50 border-b border-[#3c3c3c]">
         <div class="max-w-[1400px] w-full mx-auto flex flex-wrap justify-between items-center gap-2 px-4">
             <div class="flex items-center space-x-2 cursor-pointer select-none">
-                <i data-lucide="sword" class="w-6 h-6 text-white animate-pulse"></i>
+                <img src="media/logo_v2.webp" alt="" aria-hidden="true" class="h-8 w-8 shrink-0 object-contain drop-shadow-[0_0_8px_rgba(56,189,248,0.45)]">
                 <h1 class="text-xl font-bold uppercase tracking-wider" style="letter-spacing: -0.5px;">VOCA HERO! 영단어 용사 키우기</h1>
             </div>
 
@@ -2770,13 +2770,13 @@
 
     <!-- Gacha Animation Overlay (Capsule Gacha Machine Effect) -->
     <div id="gachaOverlayModal" class="hidden fixed inset-0 z-[20000] items-center justify-center flex-col" style="background:rgba(0,0,0,0.92);backdrop-filter:blur(10px);">
-        <div id="gachaContainer" class="relative flex flex-col items-center justify-center p-8 max-w-md w-full text-center">
+        <div id="gachaContainer" class="relative flex flex-col items-center justify-center px-3 py-8 sm:p-8 max-w-2xl w-full text-center">
             <!-- 캡슐 아이콘 & 회전 연출 -->
             <div id="gachaOrb" class="w-32 h-32 rounded-full border-4 border-pink-500 bg-gradient-to-tr from-purple-900 via-pink-900 to-indigo-900 flex items-center justify-center shadow-[0_0_50px_rgba(236,72,153,0.8)] animate-bounce mb-6">
                 <span id="gachaOrbIcon" class="text-6xl animate-spin" style="animation-duration: 3s;">🔮</span>
             </div>
             
-            <h2 id="gachaStatusTitle" class="text-2xl font-extrabold text-pink-400 tracking-wider mb-2 animate-pulse">마법 캡슐을 연성하는 중...</h2>
+            <h2 id="gachaStatusTitle" class="font-extrabold text-pink-400 tracking-normal sm:tracking-wider whitespace-nowrap mb-2 animate-pulse" style="font-size:clamp(0.7rem,3.5vw,1.5rem);">마법 캡슐을 연성하는 중...</h2>
             <p id="gachaStatusSub" class="text-xs text-[#bbbbbb] mb-6">정복한 영단어의 마법 기운이 캡슐에 응축됩니다!</p>
 
             <div class="w-full bg-[#111] h-3 border border-[#3c3c3c] rounded-none-forced overflow-hidden">

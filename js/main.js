@@ -8532,8 +8532,10 @@
             const quizTypes = ["meaning", "english", "unscramble"];
             wbCurrentQuizType = quizTypes[Math.floor(Math.random() * quizTypes.length)];
 
-            // 🐲 심연의 흑룡 파브니르 패턴: 40% 확률로 모든 보기/타일 화염 가림 처리
-            if (bossInfo.id === 'fafnir' && (wbCurrentQuizType === 'meaning' || wbCurrentQuizType === 'english' || wbCurrentQuizType === 'unscramble')) {
+            // 🐲 심연의 흑룡 파브니르 패턴: 일반 전투 중에만 40% 확률로 모든 보기/타일 화염 가림 처리
+            // 약점 파훼 및 이후 재정비 시간에는 패턴이 비활성화되어야 한다.
+            const isFafnirFlameWindow = bossInfo.id === 'fafnir' && wbBossState === 'normal' && wbGracePeriodTimer <= 0;
+            if (isFafnirFlameWindow && (wbCurrentQuizType === 'meaning' || wbCurrentQuizType === 'english' || wbCurrentQuizType === 'unscramble')) {
                 if (Math.random() < 0.4) {
                     wbIsFlameActive = true;
                 }

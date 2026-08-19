@@ -72,11 +72,19 @@ async function deleteRefsInBatches(refs) {
 }
 
 const packCatalog = JSON.parse(readFileSync(new URL('../data/word-packs.json', import.meta.url), 'utf8'));
-const wordByKey = new Map();
+const MIN_LEARNING_GRADE = 3;
+const MAX_LEARNING_GRADE = 12;
+const wordByKey = new Map((packCatalog.words || []).map((entry) => {
+  const key = text(entry?.word, 80).toLowerCase();
+  return [key, { ...entry, word: text(entry?.word, 80), meaning: text(entry?.meaning, 160) }];
+}).filter(([key, entry]) => key && entry.meaning));
 const packWordsById = new Map();
 (packCatalog.packs || []).forEach((pack) => {
   const words = new Map();
-  (pack.words || []).forEach((entry) => {
+  const entries = Array.isArray(pack.wordKeys)
+    ? pack.wordKeys.map((key) => wordByKey.get(text(key, 80).toLowerCase())).filter(Boolean)
+    : (pack.words || []);
+  entries.forEach((entry) => {
     const key = text(entry?.word, 80).toLowerCase();
     const meaning = text(entry?.meaning, 160);
     if (!key || !meaning) return;
@@ -86,29 +94,29 @@ const packWordsById = new Map();
   });
   packWordsById.set(text(pack?.id, 80), words);
 });
-// 3~6학년 하·중·상은 하 ⊂ 중 ⊂ 상 누적 구조이며, 새 길드 기본값은 해당 학년의 중 수준입니다.
-const primaryPackKinds = new Set(['grade-tier-cumulative', 'curriculum-draft', 'teacher-review']);
+// 초3~고3 하·중·상은 하 ⊂ 중 ⊂ 상 누적 구조이며, 새 길드 기본값은 해당 학년의 중 수준입니다.
+const primaryPackKinds = new Set(['curriculum-spiral']);
 const WORD_PACKS = (packCatalog.packs || []).filter((pack) => primaryPackKinds.has(pack.kind)).map((pack) => ({
   id: text(pack.id, 80),
   label: text(pack.label, 100),
-  grade: pack.grade == null ? null : safeInt(pack.grade, 4, 3, 6),
+  grade: pack.grade == null ? null : safeInt(pack.grade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE),
   level: text(pack.level, 16) || null,
   levelLabel: text(pack.levelLabel, 8) || null,
   cumulative: Boolean(pack.cumulative),
-  wordCount: Array.isArray(pack.words) ? pack.words.length : safeInt(pack.wordCount, 0, 0),
+  wordCount: Array.isArray(pack.wordKeys) ? pack.wordKeys.length : Array.isArray(pack.words) ? pack.words.length : safeInt(pack.wordCount, 0, 0),
   kind: text(pack.kind, 40)
 }));
 const wordPackById = new Map((packCatalog.packs || []).map((pack) => [text(pack?.id, 80), {
   id: text(pack.id, 80),
   label: text(pack.label, 100),
-  grade: pack.grade == null ? null : safeInt(pack.grade, 4, 3, 6),
+  grade: pack.grade == null ? null : safeInt(pack.grade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE),
   level: text(pack.level, 16) || null,
   levelLabel: text(pack.levelLabel, 8) || null,
   cumulative: Boolean(pack.cumulative),
-  wordCount: Array.isArray(pack.words) ? pack.words.length : safeInt(pack.wordCount, 0, 0),
+  wordCount: Array.isArray(pack.wordKeys) ? pack.wordKeys.length : Array.isArray(pack.words) ? pack.words.length : safeInt(pack.wordCount, 0, 0),
   kind: text(pack.kind, 40)
 }]));
-const defaultWordPack = (grade) => 'grade-' + safeInt(grade, 4, 3, 6) + '-mid';
+const defaultWordPack = (grade) => 'grade-' + safeInt(grade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE) + '-mid';
 const LEARNING_QUESTION_TYPES = new Set(['meaning-choice', 'fill-blank', 'word-choice', 'listen-meaning', 'word-order', 'short-answer']);
 const DEFAULT_QUESTION_TYPES = ['meaning-choice'];
 function normalizeWordPackIds(value, grade = 4) {
@@ -430,7 +438,7 @@ async function createGuild(uid, body) {
   const teacher = teacherSnap.data();
   const name = normalizeGuildName(body.guildName || body.classLabel);
   const guildSubtitle = normalizeGuildSubtitle(body.guildTag ?? body.guildSubtitle);
-  const grade = safeInt(body.grade, 0, 3, 6);
+  const grade = safeInt(body.grade, 0, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE);
   if (name.length < 2 || !grade) throw apiError(400, 'INVALID_GUILD', '길드 이름과 기본 단어 수준을 확인해 주세요.');
   const ref = classes.doc();
   const defaultPackId = defaultWordPack(grade);
@@ -497,7 +505,7 @@ async function listClasses(uid) {
     const data = snap.data();
     const totals = await guildMemberSummary(snap.ref);
     const ownerId = guildOwnerId(data);
-    return { id: snap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), ownerId, isOwner: ownerId === uid, managerCount: guildCoManagerCount(data), ...totals, guildRank: rankMap.get(snap.id) || null, wordPackId: classPack(data.grade, data.wordPackId), wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade), questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes) };
+    return { id: snap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE), ownerId, isOwner: ownerId === uid, managerCount: guildCoManagerCount(data), ...totals, guildRank: rankMap.get(snap.id) || null, wordPackId: classPack(data.grade, data.wordPackId), wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade), questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes) };
   }));
 }
 function safeQuestionTypeStats(value) {
@@ -624,7 +632,7 @@ async function listGuildMembers(uid, body, includeWrongWords = false) {
     return {
       memberId: member.id,
       nickname: text(value.nickname, 30) || '이름 없는 용사',
-      learningGrade: safeInt(value.learningGrade, 4, 3, 6),
+      learningGrade: safeInt(value.learningGrade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE),
       stage: safeInt(value.stage, 1, 1, 9999),
       totalCorrect,
       totalQuizTries,
@@ -662,7 +670,7 @@ async function listGuildMembers(uid, body, includeWrongWords = false) {
       guildName: guildName(data),
       guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle),
       guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl),
-      grade: safeInt(data.grade, 4, 3, 6),
+      grade: safeInt(data.grade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE),
       wordPackId: classPack(data.grade, data.wordPackId),
       wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade),
       questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes),
@@ -870,7 +878,7 @@ async function memberLearningReport(uid, body) {
   return {
     memberId,
     nickname: text(member.nickname, 30) || '이름 없는 용사',
-    learningGrade: safeInt(member.learningGrade, 4, 3, 6),
+    learningGrade: safeInt(member.learningGrade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE),
     stage: safeInt(member.stage, 1, 1, 9999),
     totalQuizTries,
     totalCorrect,
@@ -1033,7 +1041,7 @@ async function listSchoolGuilds(uid) {
     ]);
     const masterName = ownerNames.get(text(data.ownerId || data.managerIds?.[0], 128)) || '마스터';
     return {
-      guild: { id: classSnap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), managerCount: guildCoManagerCount(data), masterName: managed ? masterName : maskedTeacherName(masterName), managed, requestStatus: ownRequest?.data()?.status || '' },
+      guild: { id: classSnap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE), managerCount: guildCoManagerCount(data), masterName: managed ? masterName : maskedTeacherName(masterName), managed, requestStatus: ownRequest?.data()?.status || '' },
       incomingRequests: requests ? requests.docs.map((request) => ({ id: request.id, classId: classSnap.id, guildName: guildName(data), teacherName: text(request.data()?.teacherName, 40) || '이름 미확인', requestedAt: request.data()?.requestedAt?.toDate?.().toISOString?.() || null })) : []
     };
   }));
@@ -1060,7 +1068,7 @@ async function schoolGuildPreview(uid, body) {
   const ownerTData = ownerTSnap.data() || {};
   const ownerAData = ownerASnap.data() || {};
   const masterName = text(ownerTData.teacherName || ownerTData.displayName || ownerTData.googleDisplayName || ownerTData.name || ownerAData.nickname || ownerAData.teacherName || ownerAData.displayName, 40) || '마스터';
-  return { id: classSnap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, 3, 6), memberCount: safeInt(memberCountSnap.data()?.count, 0, 0, 100000), managerCount: guildCoManagerCount(data), masterName: managed ? masterName : maskedTeacherName(masterName), managed, requestStatus: ownRequest?.data()?.status || '' };
+  return { id: classSnap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE), memberCount: safeInt(memberCountSnap.data()?.count, 0, 0, 100000), managerCount: guildCoManagerCount(data), masterName: managed ? masterName : maskedTeacherName(masterName), managed, requestStatus: ownRequest?.data()?.status || '' };
 }async function requestSchoolGuildJoin(uid, body) {
   const teacherSnap = await verifiedTeacher(uid);
   const teacher = teacherSnap.data();

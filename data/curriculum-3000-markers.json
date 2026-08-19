@@ -1,0 +1,12017 @@
+{
+  "schemaVersion": 1,
+  "source": "2022 개정 영어과 교육과정 별책 14, 기본 어휘 목록",
+  "declaredCounts": {
+    "elementary": 800,
+    "middleHighCommon": 1200,
+    "highOther": 1000,
+    "total": 3000
+  },
+  "extractedHeadwordCount": 3001,
+  "words": [
+    {
+      "word": "a",
+      "marker": "*"
+    },
+    {
+      "word": "abandon",
+      "marker": ""
+    },
+    {
+      "word": "able",
+      "marker": "**"
+    },
+    {
+      "word": "aboard",
+      "marker": ""
+    },
+    {
+      "word": "abort",
+      "marker": ""
+    },
+    {
+      "word": "abound",
+      "marker": ""
+    },
+    {
+      "word": "about",
+      "marker": "*"
+    },
+    {
+      "word": "above",
+      "marker": "*"
+    },
+    {
+      "word": "abroad",
+      "marker": ""
+    },
+    {
+      "word": "absent",
+      "marker": ""
+    },
+    {
+      "word": "absolute",
+      "marker": "**"
+    },
+    {
+      "word": "absorb",
+      "marker": ""
+    },
+    {
+      "word": "abstract",
+      "marker": ""
+    },
+    {
+      "word": "absurd",
+      "marker": ""
+    },
+    {
+      "word": "abuse",
+      "marker": ""
+    },
+    {
+      "word": "academy",
+      "marker": ""
+    },
+    {
+      "word": "accelerate",
+      "marker": ""
+    },
+    {
+      "word": "accent",
+      "marker": "**"
+    },
+    {
+      "word": "accept",
+      "marker": "**"
+    },
+    {
+      "word": "access",
+      "marker": "**"
+    },
+    {
+      "word": "accident",
+      "marker": "**"
+    },
+    {
+      "word": "accommodate",
+      "marker": ""
+    },
+    {
+      "word": "accompany",
+      "marker": ""
+    },
+    {
+      "word": "accomplish",
+      "marker": ""
+    },
+    {
+      "word": "accord",
+      "marker": ""
+    },
+    {
+      "word": "account",
+      "marker": "**"
+    },
+    {
+      "word": "accumulate",
+      "marker": ""
+    },
+    {
+      "word": "accurate",
+      "marker": ""
+    },
+    {
+      "word": "accuse",
+      "marker": "**"
+    },
+    {
+      "word": "ache",
+      "marker": ""
+    },
+    {
+      "word": "achieve",
+      "marker": "**"
+    },
+    {
+      "word": "acid",
+      "marker": ""
+    },
+    {
+      "word": "acknowledge",
+      "marker": ""
+    },
+    {
+      "word": "acquire",
+      "marker": ""
+    },
+    {
+      "word": "acquisition",
+      "marker": ""
+    },
+    {
+      "word": "across",
+      "marker": "*"
+    },
+    {
+      "word": "act",
+      "marker": "*"
+    },
+    {
+      "word": "adapt",
+      "marker": "**"
+    },
+    {
+      "word": "add",
+      "marker": "*"
+    },
+    {
+      "word": "addict",
+      "marker": ""
+    },
+    {
+      "word": "address",
+      "marker": "*"
+    },
+    {
+      "word": "adequate",
+      "marker": ""
+    },
+    {
+      "word": "adjust",
+      "marker": ""
+    },
+    {
+      "word": "administer",
+      "marker": ""
+    },
+    {
+      "word": "admire",
+      "marker": "**"
+    },
+    {
+      "word": "admit",
+      "marker": "**"
+    },
+    {
+      "word": "adolescent",
+      "marker": ""
+    },
+    {
+      "word": "adopt",
+      "marker": "**"
+    },
+    {
+      "word": "adult",
+      "marker": "*"
+    },
+    {
+      "word": "advance",
+      "marker": "**"
+    },
+    {
+      "word": "advantage",
+      "marker": "**"
+    },
+    {
+      "word": "adventure",
+      "marker": "**"
+    },
+    {
+      "word": "adverse",
+      "marker": ""
+    },
+    {
+      "word": "advertize",
+      "marker": "**"
+    },
+    {
+      "word": "advice",
+      "marker": "**"
+    },
+    {
+      "word": "advise",
+      "marker": "**"
+    },
+    {
+      "word": "advocate",
+      "marker": ""
+    },
+    {
+      "word": "aesthetic",
+      "marker": ""
+    },
+    {
+      "word": "affair",
+      "marker": "**"
+    },
+    {
+      "word": "affect",
+      "marker": "**"
+    },
+    {
+      "word": "afford",
+      "marker": "**"
+    },
+    {
+      "word": "afraid",
+      "marker": "*"
+    },
+    {
+      "word": "after",
+      "marker": "*"
+    },
+    {
+      "word": "afternoon",
+      "marker": "*"
+    },
+    {
+      "word": "again",
+      "marker": "*"
+    },
+    {
+      "word": "against",
+      "marker": "*"
+    },
+    {
+      "word": "age",
+      "marker": "*"
+    },
+    {
+      "word": "agency",
+      "marker": ""
+    },
+    {
+      "word": "agenda",
+      "marker": ""
+    },
+    {
+      "word": "agent",
+      "marker": "**"
+    },
+    {
+      "word": "aggress",
+      "marker": ""
+    },
+    {
+      "word": "ago",
+      "marker": "*"
+    },
+    {
+      "word": "agree",
+      "marker": "*"
+    },
+    {
+      "word": "agriculture",
+      "marker": ""
+    },
+    {
+      "word": "ahead",
+      "marker": "*"
+    },
+    {
+      "word": "aid",
+      "marker": "**"
+    },
+    {
+      "word": "aim",
+      "marker": "**"
+    },
+    {
+      "word": "air",
+      "marker": "*"
+    },
+    {
+      "word": "airline",
+      "marker": "**"
+    },
+    {
+      "word": "airplane",
+      "marker": "*"
+    },
+    {
+      "word": "airport",
+      "marker": "**"
+    },
+    {
+      "word": "alarm",
+      "marker": "**"
+    },
+    {
+      "word": "album",
+      "marker": "*"
+    },
+    {
+      "word": "alcohol",
+      "marker": "**"
+    },
+    {
+      "word": "alert",
+      "marker": ""
+    },
+    {
+      "word": "alien",
+      "marker": ""
+    },
+    {
+      "word": "alike",
+      "marker": ""
+    },
+    {
+      "word": "alive",
+      "marker": "**"
+    },
+    {
+      "word": "all",
+      "marker": "*"
+    },
+    {
+      "word": "allocate",
+      "marker": ""
+    },
+    {
+      "word": "allow",
+      "marker": "**"
+    },
+    {
+      "word": "ally",
+      "marker": ""
+    },
+    {
+      "word": "almost",
+      "marker": "*"
+    },
+    {
+      "word": "alone",
+      "marker": "*"
+    },
+    {
+      "word": "along",
+      "marker": "*"
+    },
+    {
+      "word": "alongside",
+      "marker": ""
+    },
+    {
+      "word": "aloud",
+      "marker": "**"
+    },
+    {
+      "word": "already",
+      "marker": "*"
+    },
+    {
+      "word": "alright",
+      "marker": "*"
+    },
+    {
+      "word": "also",
+      "marker": "*"
+    },
+    {
+      "word": "alter",
+      "marker": "**"
+    },
+    {
+      "word": "alternate",
+      "marker": ""
+    },
+    {
+      "word": "although",
+      "marker": "**"
+    },
+    {
+      "word": "altogether",
+      "marker": "**"
+    },
+    {
+      "word": "always",
+      "marker": "*"
+    },
+    {
+      "word": "amaze",
+      "marker": "**"
+    },
+    {
+      "word": "ambassador",
+      "marker": ""
+    },
+    {
+      "word": "ambition",
+      "marker": ""
+    },
+    {
+      "word": "ambulance",
+      "marker": "**"
+    },
+    {
+      "word": "among",
+      "marker": "**"
+    },
+    {
+      "word": "amount",
+      "marker": "**"
+    },
+    {
+      "word": "amuse",
+      "marker": "**"
+    },
+    {
+      "word": "analysis",
+      "marker": "**"
+    },
+    {
+      "word": "analyze",
+      "marker": ""
+    },
+    {
+      "word": "anchor",
+      "marker": ""
+    },
+    {
+      "word": "ancient",
+      "marker": ""
+    },
+    {
+      "word": "and",
+      "marker": "*"
+    },
+    {
+      "word": "angel",
+      "marker": "**"
+    },
+    {
+      "word": "anger",
+      "marker": "**"
+    },
+    {
+      "word": "angle",
+      "marker": ""
+    },
+    {
+      "word": "animal",
+      "marker": "*"
+    },
+    {
+      "word": "anniversary",
+      "marker": ""
+    },
+    {
+      "word": "announce",
+      "marker": "**"
+    },
+    {
+      "word": "annoy",
+      "marker": "**"
+    },
+    {
+      "word": "annual",
+      "marker": "**"
+    },
+    {
+      "word": "another",
+      "marker": "*"
+    },
+    {
+      "word": "answer",
+      "marker": "*"
+    },
+    {
+      "word": "ant",
+      "marker": "**"
+    },
+    {
+      "word": "anticipate",
+      "marker": ""
+    },
+    {
+      "word": "anxiety",
+      "marker": ""
+    },
+    {
+      "word": "anxious",
+      "marker": "**"
+    },
+    {
+      "word": "any",
+      "marker": "*"
+    },
+    {
+      "word": "apart",
+      "marker": "**"
+    },
+    {
+      "word": "apartment",
+      "marker": "*"
+    },
+    {
+      "word": "apology",
+      "marker": ""
+    },
+    {
+      "word": "apparent",
+      "marker": ""
+    },
+    {
+      "word": "appeal",
+      "marker": "**"
+    },
+    {
+      "word": "appear",
+      "marker": "**"
+    },
+    {
+      "word": "apple",
+      "marker": "*"
+    },
+    {
+      "word": "apply",
+      "marker": "**"
+    },
+    {
+      "word": "appoint",
+      "marker": "**"
+    },
+    {
+      "word": "appreciate",
+      "marker": "**"
+    },
+    {
+      "word": "approach",
+      "marker": "**"
+    },
+    {
+      "word": "appropriate",
+      "marker": "**"
+    },
+    {
+      "word": "approve",
+      "marker": ""
+    },
+    {
+      "word": "approximate",
+      "marker": ""
+    },
+    {
+      "word": "architect",
+      "marker": ""
+    },
+    {
+      "word": "area",
+      "marker": "*"
+    },
+    {
+      "word": "argue",
+      "marker": "**"
+    },
+    {
+      "word": "arise",
+      "marker": ""
+    },
+    {
+      "word": "arm",
+      "marker": "*"
+    },
+    {
+      "word": "army",
+      "marker": "**"
+    },
+    {
+      "word": "around",
+      "marker": "*"
+    },
+    {
+      "word": "arrange",
+      "marker": "**"
+    },
+    {
+      "word": "arrest",
+      "marker": "**"
+    },
+    {
+      "word": "arrive",
+      "marker": "*"
+    },
+    {
+      "word": "arrow",
+      "marker": ""
+    },
+    {
+      "word": "art",
+      "marker": "*"
+    },
+    {
+      "word": "article",
+      "marker": "**"
+    },
+    {
+      "word": "artifice",
+      "marker": ""
+    },
+    {
+      "word": "as",
+      "marker": "*"
+    },
+    {
+      "word": "aside",
+      "marker": "**"
+    },
+    {
+      "word": "ask",
+      "marker": "*"
+    },
+    {
+      "word": "asleep",
+      "marker": "**"
+    },
+    {
+      "word": "aspect",
+      "marker": ""
+    },
+    {
+      "word": "aspire",
+      "marker": ""
+    },
+    {
+      "word": "assault",
+      "marker": ""
+    },
+    {
+      "word": "assemble",
+      "marker": ""
+    },
+    {
+      "word": "assert",
+      "marker": ""
+    },
+    {
+      "word": "assess",
+      "marker": "**"
+    },
+    {
+      "word": "asset",
+      "marker": ""
+    },
+    {
+      "word": "assign",
+      "marker": "**"
+    },
+    {
+      "word": "assist",
+      "marker": "**"
+    },
+    {
+      "word": "associate",
+      "marker": "**"
+    },
+    {
+      "word": "assume",
+      "marker": "**"
+    },
+    {
+      "word": "assure",
+      "marker": ""
+    },
+    {
+      "word": "astonish",
+      "marker": ""
+    },
+    {
+      "word": "at",
+      "marker": "*"
+    },
+    {
+      "word": "athlete",
+      "marker": ""
+    },
+    {
+      "word": "atmosphere",
+      "marker": "**"
+    },
+    {
+      "word": "atom",
+      "marker": ""
+    },
+    {
+      "word": "attach",
+      "marker": "**"
+    },
+    {
+      "word": "attack",
+      "marker": "**"
+    },
+    {
+      "word": "attempt",
+      "marker": "**"
+    },
+    {
+      "word": "attend",
+      "marker": "**"
+    },
+    {
+      "word": "attention",
+      "marker": "**"
+    },
+    {
+      "word": "attitude",
+      "marker": "**"
+    },
+    {
+      "word": "attract",
+      "marker": "**"
+    },
+    {
+      "word": "attribute",
+      "marker": ""
+    },
+    {
+      "word": "auction",
+      "marker": ""
+    },
+    {
+      "word": "audience",
+      "marker": "**"
+    },
+    {
+      "word": "aunt",
+      "marker": "*"
+    },
+    {
+      "word": "authentic",
+      "marker": ""
+    },
+    {
+      "word": "author",
+      "marker": ""
+    },
+    {
+      "word": "automatic",
+      "marker": "**"
+    },
+    {
+      "word": "autumn",
+      "marker": "*"
+    },
+    {
+      "word": "avail",
+      "marker": ""
+    },
+    {
+      "word": "average",
+      "marker": "**"
+    },
+    {
+      "word": "avoid",
+      "marker": "**"
+    },
+    {
+      "word": "await",
+      "marker": ""
+    },
+    {
+      "word": "awake",
+      "marker": "**"
+    },
+    {
+      "word": "award",
+      "marker": "**"
+    },
+    {
+      "word": "aware",
+      "marker": "**"
+    },
+    {
+      "word": "away",
+      "marker": "*"
+    },
+    {
+      "word": "awe",
+      "marker": ""
+    },
+    {
+      "word": "awkward",
+      "marker": "**"
+    },
+    {
+      "word": "baby",
+      "marker": "*"
+    },
+    {
+      "word": "back",
+      "marker": "*"
+    },
+    {
+      "word": "background",
+      "marker": "**"
+    },
+    {
+      "word": "bacon",
+      "marker": "**"
+    },
+    {
+      "word": "bad",
+      "marker": "*"
+    },
+    {
+      "word": "badminton",
+      "marker": "*"
+    },
+    {
+      "word": "bag",
+      "marker": "*"
+    },
+    {
+      "word": "bake",
+      "marker": "*"
+    },
+    {
+      "word": "balance",
+      "marker": "**"
+    },
+    {
+      "word": "ball",
+      "marker": "*"
+    },
+    {
+      "word": "balloon",
+      "marker": "**"
+    },
+    {
+      "word": "ban",
+      "marker": ""
+    },
+    {
+      "word": "banana",
+      "marker": "*"
+    },
+    {
+      "word": "band",
+      "marker": "**"
+    },
+    {
+      "word": "bang",
+      "marker": "**"
+    },
+    {
+      "word": "bank",
+      "marker": "*"
+    },
+    {
+      "word": "bankrupt",
+      "marker": ""
+    },
+    {
+      "word": "bar",
+      "marker": "**"
+    },
+    {
+      "word": "bare",
+      "marker": "**"
+    },
+    {
+      "word": "bargain",
+      "marker": ""
+    },
+    {
+      "word": "bark",
+      "marker": "**"
+    },
+    {
+      "word": "barrier",
+      "marker": ""
+    },
+    {
+      "word": "base",
+      "marker": "*"
+    },
+    {
+      "word": "baseball",
+      "marker": "*"
+    },
+    {
+      "word": "basis",
+      "marker": "**"
+    },
+    {
+      "word": "basket",
+      "marker": "*"
+    },
+    {
+      "word": "basketball",
+      "marker": "*"
+    },
+    {
+      "word": "bat",
+      "marker": "*"
+    },
+    {
+      "word": "bath",
+      "marker": "*"
+    },
+    {
+      "word": "battery",
+      "marker": "**"
+    },
+    {
+      "word": "battle",
+      "marker": "**"
+    },
+    {
+      "word": "bay",
+      "marker": "**"
+    },
+    {
+      "word": "be",
+      "marker": "*"
+    },
+    {
+      "word": "beach",
+      "marker": "*"
+    },
+    {
+      "word": "beam",
+      "marker": ""
+    },
+    {
+      "word": "bean",
+      "marker": "**"
+    },
+    {
+      "word": "bear",
+      "marker": "*"
+    },
+    {
+      "word": "beard",
+      "marker": ""
+    },
+    {
+      "word": "beast",
+      "marker": ""
+    },
+    {
+      "word": "beat",
+      "marker": "**"
+    },
+    {
+      "word": "beauty",
+      "marker": "*"
+    },
+    {
+      "word": "because",
+      "marker": "*"
+    },
+    {
+      "word": "become",
+      "marker": "*"
+    },
+    {
+      "word": "bed",
+      "marker": "*"
+    },
+    {
+      "word": "bee",
+      "marker": "*"
+    },
+    {
+      "word": "beef",
+      "marker": "*"
+    },
+    {
+      "word": "beer",
+      "marker": "**"
+    },
+    {
+      "word": "before",
+      "marker": "*"
+    },
+    {
+      "word": "beg",
+      "marker": "**"
+    },
+    {
+      "word": "begin",
+      "marker": "*"
+    },
+    {
+      "word": "behalf",
+      "marker": ""
+    },
+    {
+      "word": "behave",
+      "marker": ""
+    },
+    {
+      "word": "behind",
+      "marker": "*"
+    },
+    {
+      "word": "belief",
+      "marker": "**"
+    },
+    {
+      "word": "believe",
+      "marker": "*"
+    },
+    {
+      "word": "bell",
+      "marker": "*"
+    },
+    {
+      "word": "belong",
+      "marker": "**"
+    },
+    {
+      "word": "below",
+      "marker": "*"
+    },
+    {
+      "word": "belt",
+      "marker": "*"
+    },
+    {
+      "word": "bench",
+      "marker": "**"
+    },
+    {
+      "word": "bend",
+      "marker": "**"
+    },
+    {
+      "word": "beneath",
+      "marker": "**"
+    },
+    {
+      "word": "benefit",
+      "marker": "**"
+    },
+    {
+      "word": "beside",
+      "marker": "*"
+    },
+    {
+      "word": "bet",
+      "marker": "**"
+    },
+    {
+      "word": "betray",
+      "marker": ""
+    },
+    {
+      "word": "between",
+      "marker": "*"
+    },
+    {
+      "word": "beyond",
+      "marker": "**"
+    },
+    {
+      "word": "bias",
+      "marker": ""
+    },
+    {
+      "word": "big",
+      "marker": "*"
+    },
+    {
+      "word": "bike",
+      "marker": "*"
+    },
+    {
+      "word": "bill",
+      "marker": "*"
+    },
+    {
+      "word": "billion",
+      "marker": "**"
+    },
+    {
+      "word": "bin",
+      "marker": "**"
+    },
+    {
+      "word": "bind",
+      "marker": "**"
+    },
+    {
+      "word": "biography",
+      "marker": ""
+    },
+    {
+      "word": "biology",
+      "marker": ""
+    },
+    {
+      "word": "bird",
+      "marker": "*"
+    },
+    {
+      "word": "birth",
+      "marker": "*"
+    },
+    {
+      "word": "biscuit",
+      "marker": "*"
+    },
+    {
+      "word": "bit",
+      "marker": "**"
+    },
+    {
+      "word": "bite",
+      "marker": "**"
+    },
+    {
+      "word": "bitter",
+      "marker": "**"
+    },
+    {
+      "word": "black",
+      "marker": "*"
+    },
+    {
+      "word": "blame",
+      "marker": "**"
+    },
+    {
+      "word": "blank",
+      "marker": "**"
+    },
+    {
+      "word": "blanket",
+      "marker": "**"
+    },
+    {
+      "word": "blast",
+      "marker": ""
+    },
+    {
+      "word": "blend",
+      "marker": ""
+    },
+    {
+      "word": "bless",
+      "marker": "**"
+    },
+    {
+      "word": "blind",
+      "marker": "**"
+    },
+    {
+      "word": "blink",
+      "marker": ""
+    },
+    {
+      "word": "block",
+      "marker": "**"
+    },
+    {
+      "word": "blonde",
+      "marker": "**"
+    },
+    {
+      "word": "blood",
+      "marker": "*"
+    },
+    {
+      "word": "bloom",
+      "marker": "**"
+    },
+    {
+      "word": "blossom",
+      "marker": ""
+    },
+    {
+      "word": "blow",
+      "marker": "**"
+    },
+    {
+      "word": "blue",
+      "marker": "*"
+    },
+    {
+      "word": "board",
+      "marker": "*"
+    },
+    {
+      "word": "boat",
+      "marker": "*"
+    },
+    {
+      "word": "body",
+      "marker": "*"
+    },
+    {
+      "word": "boil",
+      "marker": "**"
+    },
+    {
+      "word": "bold",
+      "marker": ""
+    },
+    {
+      "word": "bomb",
+      "marker": "**"
+    },
+    {
+      "word": "bond",
+      "marker": "**"
+    },
+    {
+      "word": "bone",
+      "marker": "*"
+    },
+    {
+      "word": "book",
+      "marker": "*"
+    },
+    {
+      "word": "boom",
+      "marker": "**"
+    },
+    {
+      "word": "boost",
+      "marker": ""
+    },
+    {
+      "word": "boot",
+      "marker": "**"
+    },
+    {
+      "word": "border",
+      "marker": ""
+    },
+    {
+      "word": "bore",
+      "marker": "**"
+    },
+    {
+      "word": "borrow",
+      "marker": "*"
+    },
+    {
+      "word": "boss",
+      "marker": "**"
+    },
+    {
+      "word": "both",
+      "marker": "*"
+    },
+    {
+      "word": "bother",
+      "marker": "**"
+    },
+    {
+      "word": "bottle",
+      "marker": "*"
+    },
+    {
+      "word": "bottom",
+      "marker": "*"
+    },
+    {
+      "word": "bounce",
+      "marker": "**"
+    },
+    {
+      "word": "boundary",
+      "marker": ""
+    },
+    {
+      "word": "bow",
+      "marker": "**"
+    },
+    {
+      "word": "bowl",
+      "marker": "**"
+    },
+    {
+      "word": "box",
+      "marker": "*"
+    },
+    {
+      "word": "boy",
+      "marker": "*"
+    },
+    {
+      "word": "brain",
+      "marker": "**"
+    },
+    {
+      "word": "brake",
+      "marker": "**"
+    },
+    {
+      "word": "branch",
+      "marker": "**"
+    },
+    {
+      "word": "brand",
+      "marker": "**"
+    },
+    {
+      "word": "brave",
+      "marker": "*"
+    },
+    {
+      "word": "bread",
+      "marker": "*"
+    },
+    {
+      "word": "break",
+      "marker": "*"
+    },
+    {
+      "word": "breakfast",
+      "marker": "*"
+    },
+    {
+      "word": "breast",
+      "marker": "**"
+    },
+    {
+      "word": "breath",
+      "marker": "**"
+    },
+    {
+      "word": "breathe",
+      "marker": "**"
+    },
+    {
+      "word": "breed",
+      "marker": ""
+    },
+    {
+      "word": "breeze",
+      "marker": ""
+    },
+    {
+      "word": "brick",
+      "marker": "**"
+    },
+    {
+      "word": "bridge",
+      "marker": "*"
+    },
+    {
+      "word": "brief",
+      "marker": "**"
+    },
+    {
+      "word": "bright",
+      "marker": "*"
+    },
+    {
+      "word": "brilliant",
+      "marker": "**"
+    },
+    {
+      "word": "bring",
+      "marker": "*"
+    },
+    {
+      "word": "broad",
+      "marker": "**"
+    },
+    {
+      "word": "broadcast",
+      "marker": ""
+    },
+    {
+      "word": "brother",
+      "marker": "*"
+    },
+    {
+      "word": "brown",
+      "marker": "*"
+    },
+    {
+      "word": "brush",
+      "marker": "*"
+    },
+    {
+      "word": "brute",
+      "marker": ""
+    },
+    {
+      "word": "bubble",
+      "marker": "**"
+    },
+    {
+      "word": "budget",
+      "marker": "**"
+    },
+    {
+      "word": "bug",
+      "marker": "**"
+    },
+    {
+      "word": "build",
+      "marker": "*"
+    },
+    {
+      "word": "bulk",
+      "marker": ""
+    },
+    {
+      "word": "bull",
+      "marker": ""
+    },
+    {
+      "word": "bully",
+      "marker": ""
+    },
+    {
+      "word": "bump",
+      "marker": "**"
+    },
+    {
+      "word": "bunch",
+      "marker": "**"
+    },
+    {
+      "word": "bundle",
+      "marker": ""
+    },
+    {
+      "word": "burden",
+      "marker": ""
+    },
+    {
+      "word": "burn",
+      "marker": "*"
+    },
+    {
+      "word": "burst",
+      "marker": "**"
+    },
+    {
+      "word": "bury",
+      "marker": "**"
+    },
+    {
+      "word": "bus",
+      "marker": "*"
+    },
+    {
+      "word": "bush",
+      "marker": "**"
+    },
+    {
+      "word": "business",
+      "marker": "*"
+    },
+    {
+      "word": "busy",
+      "marker": "*"
+    },
+    {
+      "word": "but",
+      "marker": "*"
+    },
+    {
+      "word": "butcher",
+      "marker": ""
+    },
+    {
+      "word": "butter",
+      "marker": "*"
+    },
+    {
+      "word": "button",
+      "marker": "*"
+    },
+    {
+      "word": "buy",
+      "marker": "*"
+    },
+    {
+      "word": "buzz",
+      "marker": ""
+    },
+    {
+      "word": "by",
+      "marker": "*"
+    },
+    {
+      "word": "cable",
+      "marker": "**"
+    },
+    {
+      "word": "cage",
+      "marker": "**"
+    },
+    {
+      "word": "cake",
+      "marker": "*"
+    },
+    {
+      "word": "calculate",
+      "marker": "**"
+    },
+    {
+      "word": "calendar",
+      "marker": "**"
+    },
+    {
+      "word": "call",
+      "marker": "*"
+    },
+    {
+      "word": "calm",
+      "marker": "**"
+    },
+    {
+      "word": "camera",
+      "marker": "*"
+    },
+    {
+      "word": "camp",
+      "marker": "*"
+    },
+    {
+      "word": "campaign",
+      "marker": "*"
+    },
+    {
+      "word": "can",
+      "marker": "*"
+    },
+    {
+      "word": "cancel",
+      "marker": ""
+    },
+    {
+      "word": "cancer",
+      "marker": ""
+    },
+    {
+      "word": "candidate",
+      "marker": ""
+    },
+    {
+      "word": "candy",
+      "marker": "*"
+    },
+    {
+      "word": "canvas",
+      "marker": ""
+    },
+    {
+      "word": "cap",
+      "marker": "*"
+    },
+    {
+      "word": "capable",
+      "marker": "**"
+    },
+    {
+      "word": "cape",
+      "marker": "**"
+    },
+    {
+      "word": "capital",
+      "marker": "**"
+    },
+    {
+      "word": "captain",
+      "marker": "**"
+    },
+    {
+      "word": "capture",
+      "marker": ""
+    },
+    {
+      "word": "car",
+      "marker": "*"
+    },
+    {
+      "word": "card",
+      "marker": "*"
+    },
+    {
+      "word": "care",
+      "marker": "*"
+    },
+    {
+      "word": "career",
+      "marker": "**"
+    },
+    {
+      "word": "carpet",
+      "marker": "**"
+    },
+    {
+      "word": "carrot",
+      "marker": "*"
+    },
+    {
+      "word": "carry",
+      "marker": "*"
+    },
+    {
+      "word": "cart",
+      "marker": "**"
+    },
+    {
+      "word": "carve",
+      "marker": ""
+    },
+    {
+      "word": "case",
+      "marker": "*"
+    },
+    {
+      "word": "cash",
+      "marker": "*"
+    },
+    {
+      "word": "cast",
+      "marker": "**"
+    },
+    {
+      "word": "castle",
+      "marker": "**"
+    },
+    {
+      "word": "cat",
+      "marker": "*"
+    },
+    {
+      "word": "catalogue",
+      "marker": "**"
+    },
+    {
+      "word": "catch",
+      "marker": "*"
+    },
+    {
+      "word": "category",
+      "marker": "**"
+    },
+    {
+      "word": "cater",
+      "marker": ""
+    },
+    {
+      "word": "cattle",
+      "marker": ""
+    },
+    {
+      "word": "cause",
+      "marker": "**"
+    },
+    {
+      "word": "caution",
+      "marker": ""
+    },
+    {
+      "word": "cave",
+      "marker": ""
+    },
+    {
+      "word": "cease",
+      "marker": ""
+    },
+    {
+      "word": "ceiling",
+      "marker": "**"
+    },
+    {
+      "word": "celebrate",
+      "marker": ""
+    },
+    {
+      "word": "celebrity",
+      "marker": ""
+    },
+    {
+      "word": "cell",
+      "marker": "**"
+    },
+    {
+      "word": "censor",
+      "marker": ""
+    },
+    {
+      "word": "center",
+      "marker": "*"
+    },
+    {
+      "word": "century",
+      "marker": "**"
+    },
+    {
+      "word": "certain",
+      "marker": "*"
+    },
+    {
+      "word": "certificate",
+      "marker": ""
+    },
+    {
+      "word": "chain",
+      "marker": "**"
+    },
+    {
+      "word": "chair",
+      "marker": "*"
+    },
+    {
+      "word": "chairman",
+      "marker": "**"
+    },
+    {
+      "word": "challenge",
+      "marker": "**"
+    },
+    {
+      "word": "chamber",
+      "marker": ""
+    },
+    {
+      "word": "champion",
+      "marker": "**"
+    },
+    {
+      "word": "chance",
+      "marker": "*"
+    },
+    {
+      "word": "change",
+      "marker": "*"
+    },
+    {
+      "word": "channel",
+      "marker": "**"
+    },
+    {
+      "word": "chaos",
+      "marker": ""
+    },
+    {
+      "word": "character",
+      "marker": "**"
+    },
+    {
+      "word": "characteristic",
+      "marker": "**"
+    },
+    {
+      "word": "charge",
+      "marker": "**"
+    },
+    {
+      "word": "charity",
+      "marker": ""
+    },
+    {
+      "word": "charm",
+      "marker": "**"
+    },
+    {
+      "word": "chart",
+      "marker": "**"
+    },
+    {
+      "word": "chase",
+      "marker": "**"
+    },
+    {
+      "word": "chat",
+      "marker": "**"
+    },
+    {
+      "word": "cheap",
+      "marker": "*"
+    },
+    {
+      "word": "check",
+      "marker": "*"
+    },
+    {
+      "word": "cheek",
+      "marker": "**"
+    },
+    {
+      "word": "cheer",
+      "marker": "**"
+    },
+    {
+      "word": "cheese",
+      "marker": "*"
+    },
+    {
+      "word": "chef",
+      "marker": ""
+    },
+    {
+      "word": "chemical",
+      "marker": ""
+    },
+    {
+      "word": "chest",
+      "marker": "**"
+    },
+    {
+      "word": "chew",
+      "marker": "**"
+    },
+    {
+      "word": "chicken",
+      "marker": "*"
+    },
+    {
+      "word": "chief",
+      "marker": "**"
+    },
+    {
+      "word": "child",
+      "marker": "*"
+    },
+    {
+      "word": "chill",
+      "marker": ""
+    },
+    {
+      "word": "chin",
+      "marker": ""
+    },
+    {
+      "word": "chip",
+      "marker": "**"
+    },
+    {
+      "word": "chocolate",
+      "marker": "*"
+    },
+    {
+      "word": "choice",
+      "marker": "**"
+    },
+    {
+      "word": "choir",
+      "marker": ""
+    },
+    {
+      "word": "choose",
+      "marker": "*"
+    },
+    {
+      "word": "chop",
+      "marker": "**"
+    },
+    {
+      "word": "chorus",
+      "marker": ""
+    },
+    {
+      "word": "chronic",
+      "marker": ""
+    },
+    {
+      "word": "church",
+      "marker": "*"
+    },
+    {
+      "word": "cigarette",
+      "marker": "**"
+    },
+    {
+      "word": "cinema",
+      "marker": "**"
+    },
+    {
+      "word": "circle",
+      "marker": "*"
+    },
+    {
+      "word": "circulate",
+      "marker": ""
+    },
+    {
+      "word": "circumstance",
+      "marker": "**"
+    },
+    {
+      "word": "cite",
+      "marker": ""
+    },
+    {
+      "word": "citizen",
+      "marker": "**"
+    },
+    {
+      "word": "city",
+      "marker": "*"
+    },
+    {
+      "word": "civil",
+      "marker": "**"
+    },
+    {
+      "word": "claim",
+      "marker": "**"
+    },
+    {
+      "word": "clap",
+      "marker": ""
+    },
+    {
+      "word": "clash",
+      "marker": ""
+    },
+    {
+      "word": "class",
+      "marker": "*"
+    },
+    {
+      "word": "clause",
+      "marker": ""
+    },
+    {
+      "word": "clay",
+      "marker": ""
+    },
+    {
+      "word": "clean",
+      "marker": "*"
+    },
+    {
+      "word": "clear",
+      "marker": "*"
+    },
+    {
+      "word": "clerk",
+      "marker": "**"
+    },
+    {
+      "word": "clever",
+      "marker": "*"
+    },
+    {
+      "word": "click",
+      "marker": "**"
+    },
+    {
+      "word": "client",
+      "marker": "**"
+    },
+    {
+      "word": "cliff",
+      "marker": "**"
+    },
+    {
+      "word": "climate",
+      "marker": "**"
+    },
+    {
+      "word": "climb",
+      "marker": "*"
+    },
+    {
+      "word": "cling",
+      "marker": ""
+    },
+    {
+      "word": "clinic",
+      "marker": ""
+    },
+    {
+      "word": "clip",
+      "marker": "**"
+    },
+    {
+      "word": "clock",
+      "marker": "*"
+    },
+    {
+      "word": "close",
+      "marker": "*"
+    },
+    {
+      "word": "clothes",
+      "marker": "*"
+    },
+    {
+      "word": "cloud",
+      "marker": "*"
+    },
+    {
+      "word": "club",
+      "marker": "*"
+    },
+    {
+      "word": "clue",
+      "marker": "**"
+    },
+    {
+      "word": "cluster",
+      "marker": ""
+    },
+    {
+      "word": "coach",
+      "marker": "**"
+    },
+    {
+      "word": "coal",
+      "marker": "**"
+    },
+    {
+      "word": "coast",
+      "marker": "**"
+    },
+    {
+      "word": "coat",
+      "marker": "*"
+    },
+    {
+      "word": "code",
+      "marker": "**"
+    },
+    {
+      "word": "coffee",
+      "marker": "*"
+    },
+    {
+      "word": "coin",
+      "marker": "**"
+    },
+    {
+      "word": "coincide",
+      "marker": ""
+    },
+    {
+      "word": "cold",
+      "marker": "*"
+    },
+    {
+      "word": "collaborate",
+      "marker": ""
+    },
+    {
+      "word": "collapse",
+      "marker": ""
+    },
+    {
+      "word": "collar",
+      "marker": ""
+    },
+    {
+      "word": "colleague",
+      "marker": ""
+    },
+    {
+      "word": "collect",
+      "marker": "*"
+    },
+    {
+      "word": "college",
+      "marker": "*"
+    },
+    {
+      "word": "colony",
+      "marker": ""
+    },
+    {
+      "word": "color",
+      "marker": "*"
+    },
+    {
+      "word": "column",
+      "marker": ""
+    },
+    {
+      "word": "combat",
+      "marker": ""
+    },
+    {
+      "word": "combine",
+      "marker": "**"
+    },
+    {
+      "word": "come",
+      "marker": "*"
+    },
+    {
+      "word": "comedy",
+      "marker": "**"
+    },
+    {
+      "word": "comfort",
+      "marker": "**"
+    },
+    {
+      "word": "comic",
+      "marker": "*"
+    },
+    {
+      "word": "command",
+      "marker": "**"
+    },
+    {
+      "word": "comment",
+      "marker": "**"
+    },
+    {
+      "word": "commerce",
+      "marker": "**"
+    },
+    {
+      "word": "commit",
+      "marker": ""
+    },
+    {
+      "word": "committee",
+      "marker": "**"
+    },
+    {
+      "word": "commodity",
+      "marker": ""
+    },
+    {
+      "word": "common",
+      "marker": "**"
+    },
+    {
+      "word": "communicate",
+      "marker": "**"
+    },
+    {
+      "word": "communist",
+      "marker": ""
+    },
+    {
+      "word": "community",
+      "marker": "**"
+    },
+    {
+      "word": "companion",
+      "marker": ""
+    },
+    {
+      "word": "company",
+      "marker": "*"
+    },
+    {
+      "word": "compare",
+      "marker": "**"
+    },
+    {
+      "word": "compatible",
+      "marker": ""
+    },
+    {
+      "word": "compel",
+      "marker": ""
+    },
+    {
+      "word": "compensate",
+      "marker": ""
+    },
+    {
+      "word": "compete",
+      "marker": ""
+    },
+    {
+      "word": "compile",
+      "marker": ""
+    },
+    {
+      "word": "complain",
+      "marker": "**"
+    },
+    {
+      "word": "complement",
+      "marker": ""
+    },
+    {
+      "word": "complete",
+      "marker": "**"
+    },
+    {
+      "word": "complex",
+      "marker": "**"
+    },
+    {
+      "word": "complicate",
+      "marker": "**"
+    },
+    {
+      "word": "component",
+      "marker": ""
+    },
+    {
+      "word": "compose",
+      "marker": ""
+    },
+    {
+      "word": "compound",
+      "marker": ""
+    },
+    {
+      "word": "comprehend",
+      "marker": ""
+    },
+    {
+      "word": "comprise",
+      "marker": ""
+    },
+    {
+      "word": "compromise",
+      "marker": ""
+    },
+    {
+      "word": "compute",
+      "marker": "*"
+    },
+    {
+      "word": "conceal",
+      "marker": ""
+    },
+    {
+      "word": "conceive",
+      "marker": ""
+    },
+    {
+      "word": "concentrate",
+      "marker": "**"
+    },
+    {
+      "word": "concept",
+      "marker": "**"
+    },
+    {
+      "word": "concern",
+      "marker": "**"
+    },
+    {
+      "word": "concert",
+      "marker": "**"
+    },
+    {
+      "word": "conclude",
+      "marker": ""
+    },
+    {
+      "word": "concrete",
+      "marker": ""
+    },
+    {
+      "word": "condemn",
+      "marker": ""
+    },
+    {
+      "word": "condition",
+      "marker": "*"
+    },
+    {
+      "word": "conduct",
+      "marker": ""
+    },
+    {
+      "word": "confer",
+      "marker": ""
+    },
+    {
+      "word": "confess",
+      "marker": ""
+    },
+    {
+      "word": "confide",
+      "marker": ""
+    },
+    {
+      "word": "confine",
+      "marker": ""
+    },
+    {
+      "word": "confirm",
+      "marker": "**"
+    },
+    {
+      "word": "conflict",
+      "marker": "**"
+    },
+    {
+      "word": "conform",
+      "marker": ""
+    },
+    {
+      "word": "confront",
+      "marker": ""
+    },
+    {
+      "word": "confuse",
+      "marker": "**"
+    },
+    {
+      "word": "congratulate",
+      "marker": "*"
+    },
+    {
+      "word": "congress",
+      "marker": ""
+    },
+    {
+      "word": "connect",
+      "marker": "**"
+    },
+    {
+      "word": "conscience",
+      "marker": ""
+    },
+    {
+      "word": "conscious",
+      "marker": "**"
+    },
+    {
+      "word": "consent",
+      "marker": ""
+    },
+    {
+      "word": "conserve",
+      "marker": ""
+    },
+    {
+      "word": "consider",
+      "marker": "**"
+    },
+    {
+      "word": "consist",
+      "marker": ""
+    },
+    {
+      "word": "constant",
+      "marker": "**"
+    },
+    {
+      "word": "constitute",
+      "marker": ""
+    },
+    {
+      "word": "constrain",
+      "marker": ""
+    },
+    {
+      "word": "construct",
+      "marker": ""
+    },
+    {
+      "word": "consult",
+      "marker": ""
+    },
+    {
+      "word": "consume",
+      "marker": "**"
+    },
+    {
+      "word": "contact",
+      "marker": "**"
+    },
+    {
+      "word": "contain",
+      "marker": "**"
+    },
+    {
+      "word": "contemporary",
+      "marker": ""
+    },
+    {
+      "word": "contend",
+      "marker": ""
+    },
+    {
+      "word": "content",
+      "marker": "**"
+    },
+    {
+      "word": "contest",
+      "marker": "**"
+    },
+    {
+      "word": "context",
+      "marker": "**"
+    },
+    {
+      "word": "continent",
+      "marker": ""
+    },
+    {
+      "word": "continue",
+      "marker": "**"
+    },
+    {
+      "word": "contract",
+      "marker": "**"
+    },
+    {
+      "word": "contradict",
+      "marker": ""
+    },
+    {
+      "word": "contrary",
+      "marker": ""
+    },
+    {
+      "word": "contrast",
+      "marker": ""
+    },
+    {
+      "word": "contribute",
+      "marker": "**"
+    },
+    {
+      "word": "control",
+      "marker": "*"
+    },
+    {
+      "word": "controversy",
+      "marker": ""
+    },
+    {
+      "word": "convene",
+      "marker": ""
+    },
+    {
+      "word": "converse",
+      "marker": "**"
+    },
+    {
+      "word": "convert",
+      "marker": ""
+    },
+    {
+      "word": "convey",
+      "marker": ""
+    },
+    {
+      "word": "convict",
+      "marker": ""
+    },
+    {
+      "word": "convince",
+      "marker": "**"
+    },
+    {
+      "word": "cook",
+      "marker": "*"
+    },
+    {
+      "word": "cookie",
+      "marker": "*"
+    },
+    {
+      "word": "cool",
+      "marker": "*"
+    },
+    {
+      "word": "cooperate",
+      "marker": ""
+    },
+    {
+      "word": "coordinate",
+      "marker": ""
+    },
+    {
+      "word": "cop",
+      "marker": "**"
+    },
+    {
+      "word": "cope",
+      "marker": "**"
+    },
+    {
+      "word": "copy",
+      "marker": "**"
+    },
+    {
+      "word": "copyright",
+      "marker": ""
+    },
+    {
+      "word": "cord",
+      "marker": ""
+    },
+    {
+      "word": "core",
+      "marker": ""
+    },
+    {
+      "word": "corn",
+      "marker": ""
+    },
+    {
+      "word": "corner",
+      "marker": "*"
+    },
+    {
+      "word": "corporate",
+      "marker": ""
+    },
+    {
+      "word": "correct",
+      "marker": "**"
+    },
+    {
+      "word": "correspond",
+      "marker": ""
+    },
+    {
+      "word": "corridor",
+      "marker": ""
+    },
+    {
+      "word": "corrupt",
+      "marker": ""
+    },
+    {
+      "word": "cost",
+      "marker": "*"
+    },
+    {
+      "word": "costume",
+      "marker": ""
+    },
+    {
+      "word": "cottage",
+      "marker": "**"
+    },
+    {
+      "word": "cotton",
+      "marker": "**"
+    },
+    {
+      "word": "cough",
+      "marker": "**"
+    },
+    {
+      "word": "could",
+      "marker": "*"
+    },
+    {
+      "word": "council",
+      "marker": "**"
+    },
+    {
+      "word": "counsel",
+      "marker": ""
+    },
+    {
+      "word": "count",
+      "marker": "**"
+    },
+    {
+      "word": "counterpart",
+      "marker": ""
+    },
+    {
+      "word": "country",
+      "marker": "*"
+    },
+    {
+      "word": "countryside",
+      "marker": "**"
+    },
+    {
+      "word": "county",
+      "marker": "**"
+    },
+    {
+      "word": "couple",
+      "marker": "*"
+    },
+    {
+      "word": "coupon",
+      "marker": ""
+    },
+    {
+      "word": "courage",
+      "marker": ""
+    },
+    {
+      "word": "course",
+      "marker": "*"
+    },
+    {
+      "word": "court",
+      "marker": "*"
+    },
+    {
+      "word": "cousin",
+      "marker": "*"
+    },
+    {
+      "word": "cover",
+      "marker": "*"
+    },
+    {
+      "word": "cow",
+      "marker": "*"
+    },
+    {
+      "word": "crack",
+      "marker": "**"
+    },
+    {
+      "word": "craft",
+      "marker": ""
+    },
+    {
+      "word": "crash",
+      "marker": "**"
+    },
+    {
+      "word": "crawl",
+      "marker": "**"
+    },
+    {
+      "word": "crayon",
+      "marker": "*"
+    },
+    {
+      "word": "craze",
+      "marker": ""
+    },
+    {
+      "word": "cream",
+      "marker": "*"
+    },
+    {
+      "word": "create",
+      "marker": "**"
+    },
+    {
+      "word": "credible",
+      "marker": ""
+    },
+    {
+      "word": "credit",
+      "marker": "**"
+    },
+    {
+      "word": "creep",
+      "marker": ""
+    },
+    {
+      "word": "crew",
+      "marker": ""
+    },
+    {
+      "word": "crime",
+      "marker": "**"
+    },
+    {
+      "word": "crisis",
+      "marker": "**"
+    },
+    {
+      "word": "crisp",
+      "marker": "**"
+    },
+    {
+      "word": "criterion",
+      "marker": ""
+    },
+    {
+      "word": "critic",
+      "marker": ""
+    },
+    {
+      "word": "crop",
+      "marker": ""
+    },
+    {
+      "word": "cross",
+      "marker": "*"
+    },
+    {
+      "word": "crowd",
+      "marker": "**"
+    },
+    {
+      "word": "crown",
+      "marker": "**"
+    },
+    {
+      "word": "crucial",
+      "marker": ""
+    },
+    {
+      "word": "cruel",
+      "marker": "**"
+    },
+    {
+      "word": "cruise",
+      "marker": ""
+    },
+    {
+      "word": "crush",
+      "marker": ""
+    },
+    {
+      "word": "cry",
+      "marker": "*"
+    },
+    {
+      "word": "crystal",
+      "marker": ""
+    },
+    {
+      "word": "cultivate",
+      "marker": ""
+    },
+    {
+      "word": "culture",
+      "marker": "*"
+    },
+    {
+      "word": "cup",
+      "marker": "*"
+    },
+    {
+      "word": "cure",
+      "marker": "**"
+    },
+    {
+      "word": "curious",
+      "marker": "**"
+    },
+    {
+      "word": "curl",
+      "marker": "**"
+    },
+    {
+      "word": "currency",
+      "marker": ""
+    },
+    {
+      "word": "current",
+      "marker": "**"
+    },
+    {
+      "word": "curriculum",
+      "marker": ""
+    },
+    {
+      "word": "curry",
+      "marker": ""
+    },
+    {
+      "word": "curse",
+      "marker": ""
+    },
+    {
+      "word": "curtain",
+      "marker": "*"
+    },
+    {
+      "word": "curve",
+      "marker": ""
+    },
+    {
+      "word": "custody",
+      "marker": ""
+    },
+    {
+      "word": "custom",
+      "marker": ""
+    },
+    {
+      "word": "customer",
+      "marker": "*"
+    },
+    {
+      "word": "cut",
+      "marker": "*"
+    },
+    {
+      "word": "cute",
+      "marker": "**"
+    },
+    {
+      "word": "cycle",
+      "marker": "**"
+    },
+    {
+      "word": "cynical",
+      "marker": ""
+    },
+    {
+      "word": "dairy",
+      "marker": ""
+    },
+    {
+      "word": "damage",
+      "marker": "**"
+    },
+    {
+      "word": "damp",
+      "marker": ""
+    },
+    {
+      "word": "dance",
+      "marker": "*"
+    },
+    {
+      "word": "danger",
+      "marker": "*"
+    },
+    {
+      "word": "dare",
+      "marker": "**"
+    },
+    {
+      "word": "dark",
+      "marker": "*"
+    },
+    {
+      "word": "darling",
+      "marker": "**"
+    },
+    {
+      "word": "dash",
+      "marker": ""
+    },
+    {
+      "word": "database",
+      "marker": ""
+    },
+    {
+      "word": "date",
+      "marker": "*"
+    },
+    {
+      "word": "datum",
+      "marker": ""
+    },
+    {
+      "word": "daughter",
+      "marker": "*"
+    },
+    {
+      "word": "dawn",
+      "marker": "**"
+    },
+    {
+      "word": "day",
+      "marker": "*"
+    },
+    {
+      "word": "dead",
+      "marker": "*"
+    },
+    {
+      "word": "deal",
+      "marker": "**"
+    },
+    {
+      "word": "death",
+      "marker": "*"
+    },
+    {
+      "word": "debate",
+      "marker": "**"
+    },
+    {
+      "word": "debt",
+      "marker": "**"
+    },
+    {
+      "word": "decade",
+      "marker": ""
+    },
+    {
+      "word": "decay",
+      "marker": ""
+    },
+    {
+      "word": "decent",
+      "marker": ""
+    },
+    {
+      "word": "decide",
+      "marker": "*"
+    },
+    {
+      "word": "deck",
+      "marker": "**"
+    },
+    {
+      "word": "declare",
+      "marker": ""
+    },
+    {
+      "word": "decline",
+      "marker": ""
+    },
+    {
+      "word": "decorate",
+      "marker": "**"
+    },
+    {
+      "word": "decrease",
+      "marker": ""
+    },
+    {
+      "word": "dedicate",
+      "marker": ""
+    },
+    {
+      "word": "deep",
+      "marker": "*"
+    },
+    {
+      "word": "defeat",
+      "marker": ""
+    },
+    {
+      "word": "defend",
+      "marker": ""
+    },
+    {
+      "word": "defense",
+      "marker": "**"
+    },
+    {
+      "word": "deficiency",
+      "marker": ""
+    },
+    {
+      "word": "deficit",
+      "marker": ""
+    },
+    {
+      "word": "define",
+      "marker": "**"
+    },
+    {
+      "word": "definite",
+      "marker": "**"
+    },
+    {
+      "word": "degree",
+      "marker": "**"
+    },
+    {
+      "word": "delay",
+      "marker": "**"
+    },
+    {
+      "word": "delegate",
+      "marker": ""
+    },
+    {
+      "word": "delete",
+      "marker": ""
+    },
+    {
+      "word": "deliberate",
+      "marker": ""
+    },
+    {
+      "word": "delicate",
+      "marker": ""
+    },
+    {
+      "word": "delicious",
+      "marker": "*"
+    },
+    {
+      "word": "delight",
+      "marker": "**"
+    },
+    {
+      "word": "deliver",
+      "marker": "**"
+    },
+    {
+      "word": "demand",
+      "marker": "**"
+    },
+    {
+      "word": "democracy",
+      "marker": ""
+    },
+    {
+      "word": "democrat",
+      "marker": ""
+    },
+    {
+      "word": "demon",
+      "marker": ""
+    },
+    {
+      "word": "demonstrate",
+      "marker": "**"
+    },
+    {
+      "word": "dense",
+      "marker": ""
+    },
+    {
+      "word": "dentist",
+      "marker": "**"
+    },
+    {
+      "word": "deny",
+      "marker": "**"
+    },
+    {
+      "word": "depart",
+      "marker": ""
+    },
+    {
+      "word": "depend",
+      "marker": "**"
+    },
+    {
+      "word": "depict",
+      "marker": ""
+    },
+    {
+      "word": "deposit",
+      "marker": ""
+    },
+    {
+      "word": "depress",
+      "marker": "**"
+    },
+    {
+      "word": "deprive",
+      "marker": ""
+    },
+    {
+      "word": "derive",
+      "marker": ""
+    },
+    {
+      "word": "descend",
+      "marker": ""
+    },
+    {
+      "word": "describe",
+      "marker": "**"
+    },
+    {
+      "word": "desert",
+      "marker": "**"
+    },
+    {
+      "word": "deserve",
+      "marker": "**"
+    },
+    {
+      "word": "design",
+      "marker": "*"
+    },
+    {
+      "word": "designate",
+      "marker": ""
+    },
+    {
+      "word": "desire",
+      "marker": "**"
+    },
+    {
+      "word": "desk",
+      "marker": "*"
+    },
+    {
+      "word": "despair",
+      "marker": ""
+    },
+    {
+      "word": "desperate",
+      "marker": "**"
+    },
+    {
+      "word": "despite",
+      "marker": "**"
+    },
+    {
+      "word": "destine",
+      "marker": ""
+    },
+    {
+      "word": "destiny",
+      "marker": ""
+    },
+    {
+      "word": "destroy",
+      "marker": "**"
+    },
+    {
+      "word": "destruct",
+      "marker": ""
+    },
+    {
+      "word": "detach",
+      "marker": ""
+    },
+    {
+      "word": "detail",
+      "marker": "**"
+    },
+    {
+      "word": "detect",
+      "marker": "**"
+    },
+    {
+      "word": "determine",
+      "marker": "**"
+    },
+    {
+      "word": "develop",
+      "marker": "**"
+    },
+    {
+      "word": "device",
+      "marker": ""
+    },
+    {
+      "word": "devil",
+      "marker": ""
+    },
+    {
+      "word": "devise",
+      "marker": ""
+    },
+    {
+      "word": "devote",
+      "marker": ""
+    },
+    {
+      "word": "diabetes",
+      "marker": ""
+    },
+    {
+      "word": "dialogue",
+      "marker": "*"
+    },
+    {
+      "word": "diary",
+      "marker": "**"
+    },
+    {
+      "word": "dictate",
+      "marker": ""
+    },
+    {
+      "word": "dictionary",
+      "marker": "**"
+    },
+    {
+      "word": "die",
+      "marker": "*"
+    },
+    {
+      "word": "diet",
+      "marker": "**"
+    },
+    {
+      "word": "differ",
+      "marker": ""
+    },
+    {
+      "word": "difficult",
+      "marker": "*"
+    },
+    {
+      "word": "dig",
+      "marker": "**"
+    },
+    {
+      "word": "dignity",
+      "marker": ""
+    },
+    {
+      "word": "dimension",
+      "marker": ""
+    },
+    {
+      "word": "diminish",
+      "marker": ""
+    },
+    {
+      "word": "dine",
+      "marker": ""
+    },
+    {
+      "word": "dinner",
+      "marker": "*"
+    },
+    {
+      "word": "dip",
+      "marker": ""
+    },
+    {
+      "word": "diplomat",
+      "marker": ""
+    },
+    {
+      "word": "direct",
+      "marker": "**"
+    },
+    {
+      "word": "dirt",
+      "marker": "**"
+    },
+    {
+      "word": "disappoint",
+      "marker": "**"
+    },
+    {
+      "word": "disaster",
+      "marker": ""
+    },
+    {
+      "word": "disc",
+      "marker": "**"
+    },
+    {
+      "word": "discipline",
+      "marker": "**"
+    },
+    {
+      "word": "discourse",
+      "marker": ""
+    },
+    {
+      "word": "discriminate",
+      "marker": ""
+    },
+    {
+      "word": "discuss",
+      "marker": "*"
+    },
+    {
+      "word": "disgust",
+      "marker": "**"
+    },
+    {
+      "word": "dish",
+      "marker": "**"
+    },
+    {
+      "word": "dismiss",
+      "marker": ""
+    },
+    {
+      "word": "display",
+      "marker": "**"
+    },
+    {
+      "word": "dispute",
+      "marker": ""
+    },
+    {
+      "word": "disrupt",
+      "marker": ""
+    },
+    {
+      "word": "distance",
+      "marker": "**"
+    },
+    {
+      "word": "distinct",
+      "marker": ""
+    },
+    {
+      "word": "distinguish",
+      "marker": ""
+    },
+    {
+      "word": "distort",
+      "marker": ""
+    },
+    {
+      "word": "distract",
+      "marker": ""
+    },
+    {
+      "word": "distribute",
+      "marker": ""
+    },
+    {
+      "word": "district",
+      "marker": "**"
+    },
+    {
+      "word": "disturb",
+      "marker": "**"
+    },
+    {
+      "word": "dive",
+      "marker": "**"
+    },
+    {
+      "word": "diverse",
+      "marker": ""
+    },
+    {
+      "word": "divide",
+      "marker": "**"
+    },
+    {
+      "word": "divine",
+      "marker": ""
+    },
+    {
+      "word": "divorce",
+      "marker": "**"
+    },
+    {
+      "word": "do",
+      "marker": "*"
+    },
+    {
+      "word": "doctor",
+      "marker": "*"
+    },
+    {
+      "word": "document",
+      "marker": "**"
+    },
+    {
+      "word": "dog",
+      "marker": "*"
+    },
+    {
+      "word": "doll",
+      "marker": "*"
+    },
+    {
+      "word": "dolphin",
+      "marker": "**"
+    },
+    {
+      "word": "domain",
+      "marker": ""
+    },
+    {
+      "word": "domestic",
+      "marker": "**"
+    },
+    {
+      "word": "dominate",
+      "marker": ""
+    },
+    {
+      "word": "donate",
+      "marker": "**"
+    },
+    {
+      "word": "door",
+      "marker": "*"
+    },
+    {
+      "word": "dose",
+      "marker": ""
+    },
+    {
+      "word": "dot",
+      "marker": ""
+    },
+    {
+      "word": "double",
+      "marker": "*"
+    },
+    {
+      "word": "doubt",
+      "marker": "**"
+    },
+    {
+      "word": "doughnut",
+      "marker": "*"
+    },
+    {
+      "word": "down",
+      "marker": "*"
+    },
+    {
+      "word": "dozen",
+      "marker": "**"
+    },
+    {
+      "word": "draft",
+      "marker": ""
+    },
+    {
+      "word": "drag",
+      "marker": "**"
+    },
+    {
+      "word": "drain",
+      "marker": ""
+    },
+    {
+      "word": "drama",
+      "marker": "**"
+    },
+    {
+      "word": "draw",
+      "marker": "*"
+    },
+    {
+      "word": "dread",
+      "marker": ""
+    },
+    {
+      "word": "dream",
+      "marker": "*"
+    },
+    {
+      "word": "dress",
+      "marker": "*"
+    },
+    {
+      "word": "drill",
+      "marker": ""
+    },
+    {
+      "word": "drink",
+      "marker": "*"
+    },
+    {
+      "word": "drive",
+      "marker": "*"
+    },
+    {
+      "word": "drop",
+      "marker": "*"
+    },
+    {
+      "word": "drown",
+      "marker": ""
+    },
+    {
+      "word": "drug",
+      "marker": "**"
+    },
+    {
+      "word": "drum",
+      "marker": "*"
+    },
+    {
+      "word": "dry",
+      "marker": "*"
+    },
+    {
+      "word": "dual",
+      "marker": ""
+    },
+    {
+      "word": "duck",
+      "marker": "*"
+    },
+    {
+      "word": "due",
+      "marker": "**"
+    },
+    {
+      "word": "dull",
+      "marker": ""
+    },
+    {
+      "word": "dump",
+      "marker": "**"
+    },
+    {
+      "word": "during",
+      "marker": "*"
+    },
+    {
+      "word": "dust",
+      "marker": "**"
+    },
+    {
+      "word": "duty",
+      "marker": "**"
+    },
+    {
+      "word": "dwell",
+      "marker": ""
+    },
+    {
+      "word": "dynamic",
+      "marker": ""
+    },
+    {
+      "word": "each",
+      "marker": "**"
+    },
+    {
+      "word": "eager",
+      "marker": ""
+    },
+    {
+      "word": "ear",
+      "marker": "*"
+    },
+    {
+      "word": "early",
+      "marker": "*"
+    },
+    {
+      "word": "earn",
+      "marker": "**"
+    },
+    {
+      "word": "earth",
+      "marker": "*"
+    },
+    {
+      "word": "ease",
+      "marker": "**"
+    },
+    {
+      "word": "east",
+      "marker": "*"
+    },
+    {
+      "word": "eat",
+      "marker": "*"
+    },
+    {
+      "word": "economy",
+      "marker": "**"
+    },
+    {
+      "word": "edge",
+      "marker": "**"
+    },
+    {
+      "word": "edit",
+      "marker": "**"
+    },
+    {
+      "word": "educate",
+      "marker": "**"
+    },
+    {
+      "word": "effect",
+      "marker": "**"
+    },
+    {
+      "word": "efficient",
+      "marker": ""
+    },
+    {
+      "word": "effort",
+      "marker": "**"
+    },
+    {
+      "word": "egg",
+      "marker": "*"
+    },
+    {
+      "word": "eight",
+      "marker": "*"
+    },
+    {
+      "word": "either",
+      "marker": "**"
+    },
+    {
+      "word": "elaborate",
+      "marker": ""
+    },
+    {
+      "word": "elect",
+      "marker": "**"
+    },
+    {
+      "word": "electric",
+      "marker": "**"
+    },
+    {
+      "word": "electronic",
+      "marker": ""
+    },
+    {
+      "word": "elegant",
+      "marker": ""
+    },
+    {
+      "word": "element",
+      "marker": "**"
+    },
+    {
+      "word": "elephant",
+      "marker": "*"
+    },
+    {
+      "word": "elevate",
+      "marker": ""
+    },
+    {
+      "word": "eleven",
+      "marker": "*"
+    },
+    {
+      "word": "eliminate",
+      "marker": ""
+    },
+    {
+      "word": "elite",
+      "marker": ""
+    },
+    {
+      "word": "else",
+      "marker": "**"
+    },
+    {
+      "word": "embarrass",
+      "marker": "**"
+    },
+    {
+      "word": "embassy",
+      "marker": ""
+    },
+    {
+      "word": "embrace",
+      "marker": ""
+    },
+    {
+      "word": "emerge",
+      "marker": ""
+    },
+    {
+      "word": "emergency",
+      "marker": ""
+    },
+    {
+      "word": "emit",
+      "marker": ""
+    },
+    {
+      "word": "emotion",
+      "marker": "**"
+    },
+    {
+      "word": "emphasis",
+      "marker": ""
+    },
+    {
+      "word": "emphasize",
+      "marker": "**"
+    },
+    {
+      "word": "empire",
+      "marker": "**"
+    },
+    {
+      "word": "employ",
+      "marker": "**"
+    },
+    {
+      "word": "empty",
+      "marker": "**"
+    },
+    {
+      "word": "encounter",
+      "marker": ""
+    },
+    {
+      "word": "end",
+      "marker": "*"
+    },
+    {
+      "word": "endure",
+      "marker": ""
+    },
+    {
+      "word": "enemy",
+      "marker": "**"
+    },
+    {
+      "word": "energy",
+      "marker": "*"
+    },
+    {
+      "word": "engage",
+      "marker": "**"
+    },
+    {
+      "word": "engine",
+      "marker": "**"
+    },
+    {
+      "word": "engineer",
+      "marker": "**"
+    },
+    {
+      "word": "enhance",
+      "marker": ""
+    },
+    {
+      "word": "enormous",
+      "marker": "**"
+    },
+    {
+      "word": "enough",
+      "marker": "*"
+    },
+    {
+      "word": "enter",
+      "marker": "*"
+    },
+    {
+      "word": "enterprise",
+      "marker": ""
+    },
+    {
+      "word": "entertain",
+      "marker": "**"
+    },
+    {
+      "word": "enthusiastic",
+      "marker": ""
+    },
+    {
+      "word": "entire",
+      "marker": "**"
+    },
+    {
+      "word": "entry",
+      "marker": ""
+    },
+    {
+      "word": "envelope",
+      "marker": "**"
+    },
+    {
+      "word": "environ",
+      "marker": ""
+    },
+    {
+      "word": "envy",
+      "marker": ""
+    },
+    {
+      "word": "equal",
+      "marker": "**"
+    },
+    {
+      "word": "equip",
+      "marker": ""
+    },
+    {
+      "word": "era",
+      "marker": ""
+    },
+    {
+      "word": "erase",
+      "marker": ""
+    },
+    {
+      "word": "erect",
+      "marker": ""
+    },
+    {
+      "word": "err",
+      "marker": ""
+    },
+    {
+      "word": "escape",
+      "marker": "**"
+    },
+    {
+      "word": "especial",
+      "marker": "**"
+    },
+    {
+      "word": "essay",
+      "marker": "**"
+    },
+    {
+      "word": "essence",
+      "marker": ""
+    },
+    {
+      "word": "establish",
+      "marker": "**"
+    },
+    {
+      "word": "estate",
+      "marker": ""
+    },
+    {
+      "word": "estimate",
+      "marker": "**"
+    },
+    {
+      "word": "ethic",
+      "marker": ""
+    },
+    {
+      "word": "ethnic",
+      "marker": ""
+    },
+    {
+      "word": "evacuate",
+      "marker": ""
+    },
+    {
+      "word": "evaluate",
+      "marker": ""
+    },
+    {
+      "word": "even",
+      "marker": "**"
+    },
+    {
+      "word": "evening",
+      "marker": "*"
+    },
+    {
+      "word": "event",
+      "marker": "**"
+    },
+    {
+      "word": "ever",
+      "marker": "**"
+    },
+    {
+      "word": "every",
+      "marker": "*"
+    },
+    {
+      "word": "evidence",
+      "marker": "**"
+    },
+    {
+      "word": "evil",
+      "marker": "**"
+    },
+    {
+      "word": "evitable",
+      "marker": ""
+    },
+    {
+      "word": "evolution",
+      "marker": ""
+    },
+    {
+      "word": "evolve",
+      "marker": ""
+    },
+    {
+      "word": "exact",
+      "marker": "**"
+    },
+    {
+      "word": "exaggerate",
+      "marker": ""
+    },
+    {
+      "word": "examine",
+      "marker": "**"
+    },
+    {
+      "word": "example",
+      "marker": "*"
+    },
+    {
+      "word": "exceed",
+      "marker": ""
+    },
+    {
+      "word": "excel",
+      "marker": ""
+    },
+    {
+      "word": "except",
+      "marker": "**"
+    },
+    {
+      "word": "excess",
+      "marker": ""
+    },
+    {
+      "word": "exchange",
+      "marker": "**"
+    },
+    {
+      "word": "excite",
+      "marker": "**"
+    },
+    {
+      "word": "exclude",
+      "marker": ""
+    },
+    {
+      "word": "excuse",
+      "marker": "**"
+    },
+    {
+      "word": "executive",
+      "marker": ""
+    },
+    {
+      "word": "exercise",
+      "marker": "*"
+    },
+    {
+      "word": "exhaust",
+      "marker": "**"
+    },
+    {
+      "word": "exhibit",
+      "marker": ""
+    },
+    {
+      "word": "exist",
+      "marker": "**"
+    },
+    {
+      "word": "exit",
+      "marker": "**"
+    },
+    {
+      "word": "exotic",
+      "marker": ""
+    },
+    {
+      "word": "expand",
+      "marker": "**"
+    },
+    {
+      "word": "expect",
+      "marker": "**"
+    },
+    {
+      "word": "expense",
+      "marker": "**"
+    },
+    {
+      "word": "experience",
+      "marker": "**"
+    },
+    {
+      "word": "experiment",
+      "marker": "**"
+    },
+    {
+      "word": "expert",
+      "marker": "**"
+    },
+    {
+      "word": "expertise",
+      "marker": ""
+    },
+    {
+      "word": "explain",
+      "marker": "**"
+    },
+    {
+      "word": "explicit",
+      "marker": ""
+    },
+    {
+      "word": "explode",
+      "marker": ""
+    },
+    {
+      "word": "explore",
+      "marker": ""
+    },
+    {
+      "word": "export",
+      "marker": ""
+    },
+    {
+      "word": "expose",
+      "marker": "**"
+    },
+    {
+      "word": "express",
+      "marker": "**"
+    },
+    {
+      "word": "extend",
+      "marker": "**"
+    },
+    {
+      "word": "extent",
+      "marker": ""
+    },
+    {
+      "word": "external",
+      "marker": ""
+    },
+    {
+      "word": "extinct",
+      "marker": ""
+    },
+    {
+      "word": "extra",
+      "marker": "**"
+    },
+    {
+      "word": "extract",
+      "marker": ""
+    },
+    {
+      "word": "extraordinary",
+      "marker": ""
+    },
+    {
+      "word": "extreme",
+      "marker": "**"
+    },
+    {
+      "word": "eye",
+      "marker": "*"
+    },
+    {
+      "word": "eyebrow",
+      "marker": ""
+    },
+    {
+      "word": "fabric",
+      "marker": ""
+    },
+    {
+      "word": "face",
+      "marker": "*"
+    },
+    {
+      "word": "facilitate",
+      "marker": ""
+    },
+    {
+      "word": "facility",
+      "marker": ""
+    },
+    {
+      "word": "fact",
+      "marker": "*"
+    },
+    {
+      "word": "factor",
+      "marker": "**"
+    },
+    {
+      "word": "factory",
+      "marker": "**"
+    },
+    {
+      "word": "faculty",
+      "marker": ""
+    },
+    {
+      "word": "fade",
+      "marker": ""
+    },
+    {
+      "word": "fail",
+      "marker": "*"
+    },
+    {
+      "word": "faint",
+      "marker": "**"
+    },
+    {
+      "word": "fair",
+      "marker": "**"
+    },
+    {
+      "word": "faith",
+      "marker": "**"
+    },
+    {
+      "word": "fall",
+      "marker": "*"
+    },
+    {
+      "word": "false",
+      "marker": ""
+    },
+    {
+      "word": "fame",
+      "marker": ""
+    },
+    {
+      "word": "familiar",
+      "marker": "**"
+    },
+    {
+      "word": "family",
+      "marker": "*"
+    },
+    {
+      "word": "fan",
+      "marker": "*"
+    },
+    {
+      "word": "fancy",
+      "marker": "**"
+    },
+    {
+      "word": "fantastic",
+      "marker": "**"
+    },
+    {
+      "word": "far",
+      "marker": "*"
+    },
+    {
+      "word": "fare",
+      "marker": ""
+    },
+    {
+      "word": "farm",
+      "marker": "*"
+    },
+    {
+      "word": "fascinate",
+      "marker": "**"
+    },
+    {
+      "word": "fashion",
+      "marker": "**"
+    },
+    {
+      "word": "fast",
+      "marker": "*"
+    },
+    {
+      "word": "fasten",
+      "marker": ""
+    },
+    {
+      "word": "fat",
+      "marker": "*"
+    },
+    {
+      "word": "fate",
+      "marker": ""
+    },
+    {
+      "word": "father",
+      "marker": "*"
+    },
+    {
+      "word": "fault",
+      "marker": "**"
+    },
+    {
+      "word": "favor",
+      "marker": "**"
+    },
+    {
+      "word": "favorite",
+      "marker": "*"
+    },
+    {
+      "word": "fear",
+      "marker": "**"
+    },
+    {
+      "word": "feature",
+      "marker": "**"
+    },
+    {
+      "word": "federal",
+      "marker": ""
+    },
+    {
+      "word": "fee",
+      "marker": "**"
+    },
+    {
+      "word": "feed",
+      "marker": "**"
+    },
+    {
+      "word": "feel",
+      "marker": "*"
+    },
+    {
+      "word": "fellow",
+      "marker": "**"
+    },
+    {
+      "word": "female",
+      "marker": "**"
+    },
+    {
+      "word": "fence",
+      "marker": "**"
+    },
+    {
+      "word": "ferry",
+      "marker": ""
+    },
+    {
+      "word": "fertile",
+      "marker": ""
+    },
+    {
+      "word": "festival",
+      "marker": "*"
+    },
+    {
+      "word": "fever",
+      "marker": "**"
+    },
+    {
+      "word": "few",
+      "marker": "**"
+    },
+    {
+      "word": "fiber",
+      "marker": ""
+    },
+    {
+      "word": "fiction",
+      "marker": ""
+    },
+    {
+      "word": "field",
+      "marker": "*"
+    },
+    {
+      "word": "fierce",
+      "marker": ""
+    },
+    {
+      "word": "fight",
+      "marker": "*"
+    },
+    {
+      "word": "figure",
+      "marker": "**"
+    },
+    {
+      "word": "file",
+      "marker": "*"
+    },
+    {
+      "word": "fill",
+      "marker": "*"
+    },
+    {
+      "word": "film",
+      "marker": "*"
+    },
+    {
+      "word": "filter",
+      "marker": ""
+    },
+    {
+      "word": "final",
+      "marker": "**"
+    },
+    {
+      "word": "finance",
+      "marker": "**"
+    },
+    {
+      "word": "find",
+      "marker": "*"
+    },
+    {
+      "word": "fine",
+      "marker": "*"
+    },
+    {
+      "word": "finger",
+      "marker": "*"
+    },
+    {
+      "word": "finish",
+      "marker": "*"
+    },
+    {
+      "word": "finite",
+      "marker": ""
+    },
+    {
+      "word": "fire",
+      "marker": "*"
+    },
+    {
+      "word": "firm",
+      "marker": "**"
+    },
+    {
+      "word": "first",
+      "marker": "*"
+    },
+    {
+      "word": "fish",
+      "marker": "*"
+    },
+    {
+      "word": "fit",
+      "marker": "**"
+    },
+    {
+      "word": "five",
+      "marker": "*"
+    },
+    {
+      "word": "fix",
+      "marker": "*"
+    },
+    {
+      "word": "flag",
+      "marker": "**"
+    },
+    {
+      "word": "flame",
+      "marker": "**"
+    },
+    {
+      "word": "flash",
+      "marker": "**"
+    },
+    {
+      "word": "flat",
+      "marker": "**"
+    },
+    {
+      "word": "flavor",
+      "marker": ""
+    },
+    {
+      "word": "flaw",
+      "marker": ""
+    },
+    {
+      "word": "flee",
+      "marker": ""
+    },
+    {
+      "word": "flesh",
+      "marker": ""
+    },
+    {
+      "word": "flexible",
+      "marker": ""
+    },
+    {
+      "word": "flight",
+      "marker": "**"
+    },
+    {
+      "word": "flip",
+      "marker": ""
+    },
+    {
+      "word": "float",
+      "marker": "**"
+    },
+    {
+      "word": "flock",
+      "marker": ""
+    },
+    {
+      "word": "flood",
+      "marker": "**"
+    },
+    {
+      "word": "floor",
+      "marker": "*"
+    },
+    {
+      "word": "flourish",
+      "marker": ""
+    },
+    {
+      "word": "flow",
+      "marker": "**"
+    },
+    {
+      "word": "flower",
+      "marker": "*"
+    },
+    {
+      "word": "flush",
+      "marker": ""
+    },
+    {
+      "word": "fly",
+      "marker": "*"
+    },
+    {
+      "word": "focus",
+      "marker": "*"
+    },
+    {
+      "word": "fog",
+      "marker": "**"
+    },
+    {
+      "word": "fold",
+      "marker": "**"
+    },
+    {
+      "word": "folk",
+      "marker": "**"
+    },
+    {
+      "word": "follow",
+      "marker": "**"
+    },
+    {
+      "word": "fond",
+      "marker": ""
+    },
+    {
+      "word": "food",
+      "marker": "*"
+    },
+    {
+      "word": "fool",
+      "marker": "*"
+    },
+    {
+      "word": "foot",
+      "marker": "*"
+    },
+    {
+      "word": "football",
+      "marker": "*"
+    },
+    {
+      "word": "for",
+      "marker": "*"
+    },
+    {
+      "word": "forbid",
+      "marker": ""
+    },
+    {
+      "word": "force",
+      "marker": "**"
+    },
+    {
+      "word": "forecast",
+      "marker": ""
+    },
+    {
+      "word": "forehead",
+      "marker": ""
+    },
+    {
+      "word": "foreign",
+      "marker": "**"
+    },
+    {
+      "word": "forest",
+      "marker": "*"
+    },
+    {
+      "word": "forever",
+      "marker": "**"
+    },
+    {
+      "word": "forget",
+      "marker": "*"
+    },
+    {
+      "word": "forgive",
+      "marker": "**"
+    },
+    {
+      "word": "fork",
+      "marker": "*"
+    },
+    {
+      "word": "form",
+      "marker": "*"
+    },
+    {
+      "word": "format",
+      "marker": ""
+    },
+    {
+      "word": "former",
+      "marker": ""
+    },
+    {
+      "word": "formula",
+      "marker": ""
+    },
+    {
+      "word": "forth",
+      "marker": "**"
+    },
+    {
+      "word": "fortunate",
+      "marker": "**"
+    },
+    {
+      "word": "fortune",
+      "marker": "**"
+    },
+    {
+      "word": "forward",
+      "marker": "**"
+    },
+    {
+      "word": "foster",
+      "marker": ""
+    },
+    {
+      "word": "found",
+      "marker": "**"
+    },
+    {
+      "word": "fountain",
+      "marker": ""
+    },
+    {
+      "word": "four",
+      "marker": "*"
+    },
+    {
+      "word": "fox",
+      "marker": "*"
+    },
+    {
+      "word": "fraction",
+      "marker": ""
+    },
+    {
+      "word": "frame",
+      "marker": "**"
+    },
+    {
+      "word": "framework",
+      "marker": ""
+    },
+    {
+      "word": "frankly",
+      "marker": "**"
+    },
+    {
+      "word": "free",
+      "marker": "*"
+    },
+    {
+      "word": "freeze",
+      "marker": "**"
+    },
+    {
+      "word": "frequent",
+      "marker": ""
+    },
+    {
+      "word": "fresh",
+      "marker": "*"
+    },
+    {
+      "word": "friend",
+      "marker": "*"
+    },
+    {
+      "word": "fright",
+      "marker": "**"
+    },
+    {
+      "word": "frog",
+      "marker": "**"
+    },
+    {
+      "word": "from",
+      "marker": "*"
+    },
+    {
+      "word": "front",
+      "marker": "*"
+    },
+    {
+      "word": "frost",
+      "marker": ""
+    },
+    {
+      "word": "frown",
+      "marker": ""
+    },
+    {
+      "word": "fruit",
+      "marker": "*"
+    },
+    {
+      "word": "frustrate",
+      "marker": "**"
+    },
+    {
+      "word": "fry",
+      "marker": "**"
+    },
+    {
+      "word": "fuel",
+      "marker": ""
+    },
+    {
+      "word": "fulfil",
+      "marker": ""
+    },
+    {
+      "word": "full",
+      "marker": "*"
+    },
+    {
+      "word": "fun",
+      "marker": "*"
+    },
+    {
+      "word": "function",
+      "marker": "**"
+    },
+    {
+      "word": "fund",
+      "marker": "**"
+    },
+    {
+      "word": "fundamental",
+      "marker": ""
+    },
+    {
+      "word": "funeral",
+      "marker": ""
+    },
+    {
+      "word": "fur",
+      "marker": "**"
+    },
+    {
+      "word": "furnish",
+      "marker": ""
+    },
+    {
+      "word": "furniture",
+      "marker": "**"
+    },
+    {
+      "word": "furthermore",
+      "marker": ""
+    },
+    {
+      "word": "fury",
+      "marker": ""
+    },
+    {
+      "word": "fuse",
+      "marker": ""
+    },
+    {
+      "word": "future",
+      "marker": "*"
+    },
+    {
+      "word": "gain",
+      "marker": "**"
+    },
+    {
+      "word": "gallery",
+      "marker": ""
+    },
+    {
+      "word": "gamble",
+      "marker": ""
+    },
+    {
+      "word": "game",
+      "marker": "*"
+    },
+    {
+      "word": "gang",
+      "marker": ""
+    },
+    {
+      "word": "gap",
+      "marker": ""
+    },
+    {
+      "word": "garage",
+      "marker": "**"
+    },
+    {
+      "word": "garden",
+      "marker": "*"
+    },
+    {
+      "word": "gas",
+      "marker": "*"
+    },
+    {
+      "word": "gasoline",
+      "marker": ""
+    },
+    {
+      "word": "gate",
+      "marker": "**"
+    },
+    {
+      "word": "gather",
+      "marker": "**"
+    },
+    {
+      "word": "gaze",
+      "marker": ""
+    },
+    {
+      "word": "gear",
+      "marker": "**"
+    },
+    {
+      "word": "gender",
+      "marker": ""
+    },
+    {
+      "word": "gene",
+      "marker": ""
+    },
+    {
+      "word": "general",
+      "marker": "**"
+    },
+    {
+      "word": "generate",
+      "marker": ""
+    },
+    {
+      "word": "generous",
+      "marker": ""
+    },
+    {
+      "word": "genius",
+      "marker": ""
+    },
+    {
+      "word": "gentle",
+      "marker": "**"
+    },
+    {
+      "word": "gentleman",
+      "marker": "*"
+    },
+    {
+      "word": "genuine",
+      "marker": ""
+    },
+    {
+      "word": "geography",
+      "marker": ""
+    },
+    {
+      "word": "geology",
+      "marker": ""
+    },
+    {
+      "word": "gesture",
+      "marker": "**"
+    },
+    {
+      "word": "get",
+      "marker": "*"
+    },
+    {
+      "word": "ghost",
+      "marker": "**"
+    },
+    {
+      "word": "giant",
+      "marker": "**"
+    },
+    {
+      "word": "gift",
+      "marker": "**"
+    },
+    {
+      "word": "giraffe",
+      "marker": "**"
+    },
+    {
+      "word": "girl",
+      "marker": "*"
+    },
+    {
+      "word": "give",
+      "marker": "*"
+    },
+    {
+      "word": "glad",
+      "marker": "*"
+    },
+    {
+      "word": "glance",
+      "marker": "**"
+    },
+    {
+      "word": "glare",
+      "marker": ""
+    },
+    {
+      "word": "glass",
+      "marker": "*"
+    },
+    {
+      "word": "globe",
+      "marker": ""
+    },
+    {
+      "word": "glory",
+      "marker": "**"
+    },
+    {
+      "word": "glove",
+      "marker": "**"
+    },
+    {
+      "word": "glow",
+      "marker": ""
+    },
+    {
+      "word": "glue",
+      "marker": "**"
+    },
+    {
+      "word": "go",
+      "marker": "*"
+    },
+    {
+      "word": "goal",
+      "marker": "*"
+    },
+    {
+      "word": "goat",
+      "marker": ""
+    },
+    {
+      "word": "god",
+      "marker": "*"
+    },
+    {
+      "word": "gold",
+      "marker": "*"
+    },
+    {
+      "word": "golf",
+      "marker": "**"
+    },
+    {
+      "word": "good",
+      "marker": "*"
+    },
+    {
+      "word": "goodbye",
+      "marker": "*"
+    },
+    {
+      "word": "gorgeous",
+      "marker": "**"
+    },
+    {
+      "word": "govern",
+      "marker": "**"
+    },
+    {
+      "word": "grab",
+      "marker": "**"
+    },
+    {
+      "word": "grace",
+      "marker": "**"
+    },
+    {
+      "word": "grade",
+      "marker": "**"
+    },
+    {
+      "word": "graduate",
+      "marker": ""
+    },
+    {
+      "word": "grain",
+      "marker": ""
+    },
+    {
+      "word": "grand",
+      "marker": "**"
+    },
+    {
+      "word": "grandfather",
+      "marker": "*"
+    },
+    {
+      "word": "grant",
+      "marker": "**"
+    },
+    {
+      "word": "grape",
+      "marker": "*"
+    },
+    {
+      "word": "graph",
+      "marker": "**"
+    },
+    {
+      "word": "grasp",
+      "marker": ""
+    },
+    {
+      "word": "grass",
+      "marker": "*"
+    },
+    {
+      "word": "grateful",
+      "marker": ""
+    },
+    {
+      "word": "grave",
+      "marker": ""
+    },
+    {
+      "word": "gray",
+      "marker": "*"
+    },
+    {
+      "word": "great",
+      "marker": "*"
+    },
+    {
+      "word": "greed",
+      "marker": ""
+    },
+    {
+      "word": "green",
+      "marker": "*"
+    },
+    {
+      "word": "greet",
+      "marker": "**"
+    },
+    {
+      "word": "grief",
+      "marker": ""
+    },
+    {
+      "word": "grip",
+      "marker": ""
+    },
+    {
+      "word": "grocery",
+      "marker": "**"
+    },
+    {
+      "word": "gross",
+      "marker": ""
+    },
+    {
+      "word": "ground",
+      "marker": "*"
+    },
+    {
+      "word": "group",
+      "marker": "*"
+    },
+    {
+      "word": "grow",
+      "marker": "*"
+    },
+    {
+      "word": "guarantee",
+      "marker": "**"
+    },
+    {
+      "word": "guard",
+      "marker": "**"
+    },
+    {
+      "word": "guardian",
+      "marker": ""
+    },
+    {
+      "word": "guess",
+      "marker": "*"
+    },
+    {
+      "word": "guest",
+      "marker": "**"
+    },
+    {
+      "word": "guide",
+      "marker": "**"
+    },
+    {
+      "word": "guideline",
+      "marker": ""
+    },
+    {
+      "word": "guilt",
+      "marker": "**"
+    },
+    {
+      "word": "guitar",
+      "marker": "*"
+    },
+    {
+      "word": "gulf",
+      "marker": ""
+    },
+    {
+      "word": "gum",
+      "marker": "*"
+    },
+    {
+      "word": "gun",
+      "marker": "**"
+    },
+    {
+      "word": "guy",
+      "marker": "*"
+    },
+    {
+      "word": "gymnasium",
+      "marker": ""
+    },
+    {
+      "word": "habit",
+      "marker": "*"
+    },
+    {
+      "word": "habitat",
+      "marker": ""
+    },
+    {
+      "word": "hair",
+      "marker": "*"
+    },
+    {
+      "word": "half",
+      "marker": "**"
+    },
+    {
+      "word": "hall",
+      "marker": "**"
+    },
+    {
+      "word": "halt",
+      "marker": ""
+    },
+    {
+      "word": "hamburger",
+      "marker": "*"
+    },
+    {
+      "word": "hammer",
+      "marker": ""
+    },
+    {
+      "word": "hand",
+      "marker": "*"
+    },
+    {
+      "word": "handicap",
+      "marker": ""
+    },
+    {
+      "word": "handle",
+      "marker": "**"
+    },
+    {
+      "word": "handsome",
+      "marker": "**"
+    },
+    {
+      "word": "hang",
+      "marker": "*"
+    },
+    {
+      "word": "happen",
+      "marker": "**"
+    },
+    {
+      "word": "happy",
+      "marker": "*"
+    },
+    {
+      "word": "harbor",
+      "marker": ""
+    },
+    {
+      "word": "hard",
+      "marker": "*"
+    },
+    {
+      "word": "harm",
+      "marker": "**"
+    },
+    {
+      "word": "harmony",
+      "marker": ""
+    },
+    {
+      "word": "harsh",
+      "marker": ""
+    },
+    {
+      "word": "harvest",
+      "marker": ""
+    },
+    {
+      "word": "hat",
+      "marker": "*"
+    },
+    {
+      "word": "hate",
+      "marker": "*"
+    },
+    {
+      "word": "haunt",
+      "marker": ""
+    },
+    {
+      "word": "have",
+      "marker": "*"
+    },
+    {
+      "word": "hazard",
+      "marker": ""
+    },
+    {
+      "word": "he",
+      "marker": "*"
+    },
+    {
+      "word": "head",
+      "marker": "*"
+    },
+    {
+      "word": "headquarters",
+      "marker": ""
+    },
+    {
+      "word": "heal",
+      "marker": ""
+    },
+    {
+      "word": "health",
+      "marker": "**"
+    },
+    {
+      "word": "hear",
+      "marker": "**"
+    },
+    {
+      "word": "heart",
+      "marker": "*"
+    },
+    {
+      "word": "heat",
+      "marker": "*"
+    },
+    {
+      "word": "heaven",
+      "marker": "**"
+    },
+    {
+      "word": "heavy",
+      "marker": "*"
+    },
+    {
+      "word": "heel",
+      "marker": ""
+    },
+    {
+      "word": "height",
+      "marker": "**"
+    },
+    {
+      "word": "heir",
+      "marker": ""
+    },
+    {
+      "word": "helicopter",
+      "marker": "**"
+    },
+    {
+      "word": "hell",
+      "marker": "**"
+    },
+    {
+      "word": "hello",
+      "marker": "*"
+    },
+    {
+      "word": "helmet",
+      "marker": "*"
+    },
+    {
+      "word": "help",
+      "marker": "*"
+    },
+    {
+      "word": "hence",
+      "marker": ""
+    },
+    {
+      "word": "here",
+      "marker": "*"
+    },
+    {
+      "word": "heritage",
+      "marker": ""
+    },
+    {
+      "word": "hero",
+      "marker": "*"
+    },
+    {
+      "word": "hesitate",
+      "marker": "**"
+    },
+    {
+      "word": "hide",
+      "marker": "**"
+    },
+    {
+      "word": "hierarchy",
+      "marker": ""
+    },
+    {
+      "word": "high",
+      "marker": "*"
+    },
+    {
+      "word": "highlight",
+      "marker": ""
+    },
+    {
+      "word": "highway",
+      "marker": "**"
+    },
+    {
+      "word": "hike",
+      "marker": "*"
+    },
+    {
+      "word": "hill",
+      "marker": "*"
+    },
+    {
+      "word": "hint",
+      "marker": "**"
+    },
+    {
+      "word": "hire",
+      "marker": "**"
+    },
+    {
+      "word": "history",
+      "marker": "*"
+    },
+    {
+      "word": "hit",
+      "marker": "*"
+    },
+    {
+      "word": "hobby",
+      "marker": "*"
+    },
+    {
+      "word": "hold",
+      "marker": "*"
+    },
+    {
+      "word": "hole",
+      "marker": "**"
+    },
+    {
+      "word": "holiday",
+      "marker": "*"
+    },
+    {
+      "word": "holy",
+      "marker": ""
+    },
+    {
+      "word": "home",
+      "marker": "*"
+    },
+    {
+      "word": "homework",
+      "marker": "*"
+    },
+    {
+      "word": "honest",
+      "marker": "*"
+    },
+    {
+      "word": "honey",
+      "marker": "**"
+    },
+    {
+      "word": "honor",
+      "marker": "**"
+    },
+    {
+      "word": "hook",
+      "marker": ""
+    },
+    {
+      "word": "hope",
+      "marker": "*"
+    },
+    {
+      "word": "horizon",
+      "marker": ""
+    },
+    {
+      "word": "horror",
+      "marker": ""
+    },
+    {
+      "word": "horse",
+      "marker": "*"
+    },
+    {
+      "word": "hospital",
+      "marker": "*"
+    },
+    {
+      "word": "host",
+      "marker": ""
+    },
+    {
+      "word": "hostile",
+      "marker": ""
+    },
+    {
+      "word": "hot",
+      "marker": "*"
+    },
+    {
+      "word": "hotel",
+      "marker": "**"
+    },
+    {
+      "word": "hour",
+      "marker": "*"
+    },
+    {
+      "word": "house",
+      "marker": "*"
+    },
+    {
+      "word": "household",
+      "marker": ""
+    },
+    {
+      "word": "how",
+      "marker": "*"
+    },
+    {
+      "word": "however",
+      "marker": "*"
+    },
+    {
+      "word": "hug",
+      "marker": "**"
+    },
+    {
+      "word": "huge",
+      "marker": "**"
+    },
+    {
+      "word": "human",
+      "marker": "*"
+    },
+    {
+      "word": "humor",
+      "marker": "**"
+    },
+    {
+      "word": "hundred",
+      "marker": "*"
+    },
+    {
+      "word": "hunger",
+      "marker": "**"
+    },
+    {
+      "word": "hunt",
+      "marker": "*"
+    },
+    {
+      "word": "hurry",
+      "marker": "*"
+    },
+    {
+      "word": "hurt",
+      "marker": "**"
+    },
+    {
+      "word": "husband",
+      "marker": "*"
+    },
+    {
+      "word": "hut",
+      "marker": ""
+    },
+    {
+      "word": "hypothesis",
+      "marker": ""
+    },
+    {
+      "word": "i",
+      "marker": "*"
+    },
+    {
+      "word": "ice",
+      "marker": "*"
+    },
+    {
+      "word": "idea",
+      "marker": "*"
+    },
+    {
+      "word": "ideal",
+      "marker": ""
+    },
+    {
+      "word": "identical",
+      "marker": ""
+    },
+    {
+      "word": "identity",
+      "marker": "**"
+    },
+    {
+      "word": "ideology",
+      "marker": ""
+    },
+    {
+      "word": "if",
+      "marker": "*"
+    },
+    {
+      "word": "ignore",
+      "marker": "**"
+    },
+    {
+      "word": "ill",
+      "marker": "**"
+    },
+    {
+      "word": "illude",
+      "marker": ""
+    },
+    {
+      "word": "illustrate",
+      "marker": "**"
+    },
+    {
+      "word": "image",
+      "marker": "*"
+    },
+    {
+      "word": "imagine",
+      "marker": "**"
+    },
+    {
+      "word": "imitate",
+      "marker": ""
+    },
+    {
+      "word": "immediate",
+      "marker": "**"
+    },
+    {
+      "word": "immense",
+      "marker": ""
+    },
+    {
+      "word": "immigrate",
+      "marker": ""
+    },
+    {
+      "word": "immune",
+      "marker": ""
+    },
+    {
+      "word": "impact",
+      "marker": ""
+    },
+    {
+      "word": "imperial",
+      "marker": ""
+    },
+    {
+      "word": "implement",
+      "marker": ""
+    },
+    {
+      "word": "imply",
+      "marker": ""
+    },
+    {
+      "word": "import",
+      "marker": ""
+    },
+    {
+      "word": "impose",
+      "marker": ""
+    },
+    {
+      "word": "impress",
+      "marker": "**"
+    },
+    {
+      "word": "improve",
+      "marker": "**"
+    },
+    {
+      "word": "in",
+      "marker": "*"
+    },
+    {
+      "word": "incentive",
+      "marker": ""
+    },
+    {
+      "word": "incident",
+      "marker": ""
+    },
+    {
+      "word": "incline",
+      "marker": ""
+    },
+    {
+      "word": "include",
+      "marker": "**"
+    },
+    {
+      "word": "income",
+      "marker": "**"
+    },
+    {
+      "word": "incorporate",
+      "marker": ""
+    },
+    {
+      "word": "increase",
+      "marker": "**"
+    },
+    {
+      "word": "indeed",
+      "marker": "**"
+    },
+    {
+      "word": "index",
+      "marker": ""
+    },
+    {
+      "word": "indicate",
+      "marker": "**"
+    },
+    {
+      "word": "individual",
+      "marker": "**"
+    },
+    {
+      "word": "induce",
+      "marker": ""
+    },
+    {
+      "word": "industry",
+      "marker": "**"
+    },
+    {
+      "word": "infant",
+      "marker": ""
+    },
+    {
+      "word": "infect",
+      "marker": ""
+    },
+    {
+      "word": "infer",
+      "marker": ""
+    },
+    {
+      "word": "inflate",
+      "marker": ""
+    },
+    {
+      "word": "influence",
+      "marker": "**"
+    },
+    {
+      "word": "inform",
+      "marker": "**"
+    },
+    {
+      "word": "ingredient",
+      "marker": ""
+    },
+    {
+      "word": "inhabit",
+      "marker": ""
+    },
+    {
+      "word": "inherent",
+      "marker": ""
+    },
+    {
+      "word": "inhibit",
+      "marker": ""
+    },
+    {
+      "word": "initial",
+      "marker": ""
+    },
+    {
+      "word": "inject",
+      "marker": ""
+    },
+    {
+      "word": "injure",
+      "marker": "**"
+    },
+    {
+      "word": "inn",
+      "marker": ""
+    },
+    {
+      "word": "innocent",
+      "marker": "**"
+    },
+    {
+      "word": "innovate",
+      "marker": ""
+    },
+    {
+      "word": "input",
+      "marker": ""
+    },
+    {
+      "word": "inquire",
+      "marker": ""
+    },
+    {
+      "word": "insect",
+      "marker": ""
+    },
+    {
+      "word": "insert",
+      "marker": ""
+    },
+    {
+      "word": "inside",
+      "marker": "*"
+    },
+    {
+      "word": "insight",
+      "marker": ""
+    },
+    {
+      "word": "insist",
+      "marker": "**"
+    },
+    {
+      "word": "inspect",
+      "marker": "**"
+    },
+    {
+      "word": "inspire",
+      "marker": ""
+    },
+    {
+      "word": "install",
+      "marker": ""
+    },
+    {
+      "word": "instance",
+      "marker": "**"
+    },
+    {
+      "word": "instant",
+      "marker": "**"
+    },
+    {
+      "word": "instead",
+      "marker": "**"
+    },
+    {
+      "word": "instinct",
+      "marker": ""
+    },
+    {
+      "word": "institute",
+      "marker": ""
+    },
+    {
+      "word": "instruct",
+      "marker": "**"
+    },
+    {
+      "word": "instrument",
+      "marker": "**"
+    },
+    {
+      "word": "insult",
+      "marker": ""
+    },
+    {
+      "word": "insure",
+      "marker": "**"
+    },
+    {
+      "word": "integrate",
+      "marker": ""
+    },
+    {
+      "word": "intellect",
+      "marker": ""
+    },
+    {
+      "word": "intelligent",
+      "marker": ""
+    },
+    {
+      "word": "intend",
+      "marker": "**"
+    },
+    {
+      "word": "intense",
+      "marker": "**"
+    },
+    {
+      "word": "intent",
+      "marker": "**"
+    },
+    {
+      "word": "interest",
+      "marker": "**"
+    },
+    {
+      "word": "interfere",
+      "marker": ""
+    },
+    {
+      "word": "interior",
+      "marker": ""
+    },
+    {
+      "word": "intermediate",
+      "marker": ""
+    },
+    {
+      "word": "internal",
+      "marker": "**"
+    },
+    {
+      "word": "internet",
+      "marker": "*"
+    },
+    {
+      "word": "interpret",
+      "marker": ""
+    },
+    {
+      "word": "interrupt",
+      "marker": "**"
+    },
+    {
+      "word": "interval",
+      "marker": ""
+    },
+    {
+      "word": "intervene",
+      "marker": ""
+    },
+    {
+      "word": "intimate",
+      "marker": ""
+    },
+    {
+      "word": "into",
+      "marker": "*"
+    },
+    {
+      "word": "intrigue",
+      "marker": ""
+    },
+    {
+      "word": "introduce",
+      "marker": "*"
+    },
+    {
+      "word": "invade",
+      "marker": ""
+    },
+    {
+      "word": "invent",
+      "marker": "**"
+    },
+    {
+      "word": "invest",
+      "marker": "**"
+    },
+    {
+      "word": "investigate",
+      "marker": "**"
+    },
+    {
+      "word": "invite",
+      "marker": "*"
+    },
+    {
+      "word": "involve",
+      "marker": "**"
+    },
+    {
+      "word": "iron",
+      "marker": "**"
+    },
+    {
+      "word": "irony",
+      "marker": ""
+    },
+    {
+      "word": "irritate",
+      "marker": ""
+    },
+    {
+      "word": "island",
+      "marker": "**"
+    },
+    {
+      "word": "isolate",
+      "marker": ""
+    },
+    {
+      "word": "issue",
+      "marker": "*"
+    },
+    {
+      "word": "it",
+      "marker": "*"
+    },
+    {
+      "word": "item",
+      "marker": "**"
+    },
+    {
+      "word": "jacket",
+      "marker": "*"
+    },
+    {
+      "word": "jail",
+      "marker": ""
+    },
+    {
+      "word": "jam",
+      "marker": "*"
+    },
+    {
+      "word": "jar",
+      "marker": ""
+    },
+    {
+      "word": "jaw",
+      "marker": "**"
+    },
+    {
+      "word": "jeans",
+      "marker": "**"
+    },
+    {
+      "word": "job",
+      "marker": "*"
+    },
+    {
+      "word": "jog",
+      "marker": ""
+    },
+    {
+      "word": "join",
+      "marker": "*"
+    },
+    {
+      "word": "joint",
+      "marker": ""
+    },
+    {
+      "word": "joke",
+      "marker": "**"
+    },
+    {
+      "word": "journal",
+      "marker": ""
+    },
+    {
+      "word": "journey",
+      "marker": "**"
+    },
+    {
+      "word": "joy",
+      "marker": "**"
+    },
+    {
+      "word": "judge",
+      "marker": "**"
+    },
+    {
+      "word": "juice",
+      "marker": "*"
+    },
+    {
+      "word": "jump",
+      "marker": "*"
+    },
+    {
+      "word": "junior",
+      "marker": "**"
+    },
+    {
+      "word": "jury",
+      "marker": ""
+    },
+    {
+      "word": "just",
+      "marker": "*"
+    },
+    {
+      "word": "justice",
+      "marker": "**"
+    },
+    {
+      "word": "keen",
+      "marker": ""
+    },
+    {
+      "word": "keep",
+      "marker": "*"
+    },
+    {
+      "word": "key",
+      "marker": "*"
+    },
+    {
+      "word": "kick",
+      "marker": "*"
+    },
+    {
+      "word": "kid",
+      "marker": "*"
+    },
+    {
+      "word": "kill",
+      "marker": "*"
+    },
+    {
+      "word": "kind",
+      "marker": "*"
+    },
+    {
+      "word": "king",
+      "marker": "*"
+    },
+    {
+      "word": "kiss",
+      "marker": "*"
+    },
+    {
+      "word": "kit",
+      "marker": ""
+    },
+    {
+      "word": "kitchen",
+      "marker": "*"
+    },
+    {
+      "word": "knee",
+      "marker": "**"
+    },
+    {
+      "word": "knife",
+      "marker": "*"
+    },
+    {
+      "word": "knight",
+      "marker": ""
+    },
+    {
+      "word": "knock",
+      "marker": "**"
+    },
+    {
+      "word": "knot",
+      "marker": ""
+    },
+    {
+      "word": "know",
+      "marker": "*"
+    },
+    {
+      "word": "knowledge",
+      "marker": "**"
+    },
+    {
+      "word": "label",
+      "marker": "**"
+    },
+    {
+      "word": "labor",
+      "marker": "**"
+    },
+    {
+      "word": "laboratory",
+      "marker": "**"
+    },
+    {
+      "word": "lack",
+      "marker": "**"
+    },
+    {
+      "word": "ladder",
+      "marker": ""
+    },
+    {
+      "word": "lady",
+      "marker": "*"
+    },
+    {
+      "word": "lake",
+      "marker": "*"
+    },
+    {
+      "word": "lamb",
+      "marker": "**"
+    },
+    {
+      "word": "lamp",
+      "marker": "**"
+    },
+    {
+      "word": "land",
+      "marker": "*"
+    },
+    {
+      "word": "landscape",
+      "marker": ""
+    },
+    {
+      "word": "lane",
+      "marker": "**"
+    },
+    {
+      "word": "language",
+      "marker": "**"
+    },
+    {
+      "word": "lap",
+      "marker": ""
+    },
+    {
+      "word": "large",
+      "marker": "*"
+    },
+    {
+      "word": "laser",
+      "marker": "*"
+    },
+    {
+      "word": "last",
+      "marker": "*"
+    },
+    {
+      "word": "late",
+      "marker": "*"
+    },
+    {
+      "word": "latter",
+      "marker": ""
+    },
+    {
+      "word": "laugh",
+      "marker": "**"
+    },
+    {
+      "word": "launch",
+      "marker": ""
+    },
+    {
+      "word": "laundry",
+      "marker": ""
+    },
+    {
+      "word": "law",
+      "marker": "**"
+    },
+    {
+      "word": "lawn",
+      "marker": "**"
+    },
+    {
+      "word": "lawyer",
+      "marker": "**"
+    },
+    {
+      "word": "lay",
+      "marker": "**"
+    },
+    {
+      "word": "lazy",
+      "marker": "*"
+    },
+    {
+      "word": "lead",
+      "marker": "**"
+    },
+    {
+      "word": "leaf",
+      "marker": "**"
+    },
+    {
+      "word": "league",
+      "marker": "**"
+    },
+    {
+      "word": "leak",
+      "marker": ""
+    },
+    {
+      "word": "lean",
+      "marker": "**"
+    },
+    {
+      "word": "leap",
+      "marker": "**"
+    },
+    {
+      "word": "learn",
+      "marker": "*"
+    },
+    {
+      "word": "lease",
+      "marker": ""
+    },
+    {
+      "word": "leather",
+      "marker": ""
+    },
+    {
+      "word": "leave",
+      "marker": "**"
+    },
+    {
+      "word": "lecture",
+      "marker": ""
+    },
+    {
+      "word": "left",
+      "marker": "*"
+    },
+    {
+      "word": "leg",
+      "marker": "*"
+    },
+    {
+      "word": "legal",
+      "marker": "**"
+    },
+    {
+      "word": "legend",
+      "marker": ""
+    },
+    {
+      "word": "legislate",
+      "marker": ""
+    },
+    {
+      "word": "legitimate",
+      "marker": ""
+    },
+    {
+      "word": "leisure",
+      "marker": ""
+    },
+    {
+      "word": "lemon",
+      "marker": "**"
+    },
+    {
+      "word": "lend",
+      "marker": "**"
+    },
+    {
+      "word": "lesson",
+      "marker": "*"
+    },
+    {
+      "word": "let",
+      "marker": "**"
+    },
+    {
+      "word": "letter",
+      "marker": "*"
+    },
+    {
+      "word": "level",
+      "marker": "**"
+    },
+    {
+      "word": "liberal",
+      "marker": ""
+    },
+    {
+      "word": "liberty",
+      "marker": ""
+    },
+    {
+      "word": "library",
+      "marker": "*"
+    },
+    {
+      "word": "license",
+      "marker": "**"
+    },
+    {
+      "word": "lid",
+      "marker": "**"
+    },
+    {
+      "word": "lie",
+      "marker": "*"
+    },
+    {
+      "word": "life",
+      "marker": "*"
+    },
+    {
+      "word": "lift",
+      "marker": "**"
+    },
+    {
+      "word": "light",
+      "marker": "*"
+    },
+    {
+      "word": "like",
+      "marker": "*"
+    },
+    {
+      "word": "likewise",
+      "marker": ""
+    },
+    {
+      "word": "limit",
+      "marker": "**"
+    },
+    {
+      "word": "line",
+      "marker": "*"
+    },
+    {
+      "word": "linguistic",
+      "marker": ""
+    },
+    {
+      "word": "link",
+      "marker": "**"
+    },
+    {
+      "word": "lion",
+      "marker": "*"
+    },
+    {
+      "word": "lip",
+      "marker": "*"
+    },
+    {
+      "word": "liquid",
+      "marker": ""
+    },
+    {
+      "word": "list",
+      "marker": "**"
+    },
+    {
+      "word": "listen",
+      "marker": "*"
+    },
+    {
+      "word": "literature",
+      "marker": ""
+    },
+    {
+      "word": "little",
+      "marker": "*"
+    },
+    {
+      "word": "live",
+      "marker": "*"
+    },
+    {
+      "word": "livingroom",
+      "marker": "**"
+    },
+    {
+      "word": "load",
+      "marker": "**"
+    },
+    {
+      "word": "loan",
+      "marker": "**"
+    },
+    {
+      "word": "local",
+      "marker": "**"
+    },
+    {
+      "word": "locate",
+      "marker": "**"
+    },
+    {
+      "word": "lock",
+      "marker": "**"
+    },
+    {
+      "word": "log",
+      "marker": "**"
+    },
+    {
+      "word": "logic",
+      "marker": ""
+    },
+    {
+      "word": "lone",
+      "marker": ""
+    },
+    {
+      "word": "long",
+      "marker": "*"
+    },
+    {
+      "word": "look",
+      "marker": "*"
+    },
+    {
+      "word": "loose",
+      "marker": "**"
+    },
+    {
+      "word": "lose",
+      "marker": "**"
+    },
+    {
+      "word": "loss",
+      "marker": "**"
+    },
+    {
+      "word": "lot",
+      "marker": "**"
+    },
+    {
+      "word": "loud",
+      "marker": "**"
+    },
+    {
+      "word": "love",
+      "marker": "*"
+    },
+    {
+      "word": "low",
+      "marker": "*"
+    },
+    {
+      "word": "loyal",
+      "marker": ""
+    },
+    {
+      "word": "luck",
+      "marker": "*"
+    },
+    {
+      "word": "lump",
+      "marker": ""
+    },
+    {
+      "word": "lunch",
+      "marker": "*"
+    },
+    {
+      "word": "luxury",
+      "marker": ""
+    },
+    {
+      "word": "machine",
+      "marker": "**"
+    },
+    {
+      "word": "mad",
+      "marker": "*"
+    },
+    {
+      "word": "magazine",
+      "marker": "**"
+    },
+    {
+      "word": "magic",
+      "marker": "**"
+    },
+    {
+      "word": "magnet",
+      "marker": ""
+    },
+    {
+      "word": "magnificent",
+      "marker": ""
+    },
+    {
+      "word": "mail",
+      "marker": "*"
+    },
+    {
+      "word": "main",
+      "marker": "**"
+    },
+    {
+      "word": "maintain",
+      "marker": "**"
+    },
+    {
+      "word": "major",
+      "marker": "**"
+    },
+    {
+      "word": "make",
+      "marker": "*"
+    },
+    {
+      "word": "male",
+      "marker": "**"
+    },
+    {
+      "word": "man",
+      "marker": "*"
+    },
+    {
+      "word": "manage",
+      "marker": "**"
+    },
+    {
+      "word": "manifest",
+      "marker": ""
+    },
+    {
+      "word": "manipulate",
+      "marker": ""
+    },
+    {
+      "word": "manner",
+      "marker": "**"
+    },
+    {
+      "word": "manufacture",
+      "marker": "**"
+    },
+    {
+      "word": "many",
+      "marker": "*"
+    },
+    {
+      "word": "map",
+      "marker": "*"
+    },
+    {
+      "word": "marathon",
+      "marker": "*"
+    },
+    {
+      "word": "margin",
+      "marker": ""
+    },
+    {
+      "word": "marine",
+      "marker": ""
+    },
+    {
+      "word": "mark",
+      "marker": "**"
+    },
+    {
+      "word": "market",
+      "marker": "*"
+    },
+    {
+      "word": "marry",
+      "marker": "*"
+    },
+    {
+      "word": "marvel",
+      "marker": "**"
+    },
+    {
+      "word": "mask",
+      "marker": "**"
+    },
+    {
+      "word": "mass",
+      "marker": "**"
+    },
+    {
+      "word": "master",
+      "marker": "**"
+    },
+    {
+      "word": "match",
+      "marker": "**"
+    },
+    {
+      "word": "mate",
+      "marker": "**"
+    },
+    {
+      "word": "mathematics",
+      "marker": "*"
+    },
+    {
+      "word": "math",
+      "marker": "*"
+    },
+    {
+      "word": "matter",
+      "marker": "**"
+    },
+    {
+      "word": "mature",
+      "marker": ""
+    },
+    {
+      "word": "maximum",
+      "marker": "**"
+    },
+    {
+      "word": "may",
+      "marker": "*"
+    },
+    {
+      "word": "maybe",
+      "marker": "**"
+    },
+    {
+      "word": "mayor",
+      "marker": ""
+    },
+    {
+      "word": "meal",
+      "marker": "**"
+    },
+    {
+      "word": "mean",
+      "marker": "**"
+    },
+    {
+      "word": "meanwhile",
+      "marker": ""
+    },
+    {
+      "word": "measure",
+      "marker": "**"
+    },
+    {
+      "word": "meat",
+      "marker": "*"
+    },
+    {
+      "word": "mechanic",
+      "marker": ""
+    },
+    {
+      "word": "mechanism",
+      "marker": ""
+    },
+    {
+      "word": "medal",
+      "marker": "*"
+    },
+    {
+      "word": "mediate",
+      "marker": ""
+    },
+    {
+      "word": "medical",
+      "marker": "**"
+    },
+    {
+      "word": "medicine",
+      "marker": "**"
+    },
+    {
+      "word": "medieval",
+      "marker": ""
+    },
+    {
+      "word": "medium",
+      "marker": ""
+    },
+    {
+      "word": "meet",
+      "marker": "*"
+    },
+    {
+      "word": "melon",
+      "marker": "**"
+    },
+    {
+      "word": "melt",
+      "marker": "**"
+    },
+    {
+      "word": "member",
+      "marker": "*"
+    },
+    {
+      "word": "memory",
+      "marker": "*"
+    },
+    {
+      "word": "mental",
+      "marker": "**"
+    },
+    {
+      "word": "mention",
+      "marker": "**"
+    },
+    {
+      "word": "menu",
+      "marker": "**"
+    },
+    {
+      "word": "merchant",
+      "marker": ""
+    },
+    {
+      "word": "mere",
+      "marker": ""
+    },
+    {
+      "word": "merge",
+      "marker": ""
+    },
+    {
+      "word": "merit",
+      "marker": ""
+    },
+    {
+      "word": "mess",
+      "marker": "**"
+    },
+    {
+      "word": "message",
+      "marker": "**"
+    },
+    {
+      "word": "metal",
+      "marker": "**"
+    },
+    {
+      "word": "method",
+      "marker": "**"
+    },
+    {
+      "word": "metropolitan",
+      "marker": ""
+    },
+    {
+      "word": "microphone",
+      "marker": ""
+    },
+    {
+      "word": "microwave",
+      "marker": "**"
+    },
+    {
+      "word": "middle",
+      "marker": "*"
+    },
+    {
+      "word": "might",
+      "marker": "*"
+    },
+    {
+      "word": "migrate",
+      "marker": ""
+    },
+    {
+      "word": "mild",
+      "marker": ""
+    },
+    {
+      "word": "military",
+      "marker": "**"
+    },
+    {
+      "word": "milk",
+      "marker": "*"
+    },
+    {
+      "word": "mill",
+      "marker": "**"
+    },
+    {
+      "word": "million",
+      "marker": ""
+    },
+    {
+      "word": "mind",
+      "marker": "*"
+    },
+    {
+      "word": "mine",
+      "marker": ""
+    },
+    {
+      "word": "mineral",
+      "marker": ""
+    },
+    {
+      "word": "minimal",
+      "marker": ""
+    },
+    {
+      "word": "minimum",
+      "marker": ""
+    },
+    {
+      "word": "ministry",
+      "marker": ""
+    },
+    {
+      "word": "minor",
+      "marker": "**"
+    },
+    {
+      "word": "minute",
+      "marker": "**"
+    },
+    {
+      "word": "miracle",
+      "marker": ""
+    },
+    {
+      "word": "mirror",
+      "marker": "**"
+    },
+    {
+      "word": "miss",
+      "marker": "*"
+    },
+    {
+      "word": "missile",
+      "marker": ""
+    },
+    {
+      "word": "mission",
+      "marker": "**"
+    },
+    {
+      "word": "mix",
+      "marker": "**"
+    },
+    {
+      "word": "mobile",
+      "marker": ""
+    },
+    {
+      "word": "mock",
+      "marker": ""
+    },
+    {
+      "word": "mode",
+      "marker": ""
+    },
+    {
+      "word": "modify",
+      "marker": ""
+    },
+    {
+      "word": "model",
+      "marker": "*"
+    },
+    {
+      "word": "moderate",
+      "marker": ""
+    },
+    {
+      "word": "modern",
+      "marker": "**"
+    },
+    {
+      "word": "modest",
+      "marker": ""
+    },
+    {
+      "word": "moist",
+      "marker": ""
+    },
+    {
+      "word": "molecule",
+      "marker": ""
+    },
+    {
+      "word": "moment",
+      "marker": "**"
+    },
+    {
+      "word": "money",
+      "marker": "*"
+    },
+    {
+      "word": "monitor",
+      "marker": "**"
+    },
+    {
+      "word": "monkey",
+      "marker": "*"
+    },
+    {
+      "word": "monster",
+      "marker": ""
+    },
+    {
+      "word": "month",
+      "marker": "*"
+    },
+    {
+      "word": "monument",
+      "marker": ""
+    },
+    {
+      "word": "mood",
+      "marker": "**"
+    },
+    {
+      "word": "moon",
+      "marker": "*"
+    },
+    {
+      "word": "moral",
+      "marker": "**"
+    },
+    {
+      "word": "moreover",
+      "marker": "**"
+    },
+    {
+      "word": "morning",
+      "marker": "*"
+    },
+    {
+      "word": "mortal",
+      "marker": ""
+    },
+    {
+      "word": "mother",
+      "marker": "*"
+    },
+    {
+      "word": "motion",
+      "marker": "**"
+    },
+    {
+      "word": "motive",
+      "marker": ""
+    },
+    {
+      "word": "motor",
+      "marker": "**"
+    },
+    {
+      "word": "mount",
+      "marker": "**"
+    },
+    {
+      "word": "mountain",
+      "marker": "*"
+    },
+    {
+      "word": "mouse",
+      "marker": "*"
+    },
+    {
+      "word": "mouth",
+      "marker": "*"
+    },
+    {
+      "word": "move",
+      "marker": "*"
+    },
+    {
+      "word": "movie",
+      "marker": "*"
+    },
+    {
+      "word": "much",
+      "marker": "*"
+    },
+    {
+      "word": "mud",
+      "marker": "**"
+    },
+    {
+      "word": "multiple",
+      "marker": ""
+    },
+    {
+      "word": "murder",
+      "marker": ""
+    },
+    {
+      "word": "muscle",
+      "marker": "**"
+    },
+    {
+      "word": "museum",
+      "marker": "**"
+    },
+    {
+      "word": "mushroom",
+      "marker": "**"
+    },
+    {
+      "word": "music",
+      "marker": "*"
+    },
+    {
+      "word": "must",
+      "marker": "*"
+    },
+    {
+      "word": "mutual",
+      "marker": ""
+    },
+    {
+      "word": "mystery",
+      "marker": "**"
+    },
+    {
+      "word": "myth",
+      "marker": ""
+    },
+    {
+      "word": "nail",
+      "marker": "**"
+    },
+    {
+      "word": "naive",
+      "marker": ""
+    },
+    {
+      "word": "naked",
+      "marker": ""
+    },
+    {
+      "word": "name",
+      "marker": "*"
+    },
+    {
+      "word": "narrate",
+      "marker": ""
+    },
+    {
+      "word": "narrow",
+      "marker": "**"
+    },
+    {
+      "word": "nasty",
+      "marker": ""
+    },
+    {
+      "word": "nation",
+      "marker": "*"
+    },
+    {
+      "word": "native",
+      "marker": "**"
+    },
+    {
+      "word": "nature",
+      "marker": "*"
+    },
+    {
+      "word": "navy",
+      "marker": "**"
+    },
+    {
+      "word": "near",
+      "marker": "*"
+    },
+    {
+      "word": "neat",
+      "marker": "**"
+    },
+    {
+      "word": "necessary",
+      "marker": "**"
+    },
+    {
+      "word": "neck",
+      "marker": "*"
+    },
+    {
+      "word": "need",
+      "marker": "*"
+    },
+    {
+      "word": "needle",
+      "marker": ""
+    },
+    {
+      "word": "negate",
+      "marker": ""
+    },
+    {
+      "word": "neglect",
+      "marker": ""
+    },
+    {
+      "word": "negotiate",
+      "marker": ""
+    },
+    {
+      "word": "neighbor",
+      "marker": "**"
+    },
+    {
+      "word": "neither",
+      "marker": "**"
+    },
+    {
+      "word": "nephew",
+      "marker": ""
+    },
+    {
+      "word": "nerve",
+      "marker": "**"
+    },
+    {
+      "word": "nest",
+      "marker": "**"
+    },
+    {
+      "word": "net",
+      "marker": "**"
+    },
+    {
+      "word": "network",
+      "marker": ""
+    },
+    {
+      "word": "neutral",
+      "marker": ""
+    },
+    {
+      "word": "never",
+      "marker": "*"
+    },
+    {
+      "word": "nevertheless",
+      "marker": ""
+    },
+    {
+      "word": "new",
+      "marker": "*"
+    },
+    {
+      "word": "news",
+      "marker": "*"
+    },
+    {
+      "word": "newspaper",
+      "marker": "*"
+    },
+    {
+      "word": "next",
+      "marker": "*"
+    },
+    {
+      "word": "nice",
+      "marker": "*"
+    },
+    {
+      "word": "night",
+      "marker": "*"
+    },
+    {
+      "word": "nightmare",
+      "marker": ""
+    },
+    {
+      "word": "nine",
+      "marker": "*"
+    },
+    {
+      "word": "no",
+      "marker": "*"
+    },
+    {
+      "word": "noble",
+      "marker": ""
+    },
+    {
+      "word": "nod",
+      "marker": ""
+    },
+    {
+      "word": "noise",
+      "marker": "**"
+    },
+    {
+      "word": "nominate",
+      "marker": ""
+    },
+    {
+      "word": "none",
+      "marker": "**"
+    },
+    {
+      "word": "nonetheless",
+      "marker": ""
+    },
+    {
+      "word": "noon",
+      "marker": "**"
+    },
+    {
+      "word": "nor",
+      "marker": "**"
+    },
+    {
+      "word": "norm",
+      "marker": ""
+    },
+    {
+      "word": "north",
+      "marker": "*"
+    },
+    {
+      "word": "nose",
+      "marker": "*"
+    },
+    {
+      "word": "not",
+      "marker": "*"
+    },
+    {
+      "word": "note",
+      "marker": "*"
+    },
+    {
+      "word": "notebook",
+      "marker": "*"
+    },
+    {
+      "word": "nothing",
+      "marker": "*"
+    },
+    {
+      "word": "notice",
+      "marker": "**"
+    },
+    {
+      "word": "novel",
+      "marker": ""
+    },
+    {
+      "word": "now",
+      "marker": "*"
+    },
+    {
+      "word": "nowadays",
+      "marker": "**"
+    },
+    {
+      "word": "nowhere",
+      "marker": "**"
+    },
+    {
+      "word": "nuclear",
+      "marker": ""
+    },
+    {
+      "word": "number",
+      "marker": "*"
+    },
+    {
+      "word": "numerous",
+      "marker": ""
+    },
+    {
+      "word": "nurse",
+      "marker": "*"
+    },
+    {
+      "word": "nut",
+      "marker": "**"
+    },
+    {
+      "word": "oak",
+      "marker": "**"
+    },
+    {
+      "word": "obey",
+      "marker": ""
+    },
+    {
+      "word": "object",
+      "marker": "**"
+    },
+    {
+      "word": "oblige",
+      "marker": ""
+    },
+    {
+      "word": "observe",
+      "marker": "**"
+    },
+    {
+      "word": "obsess",
+      "marker": ""
+    },
+    {
+      "word": "obtain",
+      "marker": ""
+    },
+    {
+      "word": "obvious",
+      "marker": "**"
+    },
+    {
+      "word": "occasion",
+      "marker": "**"
+    },
+    {
+      "word": "occupy",
+      "marker": ""
+    },
+    {
+      "word": "occur",
+      "marker": "**"
+    },
+    {
+      "word": "ocean",
+      "marker": "**"
+    },
+    {
+      "word": "odd",
+      "marker": "**"
+    },
+    {
+      "word": "of",
+      "marker": "*"
+    },
+    {
+      "word": "off",
+      "marker": "*"
+    },
+    {
+      "word": "offend",
+      "marker": ""
+    },
+    {
+      "word": "offer",
+      "marker": "**"
+    },
+    {
+      "word": "office",
+      "marker": "*"
+    },
+    {
+      "word": "officer",
+      "marker": "**"
+    },
+    {
+      "word": "often",
+      "marker": "*"
+    },
+    {
+      "word": "oil",
+      "marker": "*"
+    },
+    {
+      "word": "okay",
+      "marker": "*"
+    },
+    {
+      "word": "old",
+      "marker": "*"
+    },
+    {
+      "word": "on",
+      "marker": "*"
+    },
+    {
+      "word": "once",
+      "marker": "**"
+    },
+    {
+      "word": "one",
+      "marker": "*"
+    },
+    {
+      "word": "only",
+      "marker": "*"
+    },
+    {
+      "word": "open",
+      "marker": "*"
+    },
+    {
+      "word": "opera",
+      "marker": "**"
+    },
+    {
+      "word": "operate",
+      "marker": "**"
+    },
+    {
+      "word": "opinion",
+      "marker": "**"
+    },
+    {
+      "word": "opportune",
+      "marker": ""
+    },
+    {
+      "word": "oppose",
+      "marker": "**"
+    },
+    {
+      "word": "opt",
+      "marker": ""
+    },
+    {
+      "word": "optimist",
+      "marker": ""
+    },
+    {
+      "word": "or",
+      "marker": "*"
+    },
+    {
+      "word": "oral",
+      "marker": ""
+    },
+    {
+      "word": "orange",
+      "marker": "*"
+    },
+    {
+      "word": "orbit",
+      "marker": ""
+    },
+    {
+      "word": "orchestra",
+      "marker": ""
+    },
+    {
+      "word": "order",
+      "marker": "**"
+    },
+    {
+      "word": "ordinary",
+      "marker": "**"
+    },
+    {
+      "word": "organ",
+      "marker": ""
+    },
+    {
+      "word": "orient",
+      "marker": ""
+    },
+    {
+      "word": "origin",
+      "marker": ""
+    },
+    {
+      "word": "other",
+      "marker": "**"
+    },
+    {
+      "word": "otherwise",
+      "marker": "**"
+    },
+    {
+      "word": "ought",
+      "marker": "**"
+    },
+    {
+      "word": "out",
+      "marker": "*"
+    },
+    {
+      "word": "outcome",
+      "marker": ""
+    },
+    {
+      "word": "outline",
+      "marker": ""
+    },
+    {
+      "word": "output",
+      "marker": ""
+    },
+    {
+      "word": "outrage",
+      "marker": ""
+    },
+    {
+      "word": "outstanding",
+      "marker": ""
+    },
+    {
+      "word": "oven",
+      "marker": "**"
+    },
+    {
+      "word": "over",
+      "marker": "*"
+    },
+    {
+      "word": "overall",
+      "marker": "**"
+    },
+    {
+      "word": "overcome",
+      "marker": ""
+    },
+    {
+      "word": "overhead",
+      "marker": ""
+    },
+    {
+      "word": "overlap",
+      "marker": ""
+    },
+    {
+      "word": "overlook",
+      "marker": ""
+    },
+    {
+      "word": "overnight",
+      "marker": ""
+    },
+    {
+      "word": "oversea",
+      "marker": ""
+    },
+    {
+      "word": "overwhelm",
+      "marker": ""
+    },
+    {
+      "word": "owe",
+      "marker": ""
+    },
+    {
+      "word": "own",
+      "marker": "**"
+    },
+    {
+      "word": "pace",
+      "marker": ""
+    },
+    {
+      "word": "pack",
+      "marker": "**"
+    },
+    {
+      "word": "pad",
+      "marker": ""
+    },
+    {
+      "word": "page",
+      "marker": "*"
+    },
+    {
+      "word": "pain",
+      "marker": "**"
+    },
+    {
+      "word": "paint",
+      "marker": "*"
+    },
+    {
+      "word": "pair",
+      "marker": "**"
+    },
+    {
+      "word": "palace",
+      "marker": "**"
+    },
+    {
+      "word": "pale",
+      "marker": ""
+    },
+    {
+      "word": "palm",
+      "marker": ""
+    },
+    {
+      "word": "pan",
+      "marker": "**"
+    },
+    {
+      "word": "panel",
+      "marker": ""
+    },
+    {
+      "word": "panic",
+      "marker": "**"
+    },
+    {
+      "word": "pants",
+      "marker": "*"
+    },
+    {
+      "word": "paper",
+      "marker": "*"
+    },
+    {
+      "word": "parade",
+      "marker": "**"
+    },
+    {
+      "word": "paragraph",
+      "marker": "**"
+    },
+    {
+      "word": "parallel",
+      "marker": ""
+    },
+    {
+      "word": "pardon",
+      "marker": "**"
+    },
+    {
+      "word": "parent",
+      "marker": "*"
+    },
+    {
+      "word": "park",
+      "marker": "*"
+    },
+    {
+      "word": "parliament",
+      "marker": ""
+    },
+    {
+      "word": "part",
+      "marker": "*"
+    },
+    {
+      "word": "participate",
+      "marker": ""
+    },
+    {
+      "word": "particle",
+      "marker": ""
+    },
+    {
+      "word": "particular",
+      "marker": "**"
+    },
+    {
+      "word": "partner",
+      "marker": "*"
+    },
+    {
+      "word": "party",
+      "marker": "*"
+    },
+    {
+      "word": "pass",
+      "marker": "*"
+    },
+    {
+      "word": "passage",
+      "marker": ""
+    },
+    {
+      "word": "passenger",
+      "marker": ""
+    },
+    {
+      "word": "passion",
+      "marker": ""
+    },
+    {
+      "word": "passport",
+      "marker": ""
+    },
+    {
+      "word": "past",
+      "marker": "**"
+    },
+    {
+      "word": "pat",
+      "marker": ""
+    },
+    {
+      "word": "patch",
+      "marker": ""
+    },
+    {
+      "word": "patent",
+      "marker": ""
+    },
+    {
+      "word": "path",
+      "marker": "**"
+    },
+    {
+      "word": "patient",
+      "marker": "**"
+    },
+    {
+      "word": "pattern",
+      "marker": "**"
+    },
+    {
+      "word": "pause",
+      "marker": "**"
+    },
+    {
+      "word": "pave",
+      "marker": ""
+    },
+    {
+      "word": "pay",
+      "marker": "*"
+    },
+    {
+      "word": "peace",
+      "marker": "**"
+    },
+    {
+      "word": "peak",
+      "marker": ""
+    },
+    {
+      "word": "pear",
+      "marker": "**"
+    },
+    {
+      "word": "peasant",
+      "marker": ""
+    },
+    {
+      "word": "peel",
+      "marker": ""
+    },
+    {
+      "word": "peer",
+      "marker": ""
+    },
+    {
+      "word": "pen",
+      "marker": "*"
+    },
+    {
+      "word": "penalty",
+      "marker": ""
+    },
+    {
+      "word": "pencil",
+      "marker": "*"
+    },
+    {
+      "word": "people",
+      "marker": "*"
+    },
+    {
+      "word": "pepper",
+      "marker": "**"
+    },
+    {
+      "word": "per",
+      "marker": "**"
+    },
+    {
+      "word": "perceive",
+      "marker": ""
+    },
+    {
+      "word": "perfect",
+      "marker": "**"
+    },
+    {
+      "word": "perform",
+      "marker": "**"
+    },
+    {
+      "word": "perhaps",
+      "marker": "**"
+    },
+    {
+      "word": "period",
+      "marker": "**"
+    },
+    {
+      "word": "permanent",
+      "marker": ""
+    },
+    {
+      "word": "permit",
+      "marker": ""
+    },
+    {
+      "word": "persist",
+      "marker": ""
+    },
+    {
+      "word": "person",
+      "marker": "**"
+    },
+    {
+      "word": "perspective",
+      "marker": ""
+    },
+    {
+      "word": "persuade",
+      "marker": ""
+    },
+    {
+      "word": "pet",
+      "marker": "**"
+    },
+    {
+      "word": "phase",
+      "marker": ""
+    },
+    {
+      "word": "phenomenon",
+      "marker": ""
+    },
+    {
+      "word": "philosophy",
+      "marker": ""
+    },
+    {
+      "word": "photograph",
+      "marker": "**"
+    },
+    {
+      "word": "phrase",
+      "marker": ""
+    },
+    {
+      "word": "physical",
+      "marker": "**"
+    },
+    {
+      "word": "physics",
+      "marker": ""
+    },
+    {
+      "word": "piano",
+      "marker": "*"
+    },
+    {
+      "word": "pick",
+      "marker": "*"
+    },
+    {
+      "word": "picnic",
+      "marker": "**"
+    },
+    {
+      "word": "picture",
+      "marker": "*"
+    },
+    {
+      "word": "pie",
+      "marker": "**"
+    },
+    {
+      "word": "piece",
+      "marker": "**"
+    },
+    {
+      "word": "pig",
+      "marker": "*"
+    },
+    {
+      "word": "pile",
+      "marker": "**"
+    },
+    {
+      "word": "pill",
+      "marker": ""
+    },
+    {
+      "word": "pilot",
+      "marker": "*"
+    },
+    {
+      "word": "pin",
+      "marker": "**"
+    },
+    {
+      "word": "pinch",
+      "marker": ""
+    },
+    {
+      "word": "pine",
+      "marker": "**"
+    },
+    {
+      "word": "pink",
+      "marker": "*"
+    },
+    {
+      "word": "pioneer",
+      "marker": ""
+    },
+    {
+      "word": "pipe",
+      "marker": "**"
+    },
+    {
+      "word": "pitch",
+      "marker": "**"
+    },
+    {
+      "word": "pity",
+      "marker": "**"
+    },
+    {
+      "word": "pizza",
+      "marker": "*"
+    },
+    {
+      "word": "place",
+      "marker": "*"
+    },
+    {
+      "word": "plain",
+      "marker": "**"
+    },
+    {
+      "word": "plan",
+      "marker": "*"
+    },
+    {
+      "word": "plane",
+      "marker": "**"
+    },
+    {
+      "word": "planet",
+      "marker": "**"
+    },
+    {
+      "word": "plant",
+      "marker": "**"
+    },
+    {
+      "word": "plastic",
+      "marker": "*"
+    },
+    {
+      "word": "plate",
+      "marker": "**"
+    },
+    {
+      "word": "platform",
+      "marker": ""
+    },
+    {
+      "word": "play",
+      "marker": "*"
+    },
+    {
+      "word": "please",
+      "marker": "*"
+    },
+    {
+      "word": "plenty",
+      "marker": "**"
+    },
+    {
+      "word": "plot",
+      "marker": ""
+    },
+    {
+      "word": "plus",
+      "marker": "**"
+    },
+    {
+      "word": "pocket",
+      "marker": "**"
+    },
+    {
+      "word": "poem",
+      "marker": "**"
+    },
+    {
+      "word": "poet",
+      "marker": "**"
+    },
+    {
+      "word": "point",
+      "marker": "*"
+    },
+    {
+      "word": "poison",
+      "marker": "**"
+    },
+    {
+      "word": "pole",
+      "marker": "**"
+    },
+    {
+      "word": "police",
+      "marker": "*"
+    },
+    {
+      "word": "policy",
+      "marker": "**"
+    },
+    {
+      "word": "polish",
+      "marker": ""
+    },
+    {
+      "word": "polite",
+      "marker": "**"
+    },
+    {
+      "word": "politics",
+      "marker": "**"
+    },
+    {
+      "word": "poll",
+      "marker": ""
+    },
+    {
+      "word": "pollute",
+      "marker": "**"
+    },
+    {
+      "word": "pond",
+      "marker": ""
+    },
+    {
+      "word": "pool",
+      "marker": "**"
+    },
+    {
+      "word": "poor",
+      "marker": "*"
+    },
+    {
+      "word": "pop",
+      "marker": "**"
+    },
+    {
+      "word": "popular",
+      "marker": "**"
+    },
+    {
+      "word": "populate",
+      "marker": ""
+    },
+    {
+      "word": "pork",
+      "marker": "**"
+    },
+    {
+      "word": "port",
+      "marker": "**"
+    },
+    {
+      "word": "portion",
+      "marker": ""
+    },
+    {
+      "word": "portrait",
+      "marker": ""
+    },
+    {
+      "word": "pose",
+      "marker": ""
+    },
+    {
+      "word": "posit",
+      "marker": ""
+    },
+    {
+      "word": "possess",
+      "marker": "**"
+    },
+    {
+      "word": "possible",
+      "marker": "**"
+    },
+    {
+      "word": "post",
+      "marker": "**"
+    },
+    {
+      "word": "pot",
+      "marker": "**"
+    },
+    {
+      "word": "potato",
+      "marker": "*"
+    },
+    {
+      "word": "potential",
+      "marker": "**"
+    },
+    {
+      "word": "pour",
+      "marker": "**"
+    },
+    {
+      "word": "powder",
+      "marker": "**"
+    },
+    {
+      "word": "power",
+      "marker": "*"
+    },
+    {
+      "word": "practical",
+      "marker": "**"
+    },
+    {
+      "word": "practice",
+      "marker": "**"
+    },
+    {
+      "word": "praise",
+      "marker": ""
+    },
+    {
+      "word": "pray",
+      "marker": "**"
+    },
+    {
+      "word": "preach",
+      "marker": ""
+    },
+    {
+      "word": "precede",
+      "marker": ""
+    },
+    {
+      "word": "precise",
+      "marker": ""
+    },
+    {
+      "word": "predator",
+      "marker": ""
+    },
+    {
+      "word": "predict",
+      "marker": ""
+    },
+    {
+      "word": "prefer",
+      "marker": "**"
+    },
+    {
+      "word": "pregnant",
+      "marker": "**"
+    },
+    {
+      "word": "prejudice",
+      "marker": ""
+    },
+    {
+      "word": "premium",
+      "marker": ""
+    },
+    {
+      "word": "prepare",
+      "marker": "**"
+    },
+    {
+      "word": "prescribe",
+      "marker": ""
+    },
+    {
+      "word": "presence",
+      "marker": "**"
+    },
+    {
+      "word": "present",
+      "marker": "*"
+    },
+    {
+      "word": "preserve",
+      "marker": ""
+    },
+    {
+      "word": "preside",
+      "marker": ""
+    },
+    {
+      "word": "press",
+      "marker": "**"
+    },
+    {
+      "word": "presume",
+      "marker": ""
+    },
+    {
+      "word": "pretend",
+      "marker": "**"
+    },
+    {
+      "word": "pretty",
+      "marker": "*"
+    },
+    {
+      "word": "prevail",
+      "marker": ""
+    },
+    {
+      "word": "prevent",
+      "marker": "**"
+    },
+    {
+      "word": "previous",
+      "marker": "**"
+    },
+    {
+      "word": "prey",
+      "marker": ""
+    },
+    {
+      "word": "price",
+      "marker": "**"
+    },
+    {
+      "word": "pride",
+      "marker": "**"
+    },
+    {
+      "word": "priest",
+      "marker": ""
+    },
+    {
+      "word": "prime",
+      "marker": "**"
+    },
+    {
+      "word": "primitive",
+      "marker": ""
+    },
+    {
+      "word": "prince",
+      "marker": "*"
+    },
+    {
+      "word": "principal",
+      "marker": ""
+    },
+    {
+      "word": "principle",
+      "marker": "**"
+    },
+    {
+      "word": "print",
+      "marker": "*"
+    },
+    {
+      "word": "prior",
+      "marker": ""
+    },
+    {
+      "word": "prison",
+      "marker": "**"
+    },
+    {
+      "word": "privacy",
+      "marker": "**"
+    },
+    {
+      "word": "private",
+      "marker": "**"
+    },
+    {
+      "word": "privilege",
+      "marker": ""
+    },
+    {
+      "word": "prize",
+      "marker": "**"
+    },
+    {
+      "word": "probable",
+      "marker": "**"
+    },
+    {
+      "word": "problem",
+      "marker": "*"
+    },
+    {
+      "word": "proceed",
+      "marker": "**"
+    },
+    {
+      "word": "process",
+      "marker": "**"
+    },
+    {
+      "word": "produce",
+      "marker": "**"
+    },
+    {
+      "word": "profession",
+      "marker": "**"
+    },
+    {
+      "word": "professor",
+      "marker": ""
+    },
+    {
+      "word": "profile",
+      "marker": ""
+    },
+    {
+      "word": "profit",
+      "marker": "**"
+    },
+    {
+      "word": "profound",
+      "marker": ""
+    },
+    {
+      "word": "program",
+      "marker": "*"
+    },
+    {
+      "word": "progress",
+      "marker": "**"
+    },
+    {
+      "word": "prohibit",
+      "marker": ""
+    },
+    {
+      "word": "project",
+      "marker": "*"
+    },
+    {
+      "word": "prominent",
+      "marker": ""
+    },
+    {
+      "word": "promise",
+      "marker": "**"
+    },
+    {
+      "word": "promote",
+      "marker": "**"
+    },
+    {
+      "word": "prompt",
+      "marker": ""
+    },
+    {
+      "word": "pronounce",
+      "marker": "**"
+    },
+    {
+      "word": "proof",
+      "marker": ""
+    },
+    {
+      "word": "proper",
+      "marker": "**"
+    },
+    {
+      "word": "property",
+      "marker": "**"
+    },
+    {
+      "word": "proportion",
+      "marker": ""
+    },
+    {
+      "word": "propose",
+      "marker": "**"
+    },
+    {
+      "word": "prospect",
+      "marker": ""
+    },
+    {
+      "word": "prosper",
+      "marker": ""
+    },
+    {
+      "word": "protect",
+      "marker": "**"
+    },
+    {
+      "word": "protein",
+      "marker": ""
+    },
+    {
+      "word": "protest",
+      "marker": "**"
+    },
+    {
+      "word": "proud",
+      "marker": "**"
+    },
+    {
+      "word": "prove",
+      "marker": "**"
+    },
+    {
+      "word": "provide",
+      "marker": "**"
+    },
+    {
+      "word": "province",
+      "marker": ""
+    },
+    {
+      "word": "provoke",
+      "marker": ""
+    },
+    {
+      "word": "psychology",
+      "marker": ""
+    },
+    {
+      "word": "pub",
+      "marker": "**"
+    },
+    {
+      "word": "public",
+      "marker": "**"
+    },
+    {
+      "word": "publish",
+      "marker": ""
+    },
+    {
+      "word": "pull",
+      "marker": "**"
+    },
+    {
+      "word": "pump",
+      "marker": "**"
+    },
+    {
+      "word": "punch",
+      "marker": "**"
+    },
+    {
+      "word": "punish",
+      "marker": "**"
+    },
+    {
+      "word": "pupil",
+      "marker": ""
+    },
+    {
+      "word": "puppy",
+      "marker": "*"
+    },
+    {
+      "word": "purchase",
+      "marker": "**"
+    },
+    {
+      "word": "pure",
+      "marker": "**"
+    },
+    {
+      "word": "purple",
+      "marker": "**"
+    },
+    {
+      "word": "purpose",
+      "marker": "**"
+    },
+    {
+      "word": "pursue",
+      "marker": ""
+    },
+    {
+      "word": "push",
+      "marker": "*"
+    },
+    {
+      "word": "put",
+      "marker": "*"
+    },
+    {
+      "word": "puzzle",
+      "marker": "**"
+    },
+    {
+      "word": "quality",
+      "marker": "**"
+    },
+    {
+      "word": "quantity",
+      "marker": ""
+    },
+    {
+      "word": "quarter",
+      "marker": "**"
+    },
+    {
+      "word": "queen",
+      "marker": "*"
+    },
+    {
+      "word": "question",
+      "marker": "*"
+    },
+    {
+      "word": "questionnaire",
+      "marker": ""
+    },
+    {
+      "word": "quick",
+      "marker": "*"
+    },
+    {
+      "word": "quiet",
+      "marker": "*"
+    },
+    {
+      "word": "quit",
+      "marker": "**"
+    },
+    {
+      "word": "quite",
+      "marker": "**"
+    },
+    {
+      "word": "quiz",
+      "marker": "*"
+    },
+    {
+      "word": "quote",
+      "marker": "**"
+    },
+    {
+      "word": "rabbit",
+      "marker": "*"
+    },
+    {
+      "word": "race",
+      "marker": "*"
+    },
+    {
+      "word": "radio",
+      "marker": "*"
+    },
+    {
+      "word": "rage",
+      "marker": ""
+    },
+    {
+      "word": "rail",
+      "marker": "**"
+    },
+    {
+      "word": "rain",
+      "marker": "*"
+    },
+    {
+      "word": "rainbow",
+      "marker": "**"
+    },
+    {
+      "word": "raise",
+      "marker": "**"
+    },
+    {
+      "word": "rally",
+      "marker": ""
+    },
+    {
+      "word": "random",
+      "marker": ""
+    },
+    {
+      "word": "range",
+      "marker": "**"
+    },
+    {
+      "word": "rank",
+      "marker": ""
+    },
+    {
+      "word": "rapid",
+      "marker": "**"
+    },
+    {
+      "word": "rare",
+      "marker": "**"
+    },
+    {
+      "word": "rat",
+      "marker": "**"
+    },
+    {
+      "word": "rate",
+      "marker": "**"
+    },
+    {
+      "word": "rather",
+      "marker": "**"
+    },
+    {
+      "word": "rational",
+      "marker": ""
+    },
+    {
+      "word": "raw",
+      "marker": ""
+    },
+    {
+      "word": "reach",
+      "marker": "**"
+    },
+    {
+      "word": "react",
+      "marker": "**"
+    },
+    {
+      "word": "read",
+      "marker": "*"
+    },
+    {
+      "word": "ready",
+      "marker": "*"
+    },
+    {
+      "word": "real",
+      "marker": "**"
+    },
+    {
+      "word": "rear",
+      "marker": ""
+    },
+    {
+      "word": "reason",
+      "marker": "**"
+    },
+    {
+      "word": "rebel",
+      "marker": ""
+    },
+    {
+      "word": "receipt",
+      "marker": ""
+    },
+    {
+      "word": "receive",
+      "marker": "**"
+    },
+    {
+      "word": "recent",
+      "marker": "**"
+    },
+    {
+      "word": "recipe",
+      "marker": "**"
+    },
+    {
+      "word": "recognize",
+      "marker": "**"
+    },
+    {
+      "word": "recommend",
+      "marker": "**"
+    },
+    {
+      "word": "record",
+      "marker": "**"
+    },
+    {
+      "word": "recover",
+      "marker": "**"
+    },
+    {
+      "word": "recreation",
+      "marker": "*"
+    },
+    {
+      "word": "recruit",
+      "marker": ""
+    },
+    {
+      "word": "red",
+      "marker": "*"
+    },
+    {
+      "word": "reduce",
+      "marker": "**"
+    },
+    {
+      "word": "refer",
+      "marker": "**"
+    },
+    {
+      "word": "refine",
+      "marker": ""
+    },
+    {
+      "word": "reflect",
+      "marker": "**"
+    },
+    {
+      "word": "reform",
+      "marker": ""
+    },
+    {
+      "word": "refrigerate",
+      "marker": ""
+    },
+    {
+      "word": "refuse",
+      "marker": "**"
+    },
+    {
+      "word": "regard",
+      "marker": "**"
+    },
+    {
+      "word": "region",
+      "marker": "**"
+    },
+    {
+      "word": "register",
+      "marker": "**"
+    },
+    {
+      "word": "regret",
+      "marker": ""
+    },
+    {
+      "word": "regular",
+      "marker": "**"
+    },
+    {
+      "word": "regulate",
+      "marker": ""
+    },
+    {
+      "word": "reinforce",
+      "marker": ""
+    },
+    {
+      "word": "reject",
+      "marker": ""
+    },
+    {
+      "word": "relate",
+      "marker": "**"
+    },
+    {
+      "word": "relax",
+      "marker": "**"
+    },
+    {
+      "word": "release",
+      "marker": "**"
+    },
+    {
+      "word": "relevant",
+      "marker": ""
+    },
+    {
+      "word": "relief",
+      "marker": "**"
+    },
+    {
+      "word": "relieve",
+      "marker": ""
+    },
+    {
+      "word": "religion",
+      "marker": ""
+    },
+    {
+      "word": "reluctant",
+      "marker": ""
+    },
+    {
+      "word": "rely",
+      "marker": "**"
+    },
+    {
+      "word": "remain",
+      "marker": "**"
+    },
+    {
+      "word": "remark",
+      "marker": "**"
+    },
+    {
+      "word": "remedy",
+      "marker": ""
+    },
+    {
+      "word": "remember",
+      "marker": "*"
+    },
+    {
+      "word": "remind",
+      "marker": "**"
+    },
+    {
+      "word": "remote",
+      "marker": ""
+    },
+    {
+      "word": "remove",
+      "marker": "**"
+    },
+    {
+      "word": "rent",
+      "marker": "**"
+    },
+    {
+      "word": "repair",
+      "marker": "**"
+    },
+    {
+      "word": "repeat",
+      "marker": "**"
+    },
+    {
+      "word": "replace",
+      "marker": "**"
+    },
+    {
+      "word": "reply",
+      "marker": "**"
+    },
+    {
+      "word": "report",
+      "marker": "**"
+    },
+    {
+      "word": "represent",
+      "marker": "**"
+    },
+    {
+      "word": "republic",
+      "marker": ""
+    },
+    {
+      "word": "reputation",
+      "marker": ""
+    },
+    {
+      "word": "request",
+      "marker": "**"
+    },
+    {
+      "word": "require",
+      "marker": "**"
+    },
+    {
+      "word": "rescue",
+      "marker": ""
+    },
+    {
+      "word": "research",
+      "marker": "**"
+    },
+    {
+      "word": "resemble",
+      "marker": ""
+    },
+    {
+      "word": "reserve",
+      "marker": "**"
+    },
+    {
+      "word": "reside",
+      "marker": ""
+    },
+    {
+      "word": "resign",
+      "marker": ""
+    },
+    {
+      "word": "resist",
+      "marker": "**"
+    },
+    {
+      "word": "resolve",
+      "marker": ""
+    },
+    {
+      "word": "resort",
+      "marker": ""
+    },
+    {
+      "word": "resource",
+      "marker": "**"
+    },
+    {
+      "word": "respect",
+      "marker": "**"
+    },
+    {
+      "word": "respond",
+      "marker": "**"
+    },
+    {
+      "word": "responsible",
+      "marker": "**"
+    },
+    {
+      "word": "rest",
+      "marker": "**"
+    },
+    {
+      "word": "restaurant",
+      "marker": "*"
+    },
+    {
+      "word": "restore",
+      "marker": ""
+    },
+    {
+      "word": "restrain",
+      "marker": ""
+    },
+    {
+      "word": "restrict",
+      "marker": ""
+    },
+    {
+      "word": "restroom",
+      "marker": "*"
+    },
+    {
+      "word": "result",
+      "marker": "**"
+    },
+    {
+      "word": "resume",
+      "marker": ""
+    },
+    {
+      "word": "retail",
+      "marker": ""
+    },
+    {
+      "word": "retain",
+      "marker": ""
+    },
+    {
+      "word": "retire",
+      "marker": "**"
+    },
+    {
+      "word": "retreat",
+      "marker": ""
+    },
+    {
+      "word": "return",
+      "marker": "*"
+    },
+    {
+      "word": "reveal",
+      "marker": ""
+    },
+    {
+      "word": "revenge",
+      "marker": ""
+    },
+    {
+      "word": "reverse",
+      "marker": ""
+    },
+    {
+      "word": "revise",
+      "marker": ""
+    },
+    {
+      "word": "revive",
+      "marker": ""
+    },
+    {
+      "word": "revolution",
+      "marker": ""
+    },
+    {
+      "word": "reward",
+      "marker": ""
+    },
+    {
+      "word": "rhythm",
+      "marker": ""
+    },
+    {
+      "word": "ribbon",
+      "marker": "*"
+    },
+    {
+      "word": "rice",
+      "marker": "**"
+    },
+    {
+      "word": "rich",
+      "marker": "*"
+    },
+    {
+      "word": "rid",
+      "marker": ""
+    },
+    {
+      "word": "ride",
+      "marker": "**"
+    },
+    {
+      "word": "ridicule",
+      "marker": ""
+    },
+    {
+      "word": "right",
+      "marker": "*"
+    },
+    {
+      "word": "ring",
+      "marker": "*"
+    },
+    {
+      "word": "riot",
+      "marker": ""
+    },
+    {
+      "word": "rise",
+      "marker": "**"
+    },
+    {
+      "word": "risk",
+      "marker": "**"
+    },
+    {
+      "word": "rival",
+      "marker": ""
+    },
+    {
+      "word": "river",
+      "marker": "*"
+    },
+    {
+      "word": "road",
+      "marker": "*"
+    },
+    {
+      "word": "roar",
+      "marker": ""
+    },
+    {
+      "word": "roast",
+      "marker": ""
+    },
+    {
+      "word": "rob",
+      "marker": "**"
+    },
+    {
+      "word": "robot",
+      "marker": "*"
+    },
+    {
+      "word": "rock",
+      "marker": "*"
+    },
+    {
+      "word": "rocket",
+      "marker": "**"
+    },
+    {
+      "word": "rod",
+      "marker": ""
+    },
+    {
+      "word": "role",
+      "marker": "**"
+    },
+    {
+      "word": "roll",
+      "marker": "**"
+    },
+    {
+      "word": "romantic",
+      "marker": ""
+    },
+    {
+      "word": "roof",
+      "marker": "**"
+    },
+    {
+      "word": "room",
+      "marker": "*"
+    },
+    {
+      "word": "root",
+      "marker": "**"
+    },
+    {
+      "word": "rope",
+      "marker": "**"
+    },
+    {
+      "word": "rose",
+      "marker": "*"
+    },
+    {
+      "word": "rot",
+      "marker": ""
+    },
+    {
+      "word": "rough",
+      "marker": "**"
+    },
+    {
+      "word": "round",
+      "marker": "**"
+    },
+    {
+      "word": "route",
+      "marker": "**"
+    },
+    {
+      "word": "routine",
+      "marker": ""
+    },
+    {
+      "word": "row",
+      "marker": "**"
+    },
+    {
+      "word": "royal",
+      "marker": "**"
+    },
+    {
+      "word": "rub",
+      "marker": "**"
+    },
+    {
+      "word": "rude",
+      "marker": "**"
+    },
+    {
+      "word": "ruin",
+      "marker": "**"
+    },
+    {
+      "word": "rule",
+      "marker": "**"
+    },
+    {
+      "word": "rumor",
+      "marker": ""
+    },
+    {
+      "word": "run",
+      "marker": "*"
+    },
+    {
+      "word": "rural",
+      "marker": ""
+    },
+    {
+      "word": "rush",
+      "marker": "**"
+    },
+    {
+      "word": "sack",
+      "marker": ""
+    },
+    {
+      "word": "sacred",
+      "marker": ""
+    },
+    {
+      "word": "sacrifice",
+      "marker": ""
+    },
+    {
+      "word": "sad",
+      "marker": "*"
+    },
+    {
+      "word": "safe",
+      "marker": "*"
+    },
+    {
+      "word": "sail",
+      "marker": "**"
+    },
+    {
+      "word": "salad",
+      "marker": "*"
+    },
+    {
+      "word": "salary",
+      "marker": "**"
+    },
+    {
+      "word": "sale",
+      "marker": "*"
+    },
+    {
+      "word": "salt",
+      "marker": "*"
+    },
+    {
+      "word": "same",
+      "marker": "*"
+    },
+    {
+      "word": "sample",
+      "marker": "**"
+    },
+    {
+      "word": "sand",
+      "marker": "*"
+    },
+    {
+      "word": "sandwich",
+      "marker": "*"
+    },
+    {
+      "word": "satellite",
+      "marker": ""
+    },
+    {
+      "word": "satisfy",
+      "marker": "**"
+    },
+    {
+      "word": "sauce",
+      "marker": "**"
+    },
+    {
+      "word": "save",
+      "marker": "*"
+    },
+    {
+      "word": "say",
+      "marker": "*"
+    },
+    {
+      "word": "scale",
+      "marker": "**"
+    },
+    {
+      "word": "scan",
+      "marker": ""
+    },
+    {
+      "word": "scandal",
+      "marker": ""
+    },
+    {
+      "word": "scarce",
+      "marker": ""
+    },
+    {
+      "word": "scare",
+      "marker": "**"
+    },
+    {
+      "word": "scarf",
+      "marker": "**"
+    },
+    {
+      "word": "scatter",
+      "marker": ""
+    },
+    {
+      "word": "scene",
+      "marker": "**"
+    },
+    {
+      "word": "schedule",
+      "marker": "**"
+    },
+    {
+      "word": "scheme",
+      "marker": ""
+    },
+    {
+      "word": "scholar",
+      "marker": ""
+    },
+    {
+      "word": "school",
+      "marker": "*"
+    },
+    {
+      "word": "science",
+      "marker": "*"
+    },
+    {
+      "word": "scissors",
+      "marker": "*"
+    },
+    {
+      "word": "scope",
+      "marker": ""
+    },
+    {
+      "word": "score",
+      "marker": "*"
+    },
+    {
+      "word": "scramble",
+      "marker": ""
+    },
+    {
+      "word": "scratch",
+      "marker": "**"
+    },
+    {
+      "word": "scream",
+      "marker": "**"
+    },
+    {
+      "word": "screen",
+      "marker": "**"
+    },
+    {
+      "word": "screw",
+      "marker": ""
+    },
+    {
+      "word": "sculpt",
+      "marker": ""
+    },
+    {
+      "word": "sea",
+      "marker": "*"
+    },
+    {
+      "word": "seal",
+      "marker": "**"
+    },
+    {
+      "word": "search",
+      "marker": "**"
+    },
+    {
+      "word": "season",
+      "marker": "*"
+    },
+    {
+      "word": "seat",
+      "marker": "**"
+    },
+    {
+      "word": "second",
+      "marker": "*"
+    },
+    {
+      "word": "secret",
+      "marker": "**"
+    },
+    {
+      "word": "secretary",
+      "marker": "**"
+    },
+    {
+      "word": "section",
+      "marker": "**"
+    },
+    {
+      "word": "sector",
+      "marker": ""
+    },
+    {
+      "word": "secure",
+      "marker": "**"
+    },
+    {
+      "word": "see",
+      "marker": "*"
+    },
+    {
+      "word": "seed",
+      "marker": "**"
+    },
+    {
+      "word": "seek",
+      "marker": "**"
+    },
+    {
+      "word": "seem",
+      "marker": "**"
+    },
+    {
+      "word": "seize",
+      "marker": ""
+    },
+    {
+      "word": "select",
+      "marker": "**"
+    },
+    {
+      "word": "self",
+      "marker": "**"
+    },
+    {
+      "word": "sell",
+      "marker": "*"
+    },
+    {
+      "word": "send",
+      "marker": "*"
+    },
+    {
+      "word": "senior",
+      "marker": "**"
+    },
+    {
+      "word": "sense",
+      "marker": "**"
+    },
+    {
+      "word": "sensible",
+      "marker": ""
+    },
+    {
+      "word": "sentence",
+      "marker": "**"
+    },
+    {
+      "word": "sentiment",
+      "marker": ""
+    },
+    {
+      "word": "separate",
+      "marker": "**"
+    },
+    {
+      "word": "sequence",
+      "marker": ""
+    },
+    {
+      "word": "series",
+      "marker": "**"
+    },
+    {
+      "word": "serious",
+      "marker": "**"
+    },
+    {
+      "word": "serve",
+      "marker": "**"
+    },
+    {
+      "word": "service",
+      "marker": "*"
+    },
+    {
+      "word": "session",
+      "marker": "**"
+    },
+    {
+      "word": "set",
+      "marker": "*"
+    },
+    {
+      "word": "settle",
+      "marker": "**"
+    },
+    {
+      "word": "seven",
+      "marker": "*"
+    },
+    {
+      "word": "several",
+      "marker": "**"
+    },
+    {
+      "word": "severe",
+      "marker": ""
+    },
+    {
+      "word": "sew",
+      "marker": "**"
+    },
+    {
+      "word": "sex",
+      "marker": "**"
+    },
+    {
+      "word": "shade",
+      "marker": "**"
+    },
+    {
+      "word": "shadow",
+      "marker": "**"
+    },
+    {
+      "word": "shake",
+      "marker": "**"
+    },
+    {
+      "word": "shall",
+      "marker": "**"
+    },
+    {
+      "word": "shallow",
+      "marker": ""
+    },
+    {
+      "word": "shame",
+      "marker": "**"
+    },
+    {
+      "word": "shape",
+      "marker": "**"
+    },
+    {
+      "word": "share",
+      "marker": "**"
+    },
+    {
+      "word": "sharp",
+      "marker": "**"
+    },
+    {
+      "word": "shave",
+      "marker": "**"
+    },
+    {
+      "word": "she",
+      "marker": "*"
+    },
+    {
+      "word": "sheep",
+      "marker": "**"
+    },
+    {
+      "word": "sheet",
+      "marker": "**"
+    },
+    {
+      "word": "shelf",
+      "marker": "**"
+    },
+    {
+      "word": "shell",
+      "marker": "**"
+    },
+    {
+      "word": "shelter",
+      "marker": "**"
+    },
+    {
+      "word": "shift",
+      "marker": "**"
+    },
+    {
+      "word": "shine",
+      "marker": "**"
+    },
+    {
+      "word": "ship",
+      "marker": "*"
+    },
+    {
+      "word": "shirt",
+      "marker": "*"
+    },
+    {
+      "word": "shock",
+      "marker": "**"
+    },
+    {
+      "word": "shoe",
+      "marker": "*"
+    },
+    {
+      "word": "shoot",
+      "marker": "**"
+    },
+    {
+      "word": "shop",
+      "marker": "*"
+    },
+    {
+      "word": "shore",
+      "marker": "**"
+    },
+    {
+      "word": "short",
+      "marker": "*"
+    },
+    {
+      "word": "should",
+      "marker": "*"
+    },
+    {
+      "word": "shoulder",
+      "marker": "**"
+    },
+    {
+      "word": "shout",
+      "marker": "**"
+    },
+    {
+      "word": "show",
+      "marker": "*"
+    },
+    {
+      "word": "shower",
+      "marker": "**"
+    },
+    {
+      "word": "shut",
+      "marker": "**"
+    },
+    {
+      "word": "shy",
+      "marker": "*"
+    },
+    {
+      "word": "sick",
+      "marker": "*"
+    },
+    {
+      "word": "side",
+      "marker": "*"
+    },
+    {
+      "word": "sigh",
+      "marker": ""
+    },
+    {
+      "word": "sight",
+      "marker": "**"
+    },
+    {
+      "word": "sign",
+      "marker": "**"
+    },
+    {
+      "word": "silent",
+      "marker": ""
+    },
+    {
+      "word": "silly",
+      "marker": "**"
+    },
+    {
+      "word": "silver",
+      "marker": "**"
+    },
+    {
+      "word": "similar",
+      "marker": "**"
+    },
+    {
+      "word": "simple",
+      "marker": "**"
+    },
+    {
+      "word": "simulate",
+      "marker": ""
+    },
+    {
+      "word": "simultaneous",
+      "marker": ""
+    },
+    {
+      "word": "sin",
+      "marker": ""
+    },
+    {
+      "word": "since",
+      "marker": "**"
+    },
+    {
+      "word": "sing",
+      "marker": "*"
+    },
+    {
+      "word": "single",
+      "marker": "**"
+    },
+    {
+      "word": "sink",
+      "marker": "**"
+    },
+    {
+      "word": "sister",
+      "marker": "*"
+    },
+    {
+      "word": "sit",
+      "marker": "*"
+    },
+    {
+      "word": "site",
+      "marker": "**"
+    },
+    {
+      "word": "situate",
+      "marker": "**"
+    },
+    {
+      "word": "six",
+      "marker": "*"
+    },
+    {
+      "word": "size",
+      "marker": "*"
+    },
+    {
+      "word": "skate",
+      "marker": "*"
+    },
+    {
+      "word": "ski",
+      "marker": "*"
+    },
+    {
+      "word": "skill",
+      "marker": "**"
+    },
+    {
+      "word": "skin",
+      "marker": "*"
+    },
+    {
+      "word": "skip",
+      "marker": ""
+    },
+    {
+      "word": "skirt",
+      "marker": "*"
+    },
+    {
+      "word": "sky",
+      "marker": "*"
+    },
+    {
+      "word": "slave",
+      "marker": "**"
+    },
+    {
+      "word": "sleep",
+      "marker": "*"
+    },
+    {
+      "word": "slice",
+      "marker": ""
+    },
+    {
+      "word": "slide",
+      "marker": "**"
+    },
+    {
+      "word": "slight",
+      "marker": "**"
+    },
+    {
+      "word": "slim",
+      "marker": ""
+    },
+    {
+      "word": "slip",
+      "marker": "**"
+    },
+    {
+      "word": "slope",
+      "marker": ""
+    },
+    {
+      "word": "slow",
+      "marker": "*"
+    },
+    {
+      "word": "small",
+      "marker": "*"
+    },
+    {
+      "word": "smart",
+      "marker": "**"
+    },
+    {
+      "word": "smash",
+      "marker": "**"
+    },
+    {
+      "word": "smell",
+      "marker": "*"
+    },
+    {
+      "word": "smile",
+      "marker": "*"
+    },
+    {
+      "word": "smoke",
+      "marker": "**"
+    },
+    {
+      "word": "smooth",
+      "marker": "**"
+    },
+    {
+      "word": "snack",
+      "marker": "**"
+    },
+    {
+      "word": "snake",
+      "marker": "**"
+    },
+    {
+      "word": "snap",
+      "marker": "**"
+    },
+    {
+      "word": "sneak",
+      "marker": ""
+    },
+    {
+      "word": "snow",
+      "marker": "*"
+    },
+    {
+      "word": "so",
+      "marker": "*"
+    },
+    {
+      "word": "soak",
+      "marker": ""
+    },
+    {
+      "word": "soap",
+      "marker": ""
+    },
+    {
+      "word": "soccer",
+      "marker": "*"
+    },
+    {
+      "word": "social",
+      "marker": "**"
+    },
+    {
+      "word": "society",
+      "marker": "**"
+    },
+    {
+      "word": "sociology",
+      "marker": ""
+    },
+    {
+      "word": "sock",
+      "marker": "*"
+    },
+    {
+      "word": "soft",
+      "marker": "*"
+    },
+    {
+      "word": "software",
+      "marker": "*"
+    },
+    {
+      "word": "soil",
+      "marker": "**"
+    },
+    {
+      "word": "soldier",
+      "marker": "**"
+    },
+    {
+      "word": "sole",
+      "marker": ""
+    },
+    {
+      "word": "solid",
+      "marker": "**"
+    },
+    {
+      "word": "solve",
+      "marker": "**"
+    },
+    {
+      "word": "some",
+      "marker": "*"
+    },
+    {
+      "word": "somewhat",
+      "marker": "**"
+    },
+    {
+      "word": "son",
+      "marker": "*"
+    },
+    {
+      "word": "song",
+      "marker": "*"
+    },
+    {
+      "word": "soon",
+      "marker": "**"
+    },
+    {
+      "word": "sophisticate",
+      "marker": ""
+    },
+    {
+      "word": "sore",
+      "marker": "**"
+    },
+    {
+      "word": "sorry",
+      "marker": "*"
+    },
+    {
+      "word": "sort",
+      "marker": "**"
+    },
+    {
+      "word": "soul",
+      "marker": "**"
+    },
+    {
+      "word": "sound",
+      "marker": "*"
+    },
+    {
+      "word": "soup",
+      "marker": "*"
+    },
+    {
+      "word": "sour",
+      "marker": "**"
+    },
+    {
+      "word": "source",
+      "marker": "**"
+    },
+    {
+      "word": "south",
+      "marker": "*"
+    },
+    {
+      "word": "space",
+      "marker": "*"
+    },
+    {
+      "word": "spaghetti",
+      "marker": "*"
+    },
+    {
+      "word": "span",
+      "marker": ""
+    },
+    {
+      "word": "spare",
+      "marker": "**"
+    },
+    {
+      "word": "spark",
+      "marker": ""
+    },
+    {
+      "word": "speak",
+      "marker": "*"
+    },
+    {
+      "word": "species",
+      "marker": "**"
+    },
+    {
+      "word": "specific",
+      "marker": "**"
+    },
+    {
+      "word": "spectacle",
+      "marker": ""
+    },
+    {
+      "word": "spectrum",
+      "marker": ""
+    },
+    {
+      "word": "speech",
+      "marker": "**"
+    },
+    {
+      "word": "speed",
+      "marker": "*"
+    },
+    {
+      "word": "spell",
+      "marker": "**"
+    },
+    {
+      "word": "spend",
+      "marker": "**"
+    },
+    {
+      "word": "sphere",
+      "marker": ""
+    },
+    {
+      "word": "spill",
+      "marker": ""
+    },
+    {
+      "word": "spin",
+      "marker": "**"
+    },
+    {
+      "word": "spirit",
+      "marker": "**"
+    },
+    {
+      "word": "spit",
+      "marker": ""
+    },
+    {
+      "word": "splash",
+      "marker": ""
+    },
+    {
+      "word": "split",
+      "marker": ""
+    },
+    {
+      "word": "spoil",
+      "marker": "**"
+    },
+    {
+      "word": "sponsor",
+      "marker": "**"
+    },
+    {
+      "word": "spoon",
+      "marker": "*"
+    },
+    {
+      "word": "sport",
+      "marker": "*"
+    },
+    {
+      "word": "spot",
+      "marker": "**"
+    },
+    {
+      "word": "spouse",
+      "marker": ""
+    },
+    {
+      "word": "spray",
+      "marker": "**"
+    },
+    {
+      "word": "spread",
+      "marker": "**"
+    },
+    {
+      "word": "spring",
+      "marker": "*"
+    },
+    {
+      "word": "spy",
+      "marker": "**"
+    },
+    {
+      "word": "square",
+      "marker": "**"
+    },
+    {
+      "word": "squeeze",
+      "marker": ""
+    },
+    {
+      "word": "stable",
+      "marker": "**"
+    },
+    {
+      "word": "stack",
+      "marker": ""
+    },
+    {
+      "word": "staff",
+      "marker": "*"
+    },
+    {
+      "word": "stage",
+      "marker": "**"
+    },
+    {
+      "word": "stain",
+      "marker": ""
+    },
+    {
+      "word": "stairs",
+      "marker": "**"
+    },
+    {
+      "word": "stamp",
+      "marker": "**"
+    },
+    {
+      "word": "stand",
+      "marker": "*"
+    },
+    {
+      "word": "standard",
+      "marker": "**"
+    },
+    {
+      "word": "star",
+      "marker": "*"
+    },
+    {
+      "word": "stare",
+      "marker": "**"
+    },
+    {
+      "word": "start",
+      "marker": "*"
+    },
+    {
+      "word": "starve",
+      "marker": ""
+    },
+    {
+      "word": "state",
+      "marker": "**"
+    },
+    {
+      "word": "station",
+      "marker": "**"
+    },
+    {
+      "word": "statistic",
+      "marker": ""
+    },
+    {
+      "word": "statue",
+      "marker": ""
+    },
+    {
+      "word": "status",
+      "marker": ""
+    },
+    {
+      "word": "stay",
+      "marker": "*"
+    },
+    {
+      "word": "steady",
+      "marker": "**"
+    },
+    {
+      "word": "steak",
+      "marker": "*"
+    },
+    {
+      "word": "steal",
+      "marker": "**"
+    },
+    {
+      "word": "steam",
+      "marker": "**"
+    },
+    {
+      "word": "steel",
+      "marker": "**"
+    },
+    {
+      "word": "steep",
+      "marker": ""
+    },
+    {
+      "word": "stem",
+      "marker": ""
+    },
+    {
+      "word": "step",
+      "marker": "**"
+    },
+    {
+      "word": "stick",
+      "marker": "**"
+    },
+    {
+      "word": "stiff",
+      "marker": ""
+    },
+    {
+      "word": "still",
+      "marker": "**"
+    },
+    {
+      "word": "stimulate",
+      "marker": ""
+    },
+    {
+      "word": "stir",
+      "marker": "**"
+    },
+    {
+      "word": "stitch",
+      "marker": ""
+    },
+    {
+      "word": "stock",
+      "marker": "**"
+    },
+    {
+      "word": "stomach",
+      "marker": "**"
+    },
+    {
+      "word": "stone",
+      "marker": "*"
+    },
+    {
+      "word": "stop",
+      "marker": "*"
+    },
+    {
+      "word": "store",
+      "marker": "*"
+    },
+    {
+      "word": "storm",
+      "marker": "**"
+    },
+    {
+      "word": "story",
+      "marker": "*"
+    },
+    {
+      "word": "stove",
+      "marker": ""
+    },
+    {
+      "word": "straight",
+      "marker": "**"
+    },
+    {
+      "word": "strain",
+      "marker": ""
+    },
+    {
+      "word": "strange",
+      "marker": "**"
+    },
+    {
+      "word": "strategy",
+      "marker": "**"
+    },
+    {
+      "word": "strawberry",
+      "marker": "**"
+    },
+    {
+      "word": "stream",
+      "marker": "**"
+    },
+    {
+      "word": "street",
+      "marker": "*"
+    },
+    {
+      "word": "stress",
+      "marker": "**"
+    },
+    {
+      "word": "stretch",
+      "marker": "**"
+    },
+    {
+      "word": "strict",
+      "marker": ""
+    },
+    {
+      "word": "strike",
+      "marker": "**"
+    },
+    {
+      "word": "string",
+      "marker": "**"
+    },
+    {
+      "word": "strip",
+      "marker": ""
+    },
+    {
+      "word": "stripe",
+      "marker": ""
+    },
+    {
+      "word": "stroke",
+      "marker": ""
+    },
+    {
+      "word": "strong",
+      "marker": "*"
+    },
+    {
+      "word": "structure",
+      "marker": "**"
+    },
+    {
+      "word": "struggle",
+      "marker": "**"
+    },
+    {
+      "word": "studio",
+      "marker": "**"
+    },
+    {
+      "word": "study",
+      "marker": "*"
+    },
+    {
+      "word": "stuff",
+      "marker": "**"
+    },
+    {
+      "word": "style",
+      "marker": "*"
+    },
+    {
+      "word": "subject",
+      "marker": "**"
+    },
+    {
+      "word": "submarine",
+      "marker": ""
+    },
+    {
+      "word": "submit",
+      "marker": ""
+    },
+    {
+      "word": "subscribe",
+      "marker": ""
+    },
+    {
+      "word": "substance",
+      "marker": ""
+    },
+    {
+      "word": "substitute",
+      "marker": ""
+    },
+    {
+      "word": "subtle",
+      "marker": ""
+    },
+    {
+      "word": "suburb",
+      "marker": ""
+    },
+    {
+      "word": "subway",
+      "marker": "*"
+    },
+    {
+      "word": "succeed",
+      "marker": "**"
+    },
+    {
+      "word": "success",
+      "marker": "**"
+    },
+    {
+      "word": "such",
+      "marker": "**"
+    },
+    {
+      "word": "suck",
+      "marker": ""
+    },
+    {
+      "word": "sudden",
+      "marker": "**"
+    },
+    {
+      "word": "suffer",
+      "marker": "**"
+    },
+    {
+      "word": "suffice",
+      "marker": ""
+    },
+    {
+      "word": "sugar",
+      "marker": "*"
+    },
+    {
+      "word": "suggest",
+      "marker": "**"
+    },
+    {
+      "word": "suicide",
+      "marker": ""
+    },
+    {
+      "word": "suit",
+      "marker": "**"
+    },
+    {
+      "word": "suite",
+      "marker": ""
+    },
+    {
+      "word": "sum",
+      "marker": "**"
+    },
+    {
+      "word": "summer",
+      "marker": "*"
+    },
+    {
+      "word": "summit",
+      "marker": ""
+    },
+    {
+      "word": "sun",
+      "marker": "*"
+    },
+    {
+      "word": "super",
+      "marker": "**"
+    },
+    {
+      "word": "superb",
+      "marker": ""
+    },
+    {
+      "word": "superior",
+      "marker": ""
+    },
+    {
+      "word": "supervise",
+      "marker": ""
+    },
+    {
+      "word": "supper",
+      "marker": "**"
+    },
+    {
+      "word": "supplement",
+      "marker": ""
+    },
+    {
+      "word": "supply",
+      "marker": "**"
+    },
+    {
+      "word": "support",
+      "marker": "**"
+    },
+    {
+      "word": "suppose",
+      "marker": "**"
+    },
+    {
+      "word": "sure",
+      "marker": "*"
+    },
+    {
+      "word": "surface",
+      "marker": "**"
+    },
+    {
+      "word": "surgery",
+      "marker": ""
+    },
+    {
+      "word": "surprise",
+      "marker": "**"
+    },
+    {
+      "word": "surrender",
+      "marker": ""
+    },
+    {
+      "word": "surround",
+      "marker": "**"
+    },
+    {
+      "word": "survey",
+      "marker": "**"
+    },
+    {
+      "word": "survive",
+      "marker": "**"
+    },
+    {
+      "word": "suspect",
+      "marker": "**"
+    },
+    {
+      "word": "suspend",
+      "marker": ""
+    },
+    {
+      "word": "sustain",
+      "marker": ""
+    },
+    {
+      "word": "swallow",
+      "marker": "**"
+    },
+    {
+      "word": "swear",
+      "marker": ""
+    },
+    {
+      "word": "sweat",
+      "marker": ""
+    },
+    {
+      "word": "sweater",
+      "marker": "**"
+    },
+    {
+      "word": "sweep",
+      "marker": "**"
+    },
+    {
+      "word": "sweet",
+      "marker": "**"
+    },
+    {
+      "word": "swell",
+      "marker": ""
+    },
+    {
+      "word": "swift",
+      "marker": ""
+    },
+    {
+      "word": "swim",
+      "marker": "*"
+    },
+    {
+      "word": "swing",
+      "marker": "**"
+    },
+    {
+      "word": "switch",
+      "marker": "**"
+    },
+    {
+      "word": "symbol",
+      "marker": ""
+    },
+    {
+      "word": "sympathy",
+      "marker": ""
+    },
+    {
+      "word": "symphony",
+      "marker": ""
+    },
+    {
+      "word": "symptom",
+      "marker": ""
+    },
+    {
+      "word": "system",
+      "marker": "**"
+    },
+    {
+      "word": "table",
+      "marker": "*"
+    },
+    {
+      "word": "tackle",
+      "marker": ""
+    },
+    {
+      "word": "tag",
+      "marker": ""
+    },
+    {
+      "word": "tail",
+      "marker": "*"
+    },
+    {
+      "word": "take",
+      "marker": "*"
+    },
+    {
+      "word": "tale",
+      "marker": "**"
+    },
+    {
+      "word": "talent",
+      "marker": ""
+    },
+    {
+      "word": "talk",
+      "marker": "*"
+    },
+    {
+      "word": "tall",
+      "marker": "*"
+    },
+    {
+      "word": "tank",
+      "marker": "**"
+    },
+    {
+      "word": "tap",
+      "marker": "**"
+    },
+    {
+      "word": "tape",
+      "marker": "*"
+    },
+    {
+      "word": "target",
+      "marker": "**"
+    },
+    {
+      "word": "task",
+      "marker": ""
+    },
+    {
+      "word": "taste",
+      "marker": "*"
+    },
+    {
+      "word": "tax",
+      "marker": "**"
+    },
+    {
+      "word": "taxi",
+      "marker": "*"
+    },
+    {
+      "word": "tea",
+      "marker": "**"
+    },
+    {
+      "word": "teach",
+      "marker": "*"
+    },
+    {
+      "word": "team",
+      "marker": "*"
+    },
+    {
+      "word": "tear",
+      "marker": "**"
+    },
+    {
+      "word": "tease",
+      "marker": ""
+    },
+    {
+      "word": "technique",
+      "marker": "**"
+    },
+    {
+      "word": "technology",
+      "marker": "**"
+    },
+    {
+      "word": "teenage",
+      "marker": "**"
+    },
+    {
+      "word": "telegraph",
+      "marker": ""
+    },
+    {
+      "word": "telephone",
+      "marker": "*"
+    },
+    {
+      "word": "television",
+      "marker": "*"
+    },
+    {
+      "word": "tell",
+      "marker": "*"
+    },
+    {
+      "word": "temperature",
+      "marker": "**"
+    },
+    {
+      "word": "temple",
+      "marker": ""
+    },
+    {
+      "word": "temporary",
+      "marker": ""
+    },
+    {
+      "word": "tempt",
+      "marker": ""
+    },
+    {
+      "word": "ten",
+      "marker": "*"
+    },
+    {
+      "word": "tenant",
+      "marker": ""
+    },
+    {
+      "word": "tend",
+      "marker": "**"
+    },
+    {
+      "word": "tender",
+      "marker": ""
+    },
+    {
+      "word": "tennis",
+      "marker": "*"
+    },
+    {
+      "word": "tense",
+      "marker": "**"
+    },
+    {
+      "word": "tent",
+      "marker": "*"
+    },
+    {
+      "word": "term",
+      "marker": "**"
+    },
+    {
+      "word": "terminal",
+      "marker": ""
+    },
+    {
+      "word": "terminate",
+      "marker": ""
+    },
+    {
+      "word": "terrace",
+      "marker": ""
+    },
+    {
+      "word": "terrible",
+      "marker": "**"
+    },
+    {
+      "word": "terrific",
+      "marker": ""
+    },
+    {
+      "word": "territory",
+      "marker": ""
+    },
+    {
+      "word": "terror",
+      "marker": ""
+    },
+    {
+      "word": "test",
+      "marker": "*"
+    },
+    {
+      "word": "text",
+      "marker": "**"
+    },
+    {
+      "word": "textbook",
+      "marker": "*"
+    },
+    {
+      "word": "than",
+      "marker": "*"
+    },
+    {
+      "word": "thank",
+      "marker": "*"
+    },
+    {
+      "word": "that",
+      "marker": "*"
+    },
+    {
+      "word": "the",
+      "marker": "*"
+    },
+    {
+      "word": "theater",
+      "marker": "**"
+    },
+    {
+      "word": "theme",
+      "marker": ""
+    },
+    {
+      "word": "then",
+      "marker": "**"
+    },
+    {
+      "word": "theory",
+      "marker": "**"
+    },
+    {
+      "word": "therapy",
+      "marker": ""
+    },
+    {
+      "word": "there",
+      "marker": "*"
+    },
+    {
+      "word": "therefore",
+      "marker": "**"
+    },
+    {
+      "word": "they",
+      "marker": "*"
+    },
+    {
+      "word": "thick",
+      "marker": "**"
+    },
+    {
+      "word": "thief",
+      "marker": "**"
+    },
+    {
+      "word": "thin",
+      "marker": "**"
+    },
+    {
+      "word": "thing",
+      "marker": "*"
+    },
+    {
+      "word": "think",
+      "marker": "*"
+    },
+    {
+      "word": "third",
+      "marker": "*"
+    },
+    {
+      "word": "thirst",
+      "marker": "*"
+    },
+    {
+      "word": "thirteen",
+      "marker": "*"
+    },
+    {
+      "word": "thirty",
+      "marker": "*"
+    },
+    {
+      "word": "this",
+      "marker": "*"
+    },
+    {
+      "word": "thorough",
+      "marker": ""
+    },
+    {
+      "word": "though",
+      "marker": "**"
+    },
+    {
+      "word": "thousand",
+      "marker": "**"
+    },
+    {
+      "word": "thread",
+      "marker": ""
+    },
+    {
+      "word": "threat",
+      "marker": "**"
+    },
+    {
+      "word": "three",
+      "marker": "*"
+    },
+    {
+      "word": "thrill",
+      "marker": ""
+    },
+    {
+      "word": "throat",
+      "marker": "**"
+    },
+    {
+      "word": "through",
+      "marker": "**"
+    },
+    {
+      "word": "throw",
+      "marker": "**"
+    },
+    {
+      "word": "thumb",
+      "marker": ""
+    },
+    {
+      "word": "thus",
+      "marker": "**"
+    },
+    {
+      "word": "tick",
+      "marker": ""
+    },
+    {
+      "word": "ticket",
+      "marker": "*"
+    },
+    {
+      "word": "tide",
+      "marker": "**"
+    },
+    {
+      "word": "tie",
+      "marker": "**"
+    },
+    {
+      "word": "tiger",
+      "marker": "*"
+    },
+    {
+      "word": "tight",
+      "marker": "**"
+    },
+    {
+      "word": "till",
+      "marker": "**"
+    },
+    {
+      "word": "timber",
+      "marker": ""
+    },
+    {
+      "word": "time",
+      "marker": "*"
+    },
+    {
+      "word": "tin",
+      "marker": "**"
+    },
+    {
+      "word": "tiny",
+      "marker": "**"
+    },
+    {
+      "word": "tip",
+      "marker": "**"
+    },
+    {
+      "word": "tire",
+      "marker": "*"
+    },
+    {
+      "word": "tissue",
+      "marker": ""
+    },
+    {
+      "word": "title",
+      "marker": "**"
+    },
+    {
+      "word": "to",
+      "marker": "*"
+    },
+    {
+      "word": "toast",
+      "marker": "**"
+    },
+    {
+      "word": "today",
+      "marker": "*"
+    },
+    {
+      "word": "toe",
+      "marker": "**"
+    },
+    {
+      "word": "together",
+      "marker": "*"
+    },
+    {
+      "word": "toilet",
+      "marker": "**"
+    },
+    {
+      "word": "tomato",
+      "marker": "*"
+    },
+    {
+      "word": "tomorrow",
+      "marker": "*"
+    },
+    {
+      "word": "tone",
+      "marker": "**"
+    },
+    {
+      "word": "tongue",
+      "marker": "**"
+    },
+    {
+      "word": "tonight",
+      "marker": "*"
+    },
+    {
+      "word": "too",
+      "marker": "*"
+    },
+    {
+      "word": "tool",
+      "marker": "**"
+    },
+    {
+      "word": "tooth",
+      "marker": "*"
+    },
+    {
+      "word": "top",
+      "marker": "*"
+    },
+    {
+      "word": "topic",
+      "marker": "**"
+    },
+    {
+      "word": "torture",
+      "marker": ""
+    },
+    {
+      "word": "toss",
+      "marker": ""
+    },
+    {
+      "word": "total",
+      "marker": "**"
+    },
+    {
+      "word": "touch",
+      "marker": "*"
+    },
+    {
+      "word": "tough",
+      "marker": "**"
+    },
+    {
+      "word": "tour",
+      "marker": "**"
+    },
+    {
+      "word": "toward",
+      "marker": "**"
+    },
+    {
+      "word": "towel",
+      "marker": "**"
+    },
+    {
+      "word": "tower",
+      "marker": "**"
+    },
+    {
+      "word": "town",
+      "marker": "*"
+    },
+    {
+      "word": "toxic",
+      "marker": ""
+    },
+    {
+      "word": "toy",
+      "marker": "*"
+    },
+    {
+      "word": "trace",
+      "marker": "**"
+    },
+    {
+      "word": "track",
+      "marker": "*"
+    },
+    {
+      "word": "trade",
+      "marker": "**"
+    },
+    {
+      "word": "tradition",
+      "marker": "**"
+    },
+    {
+      "word": "traffic",
+      "marker": "**"
+    },
+    {
+      "word": "tragic",
+      "marker": ""
+    },
+    {
+      "word": "trail",
+      "marker": ""
+    },
+    {
+      "word": "train",
+      "marker": "*"
+    },
+    {
+      "word": "transact",
+      "marker": ""
+    },
+    {
+      "word": "transfer",
+      "marker": "**"
+    },
+    {
+      "word": "transform",
+      "marker": ""
+    },
+    {
+      "word": "transition",
+      "marker": ""
+    },
+    {
+      "word": "translate",
+      "marker": ""
+    },
+    {
+      "word": "transmit",
+      "marker": ""
+    },
+    {
+      "word": "transport",
+      "marker": "**"
+    },
+    {
+      "word": "trap",
+      "marker": "**"
+    },
+    {
+      "word": "travel",
+      "marker": "*"
+    },
+    {
+      "word": "tray",
+      "marker": "**"
+    },
+    {
+      "word": "treasure",
+      "marker": ""
+    },
+    {
+      "word": "treat",
+      "marker": "**"
+    },
+    {
+      "word": "treaty",
+      "marker": ""
+    },
+    {
+      "word": "tree",
+      "marker": "*"
+    },
+    {
+      "word": "tremendous",
+      "marker": ""
+    },
+    {
+      "word": "trend",
+      "marker": ""
+    },
+    {
+      "word": "triangle",
+      "marker": "**"
+    },
+    {
+      "word": "tribe",
+      "marker": ""
+    },
+    {
+      "word": "trick",
+      "marker": "**"
+    },
+    {
+      "word": "trigger",
+      "marker": ""
+    },
+    {
+      "word": "trim",
+      "marker": ""
+    },
+    {
+      "word": "trip",
+      "marker": "*"
+    },
+    {
+      "word": "triumph",
+      "marker": ""
+    },
+    {
+      "word": "troop",
+      "marker": ""
+    },
+    {
+      "word": "trouble",
+      "marker": "**"
+    },
+    {
+      "word": "truck",
+      "marker": "*"
+    },
+    {
+      "word": "true",
+      "marker": "*"
+    },
+    {
+      "word": "trunk",
+      "marker": "**"
+    },
+    {
+      "word": "trust",
+      "marker": "**"
+    },
+    {
+      "word": "truth",
+      "marker": "**"
+    },
+    {
+      "word": "try",
+      "marker": "*"
+    },
+    {
+      "word": "tube",
+      "marker": ""
+    },
+    {
+      "word": "tune",
+      "marker": "**"
+    },
+    {
+      "word": "tunnel",
+      "marker": ""
+    },
+    {
+      "word": "turn",
+      "marker": "*"
+    },
+    {
+      "word": "turnover",
+      "marker": ""
+    },
+    {
+      "word": "twelve",
+      "marker": "*"
+    },
+    {
+      "word": "twenty",
+      "marker": "*"
+    },
+    {
+      "word": "twenty-first",
+      "marker": "*"
+    },
+    {
+      "word": "twenty-second",
+      "marker": "*"
+    },
+    {
+      "word": "twenty-third",
+      "marker": "*"
+    },
+    {
+      "word": "twice",
+      "marker": "*"
+    },
+    {
+      "word": "twin",
+      "marker": "**"
+    },
+    {
+      "word": "twist",
+      "marker": "**"
+    },
+    {
+      "word": "two",
+      "marker": "*"
+    },
+    {
+      "word": "type",
+      "marker": "*"
+    },
+    {
+      "word": "ugly",
+      "marker": "*"
+    },
+    {
+      "word": "ultimate",
+      "marker": ""
+    },
+    {
+      "word": "umbrella",
+      "marker": "*"
+    },
+    {
+      "word": "uncle",
+      "marker": "*"
+    },
+    {
+      "word": "under",
+      "marker": "*"
+    },
+    {
+      "word": "undergo",
+      "marker": ""
+    },
+    {
+      "word": "underlie",
+      "marker": ""
+    },
+    {
+      "word": "undermine",
+      "marker": ""
+    },
+    {
+      "word": "understand",
+      "marker": "*"
+    },
+    {
+      "word": "undertake",
+      "marker": ""
+    },
+    {
+      "word": "uniform",
+      "marker": "**"
+    },
+    {
+      "word": "unify",
+      "marker": ""
+    },
+    {
+      "word": "unique",
+      "marker": ""
+    },
+    {
+      "word": "unit",
+      "marker": "**"
+    },
+    {
+      "word": "unite",
+      "marker": "**"
+    },
+    {
+      "word": "universe",
+      "marker": ""
+    },
+    {
+      "word": "university",
+      "marker": "**"
+    },
+    {
+      "word": "unless",
+      "marker": "**"
+    },
+    {
+      "word": "until",
+      "marker": "**"
+    },
+    {
+      "word": "up",
+      "marker": "*"
+    },
+    {
+      "word": "update",
+      "marker": ""
+    },
+    {
+      "word": "upon",
+      "marker": "**"
+    },
+    {
+      "word": "upper",
+      "marker": "**"
+    },
+    {
+      "word": "upset",
+      "marker": "**"
+    },
+    {
+      "word": "upward",
+      "marker": ""
+    },
+    {
+      "word": "urban",
+      "marker": ""
+    },
+    {
+      "word": "urge",
+      "marker": ""
+    },
+    {
+      "word": "use",
+      "marker": "*"
+    },
+    {
+      "word": "utilize",
+      "marker": ""
+    },
+    {
+      "word": "utter",
+      "marker": ""
+    },
+    {
+      "word": "vacate",
+      "marker": ""
+    },
+    {
+      "word": "vaccine",
+      "marker": ""
+    },
+    {
+      "word": "vacuum",
+      "marker": ""
+    },
+    {
+      "word": "vague",
+      "marker": ""
+    },
+    {
+      "word": "valid",
+      "marker": ""
+    },
+    {
+      "word": "valley",
+      "marker": "**"
+    },
+    {
+      "word": "value",
+      "marker": "**"
+    },
+    {
+      "word": "van",
+      "marker": "**"
+    },
+    {
+      "word": "vanish",
+      "marker": ""
+    },
+    {
+      "word": "various",
+      "marker": "**"
+    },
+    {
+      "word": "vary",
+      "marker": "**"
+    },
+    {
+      "word": "vast",
+      "marker": ""
+    },
+    {
+      "word": "vegetable",
+      "marker": "*"
+    },
+    {
+      "word": "vehicle",
+      "marker": "**"
+    },
+    {
+      "word": "venture",
+      "marker": ""
+    },
+    {
+      "word": "verb",
+      "marker": ""
+    },
+    {
+      "word": "verse",
+      "marker": ""
+    },
+    {
+      "word": "version",
+      "marker": "**"
+    },
+    {
+      "word": "versus",
+      "marker": ""
+    },
+    {
+      "word": "vertical",
+      "marker": ""
+    },
+    {
+      "word": "very",
+      "marker": "*"
+    },
+    {
+      "word": "vessel",
+      "marker": ""
+    },
+    {
+      "word": "veterinarian",
+      "marker": ""
+    },
+    {
+      "word": "via",
+      "marker": ""
+    },
+    {
+      "word": "vice",
+      "marker": ""
+    },
+    {
+      "word": "victim",
+      "marker": "**"
+    },
+    {
+      "word": "victory",
+      "marker": ""
+    },
+    {
+      "word": "video",
+      "marker": "*"
+    },
+    {
+      "word": "view",
+      "marker": "**"
+    },
+    {
+      "word": "vigor",
+      "marker": ""
+    },
+    {
+      "word": "villa",
+      "marker": "**"
+    },
+    {
+      "word": "village",
+      "marker": "**"
+    },
+    {
+      "word": "violent",
+      "marker": "**"
+    },
+    {
+      "word": "violin",
+      "marker": "*"
+    },
+    {
+      "word": "virgin",
+      "marker": ""
+    },
+    {
+      "word": "virtue",
+      "marker": ""
+    },
+    {
+      "word": "virus",
+      "marker": ""
+    },
+    {
+      "word": "visible",
+      "marker": ""
+    },
+    {
+      "word": "vision",
+      "marker": "**"
+    },
+    {
+      "word": "visit",
+      "marker": "*"
+    },
+    {
+      "word": "visual",
+      "marker": ""
+    },
+    {
+      "word": "vital",
+      "marker": ""
+    },
+    {
+      "word": "vivid",
+      "marker": ""
+    },
+    {
+      "word": "vocabulary",
+      "marker": ""
+    },
+    {
+      "word": "vocation",
+      "marker": ""
+    },
+    {
+      "word": "voice",
+      "marker": "*"
+    },
+    {
+      "word": "volume",
+      "marker": "**"
+    },
+    {
+      "word": "volunteer",
+      "marker": "**"
+    },
+    {
+      "word": "vote",
+      "marker": "**"
+    },
+    {
+      "word": "wage",
+      "marker": "**"
+    },
+    {
+      "word": "wait",
+      "marker": "*"
+    },
+    {
+      "word": "wake",
+      "marker": "*"
+    },
+    {
+      "word": "walk",
+      "marker": "*"
+    },
+    {
+      "word": "wall",
+      "marker": "*"
+    },
+    {
+      "word": "wander",
+      "marker": ""
+    },
+    {
+      "word": "want",
+      "marker": "*"
+    },
+    {
+      "word": "war",
+      "marker": "*"
+    },
+    {
+      "word": "warehouse",
+      "marker": ""
+    },
+    {
+      "word": "warm",
+      "marker": "*"
+    },
+    {
+      "word": "warn",
+      "marker": "**"
+    },
+    {
+      "word": "warrant",
+      "marker": ""
+    },
+    {
+      "word": "wash",
+      "marker": "*"
+    },
+    {
+      "word": "waste",
+      "marker": "**"
+    },
+    {
+      "word": "watch",
+      "marker": "*"
+    },
+    {
+      "word": "water",
+      "marker": "*"
+    },
+    {
+      "word": "watermelon",
+      "marker": "*"
+    },
+    {
+      "word": "wave",
+      "marker": "**"
+    },
+    {
+      "word": "way",
+      "marker": "*"
+    },
+    {
+      "word": "we",
+      "marker": "*"
+    },
+    {
+      "word": "weak",
+      "marker": "**"
+    },
+    {
+      "word": "wealth",
+      "marker": ""
+    },
+    {
+      "word": "weapon",
+      "marker": "**"
+    },
+    {
+      "word": "wear",
+      "marker": "*"
+    },
+    {
+      "word": "weather",
+      "marker": "*"
+    },
+    {
+      "word": "weave",
+      "marker": ""
+    },
+    {
+      "word": "website",
+      "marker": "*"
+    },
+    {
+      "word": "wedding",
+      "marker": "*"
+    },
+    {
+      "word": "weed",
+      "marker": ""
+    },
+    {
+      "word": "week",
+      "marker": "*"
+    },
+    {
+      "word": "weekend",
+      "marker": "*"
+    },
+    {
+      "word": "weigh",
+      "marker": "**"
+    },
+    {
+      "word": "weight",
+      "marker": "*"
+    },
+    {
+      "word": "weird",
+      "marker": ""
+    },
+    {
+      "word": "welcome",
+      "marker": "*"
+    },
+    {
+      "word": "welfare",
+      "marker": ""
+    },
+    {
+      "word": "well",
+      "marker": "*"
+    },
+    {
+      "word": "west",
+      "marker": "*"
+    },
+    {
+      "word": "wet",
+      "marker": "*"
+    },
+    {
+      "word": "whale",
+      "marker": "**"
+    },
+    {
+      "word": "what",
+      "marker": "*"
+    },
+    {
+      "word": "wheat",
+      "marker": ""
+    },
+    {
+      "word": "wheel",
+      "marker": "**"
+    },
+    {
+      "word": "when",
+      "marker": "*"
+    },
+    {
+      "word": "where",
+      "marker": "*"
+    },
+    {
+      "word": "whereas",
+      "marker": ""
+    },
+    {
+      "word": "whether",
+      "marker": "**"
+    },
+    {
+      "word": "which",
+      "marker": "**"
+    },
+    {
+      "word": "while",
+      "marker": "**"
+    },
+    {
+      "word": "whip",
+      "marker": ""
+    },
+    {
+      "word": "whisper",
+      "marker": "**"
+    },
+    {
+      "word": "whistle",
+      "marker": "**"
+    },
+    {
+      "word": "white",
+      "marker": "*"
+    },
+    {
+      "word": "who",
+      "marker": "*"
+    },
+    {
+      "word": "whole",
+      "marker": "**"
+    },
+    {
+      "word": "why",
+      "marker": "*"
+    },
+    {
+      "word": "wicked",
+      "marker": ""
+    },
+    {
+      "word": "wide",
+      "marker": "**"
+    },
+    {
+      "word": "wife",
+      "marker": "*"
+    },
+    {
+      "word": "wild",
+      "marker": "**"
+    },
+    {
+      "word": "will",
+      "marker": "*"
+    },
+    {
+      "word": "win",
+      "marker": "*"
+    },
+    {
+      "word": "wind",
+      "marker": "*"
+    },
+    {
+      "word": "window",
+      "marker": "*"
+    },
+    {
+      "word": "wine",
+      "marker": "*"
+    },
+    {
+      "word": "wing",
+      "marker": "**"
+    },
+    {
+      "word": "winter",
+      "marker": "*"
+    },
+    {
+      "word": "wipe",
+      "marker": "**"
+    },
+    {
+      "word": "wire",
+      "marker": "**"
+    },
+    {
+      "word": "wise",
+      "marker": "**"
+    },
+    {
+      "word": "wish",
+      "marker": "*"
+    },
+    {
+      "word": "wit",
+      "marker": ""
+    },
+    {
+      "word": "with",
+      "marker": "*"
+    },
+    {
+      "word": "withdraw",
+      "marker": ""
+    },
+    {
+      "word": "within",
+      "marker": "**"
+    },
+    {
+      "word": "without",
+      "marker": "**"
+    },
+    {
+      "word": "witness",
+      "marker": ""
+    },
+    {
+      "word": "woman",
+      "marker": "*"
+    },
+    {
+      "word": "wonder",
+      "marker": "**"
+    },
+    {
+      "word": "wood",
+      "marker": "*"
+    },
+    {
+      "word": "wool",
+      "marker": "**"
+    },
+    {
+      "word": "word",
+      "marker": "*"
+    },
+    {
+      "word": "work",
+      "marker": "*"
+    },
+    {
+      "word": "world",
+      "marker": "*"
+    },
+    {
+      "word": "worry",
+      "marker": "*"
+    },
+    {
+      "word": "worship",
+      "marker": ""
+    },
+    {
+      "word": "worth",
+      "marker": "**"
+    },
+    {
+      "word": "would",
+      "marker": "**"
+    },
+    {
+      "word": "wound",
+      "marker": "**"
+    },
+    {
+      "word": "wrap",
+      "marker": "**"
+    },
+    {
+      "word": "wreck",
+      "marker": ""
+    },
+    {
+      "word": "write",
+      "marker": "*"
+    },
+    {
+      "word": "wrong",
+      "marker": "*"
+    },
+    {
+      "word": "year",
+      "marker": "*"
+    },
+    {
+      "word": "yell",
+      "marker": "**"
+    },
+    {
+      "word": "yellow",
+      "marker": "*"
+    },
+    {
+      "word": "yes",
+      "marker": "*"
+    },
+    {
+      "word": "yesterday",
+      "marker": "*"
+    },
+    {
+      "word": "yet",
+      "marker": "**"
+    },
+    {
+      "word": "yield",
+      "marker": ""
+    },
+    {
+      "word": "you",
+      "marker": "*"
+    },
+    {
+      "word": "young",
+      "marker": "*"
+    },
+    {
+      "word": "zebra",
+      "marker": "**"
+    },
+    {
+      "word": "zero",
+      "marker": "**"
+    },
+    {
+      "word": "zone",
+      "marker": ""
+    },
+    {
+      "word": "zoo",
+      "marker": "*"
+    }
+  ]
+}

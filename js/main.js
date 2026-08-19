@@ -1101,46 +1101,69 @@
 
         let wordPoolLoadVersion = 0;
 
+        function learningGradeLabel(grade) {
+            const value = Math.max(3, Math.min(12, Number(grade) || 4));
+            if (value <= 6) return `초등 ${value}학년`;
+            if (value <= 9) return `중학교 ${value - 6}학년`;
+            return `고등학교 ${value - 9}학년`;
+        }
+
         async function loadAssignedWordPacks() {
-            const ids = Array.isArray(gameState.assignedWordPackIds) && gameState.assignedWordPackIds.length
+            const requestedGrade = Math.max(3, Math.min(12, Number(gameState.learningGrade || gameState.grade) || 4));
+            let ids = Array.isArray(gameState.assignedWordPackIds) && gameState.assignedWordPackIds.length
                 ? gameState.assignedWordPackIds
-                : (gameState.assignedWordPackId ? [gameState.assignedWordPackId] : []);
-            if (!ids.length) return null;
-            const response = await fetch('data/word-packs.json?v=20260809-21', { cache: 'force-cache' });
+                : (gameState.assignedWordPackId ? [gameState.assignedWordPackId] : [`grade-${requestedGrade}-mid`]);
+            const response = await fetch('data/word-packs.json?v=20260820-1', { cache: 'force-cache' });
             if (!response.ok) throw new Error('단어팩 파일을 불러오지 못했어요. (' + response.status + ')');
             const catalog = await response.json();
             const byId = new Map((Array.isArray(catalog.packs) ? catalog.packs : []).map((pack) => [pack.id, pack]));
+            const wordCatalog = new Map((Array.isArray(catalog.words) ? catalog.words : []).map((entry) => [String(entry?.word || '').trim().toLowerCase(), entry]));
+            let selectedPacks = ids.map((id) => byId.get(id)).filter(Boolean);
+            if (!selectedPacks.length) {
+                ids = [`grade-${requestedGrade}-mid`];
+                selectedPacks = ids.map((id) => byId.get(id)).filter(Boolean);
+            }
             const merged = new Map();
-            ids.forEach((id) => {
-                const pack = byId.get(id);
-                if (!pack || !Array.isArray(pack.words)) return;
-                pack.words.forEach((entry) => {
+            selectedPacks.forEach((pack) => {
+                const entries = Array.isArray(pack.wordKeys)
+                    ? pack.wordKeys.map((key) => wordCatalog.get(String(key || '').trim().toLowerCase())).filter(Boolean)
+                    : (Array.isArray(pack.words) ? pack.words : []);
+                entries.forEach((entry) => {
                     const key = String(entry?.word || '').trim().toLowerCase();
-                    if (key && entry?.meaning && !merged.has(key)) merged.set(key, { word: String(entry.word).trim(), meaning: String(entry.meaning).trim() });
+                    if (key && entry?.meaning && !merged.has(key)) merged.set(key, {
+                        word: String(entry.word).trim(),
+                        meaning: String(entry.meaning).trim(),
+                        spiralRank: Math.max(0, Number(entry.spiralRank) || 0),
+                        introducedGrade: Math.max(3, Math.min(12, Number(entry.introducedGrade) || requestedGrade)),
+                        introducedLevel: String(entry.introducedLevel || '')
+                    });
                 });
             });
             if (!merged.size) throw new Error('배정된 단어팩을 찾지 못했어요.');
-            return { words: [...merged.values()], source: ids.join('+') };
+            return {
+                words: [...merged.values()],
+                source: ids.join('+'),
+                supportWordCount: Math.max(0, ...selectedPacks.map((pack) => Number(pack.supportWordCount) || 0))
+            };
         }
         async function fetchWordsFromSpreadsheet() {
             const loadVersion = ++wordPoolLoadVersion;
             const gradeStr = String(gameState.grade);
-            const finish = (words, source) => {
+            const finish = (words, source, supportWordCount = 0) => {
                 if (loadVersion !== wordPoolLoadVersion) return false;
                 gameState.wordsPool = words;
+                gameState.activeWordPackSupportCount = Math.max(0, Math.min(words.length, Number(supportWordCount) || 0));
                 gameState.currentQuizIndex = gameState.progress % (gameState.wordsPool.length || 1);
                 console.log(`[WordsPool] source: ${source}, grade: ${gameState.grade}, words: ${gameState.wordsPool.length}`);
                 initGameEngine();
                 return true;
             };
 
-            if ((Array.isArray(gameState.assignedWordPackIds) && gameState.assignedWordPackIds.length) || gameState.assignedWordPackId) {
-                try {
-                    const assignment = await loadAssignedWordPacks();
-                    if (assignment && finish(assignment.words, assignment.source)) return;
-                } catch (err) {
-                    console.warn('배정 단어팩 로드 실패로 학년 기본 목록을 사용합니다.', err);
-                }
+            try {
+                const assignment = await loadAssignedWordPacks();
+                if (assignment && finish(assignment.words, assignment.source, assignment.supportWordCount)) return;
+            } catch (err) {
+                console.warn('교육과정 단어팩 로드 실패로 학년 기본 목록을 사용합니다.', err);
             }
             try {
                 if (!window._fbReady) {
@@ -1154,7 +1177,7 @@
                         finish(data['grade_' + gradeStr], `grade-${gradeStr}-current`);
                     } else {
                         finish(MOCK_WORDS[gradeStr] || MOCK_WORDS['4'], 'local fallback');
-                        setTimeout(() => showToast(`${gradeStr}학년 단어 목록을 찾지 못해 임시 목록을 사용합니다.`), 2000);
+                        setTimeout(() => showToast(`${learningGradeLabel(gradeStr)} 단어 목록을 찾지 못해 임시 목록을 사용합니다.`), 2000);
                     }
                 } else {
                     finish(MOCK_WORDS[gradeStr] || MOCK_WORDS['4'], 'local fallback');
@@ -1620,7 +1643,7 @@
             const _nameEl = document.getElementById("displayStudentName");
             if (_nameEl) refreshHeroIdentity();            const _badgeEl = document.getElementById("gradeLevelBadge");
             const displayedLearningGrade = Number(gameState.learningGrade || gameState.grade || 4);
-            if (_badgeEl) _badgeEl.innerText = `교과 영단어 ${displayedLearningGrade}학년`;
+            if (_badgeEl) _badgeEl.innerText = `교과 영단어 ${learningGradeLabel(displayedLearningGrade)}`;
 
             if (typeof gameState.skillsInventory === 'string') {
                 try { gameState.skillsInventory = JSON.parse(gameState.skillsInventory); } catch(e) { gameState.skillsInventory = []; }
@@ -3833,13 +3856,72 @@
             return label;
         }
 
+        function selectAdaptiveQuizIndex(pool, learningStats, supportWordCount, previousIndex, random = Math.random) {
+            if (!Array.isArray(pool) || pool.length <= 1) return 0;
+            const stats = learningStats && typeof learningStats === "object" && !Array.isArray(learningStats) ? learningStats : {};
+            const supportLimit = Math.max(0, Number(supportWordCount) || 0);
+            const candidates = pool.map((entry, index) => {
+                const key = String(entry?.word || "").trim().toLowerCase();
+                const row = stats[key] && typeof stats[key] === "object" ? stats[key] : {};
+                const correct = Math.max(0, Number(row.c) || 0);
+                const wrong = Math.max(0, Number(row.x) || 0);
+                const tries = correct + wrong;
+                const accuracy = tries ? correct / tries : 0;
+                const streak = Math.max(0, Number(row.s) || 0);
+                const rank = Math.max(0, Number(entry?.spiralRank) || 0);
+                const unresolved = wrong > 0 && (streak < 3 || accuracy < 0.8);
+                const review = supportLimit > 0 && rank > 0 && rank <= supportLimit;
+                const mastered = correct >= WORD_MASTERY_CORRECT_THRESHOLD && accuracy >= WORD_MASTERY_ACCURACY_THRESHOLD;
+                return { index, correct, wrong, tries, accuracy, unresolved, review, mastered };
+            });
+            const totals = candidates.reduce((sum, item) => {
+                sum.correct += item.correct;
+                sum.wrong += item.wrong;
+                return sum;
+            }, { correct: 0, wrong: 0 });
+            const totalTries = totals.correct + totals.wrong;
+            const unresolved = candidates.filter((item) => item.unresolved);
+            const review = candidates.filter((item) => item.review && !item.unresolved);
+            const target = candidates.filter((item) => !item.review && !item.unresolved);
+            const supportMode = (totalTries >= 8 && totals.correct / totalTries < 0.75)
+                || unresolved.length >= 3
+                || unresolved.reduce((sum, item) => sum + item.wrong, 0) >= 4;
+            const roll = Math.max(0, Math.min(0.999999, Number(random()) || 0));
+            const groups = supportMode
+                ? (roll < 0.55 ? [unresolved, review, target] : roll < 0.85 ? [review, unresolved, target] : [target, unresolved, review])
+                : (roll < 0.20 ? [unresolved, target, review] : roll < 0.40 ? [review, target, unresolved] : [target, unresolved, review]);
+            let selectedGroup = groups.find((group) => group.some((item) => item.index !== previousIndex))
+                || candidates.filter((item) => item.index !== previousIndex);
+            if (!selectedGroup.length) selectedGroup = candidates;
+            selectedGroup = selectedGroup.filter((item) => item.index !== previousIndex || selectedGroup.length === 1);
+            const weighted = selectedGroup.map((item) => {
+                let weight = item.tries === 0 ? 3 : 1 + item.wrong * 2 + (1 - item.accuracy) * 3;
+                if (item.unresolved) weight += 4;
+                if (item.mastered) weight *= 0.2;
+                return { ...item, weight: Math.max(0.05, weight) };
+            });
+            const totalWeight = weighted.reduce((sum, item) => sum + item.weight, 0);
+            let cursor = Math.max(0, Math.min(0.999999, Number(random()) || 0)) * totalWeight;
+            for (const item of weighted) {
+                cursor -= item.weight;
+                if (cursor <= 0) return item.index;
+            }
+            return weighted[weighted.length - 1]?.index ?? 0;
+        }
+        window.__vocaSelectAdaptiveQuizIndex = selectAdaptiveQuizIndex;
+
         function generateQuizCard() {
             if (!gameState.wordsPool || gameState.wordsPool.length === 0) {
                 document.getElementById("quizWordEng").innerText = "마법 성역의 단어가 고갈되었습니다";
                 return;
             }
 
-            gameState.currentQuizIndex = Math.floor(Math.random() * gameState.wordsPool.length);
+            gameState.currentQuizIndex = selectAdaptiveQuizIndex(
+                gameState.wordsPool,
+                gameState.wordLearningStats,
+                gameState.activeWordPackSupportCount,
+                gameState.currentQuizIndex
+            );
             const current = gameState.wordsPool[gameState.currentQuizIndex];
             const allowed = new Set(["meaning-choice", "fill-blank", "word-choice", "listen-meaning", "word-order", "short-answer"]);
             const selected = [...new Set((Array.isArray(gameState.assignedQuestionTypes) ? gameState.assignedQuestionTypes : ["meaning-choice"]).filter((type) => allowed.has(type)))];
@@ -9571,7 +9653,7 @@
             if(skipBtn) skipBtn.style.display = "block";
 
             if (tutorialStep === 1) {
-                overlay.classList.add('bg-black/50');
+                overlay.classList.add('bg-black/20');
                 // 팝업을 오른쪽 상단으로 (퀴즈 문항과 겹치지 않도록)
                 overlay.style.alignItems = "flex-end";
                 overlay.style.justifyContent = "flex-start";
@@ -9585,7 +9667,7 @@
                 const qContainer = document.getElementById('quizContainer');
                 if (qContainer) qContainer.classList.add('tutorial-highlight', 'relative', 'z-[10000]');
             } else if (tutorialStep === 2) {
-                overlay.classList.add('bg-black/50');
+                overlay.classList.add('bg-black/20');
                 overlay.style.alignItems = "flex-start";
                 overlay.style.justifyContent = "flex-start";
                 overlay.style.paddingTop = "52px";
@@ -9593,7 +9675,7 @@
                 const gearTabBtn = document.getElementById("gearTabBtn");
                 if(gearTabBtn) gearTabBtn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
             } else if (tutorialStep === 3) {
-                overlay.classList.add('bg-black/50');
+                overlay.classList.add('bg-black/20');
                 overlay.style.alignItems = "flex-start";
                 overlay.style.justifyContent = "flex-start";
                 overlay.style.paddingTop = "52px";
@@ -9603,7 +9685,7 @@
                 const weaponBtnContainer = document.getElementById("gearInfo_weapon");
                 if(weaponBtnContainer) weaponBtnContainer.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
             } else if (tutorialStep === 4) {
-                overlay.classList.add('bg-black/50');
+                overlay.classList.add('bg-black/20');
                 overlay.style.alignItems = "flex-start";
                 overlay.style.justifyContent = "flex-start";
                 overlay.style.paddingTop = "52px";
@@ -9611,7 +9693,7 @@
                 const btn = document.getElementById("petTabBtn");
                 if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse'); btn.style.pointerEvents = 'auto';
             } else if (tutorialStep === 5) {
-                overlay.classList.add('bg-black/50');
+                overlay.classList.add('bg-black/20');
                 overlay.style.alignItems = "flex-start";
                 overlay.style.justifyContent = "flex-start";
                 overlay.style.paddingTop = "52px";
@@ -9620,7 +9702,7 @@
                 const btn = document.querySelector(`button[onclick="interactUpgradePet('dragon')"]`);
                 if(btn) { btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse'); btn.style.pointerEvents = 'auto'; }
             } else if (tutorialStep === 6) {
-                overlay.classList.add('bg-black/50');
+                overlay.classList.add('bg-black/20');
                 overlay.style.alignItems = "flex-start";
                 overlay.style.justifyContent = "flex-start";
                 overlay.style.paddingTop = "52px";
@@ -9628,7 +9710,7 @@
                 const btn = document.getElementById("skillTabBtn");
                 if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse'); btn.style.pointerEvents = 'auto';
             } else if (tutorialStep === 7) {
-                overlay.classList.add('bg-black/50');
+                overlay.classList.add('bg-black/20');
                 overlay.style.alignItems = "flex-start";
                 overlay.style.justifyContent = "flex-start";
                 overlay.style.paddingTop = "52px";

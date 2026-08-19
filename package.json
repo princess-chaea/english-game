@@ -13,10 +13,11 @@
     "tesseract.js": "7.0.0"
   },
   "scripts": {
+    "build:curriculum-vocabulary": "node scripts/build-curriculum-vocabulary.mjs",
     "build:tiered-packs": "node scripts/build-tiered-word-packs.mjs",
     "build:curriculum-review": "node scripts/build-curriculum-review.mjs",
     "build:curriculum-packs": "node scripts/build-curriculum-elementary-packs.mjs",
     "check:release": "node scripts/release-readiness.mjs",
-    "check": "node --check api/_firebase-admin.js && node --check api/_http.js && node --check api/student.js && node --check api/teacher.js && node --check api/leaderboard.js && node --check api/world-boss.js && node --check api/cleanup-legacy.js && node --check js/config.js && node --check js/main.js && node --check js/secure-account.js && node --check sw.js && node --check js/vendor/qrcode-generator.mjs && node --check scripts/build-tiered-word-packs.mjs && node --check scripts/build-curriculum-elementary-packs.mjs && node --check scripts/release-readiness.mjs"
+    "check": "node --check api/_firebase-admin.js && node --check api/_http.js && node --check api/student.js && node --check api/teacher.js && node --check api/leaderboard.js && node --check api/world-boss.js && node --check api/cleanup-legacy.js && node --check js/config.js && node --check js/main.js && node --check js/secure-account.js && node --check sw.js && node --check js/vendor/qrcode-generator.mjs && node --check scripts/build-curriculum-vocabulary.mjs && node --check scripts/build-tiered-word-packs.mjs && node --check scripts/build-curriculum-elementary-packs.mjs && node --check scripts/release-readiness.mjs"
   }
 }

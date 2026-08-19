@@ -96,14 +96,21 @@ const leaderboard = adminDb.collection('leaderboard');
 const invites = adminDb.collection('classInvites');
 const legacyUsers = adminDb.collection('users');
 const legacyRecoveryGuards = adminDb.collection('legacyRecoveryGuards');
-const REVIEW_PACK_ID = 'elementary-800-missing-review';
-const TIER_WORD_PACK_IDS = [3,4,5,6].flatMap((grade) => ['low','mid','high'].map((level) => 'grade-' + grade + '-' + level));
-const ASSIGNABLE_WORD_PACK_IDS = new Set(['grade-3-current','grade-4-current','grade-5-current','grade-6-current','curriculum-2022-grade-3','curriculum-2022-grade-4','curriculum-2022-grade-5','curriculum-2022-grade-6',...TIER_WORD_PACK_IDS,REVIEW_PACK_ID]);
+const MIN_LEARNING_GRADE = 3;
+const MAX_LEARNING_GRADE = 12;
 const LEARNING_QUESTION_TYPES = new Set(['meaning-choice','fill-blank','word-choice','listen-meaning','word-order','short-answer']);
-const STUDENT_WORD_PACKS = packCatalog?.packs || [];
+const STUDENT_WORD_CATALOG = new Map((packCatalog?.words || []).map((entry) => [text(entry?.word, 80).toLowerCase(), entry]).filter(([key, entry]) => key && text(entry?.meaning, 160)));
+const STUDENT_WORD_PACKS = (packCatalog?.packs || []).filter((pack) => pack?.kind === 'curriculum-spiral');
 const STUDENT_WORD_PACK_BY_ID = new Map(STUDENT_WORD_PACKS.map((pack) => [pack.id, pack]));
+const ASSIGNABLE_WORD_PACK_IDS = new Set(STUDENT_WORD_PACKS.map((pack) => pack.id));
+function resolvedPackWords(pack) {
+  const entries = Array.isArray(pack?.wordKeys)
+    ? pack.wordKeys.map((key) => STUDENT_WORD_CATALOG.get(text(key, 80).toLowerCase())).filter(Boolean)
+    : (Array.isArray(pack?.words) ? pack.words : []);
+  return entries.map((entry) => ({ word: text(entry?.word, 80), meaning: text(entry?.meaning, 160) })).filter((entry) => entry.word && entry.meaning);
+}
 const safeGuildLogoUrl = (value) => { const url=text(value,1200);return /^https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/[A-Za-z0-9._-]+\/o\//.test(url)?url:null; };
-const defaultWordPack = (grade) => 'grade-' + grade + '-mid';
+const defaultWordPack = (grade) => 'grade-' + safeInt(grade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE) + '-mid';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PROGRESS_TOKEN_INITIAL = 20;
 const PROGRESS_TOKEN_CAPACITY = 240;
@@ -206,7 +213,7 @@ function wordMasterySummary(value, conqueredFallback = 0) {
   return { stats, masteredCount, conqueredCount: safeInt(conqueredFallback, 0, 0, 100000) };
 }function normalizedPackIds(value, grade) { const source=Array.isArray(value)?value:(value?[value]:[]);const ids=[...new Set(source.map((item)=>text(item,80)).filter((id)=>ASSIGNABLE_WORD_PACK_IDS.has(id)))].slice(0,12);return ids.length?ids:[defaultWordPack(grade)]; }
 function normalizedQuestionTypes(value) { const types=[...new Set((Array.isArray(value)?value:[]).map((item)=>text(item,32)).filter((item)=>LEARNING_QUESTION_TYPES.has(item)))];return ['meaning-choice',...types.filter((item)=>item!=='meaning-choice')]; }
-function assignedPackMetadata(ids) { return (ids || []).map((id) => STUDENT_WORD_PACK_BY_ID.get(id)).filter(Boolean).map((pack) => ({ id: pack.id, label: text(pack.label, 120) || pack.id, wordCount: safeInt(pack.wordCount, Array.isArray(pack.words) ? pack.words.length : 0, 0, 5000) })); }
+function assignedPackMetadata(ids) { return (ids || []).map((id) => STUDENT_WORD_PACK_BY_ID.get(id)).filter(Boolean).map((pack) => ({ id: pack.id, label: text(pack.label, 120) || pack.id, wordCount: safeInt(pack.wordCount, Array.isArray(pack.wordKeys) ? pack.wordKeys.length : Array.isArray(pack.words) ? pack.words.length : 0, 0, 5000), supportWordCount: safeInt(pack.supportWordCount, 0, 0, 5000) })); }
 function safeQuestionTypeStats(value) { const result={};LEARNING_QUESTION_TYPES.forEach((type)=>{const row=value&&typeof value==='object'&&!Array.isArray(value)?value[type]:null;result[type]={tries:safeInt(row?.tries,0,0,1000000000),correct:safeInt(row?.correct,0,0,1000000000)};});return result; }
 function classPack(grade, wordPackId) { return ASSIGNABLE_WORD_PACK_IDS.has(wordPackId) ? wordPackId : defaultWordPack(grade); }
 const fields = new Set(['avatarType','gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petType','petLvl','petLevels','stage','progress','totalQuizTries','totalQuizCorrect','masteredWords','currentQuizIndex','skillsInventory','skillTierOrderVersion','equippedSkills','activeSkillDeck','skillEssence','lockedPotentialSlots','wrongWordCounts','wordLearningStats','questionTypeStats','combatPower','masteryPoints','necklaceLvl','braceletLvl','ringLvl','acquiredRelics','equippedRelicId','gearPotentials','isPotentialUnlocked','equippedTitle','wbTitle','unlockedTitles','bossTokens','relicEssence','relicTranscendLvl','soundSettings','tutorialCompleted','lastSaved','guildBoostCharges']);
@@ -277,7 +284,7 @@ async function assignedWordPack(uid) {
     if (!classSnap.exists || !memberSnap.exists) continue;
     const classroom = classSnap.data();
     const member = memberSnap.data() || {};
-    const grade = safeInt(member.learningGrade, safeInt(classroom.grade, account.learningGrade, 3, 6), 3, 6);
+    const grade = safeInt(member.learningGrade, safeInt(classroom.grade, account.learningGrade, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE), MIN_LEARNING_GRADE, MAX_LEARNING_GRADE);
     const hasMemberOverride = member.usesGuildLearningDefaults === false;
     const rawPackIds = hasMemberOverride ? member.assignedWordPackIds : (classroom.wordPackIds || classroom.wordPackId);
     const rawQuestionTypes = hasMemberOverride ? member.questionTypes : classroom.defaultQuestionTypes;
@@ -449,7 +456,7 @@ async function loadGuildTrial(uid, prefetchedAssignment = null) {
     const data = member.data() || {};
     return {
       nickname: text(data.nickname, 30) || '이름 없는 용사',
-      learningGrade: safeInt(data.learningGrade, 4, 3, 6),
+      learningGrade: safeInt(data.learningGrade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE),
       stage: safeInt(data.stage, 1, 1, 9999),
       totalCorrect: safeInt(data.totalCorrect, 0, 0, 1000000000),
       totalQuizTries: Math.max(safeInt(data.totalCorrect, 0, 0, 1000000000), safeInt(data.totalQuizTries, 0, 0, 1000000000)),
@@ -748,8 +755,9 @@ async function guildWordPackPreview(uid, body) {
   return {
     id: pack.id,
     label: text(pack.label, 120) || pack.id,
-    wordCount: safeInt(pack.wordCount, Array.isArray(pack.words) ? pack.words.length : 0, 0, 5000),
-    words: (Array.isArray(pack.words) ? pack.words : []).slice(0, 500).map((entry) => ({ word: text(entry?.word, 80), meaning: text(entry?.meaning, 160) })).filter((entry) => entry.word && entry.meaning)
+    wordCount: safeInt(pack.wordCount, Array.isArray(pack.wordKeys) ? pack.wordKeys.length : Array.isArray(pack.words) ? pack.words.length : 0, 0, 5000),
+    supportWordCount: safeInt(pack.supportWordCount, 0, 0, 5000),
+    words: resolvedPackWords(pack).slice(0, 3500)
   };
 }
 async function guildLeaderboard() {
@@ -908,7 +916,7 @@ function guardProgress(previous, next, storedGuard, now = Date.now()) {
 async function create(uid, body) {
   const ref=accounts.doc(uid); const existing=await ref.get(); if (existing.exists) return publicAccount(existing.data());
   if (body.privacyConsent !== true) throw apiError(400,'CONSENT_REQUIRED','학습 기록 저장 안내에 동의해야 시작할 수 있어요.');
-  const data={schemaVersion:2,role:'student',nickname:normalizeNickname(body.nickname),learningGrade:safeInt(body.learningGrade,4,3,6),state:{...defaultState(),lastSaved:Date.now()},progressGuard:newProgressGuard(),freeNicknameChangeUsed:false,renameCount:0,leaderboardOptIn:Boolean(body.leaderboardOptIn),consentVersion:'student-v1',consentAt:FieldValue.serverTimestamp(),classIds:[],createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()};
+  const data={schemaVersion:2,role:'student',nickname:normalizeNickname(body.nickname),learningGrade:safeInt(body.learningGrade,4,MIN_LEARNING_GRADE,MAX_LEARNING_GRADE),state:{...defaultState(),lastSaved:Date.now()},progressGuard:newProgressGuard(),freeNicknameChangeUsed:false,renameCount:0,leaderboardOptIn:Boolean(body.leaderboardOptIn),consentVersion:'student-v1',consentAt:FieldValue.serverTimestamp(),classIds:[],createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()};
   await ref.create(data); await publish(uid,data); return publicAccount(data);
 }
 async function syncWorldBossVisibility(uid, accountData) {
@@ -1042,7 +1050,7 @@ function currentBossWeek(now=Date.now()){const kst=new Date(now+KST_OFFSET_MS);c
 function legacyBossKey(credentials){const grade=safeInt(credentials?.grade,0,3,6),room=safeInt(credentials?.classNum,0,1,99),number=safeInt(credentials?.studentNum,0,1,99),name=text(credentials?.name,30);return grade&&room&&number&&name?`${grade}_${room}_${number}_${name}`:null;}
 async function transferCurrentBossRecord({toUid,fromUid='',credentials,nickname,publicLeaderboard}){const key=legacyBossKey(credentials),ref=adminDb.collection('world_bosses').doc(`global_week_${currentBossWeek()}`),targetRef=ref.collection('contributions').doc(toUid),sourceRef=fromUid&&fromUid!==toUid?ref.collection('contributions').doc(fromUid):null;await adminDb.runTransaction(async tx=>{const reads=[tx.get(ref),tx.get(targetRef)];if(sourceRef)reads.push(tx.get(sourceRef));const [bossSnap,targetSnap,sourceSnap]=await Promise.all(reads);if(!bossSnap.exists)return;const boss=bossSnap.data()||{},target=targetSnap.data()||{},source=sourceSnap?.data()||{};const legacyDamage=key?safeInt(boss.damages?.[key],0,0,100000000000):0;const importedLegacy=target.legacyImported||source.legacyImported?0:legacyDamage;const damage=safeInt(target.damage,0,0)+safeInt(source.damage,0,0)+importedLegacy;if(!damage)return;const legacyDay=key&&typeof boss.lastPlayedDates?.[key]==='string'?boss.lastPlayedDates[key]:null;tx.set(targetRef,{damage,lastPlayedKstDay:target.lastPlayedKstDay||source.lastPlayedKstDay||legacyDay||null,publicLeaderboard:Boolean(publicLeaderboard),publicNickname:publicLeaderboard?nickname:null,legacyImported:Boolean(target.legacyImported||source.legacyImported||legacyDamage),updatedAt:FieldValue.serverTimestamp()},{merge:true});if(sourceRef)tx.delete(sourceRef);});}function legacyState(data) { let extra={};try{extra=typeof data.extraData==='string'?JSON.parse(data.extraData||'{}'):(data.extraData||{});}catch{}return {...defaultState(),...cleanState({...data,...extra})}; }
 async function migrateGoogleLegacy(uid, body) {
-  const nickname=normalizeNickname(body.nickname),requestedGrade=safeInt(body.learningGrade,4,3,6),ref=accounts.doc(uid);
+  const nickname=normalizeNickname(body.nickname),requestedGrade=safeInt(body.learningGrade,4,MIN_LEARNING_GRADE,MAX_LEARNING_GRADE),ref=accounts.doc(uid);
   const matches=await legacyUsers.where('linkedGoogleUid','==',uid).limit(2).get();
   if(matches.empty)throw apiError(404,'LEGACY_GOOGLE_NOT_FOUND','이 Google 계정에 연결된 기존 게임 기록을 찾지 못했어요.');
   if(matches.size!==1)throw apiError(409,'LEGACY_GOOGLE_AMBIGUOUS','기존 Google 연동 기록이 여러 개예요. 기존 기록 입력 방식을 이용해 주세요.');
@@ -1051,7 +1059,7 @@ async function migrateGoogleLegacy(uid, body) {
 }
 async function migrate(uid, body) {
   const pin=text(body.pin,12);if(!/^\d{4}$/.test(pin))throw apiError(400,'INVALID_PIN','기존 4자리 PIN 번호를 입력해 주세요.');
-  const credentials=body.credentials||{},ids=legacyIds(credentials),nickname=normalizeNickname(body.nickname),requestedGrade=safeInt(body.learningGrade,4,3,6),ref=accounts.doc(uid);
+  const credentials=body.credentials||{},ids=legacyIds(credentials),nickname=normalizeNickname(body.nickname),requestedGrade=safeInt(body.learningGrade,4,MIN_LEARNING_GRADE,MAX_LEARNING_GRADE),ref=accounts.doc(uid);
   const guardRef=legacyGuardRef(ids),attemptedAt=Date.now();
   const outcome=await adminDb.runTransaction(async tx=>{
     const candidates=ids.map(id=>legacyUsers.doc(id));

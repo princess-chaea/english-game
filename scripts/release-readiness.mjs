@@ -9,7 +9,7 @@ const requiredEnvironment = [
 ];
 const missing = requiredEnvironment.filter((entry) => !entry.names.some((name) => process.env[name])).map((entry) => entry.label);
 const guildSkinFiles = ['azure','sakura','neon','lion','crimson','frost','inventor','moon','starlight','dragon','clockwork','cloud','deepsea','candy','dino','rhythm','origami','comet','scarab','lantern','skypirate','mushroom','volcanic','mecha','chess','galaxywhale','phoenix','leviathan','chronomancer','prismatic','mirror','dreamlibrary','glaciertrain','constellation','coral','jungle','aurora','toybox','cosmicchef','camera','gravity','crystalsinger','thundercloud','fourseasons','glassknight','starpost','detective','festival','observatory','runegarden','seastar','ballerina','dragonfruit','moonexplorer','rainbowrider'].map((name) => `media/player/guild_skin_${name}.webp`);
-const files = ['firebase.json', 'firestore.rules', 'firestore.indexes.json', 'storage.rules', 'vercel.json', 'privacy.html', 'package-lock.json', 'data/word-packs.json', 'data/word-packs.js', 'data/curriculum-3000-review-catalog.json', 'media/guild/dimensional-summon-banner.webp', 'media/guild/guild-shop-items.webp', 'media/guild/guild-effects.webp', ...Array.from({ length: 5 }, (_, index) => `media/test/test${index + 1}.webp`), ...guildSkinFiles];
+const files = ['firebase.json', 'firestore.rules', 'firestore.indexes.json', 'storage.rules', 'vercel.json', 'privacy.html', 'package-lock.json', 'data/word-packs.json', 'data/word-packs.js', 'data/curriculum-3000-markers.json', 'data/curriculum-3000-with-meanings.json', 'data/CREDITS.md', 'data/curriculum-3000-review-catalog.json', 'media/guild/dimensional-summon-banner.webp', 'media/guild/guild-shop-items.webp', 'media/guild/guild-effects.webp', ...Array.from({ length: 5 }, (_, index) => `media/test/test${index + 1}.webp`), ...guildSkinFiles];
 for (const file of files) await access(file);
 const firebase = JSON.parse(await readFile('firebase.json', 'utf8'));
 const vercel = JSON.parse(await readFile('vercel.json', 'utf8'));
@@ -26,6 +26,20 @@ const [firestoreRules, storageRules, privacy, indexHtml, secureAccount, mainJs, 
   readFile('api/cleanup-legacy.js', 'utf8'),
   readFile('data/word-packs.json', 'utf8')
 ]);
+const wordPackCatalog = JSON.parse(wordPackText);
+if (wordPackCatalog.words?.length !== 3001) throw new Error('Curriculum vocabulary catalog must preserve all 3,001 extracted headwords.');
+if (wordPackCatalog.words.some((entry) => !entry.word || !entry.meaning || !Number.isInteger(entry.spiralRank))) throw new Error('Curriculum words require a meaning and spiral rank.');
+const spiralPacks = (wordPackCatalog.packs || []).filter((pack) => pack.kind === 'curriculum-spiral');
+if (spiralPacks.length !== 30) throw new Error('Curriculum spiral catalog must contain Grade 3-12 low/mid/high packs.');
+for (let grade = 3; grade <= 12; grade += 1) {
+  const levels = ['low', 'mid', 'high'].map((level) => spiralPacks.find((pack) => pack.id === `grade-${grade}-${level}`));
+  if (levels.some((pack) => !pack)) throw new Error(`Curriculum spiral packs are incomplete for grade ${grade}.`);
+  if (!(levels[0].wordCount < levels[1].wordCount && levels[1].wordCount < levels[2].wordCount)) throw new Error(`Curriculum levels are not cumulative for grade ${grade}.`);
+  if (!levels[0].wordKeys.every((word, index) => levels[1].wordKeys[index] === word) || !levels[1].wordKeys.every((word, index) => levels[2].wordKeys[index] === word)) throw new Error(`Curriculum pack prefixes are not inclusive for grade ${grade}.`);
+}
+if (spiralPacks.find((pack) => pack.id === 'grade-6-high')?.wordCount !== 600 || spiralPacks.find((pack) => pack.id === 'grade-9-high')?.wordCount !== 1500 || spiralPacks.find((pack) => pack.id === 'grade-10-high')?.wordCount !== 1800 || spiralPacks.find((pack) => pack.id === 'grade-12-high')?.wordCount !== 3001) throw new Error('Curriculum endpoint counts are incorrect.');
+if (!mainJs.includes('function selectAdaptiveQuizIndex(') || !mainJs.includes('gameState.activeWordPackSupportCount') || !mainJs.includes('supportMode')) throw new Error('Adaptive wrong-answer and previous-stage routing is missing.');
+if (!secureAccount.includes("new Set(['초등학교','중학교','고등학교'])") || !secureAccount.includes('configureLearningGradeOptions()')) throw new Error('Elementary, middle, and high school registration support is incomplete.');
 if (firebase.firestore?.rules !== 'firestore.rules') throw new Error('firebase.json must point to firestore.rules.');
 if (firebase.firestore?.indexes !== 'firestore.indexes.json') throw new Error('firebase.json must point to firestore.indexes.json.');
 if (firebase.storage?.rules !== 'storage.rules') throw new Error('firebase.json must point to storage.rules.');
@@ -34,7 +48,7 @@ if (!firestoreRules.includes('match /{document=**} { allow read, write: if false
 if (!storageRules.includes('allow read, write: if false;')) throw new Error('Storage direct-access deny rule is missing.');
 if (!privacy.includes('학생의 실명·학교·반·번호·PIN·Google 이메일은 새 게임 계정에 저장하지 않습니다.')) throw new Error('Student privacy-minimization notice is missing.');
 if (!privacy.includes('교사 계정 삭제')) throw new Error('Teacher deletion instructions are missing from the privacy page.');
-if (!secureAccount.includes('/privacy.html') || !secureAccount.includes('deleteTeacherAccount')) throw new Error('Public privacy link or teacher deletion UI is missing.');
+if (!secureAccount.includes('href="/privacy"') || !secureAccount.includes('deleteTeacherAccount')) throw new Error('Public privacy link or teacher deletion UI is missing.');
 const createStart = studentApi.indexOf('async function create(uid, body)');
 const createEnd = studentApi.indexOf('async function syncWorldBossVisibility', createStart);
 const createBlock = createStart >= 0 && createEnd > createStart ? studentApi.slice(createStart, createEnd) : '';

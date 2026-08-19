@@ -5042,6 +5042,10 @@
             if (isEvaluatingQuiz) return;
             isEvaluatingQuiz = true;
 
+            // 첫 튜토리얼 문제는 정답을 맞힐 때까지 안전하게 다시 시도한다.
+            // 일반 오답의 기습 공격이 튜토리얼 위에 뜨면 진행이 막힐 수 있으므로 이 단계에서는 제외한다.
+            const isTutorialQuizRetry = !gameState.tutorialCompleted && tutorialStep === 1;
+
             gameState.totalQuizTries++;
             const buttons = document.getElementsByClassName("choice-btn");
             for (let i = 0; i < buttons.length; i++) {
@@ -5131,8 +5135,10 @@
                     gameState.wrongWordCounts[wKey] = (gameState.wrongWordCounts[wKey] || 0) + 1;
                 }
 
-                // 25% 확률로 기습 공격 발동
-                if (Math.random() < 0.25) {
+                // 첫 튜토리얼 문제에서는 기습 공격/장비 하락 없이 정답을 다시 고르게 한다.
+                if (isTutorialQuizRetry) {
+                    showBattleToast('❌ 괜찮아요! 정답을 다시 골라보세요.');
+                } else if (Math.random() < 0.25) {
                     showBattleToast("❌ 오답! 몬스터의 크리티컬 공격 발동!");
                     triggerCriticalAttack(current.word, current.meaning, false);
                 } else {
@@ -5152,6 +5158,8 @@
                     for (let i = 0; i < buttons.length; i++) {
                         buttons[i].style.pointerEvents = "auto";
                     }
+                    // renderChoices()가 버튼 클래스를 새로 설정하므로 튜토리얼 강조/클릭 허용도 다시 적용한다.
+                    if (isTutorialQuizRetry) showTutorialOverlay(true);
                 }, 700);
             }
             saveLocalCache();
@@ -9522,7 +9530,7 @@
             }
         }
 
-        function showTutorialOverlay() {
+        function showTutorialOverlay(isQuizRetry = false) {
             if (gameState.tutorialCompleted) return;
             const overlay = document.getElementById("tutorialOverlay");
             if (!overlay) return;
@@ -9544,6 +9552,9 @@
             overlay.style.paddingRight = "";
             overlay.style.paddingBottom = "";
             
+            overlay.style.pointerEvents = 'auto';
+            overlay.style.background = '';
+
             const popup = overlay.querySelector('.max-w-sm');
             if (popup) popup.classList.add('pointer-events-auto');
 
@@ -9560,7 +9571,7 @@
             if(skipBtn) skipBtn.style.display = "block";
 
             if (tutorialStep === 1) {
-                overlay.classList.add('bg-black/90');
+                overlay.classList.add('bg-black/50');
                 // 팝업을 오른쪽 상단으로 (퀴즈 문항과 겹치지 않도록)
                 overlay.style.alignItems = "flex-end";
                 overlay.style.justifyContent = "flex-start";
@@ -9568,12 +9579,13 @@
                 overlay.style.paddingRight = "24px";
                 switchTab('quizTab');
                 msg.innerHTML = "환영합니다 용사여!<br>먼저 몬스터를 공격하려면 <b>올바른 뜻을 가진 단어</b>를 선택해야 합니다. <span class='text-yellow-300'>정답을 클릭해보세요!</span>";
+                if (isQuizRetry) msg.innerHTML = '아쉽지만 괜찮아요!<br>기습 공격이나 불이익은 없으니 <b>정답을 맞힐 때까지</b> 다시 골라보세요.';
                 const choices = document.querySelectorAll('.choice-btn');
                 choices.forEach(c => c.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse'));
                 const qContainer = document.getElementById('quizContainer');
                 if (qContainer) qContainer.classList.add('tutorial-highlight', 'relative', 'z-[10000]');
             } else if (tutorialStep === 2) {
-                overlay.classList.add('bg-black/90');
+                overlay.classList.add('bg-black/50');
                 overlay.style.alignItems = "flex-start";
                 overlay.style.justifyContent = "flex-start";
                 overlay.style.paddingTop = "52px";
@@ -9581,7 +9593,7 @@
                 const gearTabBtn = document.getElementById("gearTabBtn");
                 if(gearTabBtn) gearTabBtn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
             } else if (tutorialStep === 3) {
-                overlay.classList.add('bg-black/90');
+                overlay.classList.add('bg-black/50');
                 overlay.style.alignItems = "flex-start";
                 overlay.style.justifyContent = "flex-start";
                 overlay.style.paddingTop = "52px";
@@ -9591,7 +9603,7 @@
                 const weaponBtnContainer = document.getElementById("gearInfo_weapon");
                 if(weaponBtnContainer) weaponBtnContainer.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse');
             } else if (tutorialStep === 4) {
-                overlay.classList.add('bg-black/90');
+                overlay.classList.add('bg-black/50');
                 overlay.style.alignItems = "flex-start";
                 overlay.style.justifyContent = "flex-start";
                 overlay.style.paddingTop = "52px";
@@ -9599,7 +9611,7 @@
                 const btn = document.getElementById("petTabBtn");
                 if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse'); btn.style.pointerEvents = 'auto';
             } else if (tutorialStep === 5) {
-                overlay.classList.add('bg-black/70');
+                overlay.classList.add('bg-black/50');
                 overlay.style.alignItems = "flex-start";
                 overlay.style.justifyContent = "flex-start";
                 overlay.style.paddingTop = "52px";
@@ -9608,7 +9620,7 @@
                 const btn = document.querySelector(`button[onclick="interactUpgradePet('dragon')"]`);
                 if(btn) { btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse'); btn.style.pointerEvents = 'auto'; }
             } else if (tutorialStep === 6) {
-                overlay.classList.add('bg-black/90');
+                overlay.classList.add('bg-black/50');
                 overlay.style.alignItems = "flex-start";
                 overlay.style.justifyContent = "flex-start";
                 overlay.style.paddingTop = "52px";
@@ -9616,7 +9628,7 @@
                 const btn = document.getElementById("skillTabBtn");
                 if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse'); btn.style.pointerEvents = 'auto';
             } else if (tutorialStep === 7) {
-                overlay.classList.add('bg-black/70');
+                overlay.classList.add('bg-black/50');
                 overlay.style.alignItems = "flex-start";
                 overlay.style.justifyContent = "flex-start";
                 overlay.style.paddingTop = "52px";

@@ -9,7 +9,7 @@ This version moves student records away from browser-accessible Firestore docume
 5. Keep the legacy `users` collection only for the one-time migration window. The first production cron run starts a 60-day countdown. Until then, legacy data is blocked by Firestore Rules; afterward `/api/cleanup-legacy` deletes legacy `users` documents and strips personal-data keys from old world-boss documents while preserving only their aggregate damage. The Vercel cron runs daily at 03:00 UTC; configure the same `CRON_SECRET` in Vercel.
 6. Before publishing, test: new anonymous profile, first free rename, second 500-FP rename, legacy migration, student code join, manager code join, teacher school/class creation, class word-pack selection, student pack loading, and opt-in leaderboard.
 
-7. Deploy the `data/word-packs.json` static file with the app. Do not replace its teacher-review pack with an automatically grade-assigned list: the source 800-word document has no official grade mapping.
+7. Deploy both `data/word-packs.json` and `data/word-packs.js` with the app. They are runtime mirrors of the shared 3,001-headword dictionary and 30 single-choice cumulative packs from Grade 3 through Grade 12. The spiral grade placement is an app-authored sequence based on the 2022 curriculum markers, frequency, and difficulty—not a Ministry-issued word-by-grade assignment; keep draft meanings marked for teacher review.
 
 ## Privacy model
 

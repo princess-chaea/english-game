@@ -1237,7 +1237,7 @@
                 <div class="flex justify-between items-center pb-2.5 border-b border-[#3c3c3c]">
                     <span class="text-[#0066b1] font-bold text-xs uppercase tracking-widest flex items-center gap-1.5">
                         <i data-lucide="info" class="w-3.5 h-3.5"></i>
-                        <span id="gradeLevelBadge">교과 영단어 초등 3학년</span>
+                        <span id="gradeLevelBadge">현재 학습팩 불러오는 중</span>
                     </span>
                     <span
                         class="text-[9px] bg-[#1a1a1a] text-[#ffffff] border border-[#3c3c3c] px-3 py-1 font-bold uppercase tracking-widest rounded-none-forced">
@@ -1292,7 +1292,7 @@
                 <div
                     class="quiz-bottom-guide bg-[#0d0d0d] p-2.5 border border-[#3c3c3c] text-[11px] text-[#bbbbbb] flex items-start gap-2 rounded-none-forced mt-2">
                     <i data-lucide="swords" class="w-4 h-4 text-[#e22718] flex-shrink-0 mt-0.5"></i>
-                    <p class="leading-snug"><strong>약점 퀴즈 격파 및 스킬 장착 가이드:</strong> 퀴즈를 풀면 무작위 등급의 <strong>마법 스킬</strong>을 획득하며, <strong>[스킬] 탭</strong>에서 직접 장착해야 전투에서 수동으로 시전할 수 있습니다.</p>
+                    <p class="leading-snug"><strong>약점 퀴즈 격파 및 스킬 장착 가이드:</strong> 퀴즈 정답으로 <strong>정복 포인트(FP)</strong>를 모은 뒤 <strong>[스킬]</strong> 탭의 단어 캡슐에서 마법 스킬을 획득하세요. 보유 스킬 중 최대 4개를 직접 장착하면 전투에서 수동으로 시전할 수 있습니다.</p>
                 </div>
             </div>
 
@@ -1502,15 +1502,15 @@
                         </div>
                     </div>
                     <p id="skillDeckInfo" class="text-[10px] text-cyan-300 font-medium mb-1"></p>
-                    <p class="text-xs text-gray-400 font-medium mb-3">퀴즈로 쌓은 정복 포인트(FP)로 단어 캡슐을 뽑아 마법 필살기를 수집해보세요.</p>
+                    <p class="text-xs text-gray-400 font-medium mb-3">퀴즈 정답으로 쌓은 정복 포인트(FP)로 단어 캡슐을 뽑고, 최대 4개의 마법 필살기를 장착하세요.</p>
                     <p data-guild-luck-source class="mb-3 border border-violet-900/50 bg-violet-950/10 p-2 text-[8px] leading-relaxed text-violet-300"></p>
 
-                    <!-- Research focus / wishlist (shared four-slot limit with equipped skills) -->
+                    <!-- Research focus / wishlist (four research slots, separate from four equipped slots) -->
                     <section class="mb-4 border border-cyan-900/70 bg-cyan-950/10 p-3" aria-labelledby="skillResearchHeading">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <div>
                                 <h4 id="skillResearchHeading" class="text-xs font-black text-cyan-200">🔬 집중 연구 대상 (최대 4개)</h4>
-                                <p class="mt-1 text-[9px] text-gray-400">보유 스킬은 성장 집중, 미보유 단어는 획득 희망으로 등록됩니다. 장착·연구·잠금 카드는 합성·분해에서 보호됩니다.</p>
+                                <p class="mt-1 text-[9px] text-gray-400">보유 스킬은 성장, 미보유 단어는 신규 획득 대상으로 기본 가중치의 5배가 적용됩니다. 집중 성장을 7번 놓치면 다음 성장 결과는 연구 대상이 확정됩니다. 장착·연구·잠금 카드는 합성·분해에서 보호되며, 각성 정수 100개로 원하는 스킬의 성장 바 1칸을 완성할 수 있습니다.</p>
                             </div>
                             <b class="border border-amber-700 bg-amber-950/30 px-2 py-1 text-[10px] text-amber-200">각성 정수 <span id="skillEssenceCount">0</span></b>
                         </div>
@@ -1582,42 +1582,56 @@
                             <i data-lucide="info" class="w-4 h-4"></i>
                             <span>스킬 수집 & 합성 가이드</span>
                         </span>
-                        <span class="text-[11px] text-gray-400 ">신규 40% · 보유 성장 50% · 각성 정수 10%</span>
+                        <span class="text-[11px] text-gray-400 ">기본 분기 · 신규 40% · 보유 성장 50% · 각성 정수 +25 10%</span>
+                    </div>
+
+                    <div class="border border-cyan-950 bg-black/60 p-2 text-[9px] leading-relaxed text-gray-400">
+                        신규·성장 후보가 모두 있을 때의 기본 분기이며, 한쪽 후보가 소진되면 남은 분기로 확률이 재분배됩니다. 가능한 경우 매 10회 묶음마다 <b class="text-cyan-200">신규 1회 이상·보유 성장 3회 이상</b>, 카드 결과 중 <b class="text-cyan-200">희귀 이상 1회</b>를 보장합니다.
                     </div>
 
                     <!-- 5 Grades Multiplier & Probability Cards -->
                     <div class="grid grid-cols-5 gap-2 text-center text-[10px]">
                         <div class="bg-black/90 p-2.5 border border-[#3c3c3c]">
                             <span class="text-[#bbbbbb] font-extrabold block text-[11px]">일반 (75%)</span>
-                            <span class="text-white  font-bold text-[9px] whitespace-nowrap">×5배 ~ ×6배</span>
+                            <span class="text-white font-bold text-[9px] whitespace-nowrap">지수 ×5 ~ ×22</span>
                         </div>
                         <div class="bg-black/90 p-2.5 border border-[#0066b1]">
                             <span class="text-[#0066b1] font-extrabold block text-[11px]">희귀 (18%)</span>
-                            <span class="text-white  font-bold text-[9px] whitespace-nowrap">×10배 ~ ×12배</span>
+                            <span class="text-white font-bold text-[9px] whitespace-nowrap">지수 ×10 ~ ×44</span>
                         </div>
                         <div class="bg-black/90 p-2.5 border border-[#1c69d4]">
                             <span class="text-[#1c69d4] font-extrabold block text-[11px]">영웅 (5%)</span>
-                            <span class="text-white  font-bold text-[9px] whitespace-nowrap">×20배 ~ ×24배</span>
+                            <span class="text-white font-bold text-[9px] whitespace-nowrap">지수 ×20 ~ ×89</span>
                         </div>
                         <div class="bg-black/90 p-2.5 border border-[#e22718]">
                             <span class="text-[#e22718] font-extrabold block text-[11px]">전설 (1.95%)</span>
-                            <span class="text-white  font-bold text-[9px] whitespace-nowrap">×40배 ~ ×48배</span>
+                            <span class="text-white font-bold text-[9px] whitespace-nowrap">지수 ×40 ~ ×178</span>
                         </div>
                         <div class="bg-black/90 p-2.5 border border-pink-500 animate-pulse">
                             <span class="text-pink-400 font-extrabold block text-[11px]">신화 (0.05%)</span>
-                            <span class="text-white  font-bold text-[9px] whitespace-nowrap">×70배 ~ ×84배</span>
+                            <span class="text-white font-bold text-[9px] whitespace-nowrap">지수 ×70 ~ ×311</span>
                         </div>
                     </div>
+
+                    <p class="text-[9px] leading-relaxed text-gray-500">등급 확률은 <b class="text-gray-300">각성 정수 결과를 제외한 카드 결과</b>의 행운·10회 보정 전 기본값입니다. 카드 티어 기본 확률은 <b class="text-yellow-300">T1 5% · T2 25% · T3 70%</b>이며 T1이 가장 강합니다. 지수 범위는 T3 0성부터 누적 성장이 모두 보존된 T1 6성까지이며, 실제 피해는 공격력·DPS·보너스·보스 보정으로 계산됩니다.</p>
 
                     <!-- Tier & Star Explanation Rows -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-[10px] text-gray-300">
                         <div class="bg-black p-2.5 border border-[#262626] flex items-center gap-2">
                             <span class="bg-purple-950 text-purple-300 border border-purple-600 px-2 py-1 font-black shrink-0 text-[10px]">✨ 3개 카드 합성</span>
-                            <p class="leading-tight text-[10px]">동일 등급 3장은 승급 도전, 혼합 3장은 <b>각 카드의 등급·티어·⭐·EXP 가중치</b>로 결과가 정해집니다.</p>
+                            <p class="leading-tight text-[10px]">동일 등급 3장은 현재 또는 다음 등급이 됩니다. 승급률은 기본 20%에 누적 ⭐·EXP·등급별 실패 보정(+15%p, 최대 95%)을 더합니다. 혼합 3장은 등급·티어·누적 ⭐·EXP 가중 평균으로 정하며 최고 재료 등급을 넘지 않습니다.</p>
                         </div>
                         <div class="bg-black p-2.5 border border-[#262626] flex items-center gap-2">
                             <span class="bg-yellow-950 text-yellow-300 border border-yellow-600 px-2 py-1 font-black shrink-0 text-[10px]">⭐ 별 & 티어 성장</span>
-                            <p class="leading-tight text-[10px]">성장 1회는 현재 성장 바 1칸을 완성합니다. 6성 다음 성장에 T3→T2→T1 진화하며 <b>티어+10%, 별+15% 피해</b>가 적용됩니다.</p>
+                            <p class="leading-tight text-[10px]">상위 등급은 현재 성급과 EXP 비율을 보존해 승급하고, 더 좋은 티어는 즉시 적용됩니다. 동일·하위 등급은 성장 바 1칸을 완성합니다. 6성 다음 성장에 T3→T2→T1로 진화하며 완료한 별 보너스는 누적됩니다. T1 6성 MAX의 추가 성장은 정수 +100으로 바뀝니다.</p>
+                        </div>
+                        <div class="bg-black p-2.5 border border-[#262626] flex items-center gap-2">
+                            <span class="bg-cyan-950 text-cyan-200 border border-cyan-700 px-2 py-1 font-black shrink-0 text-[10px]">🔬 연구 & 보호</span>
+                            <p class="leading-tight text-[10px]">연구 대상은 최대 4개이며 신규·성장 선택 가중치 ×5, 장착 카드는 성장 가중치 ×2입니다. 연구 대상을 7번 놓친 뒤 다음 성장에서 확정됩니다. 장착·연구·잠금 카드는 합성·분해에서 제외됩니다.</p>
+                        </div>
+                        <div class="bg-black p-2.5 border border-[#262626] flex items-center gap-2">
+                            <span class="bg-red-950 text-red-300 border border-red-700 px-2 py-1 font-black shrink-0 text-[10px]">♻️ 신화 & 분해</span>
+                            <p class="leading-tight text-[10px]">신화 카드는 합성 재료로 쓸 수 없지만 보호 상태가 아니면 분해할 수 있습니다. 분해 정수는 등급·티어·누적 ⭐·EXP에 따라 정해지고, 카드를 분해해도 영구 도감 기록은 유지됩니다.</p>
                         </div>
                     </div>
                 </div>
@@ -2209,23 +2223,27 @@
                         <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px]">
                             <!-- 퀴즈 전투 -->
                             <div class="bg-black/40 border border-indigo-800/30 p-2 rounded">
-                                <div class="text-indigo-300 font-black mb-1 text-[11px]">퀴즈 전투 & 방어 시스템</div>
+                                <div class="text-indigo-300 font-black mb-1 text-[11px]">퀴즈 전투·누적팩·적응형 경로</div>
                                 <ul class="text-gray-300 space-y-1 leading-tight">
                                     <li class="flex items-start gap-1">
                                         <span class="shrink-0">✅ <b>정답 & 콤보:</b></span>
-                                        <span>피해 및 골드 획득! <b>연속 정답(콤보) 시 최대 2.0배 데미지가 증폭</b>됩니다. (오답 시 콤보 초기화)</span>
+                                        <span>피해·골드·정복 포인트(FP) 획득! <b>연속 정답(콤보) 시 최대 2.0배 데미지가 증폭</b>됩니다. (오답 시 콤보 초기화)</span>
                                     </li>
                                     <li class="flex items-start gap-1">
-                                        <span class="shrink-0"><b>방어 실패:</b></span>
-                                        <span>오답을 입력하거나 보스의 강력한 공격을 제한 시간 내에 막지 못하면 <b>랜덤으로 무구(무기/방패 등) 강화 수치가 -1 하락</b>합니다!</span>
+                                        <span class="shrink-0"><b>오답 재도전:</b></span>
+                                        <span>일반 퀴즈는 오답이면 같은 문항의 보기를 섞어 <b>정답을 맞힐 때까지</b> 다시 풉니다. 오답의 25%에서 강력한 공격 방어가 열리며, 제한 시간 안에 막지 못할 때만 무작위 무구 강화가 -1 됩니다. 첫 튜토리얼 문제는 공격·불이익 없이 다시 고릅니다.</span>
                                     </li>
                                     <li class="flex items-start gap-1">
                                         <span class="shrink-0">⚠️ <b>전투력 패널티:</b></span>
                                         <span>내 전투력이 권장 전투력보다 낮을 경우, 부족한 비율에 비례하여 <b>데미지가 감쇄</b>됩니다. (최소 15% 하한)</span>
                                     </li>
                                     <li class="flex items-start gap-1">
-                                        <span class="shrink-0">❌ <b>오답 노트:</b></span>
-                                        <span>틀린 단어는 오답 노트에 기록되어 집중 복습</span>
+                                        <span class="shrink-0">❌ <b>미해결 오답:</b></span>
+                                        <span>한 번 이상 틀렸고 3연속 정답·누적 정답률 80%를 모두 달성하지 못한 단어입니다. 새 문항은 정답을 맞힌 뒤 적응형 경로가 고릅니다.</span>
+                                    </li>
+                                    <li class="flex items-start gap-1">
+                                        <span class="shrink-0">📚 <b>누적팩 하나:</b></span>
+                                        <span>초3~고3의 하 ⊂ 중 ⊂ 상 누적팩 중 하나를 학습합니다. 선택팩 누적 풀이가 8회 이상이면서 정답률 75% 미만이거나, 미해결 오답이 3개 이상이거나, 미해결 오답의 누적 오답 합계가 4회 이상이면 문항 보충 모드가 켜집니다. 후보가 모두 있을 때의 기본 목표는 보충 모드에서 미해결 55%·직전 단계 30%·현재 단계 15%, 일반 모드에서 20%·20%·60%이며 빈 후보는 가능한 다음 그룹으로 재배분됩니다. 이전 학년까지 낮추려면 교사가 그 누적팩을 지정합니다.</span>
                                     </li>
                                 </ul>
                             </div>
@@ -2265,6 +2283,18 @@
                                     </li>
                                 </ul>
                             </div>
+                            <!-- 스킬 수집·성장 -->
+                            <div class="bg-black/40 border border-cyan-800/30 p-2 rounded sm:col-span-2">
+                                <div class="text-cyan-300 font-black mb-1 text-[11px]">🔮 영단어 스킬 수집·성장·합성</div>
+                                <ul class="text-gray-300 space-y-1 leading-tight">
+                                    <li><b>획득:</b> 퀴즈 정답으로 FP를 모아 캡슐을 뽑습니다. 기본 분기는 신규 40%·보유 성장 50%·정수+25 10%이며, 후보가 소진되면 남은 분기로 재분배됩니다. 매 10회에는 가능한 신규 1회·성장 3회와 카드 중 희귀 이상 1회를 보장합니다.</li>
+                                    <li><b>등급·티어:</b> 카드 결과의 행운·10회 보정 전 기본 등급 확률은 일반 75%·희귀 18%·영웅 5%·전설 1.95%·신화 0.05%, 티어는 T1 5%·T2 25%·T3 70%입니다.</li>
+                                    <li><b>성장:</b> 상위 등급은 성급과 EXP 비율을 보존해 승급하고 더 좋은 티어는 즉시 적용됩니다. 동일·하위 등급은 성장 바 1칸, 정수 100개도 원하는 카드의 1칸을 완성합니다. 6성 다음에는 T3→T2→T1로 진화하며 완료한 별은 누적되고, T1 6성 MAX의 추가 성장은 정수 +100입니다.</li>
+                                    <li><b>연구·장착·보호:</b> 전투 장착과 집중 연구는 각각 최대 4개입니다. 연구 대상은 신규·성장 가중치 ×5이며 7번 놓치면 다음 성장에 확정됩니다. 장착·연구·잠금 카드는 합성·분해에서 보호됩니다.</li>
+                                    <li><b>합성:</b> 동일 등급 3장은 현재/다음 등급 승급 도전(기본 20% + 누적 ⭐ 1개당 10%p + 각 카드 EXP 진행률당 최대 5%p + 실패당 15%p, 전체 최대 95%), 혼합 3장은 등급·티어·누적 ⭐·EXP 품질 가중 평균으로 최고 재료 등급 이하가 됩니다. 결과 단어·티어는 품질 가중치로 정해지고 성급·EXP는 0부터 시작합니다.</li>
+                                    <li><b>분해:</b> 신화는 합성할 수 없지만 분해할 수 있습니다. 보호되지 않은 카드의 등급 기본값(1/3/9/27/81) + 누적 ⭐×50 + EXP 진행률 환산값(최대 49) + 티어 보너스(T3 0/T2 50/T1 100)만큼 정수를 얻으며 도감은 유지됩니다.</li>
+                                </ul>
+                            </div>
                             <!-- 재화 사용처 -->
                             <div class="bg-black/40 border border-yellow-800/30 p-2 rounded">
                                 <div class="text-yellow-300 font-black mb-1 text-[11px]">핵심 재화 사용처 완벽 가이드</div>
@@ -2275,7 +2305,7 @@
                                     </li>
                                     <li class="flex items-start gap-1">
                                         <span class="shrink-0">✨ <b>FP 포인트:</b></span>
-                                        <span>상점 스킬 캡슐을 뽑아 마법 스킬 덱 강화</span>
+                                        <span>[스킬] 연구소의 단어 캡슐을 뽑거나 닉네임 변경에 사용</span>
                                     </li>
                                     <li class="flex items-start gap-1">
                                         <span class="shrink-0"><b>보스 증표:</b></span>
@@ -3200,7 +3230,7 @@
             /* 가로 모드(짧은 화면)에서 전투창 상단 UI 강제 축소 (전투화면 비율 확보용) */
     </style>
 
-    <script src="js/config.js?v=20260809-29"></script><script src="js/skill-system.js?v=20260820-01"></script><script src="js/main.js?v=20260820-02"></script><script src="js/skill-rework.js?v=20260820-02"></script><script src="js/secure-account.js?v=20260820-03"></script>
+    <script src="js/config.js?v=20260809-29"></script><script src="js/skill-system.js?v=20260820-04"></script><script src="js/main.js?v=20260820-04"></script><script src="js/skill-rework.js?v=20260820-04"></script><script src="js/secure-account.js?v=20260820-04"></script>
 
     <!-- Damage Overlay (Scratch & Flash) -->
     <div id="damageOverlay" class="fixed inset-0 pointer-events-none hidden z-[100] flex-col items-center justify-center bg-red-900/60 transition-opacity duration-300">

@@ -13,7 +13,7 @@ const files = ['firebase.json', 'firestore.rules', 'firestore.indexes.json', 'st
 for (const file of files) await access(file);
 const firebase = JSON.parse(await readFile('firebase.json', 'utf8'));
 const vercel = JSON.parse(await readFile('vercel.json', 'utf8'));
-const [firestoreRules, storageRules, privacy, indexHtml, secureAccount, mainJs, studentApi, teacherApi, worldBossApi, cleanupApi, wordPackText] = await Promise.all([
+const [firestoreRules, storageRules, privacy, indexHtml, secureAccount, mainJs, studentApi, teacherApi, worldBossApi, cleanupApi, skillSystem, skillRework, wordPackText] = await Promise.all([
   readFile('firestore.rules', 'utf8'),
   readFile('storage.rules', 'utf8'),
   readFile('privacy.html', 'utf8'),
@@ -24,6 +24,8 @@ const [firestoreRules, storageRules, privacy, indexHtml, secureAccount, mainJs, 
   readFile('api/teacher.js', 'utf8'),
   readFile('api/world-boss.js', 'utf8'),
   readFile('api/cleanup-legacy.js', 'utf8'),
+  readFile('js/skill-system.js', 'utf8'),
+  readFile('js/skill-rework.js', 'utf8'),
   readFile('data/word-packs.json', 'utf8')
 ]);
 const wordPackCatalog = JSON.parse(wordPackText);
@@ -43,6 +45,24 @@ for (let grade = 3; grade <= 12; grade += 1) {
   }
 }
 if (spiralPacks.find((pack) => pack.id === 'grade-6-high')?.wordCount !== 600 || spiralPacks.find((pack) => pack.id === 'grade-9-high')?.wordCount !== 1500 || spiralPacks.find((pack) => pack.id === 'grade-10-high')?.wordCount !== 1800 || spiralPacks.find((pack) => pack.id === 'grade-12-high')?.wordCount !== 3001) throw new Error('Curriculum endpoint counts are incorrect.');
+const assignedPackLoadStart = mainJs.indexOf('async function loadAssignedWordPacks()');
+const assignedPackLoadEnd = mainJs.indexOf('async function fetchWordsFromSpreadsheet()', assignedPackLoadStart);
+const assignedPackLoadBlock = assignedPackLoadStart >= 0 && assignedPackLoadEnd > assignedPackLoadStart ? mainJs.slice(assignedPackLoadStart, assignedPackLoadEnd) : '';
+if (
+  !assignedPackLoadBlock.includes('gameState.assignedWordPackIds.find(Boolean)')
+  || !assignedPackLoadBlock.includes('let ids = [assignedPackId ||')
+  || /assignedWordPackIds\s*\.\s*filter\s*\(/.test(assignedPackLoadBlock)
+  || /\bids\s*=\s*(?:gameState\.)?assignedWordPackIds\b/.test(assignedPackLoadBlock)
+  || /\bids\.(?:push|unshift|splice|concat)\s*\(/.test(assignedPackLoadBlock)
+  || /\bids\s*=\s*\[\s*\.\.\./.test(assignedPackLoadBlock)
+) throw new Error('The game must load exactly one assigned cumulative word pack instead of merging legacy assignedWordPackIds.');
+if (!mainJs.includes('const activePackLabel = gameState.activeWordPackLabel ||') || !mainJs.includes('`현재 학습팩 · ${activePackLabel}`')) throw new Error('The game badge must show the actual active word-pack label.');
+const quizDistractorStart = mainJs.indexOf('function quizDistractors(field, correct)');
+const quizDistractorEnd = mainJs.indexOf('function ensureQuizTypeLabel', quizDistractorStart);
+const quizDistractorBlock = quizDistractorStart >= 0 && quizDistractorEnd > quizDistractorStart ? mainJs.slice(quizDistractorStart, quizDistractorEnd) : '';
+const packDistractorAt = quizDistractorBlock.indexOf('(gameState.wordsPool || []).forEach(add);');
+const mockFallbackAt = quizDistractorBlock.indexOf('if (values.length < 3) Object.values(MOCK_WORDS).flat().forEach(add);');
+if (packDistractorAt < 0 || mockFallbackAt <= packDistractorAt) throw new Error('Quiz choices must prefer the active pack and use MOCK_WORDS only when fewer than three distractors exist.');
 if (!mainJs.includes('function selectAdaptiveQuizIndex(') || !mainJs.includes('gameState.activeWordPackSupportCount') || !mainJs.includes('supportMode')) throw new Error('Adaptive wrong-answer and previous-stage routing is missing.');
 const teacherLearningStart = secureAccount.indexOf('function teacherSpiralPackRow(');
 const teacherLearningEnd = secureAccount.indexOf('async function previewTeacherWordPack', teacherLearningStart);
@@ -68,7 +88,64 @@ const memberLearningUpdateStart = teacherApi.indexOf('async function updateMembe
 const memberLearningUpdateEnd = teacherApi.indexOf('async function wordPackPreview', memberLearningUpdateStart);
 const memberLearningUpdateBlock = memberLearningUpdateStart >= 0 && memberLearningUpdateEnd > memberLearningUpdateStart ? teacherApi.slice(memberLearningUpdateStart, memberLearningUpdateEnd) : '';
 if (!teacherApi.includes(`'WORD_PACK_ABOVE_MEMBER_GRADE'`) || !teacherApi.includes('더 낮은 누적팩을 선택해 주세요') || !memberLearningUpdateBlock.includes('ensureWordPackWithinGrade(selectedPack, memberGrade)') || (memberLearningUpdateBlock.match(/FieldValue\.delete\(\)/g) || []).length < 2 || !memberLearningUpdateBlock.includes('usesGuildLearningDefaults: followsGuildDefaults')) throw new Error('Teacher assignments must reject packs above every target member grade and delete stale overrides when following guild defaults.');
+const teacherPreviewStart = teacherApi.indexOf('async function wordPackPreview(body)');
+const teacherPreviewEnd = teacherApi.indexOf('async function guildLearningReport', teacherPreviewStart);
+const teacherPreviewBlock = teacherPreviewStart >= 0 && teacherPreviewEnd > teacherPreviewStart ? teacherApi.slice(teacherPreviewStart, teacherPreviewEnd) : '';
+if (!teacherPreviewBlock.includes('[...words.values()].slice(0, 3500)')) throw new Error('Teacher word-pack previews must support the full 3,500-word curriculum ceiling.');
+const teacherSinglePackStart = secureAccount.indexOf('function teacherSinglePackIds(');
+const teacherSinglePackEnd = secureAccount.indexOf('let teacherWordPackApplyAllScope', teacherSinglePackStart);
+const teacherSinglePackBlock = teacherSinglePackStart >= 0 && teacherSinglePackEnd > teacherSinglePackStart ? secureAccount.slice(teacherSinglePackStart, teacherSinglePackEnd) : '';
+const teacherGradeCapStart = secureAccount.indexOf('function teacherLearningTargetGradeCap(');
+const teacherGradeCapEnd = secureAccount.indexOf('function syncTeacherWordPackGradeAvailability', teacherGradeCapStart);
+const teacherGradeCapBlock = teacherGradeCapStart >= 0 && teacherGradeCapEnd > teacherGradeCapStart ? secureAccount.slice(teacherGradeCapStart, teacherGradeCapEnd) : '';
+if (
+  !teacherLearningBlock.includes(`input.type='radio';input.name='secureTeacherWordPackChoice'`)
+  || !teacherSinglePackBlock.includes('return ids.length?[ids[0]]:(fallback?[fallback]:[]);')
+  || !teacherGradeCapBlock.includes('Math.min(guildGrade,...targets.map')
+  || !secureAccount.includes('unavailable=packGrade>activeCap')
+) throw new Error('Teacher pack selection must remain a single radio choice capped by the lowest target learning grade.');
 if (!secureAccount.includes('function commonTeacherMemberLearningSettings(') || !secureAccount.includes(`fillTeacherLearningSelections([],['meaning-choice'])`) || !secureAccount.includes('fillTeacherLearningSelections(teacherGuildPackIds(guild)') || !secureAccount.includes('member.usesGuildLearningDefaults=usesGuildLearningDefaults') || !secureAccount.includes(`teacherMemberReportCache.delete(selectedTeacherManagedGuildId+':'+member.memberId)`) || !secureAccount.includes('renderTeacherMembers(members);updateTeacherSelectionHint();')) throw new Error('Teacher multi-member selection and post-save caches must remain synchronized with effective single-pack settings.');
+
+const cumulativeSkillStart = skillSystem.indexOf('function getCumulativeStars(skill)');
+const cumulativeSkillEnd = skillSystem.indexOf('function getProgressRatio(skill)', cumulativeSkillStart);
+const cumulativeSkillBlock = cumulativeSkillStart >= 0 && cumulativeSkillEnd > cumulativeSkillStart ? skillSystem.slice(cumulativeSkillStart, cumulativeSkillEnd) : '';
+if (
+  !cumulativeSkillBlock.includes('return (3 - card.tier) * MAX_STARS + card.stars;')
+  || !cumulativeSkillBlock.includes('const starFactor = 1 + 0.15 * getCumulativeStars(card);')
+  || !skillSystem.includes('50 * getCumulativeStars(card)')
+  || !skillSystem.includes('const totalStars = normalized.reduce((sum, card) => sum + getCumulativeStars(card), 0);')
+  || !skillSystem.includes('const starFactor = 1 + 0.15 * getCumulativeStars(card);')
+  || !mainJs.includes('globalThis.VocaSkillSystem.getCumulativeStars(skill)')
+  || !mainJs.includes('globalThis.VocaSkillSystem.getSkillPowerMultiplier(skill, baseGrade.multiplier)')
+) throw new Error('Skill power, dismantling, and fusion must share the cumulative-star multiplier rules.');
+const skillSnapshotStart = skillRework.indexOf('createSkillDrawSnapshot = function');
+const skillSnapshotEnd = skillRework.indexOf('const SKILL_RESULT_LABELS', skillSnapshotStart);
+const skillSnapshotBlock = skillSnapshotStart >= 0 && skillSnapshotEnd > skillSnapshotStart ? skillRework.slice(skillSnapshotStart, skillSnapshotEnd) : '';
+if (
+  !skillSnapshotBlock.includes('const actual = ownedSkill ? SkillRules.normalizeSkill(ownedSkill) : null;')
+  || !skillSnapshotBlock.includes('stars: Number(actual?.stars) || 0, exp: Number(actual?.exp) || 0,')
+  || (skillRework.match(/outcome\.skill, outcome\.essenceGained\)/g) || []).length < 2
+  || !skillRework.includes('"max-essence": "MAX 정수 +100"')
+  || !skillRework.includes('Number(result.essenceAmount) || 100')
+  || !skillRework.includes('후보가 없으면 재배분')
+) throw new Error('Skill draw results must show final owned growth, MAX +100 essence, and candidate redistribution guidance.');
+
+const coreManualStart = indexHtml.indexOf('용사 여정 핵심 매뉴얼');
+const coreManualEnd = indexHtml.indexOf('</details>', coreManualStart);
+const coreManualBlock = coreManualStart >= 0 && coreManualEnd > coreManualStart ? indexHtml.slice(coreManualStart, coreManualEnd) : '';
+const coreManualHasGradeRange = /초3\s*(?:~|～|-)\s*고3/.test(coreManualBlock) || /초등학교\s*3학년(?:부터|\s*[~～-]\s*)고등학교\s*3학년/.test(coreManualBlock);
+const coreManualHasSinglePack = /누적(?:\s*단어)?팩[^<]{0,40}(?:하나|1개)/.test(coreManualBlock);
+if (
+  !coreManualHasGradeRange
+  || !coreManualHasSinglePack
+  || !coreManualBlock.includes('미해결')
+  || !coreManualBlock.includes('경로')
+  || !coreManualBlock.includes('영단어 스킬 수집·성장·합성')
+  || !coreManualBlock.includes('T1 6성 MAX')
+  || !coreManualBlock.includes('동일 등급 3장')
+  || !coreManualBlock.includes('혼합 3장')
+  || !coreManualBlock.includes('신화는 합성할 수 없지만 분해할 수 있습니다')
+) throw new Error('The core manual must cover Grade 3-12, one cumulative pack, the unresolved-answer path, and the implemented skill rules.');
 
 if (!secureAccount.includes("new Set(['초등학교','중학교','고등학교'])") || !secureAccount.includes('configureLearningGradeOptions()')) throw new Error('Elementary, middle, and high school registration support is incomplete.');
 if (firebase.firestore?.rules !== 'firestore.rules') throw new Error('firebase.json must point to firestore.rules.');
@@ -165,6 +242,13 @@ const learningEvaluateBlock = learningEvaluateStart >= 0 && learningEvaluateEnd 
 if (learningTypes.some((type) => !learningRecordBlock.includes(`"${type}"`)) || !learningEvaluateBlock.includes('recordWordLearningResult(current, currentQuizType,')) {
   throw new Error('Every main quiz type must record per-word learning results through the shared evaluator.');
 }
+const manualQuizAdvancePattern = /(?:\+\+\s*gameState\.currentQuizIndex|gameState\.currentQuizIndex\s*(?:\+\+|\+=\s*1|=\s*\(?\s*gameState\.currentQuizIndex\s*\+\s*1))/;
+if (!learningEvaluateBlock.includes('generateQuizCard();') || manualQuizAdvancePattern.test(learningEvaluateBlock)) throw new Error('Correct answers must hand the next question to adaptive generation without manually incrementing currentQuizIndex.');
+if (
+  !learningEvaluateBlock.includes('const fpGained = Math.floor(')
+  || !learningEvaluateBlock.includes('gameState.masteryPoints += fpGained;')
+  || !learningEvaluateBlock.includes('${fpGained.toLocaleString()} FP')
+) throw new Error('The correct-answer FP toast must display the actual fpGained amount that was awarded.');
 if (!mainJs.includes('gameState.questionTypeStats = extra.questionTypeStats || data.questionTypeStats || {};') || !relicSerializeBlock.includes('questionTypeStats: gameState.questionTypeStats || {}')) {
   throw new Error('Question-type learning statistics must be restored and serialized in legacy save data.');
 }

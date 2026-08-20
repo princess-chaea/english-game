@@ -32,6 +32,10 @@
         return GRADE_RANK[grade] ? grade : "normal";
     }
 
+
+    function normalizeTier(tier) {
+        return integerInRange(tier, 1, 3, 3);
+    }
     function normalizeWordKey(value) {
         return String(value && typeof value === "object" ? value.word : value || "").trim().toLowerCase();
     }
@@ -46,11 +50,25 @@
         return {
             ...skill,
             grade,
-            tier: integerInRange(skill.tier, 1, 3, 3),
+            tier: normalizeTier(skill.tier),
             stars: integerInRange(skill.stars, 0, MAX_STARS, 0),
             exp: integerInRange(skill.exp, 0, Math.max(0, maxExp - 1), 0),
             maxExp
         };
+    }
+
+
+    // Visible stars reset on tier evolution; completed growth remains cumulative.
+    function getCumulativeStars(skill) {
+        const card = normalizeSkillCard(skill);
+        return (3 - card.tier) * MAX_STARS + card.stars;
+    }
+
+    function getSkillPowerMultiplier(skill, baseMultiplier = 1) {
+        const card = normalizeSkillCard(skill);
+        const tierFactor = TIER_FACTOR[card.tier];
+        const starFactor = 1 + 0.15 * getCumulativeStars(card);
+        return Math.round(Math.max(0, finiteNumber(baseMultiplier, 1)) * tierFactor * starFactor);
     }
 
     function getProgressRatio(skill) {
@@ -140,7 +158,7 @@
         const card = normalizeSkillCard(skill);
         const expPart = Math.floor(50 * getProgressRatio(card));
         return DISMANTLE_GRADE_ESSENCE[card.grade]
-            + 50 * card.stars
+            + 50 * getCumulativeStars(card)
             + expPart
             + TIER_ESSENCE_BONUS[card.tier];
     }
@@ -163,7 +181,7 @@
         if (!FUSION_GRADE_WEIGHT[card.grade]) {
             throw new RangeError("Mythic cards cannot be used as fusion material.");
         }
-        const starFactor = 1 + 0.15 * card.stars;
+        const starFactor = 1 + 0.15 * getCumulativeStars(card);
         const residualExpFactor = 1 + 0.15 * getFusionProgressRatio(card);
         return FUSION_GRADE_WEIGHT[card.grade] * TIER_FACTOR[card.tier] * starFactor * residualExpFactor;
     }
@@ -184,7 +202,7 @@
 
     function getSameGradePromotionChance(cards, pityFailures = 0) {
         const normalized = validateFusionCards(cards, true);
-        const totalStars = normalized.reduce((sum, card) => sum + card.stars, 0);
+        const totalStars = normalized.reduce((sum, card) => sum + getCumulativeStars(card), 0);
         // 잔여 EXP는 등급별 절댓값 대신 바 진행률로 환산해 최대 +15%p만 준다.
         const expBonus = normalized.reduce((sum, card) => sum + getFusionProgressRatio(card), 0) * 0.05;
         const pityBonus = Math.max(0, Math.floor(finiteNumber(pityFailures, 0))) * 0.15;
@@ -361,7 +379,11 @@
         FUSION_GRADE_WEIGHT,
         SUMMON_CATEGORY_WEIGHT,
         ESSENCE_PER_BAR,
+        normalizeGrade,
+        normalizeTier,
         normalizeWordKey,
+        getCumulativeStars,
+        getSkillPowerMultiplier,
         normalizeSkillCard,
         getRequiredExpForStar,
         getProgressRatio,

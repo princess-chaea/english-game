@@ -819,7 +819,7 @@ async function wordPackPreview(body) {
   const meta = wordPackById.get(wordPackId);
   const words = packWordsById.get(wordPackId);
   if (!meta || !words) throw apiError(404, 'WORD_PACK_NOT_FOUND', '단어팩을 찾지 못했어요.');
-  return { ...meta, words: [...words.values()].slice(0, 1000) };
+  return { ...meta, words: [...words.values()].slice(0, 3500) };
 }
 async function guildLearningReport(uid, body) {
   const details = await listGuildMembers(uid, body, true);

@@ -92,4 +92,4 @@ Then test in a private/incognito browser session:
 
 ## 7. Curriculum data policy
 
-`data/curriculum-3000-review-catalog.json` is a review catalog only. It labels words already found in Grade 3-6 current packs, elementary-800 words without a grade placement, and words lacking both a Korean meaning and a grade placement. Do not publish the 3,000-word list as an elementary quiz/skill pack until a teacher reviews meanings, age suitability, unit/context, and grade placement.
+`data/curriculum-3000-review-catalog.json` is a provenance/review input, not the runtime catalog. Runtime uses `data/word-packs.json` and `data/word-packs.js`: one shared 3,001-headword dictionary extracted from the curriculum's declared 3,000-word list and 30 single-choice cumulative packs from Grade 3 through Grade 12. The grade spiral is app-authored rather than a Ministry-issued word-by-grade assignment; retain `meaningStatus: "draft"` until teacher review.

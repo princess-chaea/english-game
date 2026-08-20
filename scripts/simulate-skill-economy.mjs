@@ -130,14 +130,52 @@ assert.equal(mythicGrowth.card.stars, 1, "lower-grade duplicate must grant a ful
 
 assert.equal(
     skills.getDismantleYield(makeCard("rare", { tier: 2, stars: 2, exp: 1 })),
-    169,
+    469,
     "rare T2 two-star dismantle yield"
 );
 assert.equal(
     skills.getDismantleYield(makeCard("mythic", { tier: 1, stars: 6, exp: 0 })),
-    481,
+    1081,
     "mythic T1 six-star dismantle yield"
 );
+
+const gradePowerRanges = {
+    normal: { base: 5, max: 22 },
+    rare: { base: 10, max: 44 },
+    hero: { base: 20, max: 89 },
+    legendary: { base: 40, max: 178 },
+    mythic: { base: 70, max: 311 }
+};
+for (const [grade, expected] of Object.entries(gradePowerRanges)) {
+    assert.equal(skills.getSkillPowerMultiplier(makeCard(grade, { tier: 3, stars: 0 }), expected.base), expected.base, `${grade} T3 zero-star power`);
+    assert.equal(skills.getSkillPowerMultiplier(makeCard(grade, { tier: 1, stars: 6 }), expected.base), expected.max, `${grade} T1 six-star cumulative power`);
+}
+
+const indexSource = await readFile(new URL("../index.html", import.meta.url), "utf8");
+assert.match(indexSource, /퀴즈 정답으로 <strong>정복 포인트\(FP\)<\/strong>를 모은 뒤/, "quiz guide must explain the FP-to-capsule path");
+assert.match(indexSource, /후보가 소진되면 남은 분기로 재분배/, "summon guide must explain exhausted-candidate redistribution");
+assert.match(indexSource, /T1 5% · T2 25% · T3 70%/, "skill guide must expose tier rates");
+for (const expected of Object.values(gradePowerRanges)) {
+    assert.match(indexSource, new RegExp(`지수 ×${expected.base} ~ ×${expected.max}`), `skill guide must show the ${expected.base}-${expected.max} cumulative power range`);
+}
+assert.doesNotMatch(indexSource, /퀴즈를 풀면 무작위 등급의 <strong>마법 스킬<\/strong>을 획득/, "obsolete direct quiz-to-skill claim must not return");
+
+const evolutionBoundaries = [
+    { label: "T3 six-star to T2 zero-star", before: makeCard("hero", { tier: 3, stars: 6 }), expectedAfter: { tier: 2, stars: 0 } },
+    { label: "T2 six-star to T1 zero-star", before: makeCard("hero", { tier: 2, stars: 6 }), expectedAfter: { tier: 1, stars: 0 } }
+];
+for (const boundary of evolutionBoundaries) {
+    const after = skills.advanceSkillBars(boundary.before, 1).card;
+    assert.deepEqual({ tier: after.tier, stars: after.stars }, boundary.expectedAfter, `${boundary.label} state`);
+    assert.equal(skills.getCumulativeStars(after), skills.getCumulativeStars(boundary.before), `${boundary.label} must retain completed stars`);
+    assert.ok(skills.getSkillPowerMultiplier(after, 20) > skills.getSkillPowerMultiplier(boundary.before, 20), `${boundary.label} power must increase`);
+    assert.ok(skills.getFusionEffectiveWeight(after) > skills.getFusionEffectiveWeight(boundary.before), `${boundary.label} mixed-fusion weight must increase`);
+    assert.ok(skills.getDismantleYield(after) > skills.getDismantleYield(boundary.before), `${boundary.label} dismantle yield must increase`);
+
+    const chanceBefore = skills.getSameGradePromotionChance([boundary.before, makeCard("hero"), makeCard("hero")], 0);
+    const chanceAfter = skills.getSameGradePromotionChance([after, makeCard("hero"), makeCard("hero")], 0);
+    assert.ok(chanceAfter >= chanceBefore, `${boundary.label} same-grade promotion chance must not decrease`);
+}
 
 const focus = makeCard("hero", { id: "focus", word: "focus" });
 const other = makeCard("hero", { id: "other", word: "other" });
@@ -193,4 +231,4 @@ console.table(categoryResults.map(({ packSize, counts, ratios }) => ({
     growth: `${counts.growth} (${(ratios.growth * 100).toFixed(3)}%)`,
     essence: `${counts.essence} (${(ratios.essence * 100).toFixed(3)}%)`
 })));
-console.log("[skill-economy] OK: category invariance, guarantees, fusion, pity, evolution, and dismantle yields verified.");
+console.log("[skill-economy] OK: category invariance, guarantees, fusion, pity, cumulative evolution value, power ranges, and dismantle yields verified.");

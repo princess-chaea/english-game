@@ -1134,14 +1134,78 @@
             return `고등학교 ${value - 9}학년`;
         }
 
+        let curriculumWordPackCatalogPromise = null;
+
+        async function loadCurriculumWordPackCatalog() {
+            if (curriculumWordPackCatalogPromise) return curriculumWordPackCatalogPromise;
+            curriculumWordPackCatalogPromise = (async () => {
+                let jsonError = null;
+                try {
+                    const response = await fetch('data/word-packs.json?v=20260820-1', { cache: 'force-cache' });
+                    if (!response.ok) throw new Error('단어팩 파일을 불러오지 못했어요. (' + response.status + ')');
+                    return await response.json();
+                } catch (error) {
+                    jsonError = error;
+                    console.warn('JSON 교육과정 단어팩을 불러오지 못해 모듈 사본을 확인합니다.', error);
+                }
+                try {
+                    const module = await import('../data/word-packs.js?v=20260820-1');
+                    if (!module?.default || !Array.isArray(module.default.packs) || !Array.isArray(module.default.words)) {
+                        throw new Error('단어팩 모듈 형식이 올바르지 않아요.');
+                    }
+                    return module.default;
+                } catch (moduleError) {
+                    const reason = moduleError?.message || jsonError?.message || '알 수 없는 오류';
+                    throw new Error('교육과정 단어팩의 JSON과 모듈 사본을 모두 불러오지 못했어요. (' + reason + ')');
+                }
+            })().catch((error) => {
+                curriculumWordPackCatalogPromise = null;
+                throw error;
+            });
+            return curriculumWordPackCatalogPromise;
+        }
+
+        function localCumulativeFallback(grade) {
+            const requestedGrade = Math.max(3, Math.min(12, Number(grade) || 4));
+            const availableGrade = Math.min(6, requestedGrade);
+            const merged = new Map();
+            let supportWordCount = 0;
+            for (let currentGrade = 3; currentGrade <= availableGrade; currentGrade += 1) {
+                if (currentGrade === availableGrade) supportWordCount = merged.size;
+                (MOCK_WORDS[String(currentGrade)] || []).forEach((entry) => {
+                    const key = String(entry?.word || '').trim().toLowerCase();
+                    if (!key || !entry?.meaning || merged.has(key)) return;
+                    merged.set(key, {
+                        word: String(entry.word).trim(),
+                        meaning: String(entry.meaning).trim(),
+                        spiralRank: merged.size + 1,
+                        introducedGrade: currentGrade,
+                        introducedLevel: 'emergency'
+                    });
+                });
+            }
+            const words = [...merged.values()];
+            const availableLabel = learningGradeLabel(availableGrade);
+            return {
+                words,
+                source: `local-cumulative-fallback-grade-${availableGrade}`,
+                supportWordCount,
+                packId: `local-cumulative-fallback-grade-${availableGrade}`,
+                packLabel: requestedGrade > availableGrade
+                    ? `오프라인 임시 누적 목록 · ${availableLabel}까지`
+                    : `${availableLabel} 오프라인 임시 누적 목록`,
+                packWordCount: words.length,
+                requestedGrade,
+                availableGrade
+            };
+        }
+
         async function loadAssignedWordPacks() {
             const requestedGrade = Math.max(3, Math.min(12, Number(gameState.learningGrade || gameState.grade) || 4));
-            let ids = Array.isArray(gameState.assignedWordPackIds) && gameState.assignedWordPackIds.length
-                ? gameState.assignedWordPackIds
-                : (gameState.assignedWordPackId ? [gameState.assignedWordPackId] : [`grade-${requestedGrade}-mid`]);
-            const response = await fetch('data/word-packs.json?v=20260820-1', { cache: 'force-cache' });
-            if (!response.ok) throw new Error('단어팩 파일을 불러오지 못했어요. (' + response.status + ')');
-            const catalog = await response.json();
+            const assignedPackId = gameState.assignedWordPackId
+                || (Array.isArray(gameState.assignedWordPackIds) ? gameState.assignedWordPackIds.find(Boolean) : null);
+            let ids = [assignedPackId || `grade-${requestedGrade}-mid`];
+            const catalog = await loadCurriculumWordPackCatalog();
             const byId = new Map((Array.isArray(catalog.packs) ? catalog.packs : []).map((pack) => [pack.id, pack]));
             const wordCatalog = new Map((Array.isArray(catalog.words) ? catalog.words : []).map((entry) => [String(entry?.word || '').trim().toLowerCase(), entry]));
             let selectedPacks = ids.map((id) => byId.get(id)).filter(Boolean);
@@ -1169,31 +1233,45 @@
             return {
                 words: [...merged.values()],
                 source: ids.join('+'),
-                supportWordCount: Math.max(0, ...selectedPacks.map((pack) => Number(pack.supportWordCount) || 0))
+                supportWordCount: Math.max(0, ...selectedPacks.map((pack) => Number(pack.supportWordCount) || 0)),
+                packId: selectedPacks[0]?.id || ids[0],
+                packLabel: selectedPacks[0]?.label || selectedPacks[0]?.name || '',
+                packWordCount: Number(selectedPacks[0]?.wordCount) || merged.size
             };
         }
         async function fetchWordsFromSpreadsheet() {
             const loadVersion = ++wordPoolLoadVersion;
             const gradeStr = String(gameState.grade);
-            const finish = (words, source, supportWordCount = 0) => {
+            const finish = (words, source, supportWordCount = 0, metadata = {}) => {
                 if (loadVersion !== wordPoolLoadVersion) return false;
                 gameState.wordsPool = words;
                 gameState.activeWordPackSupportCount = Math.max(0, Math.min(words.length, Number(supportWordCount) || 0));
+                gameState.activeWordPackId = String(metadata.packId || source || '');
+                gameState.activeWordPackLabel = String(metadata.packLabel || `${learningGradeLabel(gameState.learningGrade || gameState.grade)} 임시 단어 목록`);
+                gameState.activeWordPackWordCount = Math.max(0, Number(metadata.packWordCount) || words.length);
+                gameState.activeWordPackNewCount = Math.max(0, gameState.activeWordPackWordCount - gameState.activeWordPackSupportCount);
                 gameState.currentQuizIndex = gameState.progress % (gameState.wordsPool.length || 1);
                 console.log(`[WordsPool] source: ${source}, grade: ${gameState.grade}, words: ${gameState.wordsPool.length}`);
                 initGameEngine();
                 return true;
             };
+            const finishLocalFallback = (message) => {
+                const fallback = localCumulativeFallback(gameState.learningGrade || gameState.grade);
+                finish(fallback.words, fallback.source, fallback.supportWordCount, fallback);
+                setTimeout(() => showToast(message || (fallback.requestedGrade > fallback.availableGrade
+                    ? `${learningGradeLabel(fallback.requestedGrade)} 전체 단어팩을 불러오지 못해 ${learningGradeLabel(fallback.availableGrade)}까지의 오프라인 임시 누적 목록을 사용합니다.`
+                    : `${learningGradeLabel(fallback.requestedGrade)} 전체 단어팩을 불러오지 못해 오프라인 임시 누적 목록을 사용합니다.`)), 2000);
+            };
 
             try {
                 const assignment = await loadAssignedWordPacks();
-                if (assignment && finish(assignment.words, assignment.source, assignment.supportWordCount)) return;
+                if (assignment && finish(assignment.words, assignment.source, assignment.supportWordCount, assignment)) return;
             } catch (err) {
-                console.warn('교육과정 단어팩 로드 실패로 학년 기본 목록을 사용합니다.', err);
+                console.warn('교육과정 단어팩 로드 실패로 보조 단어 목록을 확인합니다.', err);
             }
             try {
                 if (!window._fbReady) {
-                    finish(MOCK_WORDS[gradeStr] || MOCK_WORDS['4'], 'local fallback');
+                    finishLocalFallback();
                     return;
                 }
                 const wordsDoc = await window._fbGetDoc(window._fbDoc(window._fbDb, 'game_data', 'words'));
@@ -1202,17 +1280,14 @@
                     if (Array.isArray(data['grade_' + gradeStr]) && data['grade_' + gradeStr].length > 0) {
                         finish(data['grade_' + gradeStr], `grade-${gradeStr}-current`);
                     } else {
-                        finish(MOCK_WORDS[gradeStr] || MOCK_WORDS['4'], 'local fallback');
-                        setTimeout(() => showToast(`${learningGradeLabel(gradeStr)} 단어 목록을 찾지 못해 임시 목록을 사용합니다.`), 2000);
+                        finishLocalFallback(`${learningGradeLabel(gradeStr)} 단어 목록을 찾지 못해 오프라인 임시 누적 목록을 사용합니다.`);
                     }
                 } else {
-                    finish(MOCK_WORDS[gradeStr] || MOCK_WORDS['4'], 'local fallback');
-                    setTimeout(() => showToast('공유 단어 목록을 찾지 못해 임시 목록을 사용합니다.'), 2000);
+                    finishLocalFallback('공유 단어 목록을 찾지 못해 오프라인 임시 누적 목록을 사용합니다.');
                 }
             } catch (err) {
                 console.error('Firebase words fetch error:', err);
-                finish(MOCK_WORDS[gradeStr] || MOCK_WORDS['4'], 'local fallback');
-                setTimeout(() => showToast('단어 목록을 불러오지 못해 임시 목록을 사용합니다.'), 2000);
+                finishLocalFallback('단어 목록을 불러오지 못해 오프라인 임시 누적 목록을 사용합니다.');
             }
         }
 
@@ -1667,9 +1742,11 @@
             const _userInfoDisplay = document.getElementById("userInfoDisplay");
             if (_userInfoDisplay) _userInfoDisplay.classList.remove("hidden");
             const _nameEl = document.getElementById("displayStudentName");
-            if (_nameEl) refreshHeroIdentity();            const _badgeEl = document.getElementById("gradeLevelBadge");
+            if (_nameEl) refreshHeroIdentity();
+            const _badgeEl = document.getElementById("gradeLevelBadge");
             const displayedLearningGrade = Number(gameState.learningGrade || gameState.grade || 4);
-            if (_badgeEl) _badgeEl.innerText = `교과 영단어 ${learningGradeLabel(displayedLearningGrade)}`;
+            const activePackLabel = gameState.activeWordPackLabel || `${learningGradeLabel(displayedLearningGrade)} 임시 단어 목록`;
+            if (_badgeEl) _badgeEl.innerText = `현재 학습팩 · ${activePackLabel}`;
 
             if (typeof gameState.skillsInventory === 'string') {
                 try { gameState.skillsInventory = JSON.parse(gameState.skillsInventory); } catch(e) { gameState.skillsInventory = []; }
@@ -3866,7 +3943,7 @@
                 if (value && value !== correct && !values.includes(value)) values.push(value);
             };
             (gameState.wordsPool || []).forEach(add);
-            Object.values(MOCK_WORDS).flat().forEach(add);
+            if (values.length < 3) Object.values(MOCK_WORDS).flat().forEach(add);
             values.sort(() => 0.5 - Math.random());
             return values;
         }
@@ -4006,15 +4083,19 @@
         function getSkillMultiplier(skill) {
             const baseGrade = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
             const tier = Math.max(1, Math.min(3, Number(skill.tier) || 3));
-            const stars = skill.stars || 0;
+            const stars = globalThis.VocaSkillSystem?.getCumulativeStars
+                ? globalThis.VocaSkillSystem.getCumulativeStars(skill)
+                : (skill.stars || 0);
 
             // 세부 급간 통일: Tier 1 (+20%), Tier 2 (+10%), Tier 3 (+0%)
             const tierFactor = 1 + (3 - tier) * 0.10;
 
-            // 한계돌파 별(⭐ 1~6개) 완성당 +15% 수치 상승
+            // 완료한 누적 별(티어 진화 전 성장 포함) 하나당 +15% 수치 상승
             const starFactor = 1 + stars * 0.15;
 
-            return Math.round(baseGrade.multiplier * tierFactor * starFactor);
+            return globalThis.VocaSkillSystem?.getSkillPowerMultiplier
+                ? globalThis.VocaSkillSystem.getSkillPowerMultiplier(skill, baseGrade.multiplier)
+                : Math.round(baseGrade.multiplier * tierFactor * starFactor);
         }
 
         function getRequiredExpForStar(grade) {
@@ -4023,8 +4104,8 @@
             return expMap[grade] || 1;
         }
 
-        function rollSkillTier() {
-            const tierRoll = Math.random();
+        function rollSkillTier(roll = Math.random()) {
+            const tierRoll = Math.max(0, Math.min(0.999999, Number(roll) || 0));
             if (tierRoll < 0.05) return 1;
             if (tierRoll < 0.30) return 2;
             return 3;
@@ -4341,7 +4422,7 @@
                 if (counts[s.grade] !== undefined) counts[s.grade]++;
             });
 
-            // 상위 획득 스킬 카드를 배율순 정렬
+            // 상위 획득 스킬 카드를 스킬 지수순 정렬
             const topList = [...acquiredList].sort((a, b) => getSkillMultiplier(b) - getSkillMultiplier(a)).slice(0, 8);
 
             let topHtml = "";
@@ -4355,7 +4436,7 @@
                             <span class="text-yellow-300">T${Math.max(1, Math.min(3, Number(s.tier) || 3))}</span>
                         </div>
                         <div class="text-[10px] sm:text-[11px] font-black text-white  tracking-tighter truncate my-0.5">${capitalizeFirstLetter(s.word)}</div>
-                        <div class="text-[9px] text-pink-400 font-bold">×${mult}배</div>
+                        <div class="text-[9px] text-pink-400 font-bold">지수 ×${mult}</div>
                     </div>
                 `;
             });
@@ -4781,7 +4862,7 @@
             const deckInfo = document.getElementById("skillDeckInfo");
             if (deckInfo) {
 
-                deckInfo.textContent = `현재 학년 또는 길드 단어팩 전체에서 영단어와 등급이 매번 무작위로 결정됩니다. (추첨 대상 ${getSkillSourcePool().length}개)`;
+                deckInfo.textContent = `새 카드 후보는 현재 적용된 누적 단어팩 ${getSkillSourcePool().length}개이며, 보유 카드 성장은 현재 팩과 무관하게 전체 보유 카드에서 선택됩니다. 기본 분기는 신규 40% · 성장 50% · 각성 정수 10%이고 후보가 없으면 재분배됩니다.`;
             }
             const eqGrid = document.getElementById("equippedSkillsGrid");
             let eqHtml = "";
@@ -4810,7 +4891,7 @@
                                 </div>
                                 <div class="z-10">
                                     <span class="text-[8px] truncate block text-[#bbbbbb]">${skill.meaning}</span>
-                                    <span class="text-[8px] font-bold text-pink-400 block">×${mult}배</span>
+                                    <span class="text-[8px] font-bold text-pink-400 block">지수 ×${mult}</span>
                                 </div>
                             </div>
                         `;
@@ -4829,7 +4910,7 @@
                 return;
             }
 
-            // 마법 피해 배율(×배) 기준 내림차순 정렬
+            // 스킬 지수 기준 내림차순 정렬
             const sortedInventory = [...gameState.skillsInventory].sort((a, b) => {
                 const multA = getSkillMultiplier(a);
                 const multB = getSkillMultiplier(b);
@@ -4864,14 +4945,14 @@
                         </div>
 
                         <div class="mt-1.5" onclick="event.stopPropagation()">
-                            <span class="text-[9px] font-extrabold text-pink-400 block mb-1">×${mult}배</span>
+                            <span class="text-[9px] font-extrabold text-pink-400 block mb-1">지수 ×${mult}</span>
                             
-                            <!-- 경험치 바 -->
+                            <!-- 성장 바 -->
                             <div class="w-full bg-[#111] h-1.5 border border-[#3c3c3c] rounded-none-forced overflow-hidden mb-1">
                                 <div class="bg-yellow-500 h-full transition-all duration-300" style="width: ${pct}%"></div>
                             </div>
                             <div class="text-[7px] text-gray-400 flex justify-between font-bold mb-1.5">
-                                <span>EXP</span>
+                                <span>성장</span>
                                 <span>${exp}/${maxExp}</span>
                             </div>
 
@@ -4919,7 +5000,7 @@
                                     <span class="text-[10px] text-yellow-400 font-bold flex-shrink-0">${starsHtml}</span>
                                 </div>
                                 <span class="cooldown-timer text-[9px] ${isOnCooldown ? 'text-[#e22718] font-extrabold' : 'font-extrabold text-pink-400'}">
-                                    ${isOnCooldown ? `${Math.ceil(skill.cooldownRemaining)}s` : `×${mult}배`}
+                                    ${isOnCooldown ? `${Math.ceil(skill.cooldownRemaining)}s` : `지수 ×${mult}`}
                                 </span>
                             </div>
                             <div class="flex justify-between items-center w-full z-10 text-[9px] font-medium opacity-90 ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-white' : ''}">
@@ -4962,7 +5043,7 @@
                         
                         const timerSpan = btn.querySelector('.cooldown-timer');
                         if (timerSpan) {
-                            timerSpan.innerText = isOnCooldown ? `${Math.ceil(skill.cooldownRemaining)}s` : `×${mult}배`;
+                            timerSpan.innerText = isOnCooldown ? `${Math.ceil(skill.cooldownRemaining)}s` : `지수 ×${mult}`;
                             if (isOnCooldown) {
                                 timerSpan.className = 'cooldown-timer text-[9px] text-[#e22718] font-extrabold';
                             } else {
@@ -5045,7 +5126,7 @@
                 ? Math.max(statDmg, Math.floor(monsterMaxHp * 0.035)) 
                 : statDmg;
             const baseQuizDmg = Math.max(10, Math.floor(rawQuizDmg * chaliceMult * bossBonus));
-            // 스킬 등급 배율(mult: 5~120)에 따른 스킬 딜 보정 계수 (일반 ~0.6x -> 신화 6성 ~2.5x of quiz base)
+            // 스킬 배율 지수(mult: 5~311)에 따른 퀴즈 피해 대비 보정 계수(상한 2.5x)
             const skillGradeFactor = 0.6 + Math.min(1.9, (mult - 5) / 60);
             const quizDmgFloor = Math.floor(baseQuizDmg * skillGradeFactor);
 
@@ -5220,9 +5301,7 @@
                 processCombatDamage(quizDmg);
                 spawnDamageFloatingText(arena.getBoundingClientRect().width / 2, arena.getBoundingClientRect().height / 2, `⚡ 콤보 크리티컬! -${quizDmg.toLocaleString()}`);
 
-                gameState.currentQuizIndex = (gameState.currentQuizIndex + 1) % gameState.wordsPool.length;
-
-                showBattleToast(`🔥 [콤보 x${gameState.quizCombo}] 정답 타격! -${quizDmg.toLocaleString()} 피해 / +${reward.toLocaleString()}G / +10 FP`);
+                showBattleToast(`🔥 [콤보 x${gameState.quizCombo}] 정답 타격! -${quizDmg.toLocaleString()} 피해 / +${reward.toLocaleString()}G / +${fpGained.toLocaleString()} FP`);
 
                 setTimeout(() => {
                     generateQuizCard();
@@ -7327,7 +7406,7 @@
                                         <span class="text-yellow-300 font-bold text-[8px]">${starsHtml}</span>
                                     </div>
                                     <span class="text-[9px] sm:text-[10px] font-bold text-white tracking-tighter truncate block text-center">${capitalizeFirstLetter(s.word)}</span>
-                                    <span class="text-[9px] font-bold text-pink-300 block text-center w-full">⚡ ×${previewMult}배</span>
+                                    <span class="text-[9px] font-bold text-pink-300 block text-center w-full">⚡ 지수 ×${previewMult}</span>
                                 </div>
                             `;
                         } else {
@@ -8254,7 +8333,7 @@
                             <div class="flex justify-between items-center w-full z-10">
                                 <span class="text-[8px] sm:text-[9px] font-extrabold  truncate tracking-tighter text-white group-hover:text-yellow-300">${capitalizeFirstLetter(s.word)}</span>
                                 <span class="wb-cd-timer text-[8px] ${isCd ? 'text-red-400 font-bold  animate-pulse' : 'text-pink-400 font-bold'} z-10 ">
-                                    ${isCd ? `⏳ ${cdLeft.toFixed(1)}s` : `⚡ ×${mult}배`}
+                                    ${isCd ? `⏳ ${cdLeft.toFixed(1)}s` : `⚡ 지수 ×${mult}`}
                                 </span>
                             </div>
                             <div class="flex justify-between items-center w-full z-10 text-[8px]">
@@ -8331,7 +8410,7 @@
                     }
                     if (cdTimerText) {
                         const mult = getSkillMultiplier(s);
-                        cdTimerText.innerText = `⚡ ×${mult}배`;
+                        cdTimerText.innerText = `⚡ 지수 ×${mult}`;
                         cdTimerText.className = "wb-cd-timer text-[8px] text-pink-400 font-bold z-10";
                     }
                 }
@@ -9180,15 +9259,15 @@
             document.getElementById("skillAcquireMeaning").innerText = skill.meaning;
 
             const starsCount = skill.stars || 0;
-            const starsHtml = starsCount > 0 ? "⭐".repeat(starsCount) : "<span class='text-xs text-[#7e7e7e] font-normal'>⭐ 0성 (동일 카드 획득 시 한계돌파)</span>";
+            const starsHtml = starsCount > 0 ? "⭐".repeat(starsCount) : "<span class='text-xs text-[#7e7e7e] font-normal'>⭐ 0성 · 성장 바를 완성하면 성급 상승</span>";
             document.getElementById("skillAcquireStarsArea").innerHTML = starsHtml;
 
             const exp = skill.exp || 0;
             const maxExp = skill.maxExp || getRequiredExpForStar(skill.grade);
-            document.getElementById("skillAcquireExpInfo").innerText = `한계돌파 누적 카드 경험치: ${exp} / ${maxExp}`;
+            document.getElementById("skillAcquireExpInfo").innerText = `현재 성장 바: ${exp} / ${maxExp}`;
 
             const mult = getSkillMultiplier(skill);
-            document.getElementById("skillAcquireDesc").innerText = `💥 최종 피해 배율: 공격력의 ×${mult}배 (Tier & ⭐ 한계돌파 수치 포함)`;
+            document.getElementById("skillAcquireDesc").innerText = `💥 스킬 지수 ×${mult} · 실제 피해는 공격력·DPS·보너스·보스 보정에 따라 계산`;
             
             box.className = `relative flex flex-col items-center justify-center p-8 border-2 rounded-none-forced transition-all duration-500 scale-100 ${gradeInfo.colorClass}`;
             
@@ -9720,7 +9799,7 @@
                 overlay.style.paddingTop = "52px";
                 msg.innerHTML = "장비 강화 성공!<br>다음으로 <b>[펫/유물 소환]</b> 탭을 클릭하여 든든한 동료와 강력한 유물을 확인해보세요.";
                 const btn = document.getElementById("petTabBtn");
-                if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse'); btn.style.pointerEvents = 'auto';
+                if(btn) { btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse'); btn.style.pointerEvents = 'auto'; }
             } else if (tutorialStep === 5) {
                 overlay.classList.add('bg-black/20');
                 overlay.style.alignItems = "flex-start";
@@ -9737,7 +9816,7 @@
                 overlay.style.paddingTop = "52px";
                 msg.innerHTML = "드래곤을 소환했습니다!<br>펫은 전투에 큰 도움이 됩니다.<br>이번엔 <b>[스킬]</b> 탭을 클릭하여 마법 스킬을 확인하세요.";
                 const btn = document.getElementById("skillTabBtn");
-                if(btn) btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse'); btn.style.pointerEvents = 'auto';
+                if(btn) { btn.classList.add('tutorial-highlight', 'relative', 'z-[10000]', 'ring-2', 'ring-yellow-400', 'animate-pulse'); btn.style.pointerEvents = 'auto'; }
             } else if (tutorialStep === 7) {
                 overlay.classList.add('bg-black/20');
                 overlay.style.alignItems = "flex-start";

@@ -171,9 +171,7 @@
     }
 
     function growthSkillCandidates() {
-        const deckKeys = new Set(ensureActiveSkillDeck().map((entry) => wordKey(entry.word)));
-        const deckOwned = (gameState.skillsInventory || []).filter((skill) => deckKeys.has(wordKey(skill.word)));
-        return deckOwned.length ? deckOwned : (gameState.skillsInventory || []);
+        return gameState.skillsInventory || [];
     }
 
     function pickNewSkillCandidate(random = Math.random) {
@@ -227,14 +225,14 @@
         const result = SkillRules.applyGrowthOutcome(existing, rolledGrade, rolledTier);
         Object.assign(existing, result.skill);
         if (result.essenceGained) gameState.skillEssence += result.essenceGained;
-        const labels = { "grade-up": "grade-up", "grade-tier-up": "grade-up", "tier-up": "tier-up", "star-up": "star-up", essence: "essence" };
+        const labels = { "grade-up": "grade-up", "grade-tier-up": "grade-tier-up", "tier-up": "tier-up", "star-up": "star-up", essence: "max-essence" };
         return { skill: existing, resultType: labels[result.event] || "growth", alreadyOwned: true, essenceGained: result.essenceGained || 0 };
     }
 
     addOrLevelUpSkill = function addOrLevelUpSkillReworked(word, meaning, rolledGrade, suppressModal = false, rolledTier = null) {
         const outcome = acquireSkillOutcome(word, meaning, rolledGrade, rolledTier || rollSkillTier());
         if (!suppressModal) {
-            if (outcome.resultType === "essence") showToast(`✨ MAX 중복이 각성 정수 +${outcome.essenceGained}로 변환되었습니다.`);
+            if (outcome.resultType === "max-essence") showToast(`✨ MAX 중복이 각성 정수 +${outcome.essenceGained}로 변환되었습니다.`);
             showSkillModal(outcome.skill, SKILL_GRADES[outcome.skill.grade] || SKILL_GRADES.normal);
             buildSkillTabUI();
             renderSkillsUI();
@@ -243,19 +241,23 @@
         return outcome.skill;
     };
 
-    createSkillDrawSnapshot = function createSkillDrawSnapshotReworked(word, meaning, rolledGrade, rolledTier, alreadyOwned = false, resultType = null) {
+    createSkillDrawSnapshot = function createSkillDrawSnapshotReworked(word, meaning, rolledGrade, rolledTier, alreadyOwned = false, resultType = null, ownedSkill = null, essenceAmount = 0) {
         if (resultType === "essence") return { word: "각성 정수", meaning: "원하는 스킬 성장에 사용", resultType: "essence", essenceAmount: 25, alreadyOwned: false };
+        const actual = ownedSkill ? SkillRules.normalizeSkill(ownedSkill) : null;
         const snapshot = {
-            word: String(word || ""), meaning: String(meaning || ""),
-            grade: SkillRules.normalizeGrade(rolledGrade), tier: SkillRules.normalizeTier(rolledTier),
-            stars: 0, exp: 0, maxExp: SkillRules.requiredExp(rolledGrade),
+            word: String(actual?.word ?? word ?? ""), meaning: String(actual?.meaning ?? meaning ?? ""),
+            grade: SkillRules.normalizeGrade(actual?.grade ?? rolledGrade), tier: SkillRules.normalizeTier(actual?.tier ?? rolledTier),
+            stars: Number(actual?.stars) || 0, exp: Number(actual?.exp) || 0,
+            maxExp: Number(actual?.maxExp) || SkillRules.requiredExp(actual?.grade ?? rolledGrade),
+            rolledGrade: SkillRules.normalizeGrade(rolledGrade), rolledTier: SkillRules.normalizeTier(rolledTier),
+            essenceAmount: Math.max(0, Number(essenceAmount) || 0),
             alreadyOwned: Boolean(alreadyOwned), resultType: resultType || (alreadyOwned ? "growth" : "new")
         };
         snapshot.drawMultiplier = getSkillMultiplier(snapshot);
         return snapshot;
     };
 
-    const SKILL_RESULT_LABELS = { new: "신규", growth: "성장", "star-up": "성급 상승", "grade-up": "등급 상승", "tier-up": "티어 상승", essence: "각성 정수" };
+    const SKILL_RESULT_LABELS = { new: "신규", growth: "성장", "star-up": "성급 상승", "grade-up": "등급 상승", "grade-tier-up": "등급·티어 상승", "tier-up": "티어 상승", essence: "각성 정수", "max-essence": "MAX 정수 +100" };
 
     renderSkillDrawResultCard = function renderSkillDrawResultCardReworked(drawResult) {
         if (drawResult.resultType === "essence") return `
@@ -266,8 +268,8 @@
         const tier = SkillRules.normalizeTier(drawResult.tier);
         return `
             <div class="border-2 ${gradeInfo.colorClass} p-2 text-center flex flex-col justify-between min-h-[90px]" data-draw-grade="${drawResult.grade}" data-draw-tier="${tier}" data-draw-result="${drawResult.resultType}">
-                <div><div class="flex items-center justify-between text-[9px] font-black"><span>${gradeInfo.name}</span><span class="text-yellow-300">T${tier}</span></div><p class="mt-0.5 truncate text-[11px] font-bold text-white">${escapeSkillHtml(capitalizeFirstLetter(drawResult.word))}</p></div>
-                <div><span class="block truncate text-[9px] text-[#ddd]">${escapeSkillHtml(drawResult.meaning)}</span><span class="block text-[8px] font-black text-cyan-200">${SKILL_RESULT_LABELS[drawResult.resultType] || "성장"}</span><span class="block text-[9px] font-bold text-pink-300">×${Number(drawResult.drawMultiplier || getSkillMultiplier(drawResult))}배</span></div>
+                <div><div class="flex items-center justify-between text-[9px] font-black"><span>${gradeInfo.name}</span><span class="text-yellow-300">T${tier} \u2605${Number(drawResult.stars) || 0}</span></div><p class="mt-0.5 truncate text-[11px] font-bold text-white">${escapeSkillHtml(capitalizeFirstLetter(drawResult.word))}</p></div>
+                <div><span class="block truncate text-[9px] text-[#ddd]">${escapeSkillHtml(drawResult.meaning)}</span><span class="block text-[8px] font-black text-cyan-200">${SKILL_RESULT_LABELS[drawResult.resultType] || "성장"}</span><span class="block text-[9px] font-bold text-pink-300">지수 ×${Number(drawResult.drawMultiplier || getSkillMultiplier(drawResult))}</span></div>
             </div>`;
     };
 
@@ -280,7 +282,7 @@
         const categories = options.tutorial
             ? [hasNew ? "new" : hasGrowth ? "growth" : "essence"]
             : SkillRules.planSummonCategories(count, { hasNew, hasGrowth }, random);
-        const descriptors = categories.map((category) => ({ category, grade: category === "essence" ? null : rollGuildRewardGrade(random()), tier: category === "essence" ? null : rollSkillTier() }));
+        const descriptors = categories.map((category) => ({ category, grade: category === "essence" ? null : rollGuildRewardGrade(random()), tier: category === "essence" ? null : rollSkillTier(random()) }));
         if (options.tutorial && descriptors[0]?.category !== "essence") descriptors[0].grade = "hero";
         if (count >= 10) {
             for (let start = 0; start < count; start += 10) {
@@ -313,7 +315,7 @@
                 }
                 const outcome = acquireSkillOutcome(picked.word, picked.meaning, descriptor.grade, descriptor.tier);
                 summary.newCards += 1;
-                results.push(createSkillDrawSnapshot(picked.word, picked.meaning, descriptor.grade, descriptor.tier, false, outcome.resultType));
+                results.push(createSkillDrawSnapshot(picked.word, picked.meaning, descriptor.grade, descriptor.tier, false, outcome.resultType, outcome.skill, outcome.essenceGained));
                 return;
             }
             const target = pickGrowthSkill(random);
@@ -321,7 +323,7 @@
             const outcome = acquireSkillOutcome(target.word, target.meaning, descriptor.grade, descriptor.tier);
             summary.growth += 1;
             summary.essenceGained += outcome.essenceGained;
-            results.push(createSkillDrawSnapshot(target.word, target.meaning, descriptor.grade, descriptor.tier, true, outcome.resultType));
+            results.push(createSkillDrawSnapshot(target.word, target.meaning, descriptor.grade, descriptor.tier, true, outcome.resultType, outcome.skill, outcome.essenceGained));
         });
         gameState.activeSkillDeck = [];
         ensureActiveSkillDeck();
@@ -332,12 +334,12 @@
 
     showSkillDraw100ResultModal = function showSkillDraw100ResultModalReworked(acquiredList, drawSummary = {}) {
         const counts = { mythic: 0, legendary: 0, hero: 0, rare: 0, normal: 0 };
-        acquiredList.forEach((item) => { if (counts[item.grade] !== undefined) counts[item.grade] += 1; });
+        acquiredList.forEach((item) => { const grade = item.rolledGrade || item.grade; if (counts[grade] !== undefined) counts[grade] += 1; });
         const topList = acquiredList.filter((item) => item.resultType !== "essence").sort((a, b) => getSkillMultiplier(b) - getSkillMultiplier(a)).slice(0, 8);
         const gridEl = document.getElementById("gacha100TopGrid");
         if (gridEl) gridEl.innerHTML = topList.map(renderSkillDrawResultCard).join("");
         const summaryEl = document.getElementById("gacha100SummaryText");
-        if (summaryEl) summaryEl.innerHTML = `<span class="font-black text-emerald-300">신규 ${drawSummary.newCards || 0}</span> | <span class="font-bold text-cyan-300">성장 ${drawSummary.growth || 0}</span> | <span class="font-bold text-amber-300">정수 결과 ${drawSummary.essenceResults || 0} (+${drawSummary.essenceGained || 0})</span><br><span class="font-black text-rose-400">신화 ${counts.mythic}</span> | 전설 ${counts.legendary} | 영웅 ${counts.hero} | 희귀 ${counts.rare} | 일반 ${counts.normal}<br><span class="text-[10px] text-gray-500">상위 결과 8개만 표시 · 도감 ${gameState.skillDiscoveredWords.length}종 · 보유 ${drawSummary.inventoryCount || 0}종</span>`;
+        if (summaryEl) summaryEl.innerHTML = `<span class="font-black text-emerald-300">신규 ${drawSummary.newCards || 0}</span> | <span class="font-bold text-cyan-300">성장 ${drawSummary.growth || 0}</span> | <span class="font-bold text-amber-300">정수 획득 +${drawSummary.essenceGained || 0} (직접 ${drawSummary.essenceResults || 0}회·MAX 전환 포함)</span><br><span class="font-black text-rose-400">신화 ${counts.mythic}</span> | 전설 ${counts.legendary} | 영웅 ${counts.hero} | 희귀 ${counts.rare} | 일반 ${counts.normal}<br><span class="text-[10px] text-gray-500">상위 결과 8개만 표시 · 도감 ${gameState.skillDiscoveredWords.length}종 · 보유 ${drawSummary.inventoryCount || 0}종</span>`;
         const modal = document.getElementById("gacha100xResultModal");
         modal?.classList.remove("hidden"); modal?.classList.add("flex");
     };
@@ -355,7 +357,10 @@
             if (result?.resultType === "essence") {
                 showToast("✨ 각성 정수 +25 획득!");
                 skillSummonBusy = false;
-            } else if (result) showSkillModal(result, SKILL_GRADES[result.grade] || SKILL_GRADES.normal);
+            } else if (result) {
+                if (result.resultType === "max-essence") showToast(`MAX 중복이 각성 정수 +${Number(result.essenceAmount) || 100}로 변환되었습니다.`);
+                showSkillModal(result, SKILL_GRADES[result.grade] || SKILL_GRADES.normal);
+            }
         }
         buildSkillTabUI(); renderSkillsUI(); saveLocalCache(); playSoundEffect("levelup");
     }
@@ -577,7 +582,7 @@
         if (!groups.length) return showToast("⚠️ 선택 등급에서 보호되지 않은 동일 등급 카드 3장 묶음이 없습니다.");
         const details = groups.map((cards, index) => {
             const preview = SkillRules.fusionPreview(cards, gameState.skillFusionPity[cards[0].grade]);
-            return `${index + 1}. ${SKILL_GRADES[cards[0].grade].name} 3장 → ${fusionDistributionText(preview)}`;
+            return `${index + 1}. ${SKILL_GRADES[cards[0].grade].name} 3장 → ${index === 0 ? fusionDistributionText(preview) : "앞선 결과에 따라 실패 보정 확률 변동"}`;
         }).join("<br>");
         showCombinePreviewModal(`<b>낮은 품질 카드부터 ${groups.length}회 일괄 합성합니다.</b><br><br>${details}<br><br>장착·집중 연구·잠금 카드는 제외됩니다.`, () => {
             const results = groups.map((cards) => resolveFusion(cards));
@@ -628,7 +633,9 @@
             if (!key) return `<div class="flex min-h-12 items-center justify-center border border-dashed border-cyan-900 text-[9px] text-gray-600">${index + 1} · 비어 있음</div>`;
             const owned = gameState.skillsInventory.find((skill) => wordKey(skill.word) === key);
             const entry = owned || source.get(key) || { word: key, meaning: "" };
-            return `<button type="button" onclick="removeSkillResearchTarget(${skillJsArg(key)})" class="min-h-12 border border-cyan-700 bg-black p-2 text-left hover:border-red-400" title="클릭하여 연구 대상 해제"><b class="block truncate text-[10px] text-cyan-200">${index + 1}. ${escapeSkillHtml(capitalizeFirstLetter(entry.word))}</b><span class="block truncate text-[8px] text-gray-500">${owned ? "보유 성장 ×5" : "획득 희망 ×5"} · ${escapeSkillHtml(entry.meaning)}</span></button>`;
+            const inCurrentPack = source.has(key);
+            const researchStatus = owned ? "보유 성장 ×5" : inCurrentPack ? "획득 희망 ×5" : "현재 팩 밖 · 획득 일시정지";
+            return `<button type="button" onclick="removeSkillResearchTarget(${skillJsArg(key)})" class="min-h-12 border border-cyan-700 bg-black p-2 text-left hover:border-red-400" title="클릭하여 연구 대상 해제"><b class="block truncate text-[10px] text-cyan-200">${index + 1}. ${escapeSkillHtml(capitalizeFirstLetter(entry.word))}</b><span class="block truncate text-[8px] text-gray-500">${researchStatus} · ${escapeSkillHtml(entry.meaning)}</span></button>`;
         }).join("");
     }
 
@@ -638,7 +645,7 @@
         sanitizeSelectedCombineSkillIds();
         renderResearchTargets();
         const deckInfo = document.getElementById("skillDeckInfo");
-        if (deckInfo) deckInfo.textContent = `연구 덱 ${gameState.activeSkillDeck.length}/24 · 신규 40% / 보유 성장 50% / 각성 정수 10% (단어팩 ${getSkillSourcePool().length}개와 무관하게 성장률 고정)`;
+        if (deckInfo) deckInfo.textContent = `연구 후보 ${gameState.activeSkillDeck.length}/24 · 기본 분기 신규 40% / 보유 성장 50% / 각성 정수 10% · 후보가 없으면 재배분 · 보유 카드 성장은 현재 팩 ${getSkillSourcePool().length}개와 무관`;
         const count = document.getElementById("selectedCombineCountText");
         if (count) count.textContent = String(selectedCombineSkillIds.length);
         const manualGroup = document.getElementById("selectedManualCombineGroup");
@@ -650,7 +657,7 @@
             const skill = gameState.skillsInventory.find((entry) => entry.id === gameState.equippedSkills[index]);
             if (!skill) return `<div class="flex min-h-[85px] items-center justify-center border border-dashed border-[#3c3c3c] p-2 text-[8px] font-bold text-[#7e7e7e]">슬롯 비어있음</div>`;
             const grade = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
-            return `<div class="group relative flex min-h-[85px] flex-col justify-between border-2 ${grade.colorClass} p-2 text-center"><button type="button" onclick="unequipSkill('${safeSkillId(skill.id)}')" class="absolute -right-1 -top-1 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[9px] font-black text-white opacity-0 group-hover:opacity-100">×</button><div class="flex justify-between text-[7px] font-bold"><span>${grade.name} T${skill.tier}</span><span class="text-yellow-400">★${skill.stars}</span></div><b class="truncate text-[10px] text-white">${escapeSkillHtml(capitalizeFirstLetter(skill.word))}</b><span class="text-[8px] font-bold text-pink-300">×${getSkillMultiplier(skill)}배</span></div>`;
+            return `<div class="group relative flex min-h-[85px] flex-col justify-between border-2 ${grade.colorClass} p-2 text-center"><button type="button" onclick="unequipSkill('${safeSkillId(skill.id)}')" class="absolute -right-1 -top-1 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[9px] font-black text-white opacity-0 group-hover:opacity-100">×</button><div class="flex justify-between text-[7px] font-bold"><span>${grade.name} T${skill.tier}</span><span class="text-yellow-400">★${skill.stars}</span></div><b class="truncate text-[10px] text-white">${escapeSkillHtml(capitalizeFirstLetter(skill.word))}</b><span class="text-[8px] font-bold text-pink-300">지수 ×${getSkillMultiplier(skill)}</span></div>`;
         }).join("");
 
         const invGrid = document.getElementById("skillsInventoryGrid");
@@ -671,7 +678,7 @@
             const id = safeSkillId(skill.id);
             return `<article data-skill-card data-skill-id="${id}" data-selected="${selected}" role="button" tabindex="0" aria-pressed="${selected}" onclick="toggleSelectCombineSkill('${id}')" onkeydown="handleSkillCardKeydown(event,'${id}')" class="skill-inventory-card group relative flex min-h-[190px] cursor-pointer flex-col justify-between border-2 ${equipped ? "border-white" : "border-[#262626]"} ${grade.colorClass} bg-[#0d0d0d] p-2 text-center">
                 ${selected ? `<span class="absolute -left-1 -top-2 z-20 bg-yellow-400 px-1.5 py-0.5 text-[8px] font-black text-black">합성 선택</span>` : ""}
-                <div><div class="flex items-center justify-between text-[8px] font-bold"><span>${grade.name} T${skill.tier}</span><span class="text-yellow-400">★${skill.stars}${SkillRules.isMaxSkill(skill) ? " MAX" : ""}</span></div><b class="mt-1 block truncate text-xs text-white">${escapeSkillHtml(capitalizeFirstLetter(skill.word))}</b><span class="block truncate text-[9px] text-[#bbb]">${escapeSkillHtml(skill.meaning)}</span><span class="mt-1 block text-[9px] font-black text-pink-300">×${getSkillMultiplier(skill)}배</span></div>
+                <div><div class="flex items-center justify-between text-[8px] font-bold"><span>${grade.name} T${skill.tier}</span><span class="text-yellow-400">★${skill.stars}${SkillRules.isMaxSkill(skill) ? " MAX" : ""}</span></div><b class="mt-1 block truncate text-xs text-white">${escapeSkillHtml(capitalizeFirstLetter(skill.word))}</b><span class="block truncate text-[9px] text-[#bbb]">${escapeSkillHtml(skill.meaning)}</span><span class="mt-1 block text-[9px] font-black text-pink-300">지수 ×${getSkillMultiplier(skill)}</span></div>
                 <div class="mt-1.5"><div class="h-1.5 w-full overflow-hidden border border-[#3c3c3c] bg-[#111]"><div class="h-full bg-yellow-500" style="width:${pct}%"></div></div><div class="mb-1 flex justify-between text-[7px] text-gray-400"><span>${skillProgressLabel(skill)}</span><span>${skill.exp}/${maxExp}</span></div>
                     <div class="grid grid-cols-2 gap-1"><button type="button" data-skill-action="focus" onclick="event.stopPropagation();toggleSkillResearch('${id}')" class="border border-cyan-800 bg-cyan-950/50 py-1 text-[8px] font-bold text-cyan-200">${focused ? "연구 해제" : "집중 연구"}</button><button type="button" data-skill-action="lock" onclick="event.stopPropagation();toggleSkillLock('${id}')" class="border border-gray-700 bg-black py-1 text-[8px] font-bold text-gray-300">${locked ? "🔒 잠금 해제" : "🔓 잠금"}</button><button type="button" data-skill-action="essence" onclick="event.stopPropagation();applyEssenceToSkill('${id}')" class="border border-amber-800 bg-amber-950/30 py-1 text-[8px] font-bold text-amber-200">정수 100 투입</button><button type="button" data-skill-action="dismantle" onclick="event.stopPropagation();dismantleSkill('${id}')" class="border border-red-900 bg-red-950/30 py-1 text-[8px] font-bold text-red-300">분해 +${SkillRules.dismantleYield(skill)}</button></div>
                     <button type="button" data-skill-action="equip" onclick="event.stopPropagation();${equipped ? `unequipSkill('${id}')` : `equipSkill('${id}')`}" class="mt-1 w-full py-1 text-[9px] font-black ${equipped ? "bg-red-600 text-white" : "bg-white text-black"}">${equipped ? "장착 해제" : "장착하기"}</button>

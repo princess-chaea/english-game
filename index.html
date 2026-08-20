@@ -879,6 +879,27 @@
         }
 
         /* 얇고 자연스러운 커스텀 스크롤바 */
+        .skill-inventory-card {
+            outline: 2px solid transparent;
+            outline-offset: -2px;
+            transition: outline-color .16s ease, box-shadow .16s ease, filter .16s ease;
+        }
+
+        .skill-inventory-card:hover {
+            outline-color: #facc15 !important;
+            filter: brightness(1.12);
+        }
+
+        .skill-inventory-card[data-selected="true"] {
+            outline: 3px solid #facc15 !important;
+            outline-offset: -3px;
+            box-shadow: 0 0 16px rgba(234, 179, 8, .85) !important;
+        }
+
+        .skill-inventory-card:focus-visible {
+            outline-color: #38bdf8 !important;
+        }
+
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -1484,6 +1505,23 @@
                     <p class="text-xs text-gray-400 font-medium mb-3">퀴즈로 쌓은 정복 포인트(FP)로 단어 캡슐을 뽑아 마법 필살기를 수집해보세요.</p>
                     <p data-guild-luck-source class="mb-3 border border-violet-900/50 bg-violet-950/10 p-2 text-[8px] leading-relaxed text-violet-300"></p>
 
+                    <!-- Research focus / wishlist (shared four-slot limit with equipped skills) -->
+                    <section class="mb-4 border border-cyan-900/70 bg-cyan-950/10 p-3" aria-labelledby="skillResearchHeading">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                                <h4 id="skillResearchHeading" class="text-xs font-black text-cyan-200">🔬 집중 연구 대상 (최대 4개)</h4>
+                                <p class="mt-1 text-[9px] text-gray-400">보유 스킬은 성장 집중, 미보유 단어는 획득 희망으로 등록됩니다. 장착·연구·잠금 카드는 합성·분해에서 보호됩니다.</p>
+                            </div>
+                            <b class="border border-amber-700 bg-amber-950/30 px-2 py-1 text-[10px] text-amber-200">각성 정수 <span id="skillEssenceCount">0</span></b>
+                        </div>
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            <input id="skillResearchWordInput" list="skillResearchWordOptions" type="search" autocomplete="off" placeholder="현재 단어팩에서 단어 검색" class="min-w-52 flex-1 border border-[#3c3c3c] bg-black px-2 py-1.5 text-[10px] text-white outline-none focus:border-cyan-400">
+                            <datalist id="skillResearchWordOptions"></datalist>
+                            <button type="button" onclick="addSkillResearchTargetFromInput()" class="border border-cyan-600 bg-cyan-950/40 px-3 py-1.5 text-[10px] font-black text-cyan-100 hover:bg-cyan-900/60">대상 지정</button>
+                        </div>
+                        <div id="skillResearchTargetSlots" class="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4"></div>
+                    </section>
+
                     <!-- Equipped Slots (4 slots) -->
                     <div class="mb-4 bg-[#0d0d0d] p-3 border border-[#3c3c3c] rounded-none-forced">
                         <div class="flex justify-between items-center mb-2">
@@ -1502,7 +1540,7 @@
                         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
                             <h4 class="text-xs font-bold text-[#0066b1] flex items-center gap-1.5 uppercase tracking-wider shrink-0">
                                 <i data-lucide="archive" class="w-4 h-4"></i>
-                                <span>보유한 영단어 스킬 마법 보관함 (<span id="selectedCombineCountText" class="text-yellow-300 font-bold">0</span>/3 선택됨)</span>
+                                <span>보유한 영단어 스킬 마법 보관함 (<span id="selectedCombineCountText" class="text-yellow-300 font-bold">0</span>/3 합성 선택)</span>
                             </h4>
                             <div class="flex items-center gap-1.5 flex-wrap justify-end ml-auto">
                                 <!-- 카드가 1개 이상 선택되었을 때만 노출되는 수동 조합 컨트롤 그룹 -->
@@ -1544,7 +1582,7 @@
                             <i data-lucide="info" class="w-4 h-4"></i>
                             <span>스킬 수집 & 합성 가이드</span>
                         </span>
-                        <span class="text-[11px] text-gray-400 ">중복 스킬 획득 시 자동 EXP/⭐ 누적</span>
+                        <span class="text-[11px] text-gray-400 ">신규 40% · 보유 성장 50% · 각성 정수 10%</span>
                     </div>
 
                     <!-- 5 Grades Multiplier & Probability Cards -->
@@ -1575,11 +1613,11 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-[10px] text-gray-300">
                         <div class="bg-black p-2.5 border border-[#262626] flex items-center gap-2">
                             <span class="bg-purple-950 text-purple-300 border border-purple-600 px-2 py-1 font-black shrink-0 text-[10px]">✨ 3개 카드 합성</span>
-                            <p class="leading-tight text-[10px]">카드 3개(일괄 포함) 합성 시 <b>기본 20% (+⭐/EXP 추가) 확률 상위 승급</b></p>
+                            <p class="leading-tight text-[10px]">동일 등급 3장은 승급 도전, 혼합 3장은 <b>각 카드의 등급·티어·⭐·EXP 가중치</b>로 결과가 정해집니다.</p>
                         </div>
                         <div class="bg-black p-2.5 border border-[#262626] flex items-center gap-2">
                             <span class="bg-yellow-950 text-yellow-300 border border-yellow-600 px-2 py-1 font-black shrink-0 text-[10px]">⭐ 별 & 티어 성장</span>
-                            <p class="leading-tight text-[10px]">중복 획득 시 EXP 충전(성급 상승) 및 확률적으로 <b>상위 티어 덮어씌움</b> (티어+10%, 별+50% 피해)</p>
+                            <p class="leading-tight text-[10px]">성장 1회는 현재 성장 바 1칸을 완성합니다. 6성 다음 성장에 T3→T2→T1 진화하며 <b>티어+10%, 별+15% 피해</b>가 적용됩니다.</p>
                         </div>
                     </div>
                 </div>
@@ -3162,7 +3200,7 @@
             /* 가로 모드(짧은 화면)에서 전투창 상단 UI 강제 축소 (전투화면 비율 확보용) */
     </style>
 
-    <script src="js/config.js?v=20260809-29"></script><script src="js/main.js?v=20260820-01"></script><script src="js/secure-account.js?v=20260820-01"></script>
+    <script src="js/config.js?v=20260809-29"></script><script src="js/skill-system.js?v=20260820-01"></script><script src="js/main.js?v=20260820-02"></script><script src="js/skill-rework.js?v=20260820-02"></script><script src="js/secure-account.js?v=20260820-03"></script>
 
     <!-- Damage Overlay (Scratch & Flash) -->
     <div id="damageOverlay" class="fixed inset-0 pointer-events-none hidden z-[100] flex-col items-center justify-center bg-red-900/60 transition-opacity duration-300">

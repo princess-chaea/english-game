@@ -104,6 +104,7 @@ const WORD_PACKS = (packCatalog.packs || []).filter((pack) => primaryPackKinds.h
   levelLabel: text(pack.levelLabel, 8) || null,
   cumulative: Boolean(pack.cumulative),
   wordCount: Array.isArray(pack.wordKeys) ? pack.wordKeys.length : Array.isArray(pack.words) ? pack.words.length : safeInt(pack.wordCount, 0, 0),
+  supportWordCount: safeInt(pack.supportWordCount, 0, 0, 5000),
   kind: text(pack.kind, 40)
 }));
 const wordPackById = new Map((packCatalog.packs || []).map((pack) => [text(pack?.id, 80), {
@@ -114,15 +115,27 @@ const wordPackById = new Map((packCatalog.packs || []).map((pack) => [text(pack?
   levelLabel: text(pack.levelLabel, 8) || null,
   cumulative: Boolean(pack.cumulative),
   wordCount: Array.isArray(pack.wordKeys) ? pack.wordKeys.length : Array.isArray(pack.words) ? pack.words.length : safeInt(pack.wordCount, 0, 0),
+  supportWordCount: safeInt(pack.supportWordCount, 0, 0, 5000),
   kind: text(pack.kind, 40)
 }]));
 const defaultWordPack = (grade) => 'grade-' + safeInt(grade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE) + '-mid';
+const WORD_PACK_LEVEL_ORDER = { low: 1, mid: 2, high: 3 };
 const LEARNING_QUESTION_TYPES = new Set(['meaning-choice', 'fill-blank', 'word-choice', 'listen-meaning', 'word-order', 'short-answer']);
 const DEFAULT_QUESTION_TYPES = ['meaning-choice'];
-function normalizeWordPackIds(value, grade = 4) {
+function highestAllowedWordPack(value, grade = 4) {
+  const allowedGrade = safeInt(grade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE);
   const source = Array.isArray(value) ? value : value ? [value] : [];
-  const ids = [...new Set(source.map((item) => text(item, 80)).filter((id) => wordPackById.has(id)))].slice(0, 12);
-  return ids.length ? ids : [defaultWordPack(grade)];
+  return [...new Set(source.map((item) => text(item, 80)).filter(Boolean))]
+    .map((id) => wordPackById.get(id))
+    .filter((pack) => pack && primaryPackKinds.has(pack.kind) && (pack.grade == null || Number(pack.grade) <= allowedGrade))
+    .sort((a, b) => Number(b.wordCount || 0) - Number(a.wordCount || 0)
+      || Number(b.grade || 0) - Number(a.grade || 0)
+      || Number(WORD_PACK_LEVEL_ORDER[b.level] || 0) - Number(WORD_PACK_LEVEL_ORDER[a.level] || 0)
+      || String(a.id).localeCompare(String(b.id)))[0] || null;
+}
+function normalizeWordPackIds(value, grade = 4) {
+  const selected = highestAllowedWordPack(value, grade);
+  return [selected?.id || defaultWordPack(grade)];
 }
 function normalizeQuestionTypes(value) {
   const source = Array.isArray(value) ? value : [];
@@ -413,8 +426,28 @@ async function reviewTeacherVerification(token, body) {
   }
   return { requestId, status: decision };
 }
-function classPack(grade, wordPackId) {
-  return wordPackById.get(wordPackId)?.id || defaultWordPack(grade);
+function classPack(grade, wordPackIds) {
+  return normalizeWordPackIds(wordPackIds, grade)[0];
+}
+function effectiveMemberLearningSettings(member = {}, classroom = {}) {
+  const usesGuildLearningDefaults = member.usesGuildLearningDefaults !== false;
+  const grade = safeInt(member.learningGrade, safeInt(classroom.grade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE), MIN_LEARNING_GRADE, MAX_LEARNING_GRADE);
+  const packSource = usesGuildLearningDefaults ? (classroom.wordPackIds || classroom.wordPackId) : member.assignedWordPackIds;
+  const questionTypeSource = usesGuildLearningDefaults ? classroom.defaultQuestionTypes : member.questionTypes;
+  const wordPackIds = normalizeWordPackIds(packSource, grade);
+  return {
+    usesGuildLearningDefaults,
+    wordPackId: wordPackIds[0],
+    wordPackIds,
+    questionTypes: normalizeQuestionTypes(questionTypeSource)
+  };
+}
+function ensureWordPackWithinGrade(pack, grade) {
+  const allowedGrade = safeInt(grade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE);
+  if (pack?.grade != null && Number(pack.grade) > allowedGrade) {
+    throw apiError(400, 'WORD_PACK_ABOVE_MEMBER_GRADE', '선택한 누적팩이 대상 길드원의 학년보다 높아요. 더 낮은 누적팩을 선택해 주세요.');
+  }
+  return pack;
 }
 async function bootstrap(uid, token) {
   const ref = teachers.doc(uid);
@@ -505,7 +538,7 @@ async function listClasses(uid) {
     const data = snap.data();
     const totals = await guildMemberSummary(snap.ref);
     const ownerId = guildOwnerId(data);
-    return { id: snap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE), ownerId, isOwner: ownerId === uid, managerCount: guildCoManagerCount(data), ...totals, guildRank: rankMap.get(snap.id) || null, wordPackId: classPack(data.grade, data.wordPackId), wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade), questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes) };
+    return { id: snap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE), ownerId, isOwner: ownerId === uid, managerCount: guildCoManagerCount(data), ...totals, guildRank: rankMap.get(snap.id) || null, wordPackId: classPack(data.grade, data.wordPackIds || data.wordPackId), wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade), questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes) };
   }));
 }
 function safeQuestionTypeStats(value) {
@@ -616,13 +649,14 @@ async function listGuildMembers(uid, body, includeWrongWords = false) {
   const classId = text(body.classId, 128);
   const classSnap = await ownedClass(uid, classId);
   const data = classSnap.data();
-  const memberFields = ['nickname', 'learningGrade', 'stage', 'totalCorrect', 'totalQuizTries', 'conqueredCount', 'masteredCount', 'combatPower', 'titleName', 'guildCoins', 'guildPoints', 'guildCorrectCount', 'guildStageClears', 'guildBossDamage', 'guildBossPointTotal', 'guildTrialCorrect', 'trialAttempts', 'trialRetries', 'trialHintsUsed', 'trialHintedCorrect', 'trialUnassistedCorrect', 'trialUnassistedTries', 'lastActiveAt', 'assignedWordPackIds', 'questionTypes', 'questionTypeStats', 'dailyLearning'];
+  const memberFields = ['nickname', 'learningGrade', 'stage', 'totalCorrect', 'totalQuizTries', 'conqueredCount', 'masteredCount', 'combatPower', 'titleName', 'guildCoins', 'guildPoints', 'guildCorrectCount', 'guildStageClears', 'guildBossDamage', 'guildBossPointTotal', 'guildTrialCorrect', 'trialAttempts', 'trialRetries', 'trialHintsUsed', 'trialHintedCorrect', 'trialUnassistedCorrect', 'trialUnassistedTries', 'lastActiveAt', 'usesGuildLearningDefaults', 'assignedWordPackIds', 'questionTypes', 'questionTypeStats', 'dailyLearning'];
   if (includeWrongWords) memberFields.push('wrongWordCounts');
   const membersSnap = await classSnap.ref.collection('members')
     .select(...memberFields)
     .limit(200).get();
   const members = membersSnap.docs.map((member) => {
     const value = member.data() || {};
+    const learningSettings = effectiveMemberLearningSettings(value, data);
     const totalCorrect = safeInt(value.totalCorrect, 0, 0, 1000000000);
     const totalQuizTries = Math.max(totalCorrect, safeInt(value.totalQuizTries, totalCorrect, 0, 1000000000));
     const trialHintsUsed = safeInt(value.trialHintsUsed, 0, 0, 1000000);
@@ -657,8 +691,9 @@ async function listGuildMembers(uid, body, includeWrongWords = false) {
       trialUnassistedTries,
       trialUnassistedAccuracy: percent(trialUnassistedCorrect, trialUnassistedTries),
       dailyLearning: safeDailyLearning(value.dailyLearning),
-      assignedWordPackIds: normalizeWordPackIds(value.assignedWordPackIds || data.wordPackIds || data.wordPackId, value.learningGrade || data.grade),
-      questionTypes: normalizeQuestionTypes(value.questionTypes || data.defaultQuestionTypes),
+      usesGuildLearningDefaults: learningSettings.usesGuildLearningDefaults,
+      assignedWordPackIds: learningSettings.wordPackIds,
+      questionTypes: learningSettings.questionTypes,
       questionTypeStats: safeQuestionTypeStats(value.questionTypeStats),
       lastActiveAt: value.lastActiveAt?.toDate?.().toISOString?.() || null,
       ...(includeWrongWords ? { wrongWordCounts: value.wrongWordCounts } : {})
@@ -671,7 +706,7 @@ async function listGuildMembers(uid, body, includeWrongWords = false) {
       guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle),
       guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl),
       grade: safeInt(data.grade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE),
-      wordPackId: classPack(data.grade, data.wordPackId),
+      wordPackId: classPack(data.grade, data.wordPackIds || data.wordPackId),
       wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade),
       questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes),
       managerCount: guildCoManagerCount(data)
@@ -735,7 +770,11 @@ async function setWordPack(uid, body) {
 async function updateMemberLearningSettings(uid, body) {
   const classId = text(body.classId, 128);
   const classSnap = await ownedClass(uid, classId);
-  const wordPackIds = normalizeWordPackIds(body.wordPackIds, classSnap.data().grade);
+  const classData = classSnap.data() || {};
+  const selectedPack = highestAllowedWordPack(body.wordPackIds ?? body.wordPackId, MAX_LEARNING_GRADE);
+  if (!selectedPack) throw apiError(400, 'WORD_PACK_REQUIRED', '누적 단어팩 하나를 선택해 주세요.');
+  ensureWordPackWithinGrade(selectedPack, classData.grade);
+  const wordPackIds = [selectedPack.id];
   const questionTypes = normalizeQuestionTypes(body.questionTypes);
   const membersRef = classSnap.ref.collection('members');
   let memberDocs;
@@ -749,11 +788,17 @@ async function updateMemberLearningSettings(uid, body) {
     memberDocs = snapshots;
   }
   if (!memberDocs.length) throw apiError(409, 'NO_GUILD_MEMBERS', '설정을 적용할 길드원이 아직 없어요.');
+  memberDocs.forEach((member) => {
+    const memberGrade = safeInt(member.data()?.learningGrade, safeInt(classData.grade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE), MIN_LEARNING_GRADE, MAX_LEARNING_GRADE);
+    ensureWordPackWithinGrade(selectedPack, memberGrade);
+  });
   const followsGuildDefaults = body.applyAll === true && body.applyToFuture !== false;
   const batch = adminDb.batch();
+  const memberLearningFields = followsGuildDefaults
+    ? { assignedWordPackIds: FieldValue.delete(), questionTypes: FieldValue.delete() }
+    : { assignedWordPackIds: wordPackIds, questionTypes };
   memberDocs.forEach((member) => batch.set(member.ref, {
-    assignedWordPackIds: wordPackIds,
-    questionTypes,
+    ...memberLearningFields,
     usesGuildLearningDefaults: followsGuildDefaults,
     learningSettingsVersion: FieldValue.increment(1),
     learningSettingsUpdatedBy: uid,
@@ -767,7 +812,7 @@ async function updateMemberLearningSettings(uid, body) {
     updatedAt: FieldValue.serverTimestamp()
   });
   await batch.commit();
-  return { classId, updatedCount: memberDocs.length, wordPackIds, questionTypes, futureMembersUpdated: followsGuildDefaults };
+  return { classId, updatedCount: memberDocs.length, wordPackId: wordPackIds[0], wordPackIds, questionTypes, usesGuildLearningDefaults: followsGuildDefaults, futureMembersUpdated: followsGuildDefaults };
 }
 async function wordPackPreview(body) {
   const wordPackId = text(body.wordPackId, 80);
@@ -854,6 +899,7 @@ async function memberLearningReport(uid, body) {
   const [memberSnap, accountSnap] = await Promise.all([memberRef.get(), accounts.doc(memberId).get()]);
   if (!memberSnap.exists) throw apiError(404, 'GUILD_MEMBER_NOT_FOUND', '현재 길드에서 해당 용사를 찾지 못했어요.');
   const member = memberSnap.data() || {};
+  const learningSettings = effectiveMemberLearningSettings(member, classSnap.data() || {});
   const state = accountSnap.data()?.state || {};
   const totalCorrect = safeInt(state.totalQuizCorrect, safeInt(member.totalCorrect, 0, 0), 0, 1000000000);
   const totalQuizTries = Math.max(totalCorrect, safeInt(state.totalQuizTries, safeInt(member.totalQuizTries, totalCorrect, 0), 0, 1000000000));
@@ -905,8 +951,9 @@ async function memberLearningReport(uid, body) {
     },
     trialDailyResults: safeTrialDailyResults(member.trialDailyResults),
     dailySeries: dailySeriesForMembers([{ dailyLearning: safeDailyLearning(member.dailyLearning) }], 120),
-    assignedWordPackIds: normalizeWordPackIds(member.assignedWordPackIds || classSnap.data().wordPackIds || classSnap.data().wordPackId, member.learningGrade || classSnap.data().grade),
-    questionTypes: normalizeQuestionTypes(member.questionTypes || classSnap.data().defaultQuestionTypes),
+    usesGuildLearningDefaults: learningSettings.usesGuildLearningDefaults,
+    assignedWordPackIds: learningSettings.wordPackIds,
+    questionTypes: learningSettings.questionTypes,
     questionTypeStats: safeQuestionTypeStats(state.questionTypeStats || member.questionTypeStats),
     wrongWords,
     lastActiveAt: member.lastActiveAt?.toDate?.().toISOString?.() || null

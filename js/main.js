@@ -63,6 +63,11 @@
             skillTierOrderVersion: 2, // Tier 1 is strongest (v2)
             activeSkillDeck: [], // Small repeatable deck; the complete word bank stays in learning quizzes
             skillEssence: 0, // Universal awakening material from a new skill card
+            skillResearchTargets: [], // Up to four owned focus skills or current-pack wishlist words
+            skillLockedWords: [], // Manually protected skill word keys
+            skillDiscoveredWords: [], // Permanent codex, retained after fusion/dismantling
+            skillSummonPity: { growthWithoutFocus: 0 },
+            skillFusionPity: { normal: 0, rare: 0, hero: 0, legendary: 0 },
             equippedSkills: [], // Array storing up to 4 skill ids currently placed in combat slots
 
             // ⚡ 무구 잠재력 잠금 슬롯 상태 (새로고침 후에도 유지)
@@ -861,6 +866,13 @@
                 gameState.currentQuizIndex = 0;
                 gameState.skillsInventory = [];
                 gameState.equippedSkills = [];
+                gameState.activeSkillDeck = [];
+                gameState.skillEssence = 0;
+                gameState.skillResearchTargets = [];
+                gameState.skillLockedWords = [];
+                gameState.skillDiscoveredWords = [];
+                gameState.skillSummonPity = { growthWithoutFocus: 0 };
+                gameState.skillFusionPity = { normal: 0, rare: 0, hero: 0, legendary: 0 };
                 gameState.wrongWordCounts = {};
                 gameState.wordLearningStats = {};
                 gameState.lockedPotentialSlots = {};
@@ -947,6 +959,13 @@
 
             gameState.skillsInventory = data.skillsInventory || [];
             gameState.equippedSkills = data.equippedSkills || [];
+            gameState.activeSkillDeck = extra.activeSkillDeck ?? data.activeSkillDeck ?? [];
+            gameState.skillEssence = extra.skillEssence ?? data.skillEssence ?? 0;
+            gameState.skillResearchTargets = extra.skillResearchTargets ?? data.skillResearchTargets ?? [];
+            gameState.skillLockedWords = extra.skillLockedWords ?? data.skillLockedWords ?? [];
+            gameState.skillDiscoveredWords = extra.skillDiscoveredWords ?? data.skillDiscoveredWords ?? [];
+            gameState.skillSummonPity = extra.skillSummonPity ?? data.skillSummonPity ?? { growthWithoutFocus: 0 };
+            gameState.skillFusionPity = extra.skillFusionPity ?? data.skillFusionPity ?? { normal: 0, rare: 0, hero: 0, legendary: 0 };
             gameState.masteryPoints = data.masteryPoints || 0;
 
             // 💍 50+ 콘텐츠 확장 필드 클라우드 동기화 셋업 (extraData 파싱 지원)
@@ -1041,6 +1060,13 @@
                 wrongWordCounts: gameState.wrongWordCounts || {},
                 wordLearningStats: gameState.wordLearningStats || {},
                 questionTypeStats: gameState.questionTypeStats || {},
+                activeSkillDeck: gameState.activeSkillDeck || [],
+                skillEssence: gameState.skillEssence || 0,
+                skillResearchTargets: gameState.skillResearchTargets || [],
+                skillLockedWords: gameState.skillLockedWords || [],
+                skillDiscoveredWords: gameState.skillDiscoveredWords || [],
+                skillSummonPity: gameState.skillSummonPity || { growthWithoutFocus: 0 },
+                skillFusionPity: gameState.skillFusionPity || { normal: 0, rare: 0, hero: 0, legendary: 0 },
                 soundSettings: gameState.soundSettings || { masterMute: false, sfxAttack: true, sfxQuiz: true, sfxLevelup: true }
             });
         }
@@ -1654,6 +1680,7 @@
                 try { gameState.equippedSkills = JSON.parse(gameState.equippedSkills); } catch(e) { gameState.equippedSkills = []; }
             }
             if (!Array.isArray(gameState.equippedSkills)) gameState.equippedSkills = [];
+            if (typeof window.normalizeSkillSystemState === 'function') window.normalizeSkillSystemState();
             if (!gameState.petLevels) {
                 gameState.petLevels = {
                     slime: gameState.petType === 'slime' ? (gameState.petLvl || 0) : 0,
@@ -4859,6 +4886,8 @@
         }
 
 
+        const escapeSkillUiHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+        const skillUiJsArg = (value) => escapeSkillUiHtml(JSON.stringify(String(value ?? '')).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029'));
         function renderSkillsUI() {
             const container = document.getElementById("quizEquippedSkillsContainer");
             if (!container) return;
@@ -4881,12 +4910,12 @@
                     const pct = isOnCooldown ? Math.round((skill.cooldownRemaining / skill.maxCooldown) * 100) : 0;
 
                     html += `
-                        <button id="btn-skill-${skill.id}" onclick="castWordSkill('${skill.id}')" ${isOnCooldown ? 'disabled' : ''} class="relative overflow-hidden p-2.5 ${gradeInfo.colorClass} border-2 text-left rounded-none-forced transition duration-150 flex flex-col justify-between h-16 group">
+                        <button id="btn-skill-${escapeSkillUiHtml(skill.id)}" onclick="castWordSkill(${skillUiJsArg(skill.id)})" ${isOnCooldown ? 'disabled' : ''} class="relative overflow-hidden p-2.5 ${gradeInfo.colorClass} border-2 text-left rounded-none-forced transition duration-150 flex flex-col justify-between h-16 group">
                             ${isOnCooldown ? `<div class="cooldown-bar absolute bottom-0 left-0 h-1.5 bg-[#e22718] transition-all" style="width: ${100 - pct}%"></div>` : ''}
                             
                             <div class="flex justify-between items-center w-full z-10">
                                 <div class="flex items-center gap-1 min-w-0 pr-1">
-                                    <span class="text-[10px] sm:text-[11px] font-extrabold  tracking-tighter truncate ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : ''}">${capitalizeFirstLetter(skill.word)}</span>
+                                    <span class="text-[10px] sm:text-[11px] font-extrabold  tracking-tighter truncate ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-[#ff8080]' : ''}">${escapeSkillUiHtml(capitalizeFirstLetter(skill.word))}</span>
                                     <span class="text-[10px] text-yellow-400 font-bold flex-shrink-0">${starsHtml}</span>
                                 </div>
                                 <span class="cooldown-timer text-[9px] ${isOnCooldown ? 'text-[#e22718] font-extrabold' : 'font-extrabold text-pink-400'}">
@@ -4894,7 +4923,7 @@
                                 </span>
                             </div>
                             <div class="flex justify-between items-center w-full z-10 text-[9px] font-medium opacity-90 ${gradeInfo.colorClass.includes('animate-pulse') ? 'text-white' : ''}">
-                                <span class="truncate pr-1">${skill.meaning}</span>
+                                <span class="truncate pr-1">${escapeSkillUiHtml(skill.meaning)}</span>
                                 <span class="text-[8px] font-bold text-gray-400 flex-shrink-0">${gradeInfo.name}</span>
                             </div>
                         </button>

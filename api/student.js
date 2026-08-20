@@ -2,6 +2,7 @@ import packCatalog from '../data/word-packs.js';
 import { randomInt, randomUUID } from 'node:crypto';
 import { adminAuth, adminDb, FieldValue, Timestamp } from './_firebase-admin.js';
 import { apiError, handleApiError, hash, isExpired, normalizeNickname, readBody, requireMethod, requireUser, safeInt, sendJson, text } from './_http.js';
+import { compactSkillInventory, MAX_STORED_SKILL_CARDS, MAX_STORED_STATE_BYTES } from './_student-skill-state.js';
 
 const accounts = adminDb.collection('accounts');
 const teachers = adminDb.collection('teachers');
@@ -102,7 +103,6 @@ const LEARNING_QUESTION_TYPES = new Set(['meaning-choice','fill-blank','word-cho
 const STUDENT_WORD_CATALOG = new Map((packCatalog?.words || []).map((entry) => [text(entry?.word, 80).toLowerCase(), entry]).filter(([key, entry]) => key && text(entry?.meaning, 160)));
 const STUDENT_WORD_PACKS = (packCatalog?.packs || []).filter((pack) => pack?.kind === 'curriculum-spiral');
 const STUDENT_WORD_PACK_BY_ID = new Map(STUDENT_WORD_PACKS.map((pack) => [pack.id, pack]));
-const ASSIGNABLE_WORD_PACK_IDS = new Set(STUDENT_WORD_PACKS.map((pack) => pack.id));
 function resolvedPackWords(pack) {
   const entries = Array.isArray(pack?.wordKeys)
     ? pack.wordKeys.map((key) => STUDENT_WORD_CATALOG.get(text(key, 80).toLowerCase())).filter(Boolean)
@@ -111,6 +111,7 @@ function resolvedPackWords(pack) {
 }
 const safeGuildLogoUrl = (value) => { const url=text(value,1200);return /^https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/[A-Za-z0-9._-]+\/o\//.test(url)?url:null; };
 const defaultWordPack = (grade) => 'grade-' + safeInt(grade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE) + '-mid';
+const STUDENT_WORD_PACK_LEVEL_ORDER = { low: 1, mid: 2, high: 3 };
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PROGRESS_TOKEN_INITIAL = 20;
 const PROGRESS_TOKEN_CAPACITY = 240;
@@ -211,14 +212,31 @@ function wordMasterySummary(value, conqueredFallback = 0) {
     if (entry.c >= WORD_MASTERY_CORRECT_THRESHOLD && entry.c / Math.max(1, tries) >= WORD_MASTERY_ACCURACY_THRESHOLD) masteredCount += 1;
   });
   return { stats, masteredCount, conqueredCount: safeInt(conqueredFallback, 0, 0, 100000) };
-}function normalizedPackIds(value, grade) { const source=Array.isArray(value)?value:(value?[value]:[]);const ids=[...new Set(source.map((item)=>text(item,80)).filter((id)=>ASSIGNABLE_WORD_PACK_IDS.has(id)))].slice(0,12);return ids.length?ids:[defaultWordPack(grade)]; }
+}
+function studentWordPackCount(pack) {
+  return Array.isArray(pack?.wordKeys) ? pack.wordKeys.length : Array.isArray(pack?.words) ? pack.words.length : safeInt(pack?.wordCount, 0, 0, 5000);
+}
+function highestAllowedStudentWordPack(value, grade) {
+  const allowedGrade=safeInt(grade,4,MIN_LEARNING_GRADE,MAX_LEARNING_GRADE),source=Array.isArray(value)?value:(value?[value]:[]);
+  return [...new Set(source.map((item)=>text(item,80)).filter(Boolean))]
+    .map((id)=>STUDENT_WORD_PACK_BY_ID.get(id))
+    .filter((pack)=>pack&&(pack.grade==null||Number(pack.grade)<=allowedGrade))
+    .sort((a,b)=>studentWordPackCount(b)-studentWordPackCount(a)
+      ||Number(b.grade||0)-Number(a.grade||0)
+      ||Number(STUDENT_WORD_PACK_LEVEL_ORDER[b.level]||0)-Number(STUDENT_WORD_PACK_LEVEL_ORDER[a.level]||0)
+      ||String(a.id).localeCompare(String(b.id)))[0]||null;
+}
+function normalizedPackIds(value, grade) {
+  const selected=highestAllowedStudentWordPack(value,grade);
+  return [selected?.id||defaultWordPack(grade)];
+}
 function normalizedQuestionTypes(value) { const types=[...new Set((Array.isArray(value)?value:[]).map((item)=>text(item,32)).filter((item)=>LEARNING_QUESTION_TYPES.has(item)))];return ['meaning-choice',...types.filter((item)=>item!=='meaning-choice')]; }
 function assignedPackMetadata(ids) { return (ids || []).map((id) => STUDENT_WORD_PACK_BY_ID.get(id)).filter(Boolean).map((pack) => ({ id: pack.id, label: text(pack.label, 120) || pack.id, wordCount: safeInt(pack.wordCount, Array.isArray(pack.wordKeys) ? pack.wordKeys.length : Array.isArray(pack.words) ? pack.words.length : 0, 0, 5000), supportWordCount: safeInt(pack.supportWordCount, 0, 0, 5000) })); }
 function safeQuestionTypeStats(value) { const result={};LEARNING_QUESTION_TYPES.forEach((type)=>{const row=value&&typeof value==='object'&&!Array.isArray(value)?value[type]:null;result[type]={tries:safeInt(row?.tries,0,0,1000000000),correct:safeInt(row?.correct,0,0,1000000000)};});return result; }
-function classPack(grade, wordPackId) { return ASSIGNABLE_WORD_PACK_IDS.has(wordPackId) ? wordPackId : defaultWordPack(grade); }
-const fields = new Set(['avatarType','gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petType','petLvl','petLevels','stage','progress','totalQuizTries','totalQuizCorrect','masteredWords','currentQuizIndex','skillsInventory','skillTierOrderVersion','equippedSkills','activeSkillDeck','skillEssence','lockedPotentialSlots','wrongWordCounts','wordLearningStats','questionTypeStats','combatPower','masteryPoints','necklaceLvl','braceletLvl','ringLvl','acquiredRelics','equippedRelicId','gearPotentials','isPotentialUnlocked','equippedTitle','wbTitle','unlockedTitles','bossTokens','relicEssence','relicTranscendLvl','soundSettings','tutorialCompleted','lastSaved','guildBoostCharges']);
+function classPack(grade, wordPackIds) { return normalizedPackIds(wordPackIds, grade)[0]; }
+const fields = new Set(['avatarType','gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petType','petLvl','petLevels','stage','progress','totalQuizTries','totalQuizCorrect','masteredWords','currentQuizIndex','skillsInventory','skillTierOrderVersion','equippedSkills','activeSkillDeck','skillEssence','skillResearchTargets','skillLockedWords','skillDiscoveredWords','skillSummonPity','skillFusionPity','lockedPotentialSlots','wrongWordCounts','wordLearningStats','questionTypeStats','combatPower','masteryPoints','necklaceLvl','braceletLvl','ringLvl','acquiredRelics','equippedRelicId','gearPotentials','isPotentialUnlocked','equippedTitle','wbTitle','unlockedTitles','bossTokens','relicEssence','relicTranscendLvl','soundSettings','tutorialCompleted','lastSaved','guildBoostCharges']);
 
-function defaultState() { return { avatarType:'male', gold:0, accGold:0, helmetLvl:1, armorLvl:1, weaponLvl:1, shieldLvl:1, shoesLvl:1, stage:1, progress:0, totalQuizTries:0, totalQuizCorrect:0, masteredWords:[], skillsInventory:[], skillTierOrderVersion:2, equippedSkills:[], activeSkillDeck:[], skillEssence:0, wrongWordCounts:{}, wordLearningStats:{}, questionTypeStats:{}, combatPower:0, masteryPoints:0, tutorialCompleted:false }; }
+function defaultState() { return { avatarType:'male', gold:0, accGold:0, helmetLvl:1, armorLvl:1, weaponLvl:1, shieldLvl:1, shoesLvl:1, stage:1, progress:0, totalQuizTries:0, totalQuizCorrect:0, masteredWords:[], skillsInventory:[], skillTierOrderVersion:2, equippedSkills:[], activeSkillDeck:[], skillEssence:0, skillResearchTargets:[], skillLockedWords:[], skillDiscoveredWords:[], skillSummonPity:{growthWithoutFocus:0}, skillFusionPity:{normal:0,rare:0,hero:0,legendary:0}, wrongWordCounts:{}, wordLearningStats:{}, questionTypeStats:{}, combatPower:0, masteryPoints:0, tutorialCompleted:false }; }
 function cleanState(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw apiError(400,'INVALID_STATE','저장할 학습 기록 형식이 올바르지 않아요.');
   const state = {};
@@ -231,8 +249,19 @@ function cleanState(input) {
   state.wordLearningStats = safeWordLearningStats(state.wordLearningStats);
   state.questionTypeStats = safeQuestionTypeStats(state.questionTypeStats);
   state.guildBoostCharges = safeGuildBoostCharges(state.guildBoostCharges);
-  if (state.skillsInventory && !Array.isArray(state.skillsInventory)) delete state.skillsInventory;
-  if ((state.masteredWords?.length||0)>5000 || (state.skillsInventory?.length||0)>1000 || Buffer.byteLength(JSON.stringify(state),'utf8')>600000) throw apiError(400,'STATE_TOO_LARGE','저장할 학습 기록이 너무 커요.');
+  const compactSkills=compactSkillInventory(state.skillsInventory);
+  const requestedSkillCount=Array.isArray(state.skillsInventory)?state.skillsInventory.length:0;
+  state.skillsInventory=compactSkills.cards;
+  const cleanWordKeys=(value,limit)=>[...new Set((Array.isArray(value)?value:[]).map((item)=>text(item,80).trim().toLowerCase()).filter(Boolean))].slice(0,limit);
+  const validSkillIds=new Set(state.skillsInventory.map((skill)=>skill.id));
+  state.equippedSkills=[...new Set((Array.isArray(state.equippedSkills)?state.equippedSkills:[]).map((item)=>compactSkills.idAliases.get(String(item))||'').filter((id)=>validSkillIds.has(id)))].slice(0,4);
+  state.activeSkillDeck=(Array.isArray(state.activeSkillDeck)?state.activeSkillDeck:[]).filter((item)=>item&&typeof item==='object'&&!Array.isArray(item)).map((item)=>({word:text(item.word,80),meaning:text(item.meaning,160)})).filter((item)=>item.word).slice(0,24);
+  state.skillResearchTargets=cleanWordKeys(state.skillResearchTargets,4);
+  state.skillLockedWords=cleanWordKeys(state.skillLockedWords,4000);
+  state.skillDiscoveredWords=cleanWordKeys([...(Array.isArray(state.skillDiscoveredWords)?state.skillDiscoveredWords:[]),...(state.skillsInventory||[]).map((skill)=>skill?.word)],4000);
+  state.skillSummonPity={growthWithoutFocus:safeInt(state.skillSummonPity?.growthWithoutFocus,0,0,7)};
+  state.skillFusionPity=Object.fromEntries(['normal','rare','hero','legendary'].map((grade)=>[grade,safeInt(state.skillFusionPity?.[grade],0,0,5)]));
+  if ((state.masteredWords?.length||0)>5000 || requestedSkillCount>MAX_STORED_SKILL_CARDS || Buffer.byteLength(JSON.stringify(state),'utf8')>MAX_STORED_STATE_BYTES) throw apiError(400,'STATE_TOO_LARGE','저장할 학습 기록이 너무 커요.');
   return state;
 }
 function score(state) { return safeInt(state.totalQuizCorrect,0,0)*1000 + (Array.isArray(state.masteredWords)?state.masteredWords.length:0)*10 + Math.min(safeInt(state.stage,1,1),999); }

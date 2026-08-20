@@ -31,14 +31,45 @@ if (wordPackCatalog.words?.length !== 3001) throw new Error('Curriculum vocabula
 if (wordPackCatalog.words.some((entry) => !entry.word || !entry.meaning || !Number.isInteger(entry.spiralRank))) throw new Error('Curriculum words require a meaning and spiral rank.');
 const spiralPacks = (wordPackCatalog.packs || []).filter((pack) => pack.kind === 'curriculum-spiral');
 if (spiralPacks.length !== 30) throw new Error('Curriculum spiral catalog must contain Grade 3-12 low/mid/high packs.');
+let previousSpiralWordCount = 0;
 for (let grade = 3; grade <= 12; grade += 1) {
   const levels = ['low', 'mid', 'high'].map((level) => spiralPacks.find((pack) => pack.id === `grade-${grade}-${level}`));
   if (levels.some((pack) => !pack)) throw new Error(`Curriculum spiral packs are incomplete for grade ${grade}.`);
   if (!(levels[0].wordCount < levels[1].wordCount && levels[1].wordCount < levels[2].wordCount)) throw new Error(`Curriculum levels are not cumulative for grade ${grade}.`);
   if (!levels[0].wordKeys.every((word, index) => levels[1].wordKeys[index] === word) || !levels[1].wordKeys.every((word, index) => levels[2].wordKeys[index] === word)) throw new Error(`Curriculum pack prefixes are not inclusive for grade ${grade}.`);
+  for (const pack of levels) {
+    if (Number(pack.supportWordCount) !== previousSpiralWordCount) throw new Error(`Curriculum support range is incorrect for ${pack.id}.`);
+    previousSpiralWordCount = Number(pack.wordCount);
+  }
 }
 if (spiralPacks.find((pack) => pack.id === 'grade-6-high')?.wordCount !== 600 || spiralPacks.find((pack) => pack.id === 'grade-9-high')?.wordCount !== 1500 || spiralPacks.find((pack) => pack.id === 'grade-10-high')?.wordCount !== 1800 || spiralPacks.find((pack) => pack.id === 'grade-12-high')?.wordCount !== 3001) throw new Error('Curriculum endpoint counts are incorrect.');
 if (!mainJs.includes('function selectAdaptiveQuizIndex(') || !mainJs.includes('gameState.activeWordPackSupportCount') || !mainJs.includes('supportMode')) throw new Error('Adaptive wrong-answer and previous-stage routing is missing.');
+const teacherLearningStart = secureAccount.indexOf('function teacherSpiralPackRow(');
+const teacherLearningEnd = secureAccount.indexOf('async function previewTeacherWordPack', teacherLearningStart);
+const teacherLearningBlock = teacherLearningStart >= 0 && teacherLearningEnd > teacherLearningStart ? secureAccount.slice(teacherLearningStart, teacherLearningEnd) : '';
+if (!teacherLearningBlock.includes('Number(pack.grade)<=guildGrade') || !teacherLearningBlock.includes(`input.type='radio'`) || !teacherLearningBlock.includes('teacherSpiralPackGuide') || !teacherLearningBlock.includes('teacherAdaptivePathGuide') || !teacherLearningBlock.includes('오답 55%') || !teacherLearningBlock.includes('오답 20%') || !teacherLearningBlock.includes('이 단계 신규')) throw new Error('Teacher spiral pack grouping, single selection, or adaptive-path guidance is incomplete.');
+if (secureAccount.includes('단어팩 · 중복 선택') || !secureAccount.includes('누적 단어팩 · 하나 선택')) throw new Error('Teacher pack heading must describe the cumulative single-choice assignment from the initial markup.');
+if ((teacherApi.match(/supportWordCount: safeInt\(pack\.supportWordCount/g) || []).length < 2) throw new Error('Teacher word-pack catalog and preview must expose the previous-step support range.');
+const teacherPackNormalizeStart = teacherApi.indexOf('function highestAllowedWordPack(');
+const teacherPackNormalizeEnd = teacherApi.indexOf('function normalizeQuestionTypes', teacherPackNormalizeStart);
+const teacherPackNormalizeBlock = teacherPackNormalizeStart >= 0 && teacherPackNormalizeEnd > teacherPackNormalizeStart ? teacherApi.slice(teacherPackNormalizeStart, teacherPackNormalizeEnd) : '';
+if (!teacherPackNormalizeBlock.includes('primaryPackKinds.has(pack.kind)') || !teacherPackNormalizeBlock.includes('Number(pack.grade) <= allowedGrade') || !teacherPackNormalizeBlock.includes('Number(b.wordCount || 0) - Number(a.wordCount || 0)') || !teacherPackNormalizeBlock.includes('WORD_PACK_LEVEL_ORDER[b.level]') || !teacherPackNormalizeBlock.includes('return [selected?.id || defaultWordPack(grade)]')) throw new Error('Teacher pack normalization must select the largest allowed cumulative pack and reject higher-grade or non-primary packs.');
+const studentPackNormalizeStart = studentApi.indexOf('function highestAllowedStudentWordPack(');
+const studentPackNormalizeEnd = studentApi.indexOf('function normalizedQuestionTypes', studentPackNormalizeStart);
+const studentPackNormalizeBlock = studentPackNormalizeStart >= 0 && studentPackNormalizeEnd > studentPackNormalizeStart ? studentApi.slice(studentPackNormalizeStart, studentPackNormalizeEnd) : '';
+if (!studentPackNormalizeBlock.includes('Number(pack.grade)<=allowedGrade') || !studentPackNormalizeBlock.includes('studentWordPackCount(b)-studentWordPackCount(a)') || !studentPackNormalizeBlock.includes('STUDENT_WORD_PACK_LEVEL_ORDER[b.level]') || !studentPackNormalizeBlock.includes('return [selected?.id||defaultWordPack(grade)]')) throw new Error('Student pack normalization must select the largest allowed cumulative pack and reject higher-grade packs.');
+if (!secureAccount.includes('canonicalAssignedWordPackId?[canonicalAssignedWordPackId]')) throw new Error('The client must restore the server canonical wordPackId before any legacy pack array.');
+if (!teacherPackNormalizeBlock.includes('return [selected?.id || defaultWordPack(grade)]') || !studentPackNormalizeBlock.includes('return [selected?.id||defaultWordPack(grade)]') || !secureAccount.includes('canonicalAssignedWordPackId?[canonicalAssignedWordPackId]')) throw new Error('Cumulative word packs must remain a single-choice assignment across the teacher UI and APIs.');
+const effectiveMemberSettingsStart = teacherApi.indexOf('function effectiveMemberLearningSettings(');
+const effectiveMemberSettingsEnd = teacherApi.indexOf('async function bootstrap', effectiveMemberSettingsStart);
+const effectiveMemberSettingsBlock = effectiveMemberSettingsStart >= 0 && effectiveMemberSettingsEnd > effectiveMemberSettingsStart ? teacherApi.slice(effectiveMemberSettingsStart, effectiveMemberSettingsEnd) : '';
+if (!effectiveMemberSettingsBlock.includes('member.usesGuildLearningDefaults !== false') || !effectiveMemberSettingsBlock.includes('(classroom.wordPackIds || classroom.wordPackId) : member.assignedWordPackIds') || !effectiveMemberSettingsBlock.includes('classroom.defaultQuestionTypes : member.questionTypes') || !teacherApi.includes(`'usesGuildLearningDefaults', 'assignedWordPackIds'`)) throw new Error('Teacher member reads must resolve guild defaults and member overrides with the same flag semantics as the student API.');
+const memberLearningUpdateStart = teacherApi.indexOf('async function updateMemberLearningSettings(');
+const memberLearningUpdateEnd = teacherApi.indexOf('async function wordPackPreview', memberLearningUpdateStart);
+const memberLearningUpdateBlock = memberLearningUpdateStart >= 0 && memberLearningUpdateEnd > memberLearningUpdateStart ? teacherApi.slice(memberLearningUpdateStart, memberLearningUpdateEnd) : '';
+if (!teacherApi.includes(`'WORD_PACK_ABOVE_MEMBER_GRADE'`) || !teacherApi.includes('더 낮은 누적팩을 선택해 주세요') || !memberLearningUpdateBlock.includes('ensureWordPackWithinGrade(selectedPack, memberGrade)') || (memberLearningUpdateBlock.match(/FieldValue\.delete\(\)/g) || []).length < 2 || !memberLearningUpdateBlock.includes('usesGuildLearningDefaults: followsGuildDefaults')) throw new Error('Teacher assignments must reject packs above every target member grade and delete stale overrides when following guild defaults.');
+if (!secureAccount.includes('function commonTeacherMemberLearningSettings(') || !secureAccount.includes(`fillTeacherLearningSelections([],['meaning-choice'])`) || !secureAccount.includes('fillTeacherLearningSelections(teacherGuildPackIds(guild)') || !secureAccount.includes('member.usesGuildLearningDefaults=usesGuildLearningDefaults') || !secureAccount.includes(`teacherMemberReportCache.delete(selectedTeacherManagedGuildId+':'+member.memberId)`) || !secureAccount.includes('renderTeacherMembers(members);updateTeacherSelectionHint();')) throw new Error('Teacher multi-member selection and post-save caches must remain synchronized with effective single-pack settings.');
+
 if (!secureAccount.includes("new Set(['초등학교','중학교','고등학교'])") || !secureAccount.includes('configureLearningGradeOptions()')) throw new Error('Elementary, middle, and high school registration support is incomplete.');
 if (firebase.firestore?.rules !== 'firestore.rules') throw new Error('firebase.json must point to firestore.rules.');
 if (firebase.firestore?.indexes !== 'firestore.indexes.json') throw new Error('firebase.json must point to firestore.indexes.json.');
@@ -59,7 +90,7 @@ for (const label of ['길드 정보', '길드원 정보', '길드원 관리', '�
 if (!secureAccount.includes('legacyShortcuts?.remove()') || secureAccount.includes("$('secureTeacherOpenTrial').onclick") || secureAccount.includes("$('secureTeacherStudentInvite').onclick") || secureAccount.includes("$('secureTeacherManagerInvite').onclick")) throw new Error('Teacher guild duplicate shortcut actions must stay removed.');
 if (!secureAccount.includes('#secureTeacherGuildNav{display:flex!important') || !secureAccount.includes('#secureTeacherGlobalSummary{grid-template-columns:repeat(4,minmax(0,1fr))!important')) throw new Error('Teacher mobile navigation and summary must remain single-row compact layouts.');
 if (!secureAccount.includes('#secureTeacherSelectedGuildLogoButton{display:flex!important') || secureAccount.includes('#secureTeacherSelectedGuildLogoButton{display:none!important')) throw new Error('Teacher mobile guild logo must remain visible.');
-if (!secureAccount.includes(`teacherCatalogStorageKey='vocahero_teacher_catalog_v20260811'`) || !secureAccount.includes('teacherGuildReportPromises=new Map()') || !secureAccount.includes('teacherCacheFresh(cached,teacherListCacheMs)')) throw new Error('Teacher catalog and report request caches must remain enabled.');
+if (!secureAccount.includes(`teacherCatalogStorageKey='vocahero_teacher_catalog_v20260820_spiral1'`) || !secureAccount.includes('teacherGuildReportPromises=new Map()') || !secureAccount.includes('teacherCacheFresh(cached,teacherListCacheMs)')) throw new Error('Teacher catalog and report request caches must remain enabled.');
 if (!secureAccount.includes(`Promise.all([refreshClasses(),teacher.verificationStatus==='verified'?refreshTeacherSchoolData():Promise.resolve()])`)) throw new Error('Teacher dashboard data must load in parallel after login.');
 const listClassesStart = teacherApi.indexOf('async function listClasses(uid)');
 const listClassesEnd = teacherApi.indexOf('function safeQuestionTypeStats', listClassesStart);

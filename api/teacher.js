@@ -678,6 +678,7 @@ function adaptivePathForMember(learningRows, wordPackId) {
 const ANALYTICS_DAY_MS = 24 * 60 * 60 * 1000;
 const TRIAL_HISTORY_DAYS = 120;
 const TRIAL_MAX_ATTEMPTS = 3;
+const ADAPTIVE_PATH_ROUTE_KEYS = Object.freeze(['nu', 'nr', 'nc', 'su', 'sr', 'sc']);
 function analyticsDayKey(daysAgo = 0) {
   return new Date(Date.now() + 9 * 60 * 60 * 1000 - daysAgo * ANALYTICS_DAY_MS).toISOString().slice(0, 10);
 }
@@ -694,7 +695,6 @@ function safeDailyLearning(value) {
   });
   return result;
 }
-const ADAPTIVE_PATH_ROUTE_KEYS = Object.freeze(['nu', 'nr', 'nc', 'su', 'sr', 'sc']);
 function safeAdaptivePathTuple(value) {
   const source = Array.isArray(value) ? value : [];
   const routed = safeInt(source[0], 0, 0, 1000000000);
@@ -707,7 +707,7 @@ function safeAdaptivePathTuple(value) {
 function safeAdaptivePathDaily(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
   return Object.fromEntries(Object.entries(value)
-    .filter(([day]) => /^d{4}-d{2}-d{2}$/.test(day))
+    .filter(([day]) => /^\d{4}-\d{2}-\d{2}$/.test(day))
     .sort(([a], [b]) => a.localeCompare(b))
     .slice(-TRIAL_HISTORY_DAYS)
     .map(([day, rawPacks]) => {
@@ -772,6 +772,18 @@ function adaptivePathSeries(value) {
     };
   });
 }
+function safeReportedTrialGenerationSummary(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const packId = text(value.packId, 80);
+  return {
+    mode: value.mode === 'support' ? 'support' : 'normal',
+    ...(wordPackById.has(packId) ? { packId, packLabel: text(value.packLabel, 120) || wordPackById.get(packId)?.label || packId } : {}),
+    questionCount: safeInt(value.questionCount, 0, 0, 20),
+    requestedGroupCounts: Object.fromEntries(TRIAL_GROUPS.map((group) => [group, safeInt(value.requestedGroupCounts?.[group], 0, 0, 20)])),
+    groupCounts: Object.fromEntries(TRIAL_GROUPS.map((group) => [group, safeInt(value.groupCounts?.[group], 0, 0, 20)])),
+    fallbackCount: safeInt(value.fallbackCount, 0, 0, 20)
+  };
+}
 function safeTrialDailyResults(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
   const rows = Object.entries(value)
@@ -782,6 +794,9 @@ function safeTrialDailyResults(value) {
     .slice(-12)
     .map((raw) => ({
       trialId: text(raw?.trialId, 128),
+      deliveryMode: trialDeliveryMode(raw?.deliveryMode),
+      packId: wordPackById.has(text(raw?.packId, 80)) ? text(raw.packId, 80) : null,
+      generationSummary: safeReportedTrialGenerationSummary(raw?.generationSummary),
       attemptNo: safeInt(raw?.attemptNo, 1, 1, TRIAL_MAX_ATTEMPTS),
       correctCount: safeInt(raw?.correctCount, 0, 0, 20),
       questionCount: safeInt(raw?.questionCount, 0, 0, 20),
@@ -1088,7 +1103,7 @@ async function memberLearningReport(uid, body) {
   const trialHintedAccuracy = percent(trialHintedCorrect, trialHintsUsed);
   const trialUnassistedAccuracy = percent(trialUnassistedCorrect, trialUnassistedTries);
   const adaptivePathDaily = safeAdaptivePathDaily(member.adaptivePathDaily);
-  const adaptivePathStartedDay = /^d{4}-d{2}-d{2}$/.test(member.adaptivePathStartedDay || '') ? member.adaptivePathStartedDay : null;
+  const adaptivePathStartedDay = /^\d{4}-\d{2}-\d{2}$/.test(member.adaptivePathStartedDay || '') ? member.adaptivePathStartedDay : null;
   return {
     memberId,
     nickname: text(member.nickname, 30) || '이름 없는 용사',
@@ -1566,15 +1581,6 @@ async function removeGuildMember(uid, body) {
       transaction.update(accountRef, update);
     }
   });
-  const activeTrialId = text(classSnap.data()?.activeTrialId, 128);
-  if (activeTrialId) {
-    const trialRef = classSnap.ref.collection('trials').doc(activeTrialId);
-    await Promise.all([
-      trialRef.collection('progress').doc(targetUid).delete().catch(() => {}),
-      trialRef.collection('completions').doc(targetUid).delete().catch(() => {}),
-      trialRef.collection('assignments').doc(targetUid).delete().catch(() => {})
-    ]);
-  }
   return { classId, memberUid: targetUid, removed: true };
 }
 async function removeGuildManager(uid, body) {

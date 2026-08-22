@@ -34,6 +34,7 @@
             studentNum: 1,
             name: "방문자",
             avatarType: "male",
+            appearanceTheme: window.VocaTheme?.current?.() || "dark",
             gold: 0,
 
             // Equipment Levels
@@ -84,10 +85,10 @@
         const ADAPTIVE_PATH_PACK_LIMIT = 40;
         const ADAPTIVE_PATH_COUNTER_MAX = 1_000_000_000;
         const ADAPTIVE_PATH_BUCKET_KEYS = Object.freeze({
-            normal: Object.freeze({ unresolved: 'nu', review: 'nr', current: 'nc' }),
-            support: Object.freeze({ unresolved: 'su', review: 'sr', current: 'sc' })
+            normal: Object.freeze({ unresolved: "nu", review: "nr", current: "nc" }),
+            support: Object.freeze({ unresolved: "su", review: "sr", current: "sc" })
         });
-        const ADAPTIVE_PATH_ALL_BUCKET_KEYS = Object.freeze(['nu', 'nr', 'nc', 'su', 'sr', 'sc']);
+        const ADAPTIVE_PATH_ALL_BUCKET_KEYS = Object.freeze(["nu", "nr", "nc", "su", "sr", "sc"]);
 
         function adaptivePathCounter(value) {
             const number = Number(value);
@@ -100,16 +101,16 @@
         }
 
         function normalizeAdaptivePathPackId(value) {
-            const normalized = String(value || '').trim().slice(0, 80).replace(/[^A-Za-z0-9_.:-]/g, '_');
-            return normalized || 'unassigned';
+            const normalized = String(value || "").trim().slice(0, 80).replace(/[^A-Za-z0-9_.:-]/g, "_");
+            return normalized || "unassigned";
         }
 
         function normalizeAdaptivePathStats(value) {
-            const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
-            const packs = source.p && typeof source.p === 'object' && !Array.isArray(source.p) ? source.p : {};
+            const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+            const packs = source.p && typeof source.p === "object" && !Array.isArray(source.p) ? source.p : {};
             const normalizedPacks = {};
             Object.entries(packs).slice(-ADAPTIVE_PATH_PACK_LIMIT).forEach(([rawPackId, rawPack]) => {
-                if (!rawPack || typeof rawPack !== 'object' || Array.isArray(rawPack)) return;
+                if (!rawPack || typeof rawPack !== "object" || Array.isArray(rawPack)) return;
                 const packId = normalizeAdaptivePathPackId(rawPackId);
                 normalizedPacks[packId] = Object.fromEntries(ADAPTIVE_PATH_ALL_BUCKET_KEYS.map((key) => [key, normalizeAdaptivePathBucket(rawPack[key])]));
             });
@@ -118,7 +119,7 @@
 
         function activeAdaptivePathPackId() {
             const assigned = Array.isArray(gameState.assignedWordPackIds) ? gameState.assignedWordPackIds.find(Boolean) : null;
-            return normalizeAdaptivePathPackId(gameState.activeWordPackId || gameState.assignedWordPackId || assigned || 'unassigned');
+            return normalizeAdaptivePathPackId(gameState.activeWordPackId || gameState.assignedWordPackId || assigned || "unassigned");
         }
 
         function ensureAdaptivePathPack(packId) {
@@ -381,9 +382,9 @@
         let monsterCurrentHp = 10;
         let monsterMaxHp = 10;
         let currentQuizChoices = [];
-        let currentAdaptiveQuizRoute = null;
         let currentQuizCorrectValue = "";
         let currentQuizType = "meaning-choice";
+        let currentAdaptiveQuizRoute = null;
 
         // Custom Synthesizer using Web Audio API
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1082,6 +1083,9 @@
                 volQuiz: typeof savedSS.volQuiz !== 'undefined' ? savedSS.volQuiz : 10,
                 volLevelup: typeof savedSS.volLevelup !== 'undefined' ? savedSS.volLevelup : 10
             };
+            const savedAppearanceTheme = extra.appearanceTheme ?? data.appearanceTheme ?? window.VocaTheme?.current?.() ?? 'dark';
+            gameState.appearanceTheme = normalizeAppearanceTheme(savedAppearanceTheme);
+            applyAppearanceTheme(gameState.appearanceTheme, { persist: true, updateState: false });
             gameState.tutorialCompleted = typeof extra.tutorialCompleted !== 'undefined' ? extra.tutorialCompleted : (data.tutorialCompleted || false);
 
             window._syncedFromServerThisSession = true;
@@ -1144,6 +1148,7 @@
                 skillDiscoveredWords: gameState.skillDiscoveredWords || [],
                 skillSummonPity: gameState.skillSummonPity || { growthWithoutFocus: 0 },
                 skillFusionPity: gameState.skillFusionPity || { normal: 0, rare: 0, hero: 0, legendary: 0 },
+                appearanceTheme: normalizeAppearanceTheme(gameState.appearanceTheme),
                 soundSettings: gameState.soundSettings || { masterMute: false, sfxAttack: true, sfxQuiz: true, sfxLevelup: true }
             });
         }
@@ -1257,7 +1262,7 @@
             curriculumWordPackCatalogPromise = (async () => {
                 let jsonError = null;
                 try {
-                    const response = await fetch('data/word-packs.json?v=20260820-1', { cache: 'force-cache' });
+                    const response = await fetch('data/word-packs.json?v=20260821-1', { cache: 'force-cache' });
                     if (!response.ok) throw new Error('단어팩 파일을 불러오지 못했어요. (' + response.status + ')');
                     return await response.json();
                 } catch (error) {
@@ -1265,7 +1270,7 @@
                     console.warn('JSON 교육과정 단어팩을 불러오지 못해 모듈 사본을 확인합니다.', error);
                 }
                 try {
-                    const module = await import('../data/word-packs.js?v=20260820-1');
+                    const module = await import('../data/word-packs.js?v=20260821-1');
                     if (!module?.default || !Array.isArray(module.default.packs) || !Array.isArray(module.default.words)) {
                         throw new Error('단어팩 모듈 형식이 올바르지 않아요.');
                     }
@@ -4079,68 +4084,16 @@
             return label;
         }
 
-        function selectLegacyAdaptiveQuizIndex(pool, learningStats, supportWordCount, previousIndex, random = Math.random) {
-            if (!Array.isArray(pool) || pool.length <= 1) return 0;
+        function selectAdaptiveQuizIndex(pool, learningStats, supportWordCount, previousIndex, random = Math.random, includeMetadata = false) {
+            const finish = (selection) => includeMetadata ? selection : selection.index;
+            const emptySelection = { index: 0, mode: "normal", intendedGroup: "current", actualGroup: "current", fallback: false };
+            if (!Array.isArray(pool) || pool.length === 0) return finish(emptySelection);
             const stats = learningStats && typeof learningStats === "object" && !Array.isArray(learningStats) ? learningStats : {};
+            const policy = normalizeAdaptiveQuestionPolicy(gameState.activeAdaptiveQuestionPolicy);
             const supportLimit = Math.max(0, Number(supportWordCount) || 0);
             const candidates = pool.map((entry, index) => {
                 const key = String(entry?.word || "").trim().toLowerCase();
                 const row = stats[key] && typeof stats[key] === "object" ? stats[key] : {};
-                const correct = Math.max(0, Number(row.c) || 0);
-                const wrong = Math.max(0, Number(row.x) || 0);
-                const tries = correct + wrong;
-                const accuracy = tries ? correct / tries : 0;
-                const streak = Math.max(0, Number(row.s) || 0);
-                const rank = Math.max(0, Number(entry?.spiralRank) || 0);
-                const unresolved = wrong > 0 && (streak < 3 || accuracy < 0.8);
-                const review = supportLimit > 0 && rank > 0 && rank <= supportLimit;
-                const mastered = correct >= WORD_MASTERY_CORRECT_THRESHOLD && accuracy >= WORD_MASTERY_ACCURACY_THRESHOLD;
-                return { index, correct, wrong, tries, accuracy, unresolved, review, mastered };
-            });
-            const totals = candidates.reduce((sum, item) => {
-                sum.correct += item.correct;
-                sum.wrong += item.wrong;
-                return sum;
-            }, { correct: 0, wrong: 0 });
-            const totalTries = totals.correct + totals.wrong;
-            const unresolved = candidates.filter((item) => item.unresolved);
-            const review = candidates.filter((item) => item.review && !item.unresolved);
-            const target = candidates.filter((item) => !item.review && !item.unresolved);
-            const supportMode = (totalTries >= 8 && totals.correct / totalTries < 0.75)
-                || unresolved.length >= 3
-                || unresolved.reduce((sum, item) => sum + item.wrong, 0) >= 4;
-            const roll = Math.max(0, Math.min(0.999999, Number(random()) || 0));
-            const groups = supportMode
-                ? (roll < 0.55 ? [unresolved, review, target] : roll < 0.85 ? [review, unresolved, target] : [target, unresolved, review])
-                : (roll < 0.20 ? [unresolved, target, review] : roll < 0.40 ? [review, target, unresolved] : [target, unresolved, review]);
-            let selectedGroup = groups.find((group) => group.some((item) => item.index !== previousIndex))
-                || candidates.filter((item) => item.index !== previousIndex);
-            if (!selectedGroup.length) selectedGroup = candidates;
-            selectedGroup = selectedGroup.filter((item) => item.index !== previousIndex || selectedGroup.length === 1);
-            const weighted = selectedGroup.map((item) => {
-                let weight = item.tries === 0 ? 3 : 1 + item.wrong * 2 + (1 - item.accuracy) * 3;
-                if (item.unresolved) weight += 4;
-                if (item.mastered) weight *= 0.2;
-                return { ...item, weight: Math.max(0.05, weight) };
-            });
-            const totalWeight = weighted.reduce((sum, item) => sum + item.weight, 0);
-            let cursor = Math.max(0, Math.min(0.999999, Number(random()) || 0)) * totalWeight;
-            for (const item of weighted) {
-                cursor -= item.weight;
-                if (cursor <= 0) return item.index;
-            }
-            return weighted[weighted.length - 1]?.index ?? 0;
-        }
-        function selectAdaptiveQuizIndex(pool, learningStats, supportWordCount, previousIndex, random = Math.random, includeMetadata = false) {
-            const finish = (selection) => includeMetadata ? selection : selection.index;
-            const emptySelection = { index: 0, mode: 'normal', intendedGroup: 'current', actualGroup: 'current', fallback: false };
-            if (!Array.isArray(pool) || pool.length === 0) return finish(emptySelection);
-            const stats = learningStats && typeof learningStats === 'object' && !Array.isArray(learningStats) ? learningStats : {};
-            const policy = normalizeAdaptiveQuestionPolicy(gameState.activeAdaptiveQuestionPolicy);
-            const supportLimit = Math.max(0, Number(supportWordCount) || 0);
-            const candidates = pool.map((entry, index) => {
-                const key = String(entry?.word || '').trim().toLowerCase();
-                const row = stats[key] && typeof stats[key] === 'object' ? stats[key] : {};
                 const correct = Math.max(0, Number(row.c) || 0);
                 const wrong = Math.max(0, Number(row.x) || 0);
                 const tries = correct + wrong;
@@ -4164,8 +4117,8 @@
             const supportMode = (totalTries >= policy.supportMode.minTries && totals.correct / totalTries < policy.supportMode.accuracyBelow / 100)
                 || unresolved.length >= policy.supportMode.unresolvedCount
                 || unresolved.reduce((sum, item) => sum + item.wrong, 0) >= policy.supportMode.unresolvedWrongTotal;
-            const mode = supportMode ? 'support' : 'normal';
-            const actualGroupFor = (item) => item?.unresolved ? 'unresolved' : item?.review ? 'review' : 'current';
+            const mode = supportMode ? "support" : "normal";
+            const actualGroupFor = (item) => item?.unresolved ? "unresolved" : item?.review ? "review" : "current";
             if (pool.length === 1) {
                 const actualGroup = actualGroupFor(candidates[0]);
                 return finish({ index: 0, mode, intendedGroup: actualGroup, actualGroup, fallback: false });
@@ -4175,14 +4128,14 @@
             let intendedGroup;
             let groupOrder;
             if (roll < ratios.unresolved / 100) {
-                intendedGroup = 'unresolved';
-                groupOrder = supportMode ? ['unresolved', 'review', 'current'] : ['unresolved', 'current', 'review'];
+                intendedGroup = "unresolved";
+                groupOrder = supportMode ? ["unresolved", "review", "current"] : ["unresolved", "current", "review"];
             } else if (roll < (ratios.unresolved + ratios.review) / 100) {
-                intendedGroup = 'review';
-                groupOrder = supportMode ? ['review', 'unresolved', 'current'] : ['review', 'current', 'unresolved'];
+                intendedGroup = "review";
+                groupOrder = supportMode ? ["review", "unresolved", "current"] : ["review", "current", "unresolved"];
             } else {
-                intendedGroup = 'current';
-                groupOrder = ['current', 'unresolved', 'review'];
+                intendedGroup = "current";
+                groupOrder = ["current", "unresolved", "review"];
             }
             const groupMap = { unresolved, review, current };
             const selectedDescriptor = groupOrder
@@ -6546,8 +6499,67 @@
             });
         }
 
+        function normalizeAppearanceTheme(value) {
+            return value === 'ivory' ? 'ivory' : 'dark';
+        }
+
+        function syncAppearanceThemeUI() {
+            const theme = normalizeAppearanceTheme(document.documentElement.dataset.theme);
+            const darkButton = document.getElementById('themeChoiceDark');
+            const ivoryButton = document.getElementById('themeChoiceIvory');
+            if (darkButton) {
+                const selected = theme === 'dark';
+                darkButton.setAttribute('aria-checked', String(selected));
+                darkButton.setAttribute('aria-pressed', String(selected));
+            }
+            if (ivoryButton) {
+                const selected = theme === 'ivory';
+                ivoryButton.setAttribute('aria-checked', String(selected));
+                ivoryButton.setAttribute('aria-pressed', String(selected));
+            }
+            const nextTheme = theme === 'dark' ? 'ivory' : 'dark';
+            const label = nextTheme === 'ivory' ? '밝은 화면' : '다크 화면';
+            document.querySelectorAll('[data-theme-toggle]').forEach(button => {
+                button.dataset.nextTheme = nextTheme;
+                button.setAttribute('aria-label', `${label}으로 변경`);
+                button.title = `${label}으로 변경`;
+                const icon = button.querySelector('[data-theme-toggle-icon]');
+                const text = button.querySelector('[data-theme-toggle-label]');
+                if (icon) icon.textContent = nextTheme === 'ivory' ? '☀️' : '🌙';
+                if (text) text.textContent = label;
+            });
+        }
+
+        function applyAppearanceTheme(value, options = {}) {
+            const { persist = true, updateState = true } = options;
+            const theme = window.VocaTheme?.apply?.(value, persist) || normalizeAppearanceTheme(value);
+            if (updateState && typeof gameState === 'object' && gameState) gameState.appearanceTheme = theme;
+            syncAppearanceThemeUI();
+            return theme;
+        }
+
+        function setAppearanceTheme(value) {
+            const previous = normalizeAppearanceTheme(document.documentElement.dataset.theme);
+            const theme = applyAppearanceTheme(value);
+            saveLocalCache();
+            if (gameState.isAnonymousStudent && typeof window._secureStudentSave === 'function') window._secureStudentSave(true);
+            else if (gameState.name && gameState.name !== '방문자') saveSessionToCloud(true);
+            if (theme !== previous) showToast(theme === 'ivory' ? '☀️ 따뜻한 아이보리 화면으로 바꿨어요.' : '🌙 기본 다크 화면으로 바꿨어요.');
+        }
+
+        function toggleAppearanceTheme() {
+            const current = normalizeAppearanceTheme(document.documentElement.dataset.theme);
+            setAppearanceTheme(current === 'dark' ? 'ivory' : 'dark');
+        }
+
+        window.applyAppearanceTheme = applyAppearanceTheme;
+        window.setAppearanceTheme = setAppearanceTheme;
+        window.toggleAppearanceTheme = toggleAppearanceTheme;
+        setTimeout(syncAppearanceThemeUI, 0);
+
         function openSettingsModal() {
             updateSoundSettingsUI();
+            syncAppearanceThemeUI();
             openModal("settingsModal");
         }
 

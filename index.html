@@ -21,6 +21,26 @@
     <link rel="icon" type="image/png" href="media/logo_v2.webp">
     <meta name="theme-color" content="#0a0a0a">
     <link rel="apple-touch-icon" href="media/logo_v2.webp">
+    <script>
+        (() => {
+            const STORAGE_KEY = 'vocahero_appearance_theme_v1';
+            const normalize = value => value === 'ivory' ? 'ivory' : 'dark';
+            const apply = (value, persist = true) => {
+                const theme = normalize(value);
+                document.documentElement.dataset.theme = theme;
+                document.documentElement.style.colorScheme = theme === 'ivory' ? 'light' : 'dark';
+                document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'ivory' ? '#f3eadb' : '#0a0a0a');
+                if (persist) {
+                    try { localStorage.setItem(STORAGE_KEY, theme); } catch (_) {}
+                }
+                return theme;
+            };
+            let savedTheme = 'dark';
+            try { savedTheme = localStorage.getItem(STORAGE_KEY) || 'dark'; } catch (_) {}
+            window.VocaTheme = { STORAGE_KEY, normalize, apply, current: () => normalize(document.documentElement.dataset.theme) };
+            apply(savedTheme, false);
+        })();
+    </script>
     <style>
         #gameMainLayout.full-panel-tab-active {
             grid-template-columns: minmax(0, 1fr) !important;
@@ -580,6 +600,262 @@
             touch-action: manipulation; /* Prevent double-tap to zoom */
         }
 
+        /* 다크(기본) / 따뜻한 아이보리 화면 테마 */
+        :root {
+            --vh-canvas: #000000;
+            --vh-surface: #0d0d0d;
+            --vh-surface-raised: #1a1a1a;
+            --vh-surface-soft: #111111;
+            --vh-text: #ffffff;
+            --vh-text-soft: #bbbbbb;
+            --vh-text-muted: #7e7e7e;
+            --vh-line: #3c3c3c;
+            --vh-line-soft: #262626;
+            --vh-overlay-soft: rgba(0, 0, 0, .2);
+        }
+
+        html[data-theme="ivory"] {
+            --vh-canvas: #f3eadb;
+            --vh-surface: #fffaf1;
+            --vh-surface-raised: #f8efdf;
+            --vh-surface-soft: #efe2cf;
+            --vh-text: #2c251d;
+            --vh-text-soft: #5f5245;
+            --vh-text-muted: #796b5d;
+            --vh-line: #b9a992;
+            --vh-line-soft: #d8c9b5;
+            --vh-overlay-soft: rgba(69, 53, 34, .12);
+        }
+
+        body,
+        body > header,
+        .bmw-card,
+        .telemetry-cell,
+        .bmw-input,
+        .bmw-btn-secondary,
+        .bmw-body-md,
+        .bmw-body-sm {
+            transition: background-color .2s ease, border-color .2s ease, color .2s ease;
+        }
+
+        html[data-theme="ivory"] body {
+            background: radial-gradient(circle at 50% -20%, #fffdf7 0, var(--vh-canvas) 48rem) fixed;
+            color: var(--vh-text);
+        }
+
+        html[data-theme="ivory"] body > header,
+        html[data-theme="ivory"] [class~="bg-black"],
+        html[data-theme="ivory"] [class~="bg-[#000000]"],
+        html[data-theme="ivory"] [class~="bg-[#050505]"],
+        html[data-theme="ivory"] [class~="bg-[#050506]"],
+        html[data-theme="ivory"] [class~="bg-[#070a09]"],
+        html[data-theme="ivory"] [class~="bg-[#080808]"],
+        html[data-theme="ivory"] [class~="bg-[#08070b]"],
+        html[data-theme="ivory"] [class~="bg-[#090708]"],
+        html[data-theme="ivory"] [class~="bg-[#09070d]"],
+        html[data-theme="ivory"] [class~="bg-[#090909]"],
+        html[data-theme="ivory"] [class~="bg-[#0a0a0c]"],
+        html[data-theme="ivory"] [class~="bg-[#0b0b0b]"],
+        html[data-theme="ivory"] [class~="bg-[#0b0c10]"],
+        html[data-theme="ivory"] [class~="bg-[#0b0d0c]"],
+        html[data-theme="ivory"] [class~="bg-[#0d0d0d]"] {
+            background-color: var(--vh-surface) !important;
+        }
+
+        html[data-theme="ivory"] [class~="bg-[#10141c]"],
+        html[data-theme="ivory"] [class~="bg-[#111]"],
+        html[data-theme="ivory"] [class~="bg-[#121212]"],
+        html[data-theme="ivory"] [class~="bg-[#121216]"],
+        html[data-theme="ivory"] [class~="bg-[#151515]"],
+        html[data-theme="ivory"] [class~="bg-[#171717]"],
+        html[data-theme="ivory"] [class~="bg-[#1a1a1a]"],
+        html[data-theme="ivory"] [class~="bg-[#222]"],
+        html[data-theme="ivory"] [class~="bg-[#252525]"],
+        html[data-theme="ivory"] [class~="bg-[#262626]"],
+        html[data-theme="ivory"] [class~="bg-gray-950"],
+        html[data-theme="ivory"] [class~="bg-gray-900"],
+        html[data-theme="ivory"] [class~="bg-gray-800"],
+        html[data-theme="ivory"] [class~="bg-gray-700"] {
+            background-color: var(--vh-surface-raised) !important;
+        }
+
+        html[data-theme="ivory"] [class~="bg-black/95"]:not(.fixed),
+        html[data-theme="ivory"] [class~="bg-black/90"]:not(.fixed),
+        html[data-theme="ivory"] [class~="bg-black/85"]:not(.fixed),
+        html[data-theme="ivory"] [class~="bg-black/80"]:not(.fixed),
+        html[data-theme="ivory"] [class~="bg-black/70"]:not(.fixed),
+        html[data-theme="ivory"] [class~="bg-black/60"]:not(.fixed),
+        html[data-theme="ivory"] [class~="bg-black/50"]:not(.fixed),
+        html[data-theme="ivory"] [class~="bg-black/40"]:not(.fixed),
+        html[data-theme="ivory"] [class~="bg-black/20"]:not(.fixed) {
+            background-color: rgba(248, 239, 223, .92) !important;
+        }
+
+        html[data-theme="ivory"] [class~="text-white"],
+        html[data-theme="ivory"] [class~="text-[#ffffff]"],
+        html[data-theme="ivory"] [class~="text-[#e6e6e6]"],
+        html[data-theme="ivory"] [class~="text-gray-200"] {
+            color: var(--vh-text) !important;
+        }
+
+        html[data-theme="ivory"] [class~="text-[#bbbbbb]"],
+        html[data-theme="ivory"] [class~="text-gray-300"],
+        html[data-theme="ivory"] [class~="text-gray-400"],
+        html[data-theme="ivory"] [class~="text-slate-400"] {
+            color: var(--vh-text-soft) !important;
+        }
+
+        html[data-theme="ivory"] [class~="text-[#7e7e7e]"],
+        html[data-theme="ivory"] [class~="text-gray-500"],
+        html[data-theme="ivory"] [class~="text-gray-600"],
+        html[data-theme="ivory"] [class~="text-gray-700"] {
+            color: var(--vh-text-muted) !important;
+        }
+
+        /* 밝은 바탕에서는 네온 계열을 같은 의미의 짙은 색으로 바꿔 읽기 대비를 확보 */
+        html[data-theme="ivory"] :is([class~="text-yellow-200"], [class~="text-yellow-300"], [class~="text-yellow-400"], [class~="text-amber-200"], [class~="text-amber-300"], [class~="text-amber-400"]):not([data-theme-toggle], #battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) {
+            color: #785100 !important;
+        }
+
+        html[data-theme="ivory"] :is([class~="text-sky-100"], [class~="text-sky-200"], [class~="text-sky-300"], [class~="text-sky-400"], [class~="text-cyan-100"], [class~="text-cyan-200"], [class~="text-cyan-300"], [class~="text-cyan-400"], [class~="text-[#7dd3fc]"], [class~="text-[#53b5ee]"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) {
+            color: #075985 !important;
+        }
+
+        html[data-theme="ivory"] :is([class~="text-blue-200"], [class~="text-blue-300"], [class~="text-blue-400"], [class~="text-indigo-200"], [class~="text-indigo-300"], [class~="text-indigo-400"], [class~="text-violet-200"], [class~="text-violet-300"], [class~="text-violet-400"], [class~="text-purple-200"], [class~="text-purple-300"], [class~="text-purple-400"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) {
+            color: #5b21b6 !important;
+        }
+
+        html[data-theme="ivory"] :is([class~="text-emerald-100"], [class~="text-emerald-200"], [class~="text-emerald-300"], [class~="text-emerald-400"], [class~="text-green-200"], [class~="text-green-300"], [class~="text-green-400"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) {
+            color: #047857 !important;
+        }
+
+        html[data-theme="ivory"] :is([class~="text-pink-100"], [class~="text-pink-200"], [class~="text-pink-300"], [class~="text-pink-400"], [class~="text-rose-100"], [class~="text-rose-200"], [class~="text-rose-300"], [class~="text-rose-400"], [class~="text-red-200"], [class~="text-red-300"], [class~="text-red-400"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) {
+            color: #be123c !important;
+        }
+
+        html[data-theme="ivory"] :is([class~="text-orange-300"], [class~="text-orange-400"], [class~="text-[#e22718]"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) {
+            color: #9a3412 !important;
+        }
+
+        html[data-theme="ivory"] :is([class*="bg-sky-950"], [class*="bg-cyan-950"], [class*="bg-blue-950"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) { background-color: #e6f4f8 !important; }
+        html[data-theme="ivory"] :is([class*="bg-violet-950"], [class*="bg-purple-950"], [class*="bg-indigo-950"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) { background-color: #f1eafa !important; }
+        html[data-theme="ivory"] :is([class*="bg-emerald-950"], [class*="bg-green-950"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) { background-color: #e7f5ed !important; }
+        html[data-theme="ivory"] :is([class*="bg-yellow-950"], [class*="bg-amber-950"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) { background-color: #fbf0d3 !important; }
+        html[data-theme="ivory"] :is([class*="bg-red-950"], [class*="bg-rose-950"], [class*="bg-pink-950"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) { background-color: #fae8e8 !important; }
+
+        html[data-theme="ivory"] #secureWelcomeTitle { color: #785100 !important; text-shadow: 0 0 12px rgba(120, 81, 0, .16) !important; }
+        html[data-theme="ivory"] #secureWelcomeGoogle { color: #075985 !important; border-color: #0c7aa6 !important; }
+        html[data-theme="ivory"] [data-theme-toggle] { background-color: #3d3328 !important; color: #fff1bf !important; border-color: #b78318 !important; }
+
+        html[data-theme="ivory"] [class~="border-[#1c1c1c]"],
+        html[data-theme="ivory"] [class~="border-[#222]"],
+        html[data-theme="ivory"] [class~="border-[#262626]"],
+        html[data-theme="ivory"] [class~="border-[#292929]"],
+        html[data-theme="ivory"] [class~="border-[#2d2d2d]"],
+        html[data-theme="ivory"] [class~="border-[#303030]"],
+        html[data-theme="ivory"] [class~="border-[#333]"],
+        html[data-theme="ivory"] [class~="border-[#3c3c3c]"],
+        html[data-theme="ivory"] [class~="border-[#444]"],
+        html[data-theme="ivory"] [class~="border-[#4b5563]"],
+        html[data-theme="ivory"] [class~="border-gray-900"],
+        html[data-theme="ivory"] [class~="border-gray-800"],
+        html[data-theme="ivory"] [class~="border-gray-800/60"],
+        html[data-theme="ivory"] [class~="border-gray-700"],
+        html[data-theme="ivory"] [class~="border-gray-600"] {
+            border-color: var(--vh-line) !important;
+        }
+
+        html[data-theme="ivory"] .bmw-card,
+        html[data-theme="ivory"] .bmw-btn-secondary,
+        html[data-theme="ivory"] .telemetry-cell {
+            background-color: var(--vh-surface-raised);
+            border-color: var(--vh-line-soft);
+            color: var(--vh-text);
+        }
+
+        html[data-theme="ivory"] .bmw-body-md,
+        html[data-theme="ivory"] .bmw-body-sm { color: var(--vh-text-soft); }
+
+        html[data-theme="ivory"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+        html[data-theme="ivory"] select,
+        html[data-theme="ivory"] textarea,
+        html[data-theme="ivory"] .bmw-input {
+            background-color: #fffdf8 !important;
+            border-color: var(--vh-line) !important;
+            color: var(--vh-text) !important;
+        }
+
+        html[data-theme="ivory"] input::placeholder,
+        html[data-theme="ivory"] textarea::placeholder {
+            color: #8a7b6c !important;
+            opacity: 1;
+        }
+
+        html[data-theme="ivory"] .choice-btn:hover,
+        html[data-theme="ivory"] .skill-inventory-card:hover {
+            background-color: #fff8e8 !important;
+            color: #211a14 !important;
+        }
+
+        html[data-theme="ivory"] ::-webkit-scrollbar-track { background: rgba(91, 72, 48, .1); }
+        html[data-theme="ivory"] ::-webkit-scrollbar-thumb { background: rgba(91, 72, 48, .28); }
+        html[data-theme="ivory"] ::-webkit-scrollbar-thumb:hover { background: rgba(91, 72, 48, .45); }
+
+        html[data-theme="ivory"] #tutorialOverlay[class~="bg-black/20"] {
+            background-color: var(--vh-overlay-soft) !important;
+        }
+
+        html[data-theme="ivory"] #securePolicyContent { color: var(--vh-text); }
+        html[data-theme="ivory"] #securePolicyContent h2,
+        html[data-theme="ivory"] #securePolicyContent strong { color: var(--vh-text); }
+        html[data-theme="ivory"] #securePolicyContent p,
+        html[data-theme="ivory"] #securePolicyContent li { color: var(--vh-text-soft); }
+        html[data-theme="ivory"] #securePolicyContent .summary { background: #eef8fa; }
+
+        /* 전투·희귀도 연출은 테마와 관계없이 원래의 어두운 무대를 유지 */
+        html[data-theme="ivory"] #battleArena,
+        html[data-theme="ivory"] #worldBossBattleArena {
+            background-color: #050608 !important;
+            color: #ffffff !important;
+        }
+
+        html[data-theme="ivory"] :is(#battleArena, #worldBossBattleArena, #gachaOverlayModal, #skillAcquireModal, #gacha10xResultModal, #gacha100xResultModal, #relicDrawResultModal, #criticalDefenseModal, #wbVictoryNoticeModal, #wbRaidResultModal, #damageOverlay, #customModalBox, #forgeResultBox) [class~="text-white"] {
+            color: #ffffff !important;
+        }
+
+        html[data-theme="ivory"] :is(#battleArena, #worldBossBattleArena, #gachaOverlayModal, #skillAcquireModal, #gacha10xResultModal, #gacha100xResultModal, #relicDrawResultModal, #criticalDefenseModal, #wbVictoryNoticeModal, #wbRaidResultModal, #damageOverlay, #customModalBox, #forgeResultBox) :is([class~="text-gray-200"], [class~="text-gray-300"], [class~="text-gray-400"]) {
+            color: #d1d5db !important;
+        }
+
+        html[data-theme="ivory"] :is(#battleArena, #worldBossBattleArena) :is([class~="text-[#bbbbbb]"], [class~="text-[#7e7e7e]"], [class~="text-gray-500"], [class~="text-gray-600"]) {
+            color: #d1d5db !important;
+        }
+
+        html[data-theme="ivory"] [class~="bg-[#e22718]"][class~="text-white"],
+        html[data-theme="ivory"] [class~="bg-[#0066b1]"][class~="text-white"],
+        html[data-theme="ivory"] [class~="bg-[#0088ee]"][class~="text-white"],
+        html[data-theme="ivory"] [class*="bg-gradient-to-"][class~="text-white"] {
+            color: #ffffff !important;
+        }
+
+        .theme-choice-btn {
+            min-height: 4.6rem;
+            border: 1px solid var(--vh-line);
+            background: var(--vh-surface-soft);
+            color: var(--vh-text-soft);
+            transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease, background-color .16s ease;
+        }
+
+        .theme-choice-btn:hover { border-color: #d5a419; transform: translateY(-1px); }
+        .theme-choice-btn[aria-pressed="true"] {
+            border-color: #f0b90b;
+            box-shadow: 0 0 0 2px rgba(240, 185, 11, .24);
+            color: var(--vh-text);
+        }
+
+        .theme-preview-dark { background: linear-gradient(135deg, #050506 0 48%, #1a1a1a 48%); }
+        .theme-preview-ivory { background: linear-gradient(135deg, #fffaf1 0 48%, #eadbc4 48%); }
+
         /* Typography utility classes */
         .bmw-display-xl {
             font-family: 'Hakgyoansim_PosterB', sans-serif;
@@ -927,6 +1203,7 @@
         }
     </script>
     <div id="secureWelcomeModal" class="fixed inset-0 z-[99999] overflow-y-auto bg-[#050506] text-white">
+        <button type="button" data-theme-toggle onclick="toggleAppearanceTheme()" class="fixed right-4 top-4 z-10 flex items-center gap-2 border border-amber-500/70 bg-black/80 px-3 py-2 text-xs font-bold text-amber-300 shadow-lg transition hover:border-amber-300 sm:right-6 sm:top-6" aria-label="밝은 화면으로 변경" title="화면 테마 바꾸기"><span data-theme-toggle-icon aria-hidden="true">☀️</span><span data-theme-toggle-label>밝은 화면</span></button>
         <button id="secureWelcomeTeacher" class="fixed left-4 top-4 z-10 flex items-center gap-2 border border-sky-500/70 bg-sky-950/80 px-4 py-2 text-xs font-bold text-sky-300 shadow-lg transition hover:bg-sky-900/80 sm:left-6 sm:top-6"><i data-lucide="graduation-cap" class="h-4 w-4"></i>교사 로그인</button>
         <main id="secureWelcomeContent" class="mx-auto flex min-h-full w-full max-w-5xl items-center px-4 pb-8 pt-20 sm:px-6 sm:pb-10 sm:pt-24" aria-labelledby="secureWelcomeTitle">
             <section class="grid w-full overflow-hidden border border-[#3c3218] bg-[#090909] shadow-[0_0_40px_rgba(234,179,8,.12)] lg:grid-cols-[minmax(0,.9fr)_minmax(0,1.1fr)]">
@@ -981,6 +1258,10 @@
                     class="hidden bg-[#1a1a1a] border border-[#3c3c3c] px-4 py-1.5 rounded-none-forced text-xs font-bold flex items-center gap-1.5 text-[#e6e6e6] tracking-wider uppercase">
                     <span id="displayStudentName">불러오는 중...</span>
                 </div>
+                <button type="button" data-theme-toggle onclick="toggleAppearanceTheme()" title="화면 테마 바꾸기" aria-label="밝은 화면으로 변경"
+                    class="bg-[#1a1a1a] hover:bg-[#262626] border border-[#3c3c3c] hover:border-amber-500 text-amber-400 px-2 py-1.5 rounded-none-forced transition flex items-center justify-center gap-1 cursor-pointer shadow-md">
+                    <span data-theme-toggle-icon aria-hidden="true">☀️</span><span data-theme-toggle-label class="hidden lg:inline text-[10px] font-bold">밝은 화면</span>
+                </button>
                 <!-- ⚙️ 환경 설정 버튼 -->
                 <button onclick="openSettingsModal()" title="환경 설정"
                     class="bg-[#1a1a1a] hover:bg-[#262626] border border-[#3c3c3c] hover:border-yellow-500 text-yellow-400 p-1.5 rounded-none-forced transition flex items-center justify-center cursor-pointer shadow-md">
@@ -2701,6 +2982,23 @@
                 </div>
 
                 <div class="space-y-3 my-2 text-xs">
+                    <section class="border border-amber-700/50 bg-[#121216] p-3" aria-labelledby="appearanceThemeTitle">
+                        <div class="mb-2">
+                            <h4 id="appearanceThemeTitle" class="text-[11px] font-black text-amber-300">🎨 화면 테마</h4>
+                            <p class="mt-1 text-[9px] leading-relaxed text-gray-400">기본 다크 또는 눈부심을 줄인 따뜻한 아이보리 화면을 선택할 수 있어요.</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="화면 테마 선택">
+                            <button id="themeChoiceDark" type="button" class="theme-choice-btn flex flex-col items-center justify-center gap-1.5 p-2 text-[10px] font-bold" onclick="setAppearanceTheme('dark')" role="radio" aria-checked="true" aria-pressed="true">
+                                <span class="theme-preview-dark h-6 w-full border border-gray-600" aria-hidden="true"></span>
+                                <span>🌙 기본 다크</span>
+                            </button>
+                            <button id="themeChoiceIvory" type="button" class="theme-choice-btn flex flex-col items-center justify-center gap-1.5 p-2 text-[10px] font-bold" onclick="setAppearanceTheme('ivory')" role="radio" aria-checked="false" aria-pressed="false">
+                                <span class="theme-preview-ivory h-6 w-full border border-amber-300" aria-hidden="true"></span>
+                                <span>☀️ 따뜻한 아이보리</span>
+                            </button>
+                        </div>
+                    </section>
+
                     <!-- 마스터 사운드 토글 -->
                     <div class="flex justify-between items-center bg-gray-900/50 p-2 border border-gray-800">
                         <span class="text-gray-300 font-bold">🔊 전체 사운드 켜기/끄기 (Master)</span>
@@ -3230,7 +3528,7 @@
             /* 가로 모드(짧은 화면)에서 전투창 상단 UI 강제 축소 (전투화면 비율 확보용) */
     </style>
 
-    <script src="js/config.js?v=20260809-29"></script><script src="js/skill-system.js?v=20260820-04"></script><script src="js/main.js?v=20260820-04"></script><script src="js/skill-rework.js?v=20260820-04"></script><script src="js/secure-account.js?v=20260820-04"></script>
+    <script src="js/config.js?v=20260809-29"></script><script src="js/skill-system.js?v=20260820-04"></script><script src="js/main.js?v=20260822-01"></script><script src="js/skill-rework.js?v=20260820-04"></script><script src="js/secure-account.js?v=20260821-01"></script>
 
     <!-- Damage Overlay (Scratch & Flash) -->
     <div id="damageOverlay" class="fixed inset-0 pointer-events-none hidden z-[100] flex-col items-center justify-center bg-red-900/60 transition-opacity duration-300">

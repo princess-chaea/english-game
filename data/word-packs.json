@@ -15,6 +15,28 @@
   "adaptivePolicy": {
     "scope": "선택한 누적 단어팩 내부",
     "supportWordCount": "각 팩의 이전 단계까지 누적된 복습 후보 수",
+    "resolved": {
+      "streak": 3,
+      "accuracy": 80
+    },
+    "supportMode": {
+      "minTries": 8,
+      "accuracyBelow": 75,
+      "unresolvedCount": 3,
+      "unresolvedWrongTotal": 4
+    },
+    "targetRatios": {
+      "normal": {
+        "unresolved": 20,
+        "review": 20,
+        "current": 60
+      },
+      "support": {
+        "unresolved": 55,
+        "review": 30,
+        "current": 15
+      }
+    },
     "note": "오답·미숙달과 이전 단계 단어를 선택 팩 안에서 우선 출제할 수 있도록 spiralRank를 제공합니다."
   },
   "words": [

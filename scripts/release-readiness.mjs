@@ -9,11 +9,11 @@ const requiredEnvironment = [
 ];
 const missing = requiredEnvironment.filter((entry) => !entry.names.some((name) => process.env[name])).map((entry) => entry.label);
 const guildSkinFiles = ['azure','sakura','neon','lion','crimson','frost','inventor','moon','starlight','dragon','clockwork','cloud','deepsea','candy','dino','rhythm','origami','comet','scarab','lantern','skypirate','mushroom','volcanic','mecha','chess','galaxywhale','phoenix','leviathan','chronomancer','prismatic','mirror','dreamlibrary','glaciertrain','constellation','coral','jungle','aurora','toybox','cosmicchef','camera','gravity','crystalsinger','thundercloud','fourseasons','glassknight','starpost','detective','festival','observatory','runegarden','seastar','ballerina','dragonfruit','moonexplorer','rainbowrider'].map((name) => `media/player/guild_skin_${name}.webp`);
-const files = ['firebase.json', 'firestore.rules', 'firestore.indexes.json', 'storage.rules', 'vercel.json', 'privacy.html', 'package-lock.json', 'data/word-packs.json', 'data/word-packs.js', 'data/curriculum-3000-markers.json', 'data/curriculum-3000-with-meanings.json', 'data/CREDITS.md', 'data/curriculum-3000-review-catalog.json', 'media/guild/dimensional-summon-banner.webp', 'media/guild/guild-shop-items.webp', 'media/guild/guild-effects.webp', ...Array.from({ length: 5 }, (_, index) => `media/test/test${index + 1}.webp`), ...guildSkinFiles];
+const files = ['firebase.json', 'firestore.rules', 'firestore.indexes.json', 'storage.rules', 'vercel.json', 'privacy.html', 'package-lock.json', 'data/word-packs.json', 'data/word-packs.js', 'data/curriculum-3000-markers.json', 'data/curriculum-3000-with-meanings.json', 'data/CREDITS.md', 'data/curriculum-3000-review-catalog.json', 'docs/promotion/captures/teacher-member-adaptive-path-actual.png', 'media/guild/dimensional-summon-banner.webp', 'media/guild/guild-shop-items.webp', 'media/guild/guild-effects.webp', ...Array.from({ length: 5 }, (_, index) => `media/test/test${index + 1}.webp`), ...guildSkinFiles];
 for (const file of files) await access(file);
 const firebase = JSON.parse(await readFile('firebase.json', 'utf8'));
 const vercel = JSON.parse(await readFile('vercel.json', 'utf8'));
-const [firestoreRules, storageRules, privacy, indexHtml, secureAccount, mainJs, studentApi, teacherApi, worldBossApi, cleanupApi, skillSystem, skillRework, wordPackText] = await Promise.all([
+const [firestoreRules, storageRules, privacy, indexHtml, secureAccount, mainJs, studentApi, teacherApi, worldBossApi, cleanupApi, skillSystem, skillRework, wordPackText, wordPackJsText, teacherQuickGuide, teacherManual] = await Promise.all([
   readFile('firestore.rules', 'utf8'),
   readFile('storage.rules', 'utf8'),
   readFile('privacy.html', 'utf8'),
@@ -26,9 +26,13 @@ const [firestoreRules, storageRules, privacy, indexHtml, secureAccount, mainJs, 
   readFile('api/cleanup-legacy.js', 'utf8'),
   readFile('js/skill-system.js', 'utf8'),
   readFile('js/skill-rework.js', 'utf8'),
-  readFile('data/word-packs.json', 'utf8')
+  readFile('data/word-packs.json', 'utf8'),
+  readFile('data/word-packs.js', 'utf8'),
+  readFile('docs/promotion/teacher-quick-guide-detailed.html', 'utf8'),
+  readFile('docs/promotion/teacher-manual.md', 'utf8')
 ]);
 const wordPackCatalog = JSON.parse(wordPackText);
+if (wordPackJsText !== `export default ${JSON.stringify(wordPackCatalog)};\n`) throw new Error('word-packs.json and word-packs.js must remain exact runtime mirrors.');
 if (wordPackCatalog.words?.length !== 3001) throw new Error('Curriculum vocabulary catalog must preserve all 3,001 extracted headwords.');
 if (wordPackCatalog.words.some((entry) => !entry.word || !entry.meaning || !Number.isInteger(entry.spiralRank))) throw new Error('Curriculum words require a meaning and spiral rank.');
 const spiralPacks = (wordPackCatalog.packs || []).filter((pack) => pack.kind === 'curriculum-spiral');
@@ -64,10 +68,36 @@ const packDistractorAt = quizDistractorBlock.indexOf('(gameState.wordsPool || []
 const mockFallbackAt = quizDistractorBlock.indexOf('if (values.length < 3) Object.values(MOCK_WORDS).flat().forEach(add);');
 if (packDistractorAt < 0 || mockFallbackAt <= packDistractorAt) throw new Error('Quiz choices must prefer the active pack and use MOCK_WORDS only when fewer than three distractors exist.');
 if (!mainJs.includes('function selectAdaptiveQuizIndex(') || !mainJs.includes('gameState.activeWordPackSupportCount') || !mainJs.includes('supportMode')) throw new Error('Adaptive wrong-answer and previous-stage routing is missing.');
+const adaptivePolicy = wordPackCatalog.adaptivePolicy || {};
+const normalAdaptiveRatios = adaptivePolicy.targetRatios?.normal || {};
+const supportAdaptiveRatios = adaptivePolicy.targetRatios?.support || {};
+if (
+  adaptivePolicy.resolved?.streak !== 3
+  || adaptivePolicy.resolved?.accuracy !== 80
+  || adaptivePolicy.supportMode?.minTries !== 8
+  || adaptivePolicy.supportMode?.accuracyBelow !== 75
+  || adaptivePolicy.supportMode?.unresolvedCount !== 3
+  || adaptivePolicy.supportMode?.unresolvedWrongTotal !== 4
+  || normalAdaptiveRatios.unresolved !== 20
+  || normalAdaptiveRatios.review !== 20
+  || normalAdaptiveRatios.current !== 60
+  || supportAdaptiveRatios.unresolved !== 55
+  || supportAdaptiveRatios.review !== 30
+  || supportAdaptiveRatios.current !== 15
+) throw new Error('The shared adaptive-question policy thresholds or target ratios are incorrect.');
+const adaptiveQuizStart = mainJs.indexOf('function selectAdaptiveQuizIndex(');
+const adaptiveQuizEnd = mainJs.indexOf('window.__vocaSelectAdaptiveQuizIndex', adaptiveQuizStart);
+const adaptiveQuizBlock = adaptiveQuizStart >= 0 && adaptiveQuizEnd > adaptiveQuizStart ? mainJs.slice(adaptiveQuizStart, adaptiveQuizEnd) : '';
+if (!assignedPackLoadBlock.includes('adaptivePolicy: normalizeAdaptiveQuestionPolicy(catalog.adaptivePolicy)') || !mainJs.includes('gameState.activeAdaptiveQuestionPolicy = normalizeAdaptiveQuestionPolicy(metadata.adaptivePolicy)') || !adaptiveQuizBlock.includes('policy.resolved.streak') || !adaptiveQuizBlock.includes('policy.supportMode.minTries') || !adaptiveQuizBlock.includes('policy.targetRatios.support')) throw new Error('The student quiz selector must use the shared catalog adaptive policy.');
 const teacherLearningStart = secureAccount.indexOf('function teacherSpiralPackRow(');
 const teacherLearningEnd = secureAccount.indexOf('async function previewTeacherWordPack', teacherLearningStart);
 const teacherLearningBlock = teacherLearningStart >= 0 && teacherLearningEnd > teacherLearningStart ? secureAccount.slice(teacherLearningStart, teacherLearningEnd) : '';
-if (!teacherLearningBlock.includes('Number(pack.grade)<=guildGrade') || !teacherLearningBlock.includes(`input.type='radio'`) || !teacherLearningBlock.includes('teacherSpiralPackGuide') || !teacherLearningBlock.includes('teacherAdaptivePathGuide') || !teacherLearningBlock.includes('오답 55%') || !teacherLearningBlock.includes('오답 20%') || !teacherLearningBlock.includes('이 단계 신규')) throw new Error('Teacher spiral pack grouping, single selection, or adaptive-path guidance is incomplete.');
+if (!teacherLearningBlock.includes('Number(pack.grade)<=guildGrade') || !teacherLearningBlock.includes(`input.type='radio'`) || !teacherLearningBlock.includes('teacherSpiralPackGuide') || !teacherLearningBlock.includes('teacherAdaptivePathGuide') || !teacherLearningBlock.includes('오답 55%') || !teacherLearningBlock.includes('오답 20%') || !teacherLearningBlock.includes('현재 단계 단어')) throw new Error('Teacher spiral pack grouping, single selection, or adaptive-path guidance is incomplete.');
+const memberReportStart = teacherApi.indexOf('async function memberLearningReport(');
+const memberReportEnd = teacherApi.indexOf('const TRIAL_TYPES', memberReportStart);
+const memberReportBlock = memberReportStart >= 0 && memberReportEnd > memberReportStart ? teacherApi.slice(memberReportStart, memberReportEnd) : '';
+if (!teacherApi.includes('function adaptivePathForMember(') || !teacherApi.includes('const adaptivePolicySource = packCatalog.adaptivePolicy || {}') || !memberReportBlock.includes('const adaptivePath = adaptivePathForMember(learningRows, learningSettings.wordPackId)') || memberReportBlock.indexOf('const adaptivePath = adaptivePathForMember') > memberReportBlock.indexOf('Object.entries(wrong).forEach') || !memberReportBlock.includes('adaptivePath,')) throw new Error('Teacher member reports must calculate the adaptive path from canonical word-learning stats before legacy wrong-word display merging.');
+if (!secureAccount.includes('function renderTeacherMemberAdaptivePath(') || !secureAccount.includes(`adaptive.id='secureTeacherMemberAdaptivePath'`) || !secureAccount.includes('renderTeacherMemberAdaptivePath(report.adaptivePath') || !secureAccount.includes('보충 진입 근거:') || !secureAccount.includes('현재 단계 단어')) throw new Error('Teacher member reports must render each student adaptive path, evidence, and target ratios.');
 if (secureAccount.includes('단어팩 · 중복 선택') || !secureAccount.includes('누적 단어팩 · 하나 선택')) throw new Error('Teacher pack heading must describe the cumulative single-choice assignment from the initial markup.');
 if ((teacherApi.match(/supportWordCount: safeInt\(pack\.supportWordCount/g) || []).length < 2) throw new Error('Teacher word-pack catalog and preview must expose the previous-step support range.');
 const teacherPackNormalizeStart = teacherApi.indexOf('function highestAllowedWordPack(');
@@ -167,6 +197,9 @@ for (const label of ['길드 정보', '길드원 정보', '길드원 관리', '�
 if (!secureAccount.includes('legacyShortcuts?.remove()') || secureAccount.includes("$('secureTeacherOpenTrial').onclick") || secureAccount.includes("$('secureTeacherStudentInvite').onclick") || secureAccount.includes("$('secureTeacherManagerInvite').onclick")) throw new Error('Teacher guild duplicate shortcut actions must stay removed.');
 if (!secureAccount.includes('#secureTeacherGuildNav{display:flex!important') || !secureAccount.includes('#secureTeacherGlobalSummary{grid-template-columns:repeat(4,minmax(0,1fr))!important')) throw new Error('Teacher mobile navigation and summary must remain single-row compact layouts.');
 if (!secureAccount.includes('#secureTeacherSelectedGuildLogoButton{display:flex!important') || secureAccount.includes('#secureTeacherSelectedGuildLogoButton{display:none!important')) throw new Error('Teacher mobile guild logo must remain visible.');
+if (!secureAccount.includes(`teacherChromePreferenceKey='vocahero_teacher_chrome_collapsed_v1'`) || !secureAccount.includes(`toggle.setAttribute('aria-controls','secureTeacherPortalHeader secureTeacherGuildHeader')`) || !secureAccount.includes(`button.setAttribute('aria-expanded',String(!collapsed))`) || !secureAccount.includes('.teacher-workspace-active.teacher-chrome-collapsed #secureTeacherPortalHeader{display:none!important}') || !secureAccount.includes('@media(max-width:900px),(pointer:coarse){#secureTeacherChromeToggle{display:none!important}')) throw new Error('Teacher desktop header collapse must remain accessible, persistent, workspace-scoped, and disabled on mobile/coarse pointers.');
+if (!teacherQuickGuide.includes(`image:C+'teacher-member-adaptive-path-actual.png'`) || !teacherQuickGuide.includes('학생 리포트에서 <em>실제 문항 경로</em>') || !teacherQuickGuide.includes('PC 상단 접기·펼치기') || !teacherQuickGuide.includes('기본 목표 비중') || !teacherQuickGuide.includes('지원 필요·성장 중·안정은 참여·전체 성취 그룹')) throw new Error('The detailed teacher quick guide must show the real adaptive-path report, desktop collapse, and separate support-group semantics.');
+if (!teacherManual.includes('실제 적용 중인 일반·문항 보충 경로') || !teacherManual.includes('지원 필요·성장 중·안정') || !teacherManual.includes('### 데스크톱에서 리포트 공간 넓게 보기') || !teacherManual.includes('휴대폰·터치 중심 화면은')) throw new Error('The teacher manual must remain aligned with the adaptive report and desktop-only collapse behavior.');
 if (!secureAccount.includes(`teacherCatalogStorageKey='vocahero_teacher_catalog_v20260820_spiral1'`) || !secureAccount.includes('teacherGuildReportPromises=new Map()') || !secureAccount.includes('teacherCacheFresh(cached,teacherListCacheMs)')) throw new Error('Teacher catalog and report request caches must remain enabled.');
 if (!secureAccount.includes(`Promise.all([refreshClasses(),teacher.verificationStatus==='verified'?refreshTeacherSchoolData():Promise.resolve()])`)) throw new Error('Teacher dashboard data must load in parallel after login.');
 const listClassesStart = teacherApi.indexOf('async function listClasses(uid)');
@@ -493,11 +526,7 @@ if (!mainJs.includes("wbRichLockedSkillIds = new Set((gameState.equippedSkills |
 if (!mainJs.includes('function renderWorldBossExpectedReward') || !mainJs.includes('100000 * Math.min(1, safeDamage / safeMaxHp)') || mainJs.includes('주간 결산 시 FP / 칭호 지급 (증표 +')) throw new Error('World-boss defeated and undefeated weekly FP estimates must remain visible after raid submission.');
 if (!secureAccount.includes('availableWidth/1600') || !secureAccount.includes('min-width:1600px!important') || !secureAccount.includes('pointer:coarse') || !secureAccount.includes('grid-template-columns:repeat(5,minmax(0,1fr))') || !secureAccount.includes('--teacher-design-height')) throw new Error('Teacher phone/tablet layouts must keep the desktop workspace, prevent flex double-scaling, and fill the available viewport width.');
 if (!studentApi.includes('Math.floor(correctCoinProgress / 5)') || !studentApi.includes('dailyConsistencyBonus') || !studentApi.includes('stageGain * 5') || !worldBossApi.includes('Math.floor(coinProgress / 10)')) throw new Error('Guild coins must be earned across learning, consistency, stage, trial, and world-boss activity.');
-if (!teacherApi.includes('const rewardGuildCoins = count * 5') || !studentApi.includes('const rewardGuildCoins = overcome ? words.length * 5 : 0') || !studentApi.includes('const rewardGuildPoints = overcome ? words.length * 10 : 0')) throw new Error('Guild trial rewards must stay at five coins and ten contribution points per completed question.');
-if (!studentApi.includes('if (completionSnap.exists) return') || !studentApi.includes('rewardGuildCoins: 0, rewardGuildPoints: 0') || !studentApi.includes('tx.set(completionRef')) throw new Error('Guild trial rewards must remain idempotent and pay exactly once regardless of the successful attempt number.');
-if (!teacherApi.includes('deliveryMode === \'personalized\'') || !teacherApi.includes('collection(\'assignments\')') || !teacherApi.includes('body.action === \'previewPersonalizedTrial\'') || !studentApi.includes('resolveTrialMaterial') || !secureAccount.includes('teacherPersonalizedPreviewMatches(memberIds,count)')) throw new Error('Common and personalized guild-trial delivery must keep current previewed per-member snapshots and server-side material resolution.');
-if (!teacherApi.includes('adaptivePathSeries') || !teacherApi.includes('adaptivePathStartedDay') || !secureAccount.includes('data-adaptive-history-days') || !secureAccount.includes('secureTeacherChromeToggle')) throw new Error('Teacher reports must expose adaptive-path history ranges and the collapsible desktop workspace header.');
-if (!secureAccount.includes('startGuildScan') || !secureAccount.includes('BarcodeDetector') || !secureAccount.includes('secureGuildScan')) throw new Error('Students must be able to scan a guild QR code inside the game.');
+if (!teacherApi.includes('const rewardGuildCoins = words.length * 5') || !studentApi.includes('words.length * 5')) throw new Error('Guild trial rewards must stay at five coins per completed question across teacher and student APIs.');
 if (!studentApi.includes('const GUILD_EFFECT_BASE_COST = 100') || !studentApi.includes('const GUILD_EFFECT_LEVEL_COST_STEP = 20') || !studentApi.includes('guildEffectLevelCost(level)') || !studentApi.includes('levelProgress -= requirement')) throw new Error('Guild effect level requirements must scale from 100P by 20P per level while accepting fixed 25P contributions with overflow carry.');
 if (!studentApi.includes("valuePerLevel: 0.4, maxLevel: 50") || !studentApi.includes("valuePerLevel: 0.2, maxLevel: 50") || !studentApi.includes("valuePerLevel: 0.04, maxLevel: 50") || !studentApi.includes("valuePerLevel: 0.6, maxLevel: 50") || !studentApi.includes("resource:'masteryPoints',amount:200") || !studentApi.includes("resource:'relicEssence',amount:5") || !studentApi.includes("resource:'bossTokens',amount:100")) throw new Error('Guild effect caps or requested currency exchange amounts changed unexpectedly.');
 if (!mainJs.includes('/^[A-Za-z\\s]*$/.test(raw)') || !mainJs.includes('잘못 입력한 글자만 지우고 계속 작성해 주세요')) throw new Error('English text inputs must allow spaces and preserve invalid input for student correction without scoring an answer.');

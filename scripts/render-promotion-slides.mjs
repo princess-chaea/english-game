@@ -14,9 +14,12 @@ const DECK_FILES = [
   'docs/promotion/student-quick-guide-detailed.html',
   'docs/promotion/integrated-manual-detailed.html',
 ];
+const DECK_FILTER = (process.env.VOCA_PROMOTION_DECK_FILTER || '').trim();
 const WIDTH = 1280;
 const HEIGHT = 720;
+const OUTPUT_SCALE = Math.max(1, Number(process.env.VOCA_PROMOTION_SCALE || 1));
 const CDP_TIMEOUT_MS = 30_000;
+const HIDE_ANNOTATIONS = process.env.VOCA_PROMOTION_HIDE_ANNOTATIONS === '1';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -220,6 +223,7 @@ async function prepareDeck(client) {
           break-after: auto !important;
         }
         body > .slide.__voca_capture_active { display: block !important; }
+        ${HIDE_ANNOTATIONS ? '.focus-region, .screen-canvas > .pin { visibility: hidden !important; }' : ''}
       `)};
       document.head.appendChild(style);
       const slides = [...document.querySelectorAll('body > .slide')];
@@ -241,6 +245,7 @@ async function activateSlide(client, index) {
       const slides = [...document.querySelectorAll('body > .slide')];
       slides.forEach((slide, slideIndex) => {
         slide.classList.toggle('__voca_capture_active', slideIndex === ${index});
+        slide.style.counterReset = slideIndex === ${index} ? 'slide ${index}' : '';
       });
       const slide = slides[${index}];
       if (!slide) throw new Error('Slide ${index + 1} was not found.');
@@ -260,6 +265,16 @@ async function activateSlide(client, index) {
         height: Math.round(rect.height),
         scrollWidth: slide.scrollWidth,
         scrollHeight: slide.scrollHeight,
+        annotations: [...slide.querySelectorAll('.screen-canvas .focus-region > .pin, .screen-canvas > .pin')]
+          .map((pin) => {
+            const pinRect = pin.getBoundingClientRect();
+            const slideRect = slide.getBoundingClientRect();
+            return {
+              text: pin.textContent.trim(),
+              x: Math.round((pinRect.left + pinRect.width / 2 - slideRect.left) * 100) / 100,
+              y: Math.round((pinRect.top + pinRect.height / 2 - slideRect.top) * 100) / 100,
+            };
+          }),
       };
     })()
   `);
@@ -281,7 +296,7 @@ async function renderDeck(endpoint, relativeFile) {
     await client.send('Emulation.setDeviceMetricsOverride', {
       width: WIDTH,
       height: HEIGHT,
-      deviceScaleFactor: 1,
+      deviceScaleFactor: OUTPUT_SCALE,
       mobile: false,
       screenWidth: WIDTH,
       screenHeight: HEIGHT,
@@ -343,6 +358,7 @@ async function renderDeck(endpoint, relativeFile) {
       outputDir,
       width: WIDTH,
       height: HEIGHT,
+      outputScale: OUTPUT_SCALE,
       media: 'print',
       pageCount: deckInfo.slideCount,
       brokenImages: deckInfo.brokenImages,
@@ -386,7 +402,11 @@ async function main() {
     browserClient = new CdpClient(browserWebSocketUrl);
     await browserClient.ready;
     const manifests = [];
-    for (const deckFile of DECK_FILES) manifests.push(await renderDeck(endpoint, deckFile));
+    const deckFiles = DECK_FILTER
+      ? DECK_FILES.filter((deckFile) => path.basename(deckFile, '.html') === DECK_FILTER)
+      : DECK_FILES;
+    if (!deckFiles.length) throw new Error(`No promotion deck matched VOCA_PROMOTION_DECK_FILTER=${DECK_FILTER}`);
+    for (const deckFile of deckFiles) manifests.push(await renderDeck(endpoint, deckFile));
     const summary = {
       generatedAt: new Date().toISOString(),
       chromeExecutable,

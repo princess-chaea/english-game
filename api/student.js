@@ -166,7 +166,7 @@ function safeAdaptivePathStats(value) {
 function safeAdaptivePathDaily(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
   const rows = Object.entries(value)
-    .filter(([day]) => /^d{4}-d{2}-d{2}$/.test(day))
+    .filter(([day]) => /^\d{4}-\d{2}-\d{2}$/.test(day))
     .sort(([a], [b]) => a.localeCompare(b))
     .slice(-TRIAL_HISTORY_DAYS)
     .map(([day, rawPacks]) => {
@@ -189,10 +189,7 @@ function mergeAdaptivePathBaselines(previousValue, currentValue) {
   return {
     v: 1,
     p: Object.fromEntries(packIds.map((packId) => [packId, Object.fromEntries(ADAPTIVE_PATH_ROUTE_KEYS.map((key) => [key,
-      safeAdaptivePathTuple(Array.from({ length: 5 }, (_, index) => Math.max(
-        previous.p[packId]?.[key]?.[index] || 0,
-        current.p[packId]?.[key]?.[index] || 0
-      )))
+      safeAdaptivePathTuple((previous.p[packId]?.[key] || []).map((value, index) => Math.max(value, current.p[packId]?.[key]?.[index] || 0)))
     ]))]))
   };
 }
@@ -218,8 +215,16 @@ function advanceAdaptivePathDaily(member, currentValue, day) {
   return {
     countedAdaptivePathStats: mergeAdaptivePathBaselines(previous, current),
     adaptivePathDaily: safeAdaptivePathDaily(daily),
-    adaptivePathStartedDay: /^d{4}-d{2}-d{2}$/.test(member.adaptivePathStartedDay || '') ? member.adaptivePathStartedDay : day
+    adaptivePathStartedDay: /^\d{4}-\d{2}-\d{2}$/.test(member.adaptivePathStartedDay || '') ? member.adaptivePathStartedDay : day
   };
+}
+function safeTrialItemResults(value) {
+  return (Array.isArray(value) ? value : []).slice(0, 20).map((raw) => {
+    const sourceIndex = safeInt(raw?.sourceIndex, -1, -1, 19);
+    if (sourceIndex < 0) return null;
+    const actualSourceGroup = ['unresolved', 'review', 'current'].includes(raw?.actualSourceGroup) ? raw.actualSourceGroup : null;
+    return { sourceIndex, correct: Boolean(raw?.correct), hinted: Boolean(raw?.hinted), ...(actualSourceGroup ? { actualSourceGroup } : {}) };
+  }).filter(Boolean);
 }
 function safeTrialAttemptHistory(value) {
   if (!Array.isArray(value)) return [];
@@ -234,7 +239,8 @@ function safeTrialAttemptHistory(value) {
     unassistedCorrect: safeInt(raw?.unassistedCorrect, 0, 0, 20),
     unassistedTries: safeInt(raw?.unassistedTries, 0, 0, 20),
     completedAtMs: safeInt(raw?.completedAtMs, 0, 0, 9999999999999),
-    overcome: Boolean(raw?.overcome)
+    overcome: Boolean(raw?.overcome),
+    items: safeTrialItemResults(raw?.items)
   })).filter((entry) => entry.attemptId && entry.questionCount > 0);
 }
 function safeTrialDailyResults(value) {
@@ -242,6 +248,9 @@ function safeTrialDailyResults(value) {
   const rows = Object.entries(value).filter(([day]) => /^\d{4}-\d{2}-\d{2}$/.test(day)).sort(([a], [b]) => a.localeCompare(b)).slice(-TRIAL_HISTORY_DAYS);
   return Object.fromEntries(rows.map(([day, attempts]) => [day, (Array.isArray(attempts) ? attempts : []).slice(-12).map((raw) => ({
     trialId: text(raw?.trialId, 128),
+    deliveryMode: trialDeliveryMode(raw?.deliveryMode),
+    packId: STUDENT_WORD_PACK_BY_ID.has(text(raw?.packId, 80)) ? text(raw.packId, 80) : null,
+    generationSummary: safeTrialGenerationSummary(raw?.generationSummary),
     attemptNo: safeInt(raw?.attemptNo, 1, 1, TRIAL_MAX_ATTEMPTS),
     correctCount: safeInt(raw?.correctCount, 0, 0, 20),
     questionCount: safeInt(raw?.questionCount, 0, 0, 20),
@@ -314,7 +323,7 @@ function normalizedQuestionTypes(value) { const types=[...new Set((Array.isArray
 function assignedPackMetadata(ids) { return (ids || []).map((id) => STUDENT_WORD_PACK_BY_ID.get(id)).filter(Boolean).map((pack) => ({ id: pack.id, label: text(pack.label, 120) || pack.id, wordCount: safeInt(pack.wordCount, Array.isArray(pack.wordKeys) ? pack.wordKeys.length : Array.isArray(pack.words) ? pack.words.length : 0, 0, 5000), supportWordCount: safeInt(pack.supportWordCount, 0, 0, 5000) })); }
 function safeQuestionTypeStats(value) { const result={};LEARNING_QUESTION_TYPES.forEach((type)=>{const row=value&&typeof value==='object'&&!Array.isArray(value)?value[type]:null;result[type]={tries:safeInt(row?.tries,0,0,1000000000),correct:safeInt(row?.correct,0,0,1000000000)};});return result; }
 function classPack(grade, wordPackIds) { return normalizedPackIds(wordPackIds, grade)[0]; }
-const fields = new Set(['avatarType','gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petType','petLvl','petLevels','stage','progress','totalQuizTries','totalQuizCorrect','masteredWords','currentQuizIndex','skillsInventory','skillTierOrderVersion','equippedSkills','activeSkillDeck','skillEssence','skillResearchTargets','skillLockedWords','skillDiscoveredWords','skillSummonPity','skillFusionPity','lockedPotentialSlots','wrongWordCounts','wordLearningStats','questionTypeStats','adaptivePathStats','combatPower','masteryPoints','necklaceLvl','braceletLvl','ringLvl','acquiredRelics','equippedRelicId','gearPotentials','isPotentialUnlocked','equippedTitle','wbTitle','unlockedTitles','bossTokens','relicEssence','relicTranscendLvl','soundSettings','tutorialCompleted','lastSaved','guildBoostCharges']);
+const fields = new Set(['avatarType','appearanceTheme','gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petType','petLvl','petLevels','stage','progress','totalQuizTries','totalQuizCorrect','masteredWords','currentQuizIndex','skillsInventory','skillTierOrderVersion','equippedSkills','activeSkillDeck','skillEssence','skillResearchTargets','skillLockedWords','skillDiscoveredWords','skillSummonPity','skillFusionPity','lockedPotentialSlots','wrongWordCounts','wordLearningStats','questionTypeStats','adaptivePathStats','combatPower','masteryPoints','necklaceLvl','braceletLvl','ringLvl','acquiredRelics','equippedRelicId','gearPotentials','isPotentialUnlocked','equippedTitle','wbTitle','unlockedTitles','bossTokens','relicEssence','relicTranscendLvl','soundSettings','tutorialCompleted','lastSaved','guildBoostCharges']);
 
 function defaultState() { return { avatarType:'male', gold:0, accGold:0, helmetLvl:1, armorLvl:1, weaponLvl:1, shieldLvl:1, shoesLvl:1, stage:1, progress:0, totalQuizTries:0, totalQuizCorrect:0, masteredWords:[], skillsInventory:[], skillTierOrderVersion:2, equippedSkills:[], activeSkillDeck:[], skillEssence:0, skillResearchTargets:[], skillLockedWords:[], skillDiscoveredWords:[], skillSummonPity:{growthWithoutFocus:0}, skillFusionPity:{normal:0,rare:0,hero:0,legendary:0}, wrongWordCounts:{}, wordLearningStats:{}, questionTypeStats:{}, adaptivePathStats:{v:1,p:{}}, combatPower:0, masteryPoints:0, tutorialCompleted:false }; }
 function cleanState(input) {
@@ -324,6 +333,7 @@ function cleanState(input) {
   ['gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petLvl','stage','progress','totalQuizTries','totalQuizCorrect','currentQuizIndex','masteryPoints','necklaceLvl','braceletLvl','ringLvl','skillEssence','bossTokens','relicEssence','combatPower'].forEach((key) => { if (Object.hasOwn(state,key)) state[key]=safeInt(state[key],0,0,9999999999); });
   if (Object.hasOwn(state,'relicTranscendLvl')) state.relicTranscendLvl=safeInt(state.relicTranscendLvl,0,0,10000);
   if (Object.hasOwn(state,'skillTierOrderVersion')) state.skillTierOrderVersion=safeInt(state.skillTierOrderVersion,2,0,2);
+  if (Object.hasOwn(state,'appearanceTheme')) state.appearanceTheme=state.appearanceTheme==='ivory'?'ivory':'dark';
   if (state.masteredWords && !Array.isArray(state.masteredWords)) delete state.masteredWords;
   state.wrongWordCounts = safeWrongWordCounts(state.wrongWordCounts);
   state.wordLearningStats = safeWordLearningStats(state.wordLearningStats);
@@ -422,6 +432,59 @@ function safeActiveTrialAnswerResults(value) {
     answer: text(entry?.answer, 160),
     correct: Boolean(entry?.correct)
   })).filter((entry) => entry.questionId);
+}
+const TRIAL_WORD_TYPES = new Set(['meaning-choice', 'word-choice', 'spelling', 'unscramble']);
+function trialDeliveryMode(value) {
+  return value === 'personalized' ? 'personalized' : 'common';
+}
+function safeTrialWords(value) {
+  const seen = new Set();
+  return (Array.isArray(value) ? value : []).slice(0, 20).map((raw) => {
+    const word = text(raw?.word, 80);
+    const key = word.toLowerCase();
+    const meaning = text(raw?.meaning, 160);
+    const type = text(raw?.type, 32);
+    if (!key || !meaning || seen.has(key) || !TRIAL_WORD_TYPES.has(type)) return null;
+    seen.add(key);
+    const packId = text(raw?.packId, 80);
+    const requestedSourceGroup = ['unresolved', 'review', 'current'].includes(raw?.requestedSourceGroup) ? raw.requestedSourceGroup : null;
+    const actualSourceGroup = ['unresolved', 'review', 'current'].includes(raw?.actualSourceGroup) ? raw.actualSourceGroup : null;
+    return {
+      word,
+      meaning,
+      type,
+      wrongCount: safeInt(raw?.wrongCount, 0, 0, 1000000),
+      ...(STUDENT_WORD_PACK_BY_ID.has(packId) ? { packId } : {}),
+      ...(requestedSourceGroup ? { requestedSourceGroup } : {}),
+      ...(actualSourceGroup ? { actualSourceGroup } : {}),
+      fallback: Boolean(raw?.fallback)
+    };
+  }).filter(Boolean);
+}
+function safeTrialGenerationSummary(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const packId = text(value.packId, 80);
+  const groupCounts = Object.fromEntries(['unresolved', 'review', 'current'].map((group) => [group, safeInt(value.groupCounts?.[group], 0, 0, 20)]));
+  const requestedGroupCounts = Object.fromEntries(['unresolved', 'review', 'current'].map((group) => [group, safeInt(value.requestedGroupCounts?.[group], 0, 0, 20)]));
+  return {
+    mode: value.mode === 'support' ? 'support' : 'normal',
+    ...(STUDENT_WORD_PACK_BY_ID.has(packId) ? { packId, packLabel: text(value.packLabel, 120) || STUDENT_WORD_PACK_BY_ID.get(packId)?.label || packId } : {}),
+    questionCount: safeInt(value.questionCount, 0, 0, 20),
+    requestedGroupCounts,
+    groupCounts,
+    fallbackCount: safeInt(value.fallbackCount, 0, 0, 20)
+  };
+}
+function resolveTrialMaterial(trial, assignmentData) {
+  const deliveryMode = trialDeliveryMode(trial?.deliveryMode);
+  if (deliveryMode === 'personalized' && (!assignmentData || typeof assignmentData !== 'object')) {
+    return { assigned: false, deliveryMode, words: [], generationSummary: null, packId: null };
+  }
+  const source = deliveryMode === 'personalized' ? assignmentData : trial;
+  const words = safeTrialWords(source?.words);
+  const generationSummary = deliveryMode === 'personalized' ? safeTrialGenerationSummary(source?.generationSummary) : null;
+  const packId = text(source?.packId || trial?.wordPackId, 80);
+  return { assigned: true, deliveryMode, words, generationSummary, packId: STUDENT_WORD_PACK_BY_ID.has(packId) ? packId : null };
 }
 function createActiveTrialQuestions(words) {
   return words.map((_entry, sourceIndex) => ({ id: randomUUID().toLowerCase(), sourceIndex })).sort((a, b) => a.id.localeCompare(b.id));
@@ -931,8 +994,8 @@ async function completeGuildTrial(uid, body) {
     const history = safeTrialAttemptHistory(current.attemptHistory);
     const prior = history.find((entry) => entry.attemptId === attemptId);
     const currentCoins = safeInt(memberSnap.data()?.guildCoins, 0, 0, 1000000000);
-    if (prior) return { result: prior, attemptCount: history.length, remainingAttempts: Math.max(0, TRIAL_MAX_ATTEMPTS - history.length), overcome: prior.overcome || completionSnap.exists, exhausted: !prior.overcome && history.length >= TRIAL_MAX_ATTEMPTS, rewardGuildCoins: 0, rewardGuildPoints: 0, guildCoins: currentCoins, alreadyRecorded: true };
-    if (completionSnap.exists) return { result: history.at(-1) || null, attemptCount: history.length, remainingAttempts: 0, overcome: true, exhausted: false, rewardGuildCoins: 0, rewardGuildPoints: 0, guildCoins: currentCoins, alreadyCompleted: true };
+    if (prior) return { result: prior, attemptCount: history.length, remainingAttempts: Math.max(0, TRIAL_MAX_ATTEMPTS - history.length), overcome: prior.overcome || completionSnap.exists, exhausted: !prior.overcome && history.length >= TRIAL_MAX_ATTEMPTS, rewardGuildCoins: 0, guildCoins: currentCoins, alreadyRecorded: true };
+    if (completionSnap.exists) return { result: history.at(-1) || null, attemptCount: history.length, remainingAttempts: 0, overcome: true, exhausted: false, rewardGuildCoins: 0, guildCoins: currentCoins, alreadyCompleted: true };
     if (history.length >= TRIAL_MAX_ATTEMPTS) throw apiError(409, 'TRIAL_ATTEMPTS_EXHAUSTED', '이번 시련의 도전 기회를 모두 사용했어요.');
     if (text(current.activeAttemptId, 128).toLowerCase() !== attemptId) throw apiError(409, 'TRIAL_ATTEMPT_REPLACED', '새로 시작한 도전이 있어요. 길드 본부에서 다시 시작해 주세요.');
     const activeQuestions = safeActiveTrialQuestions(current.activeQuestions, words.length);
@@ -960,17 +1023,16 @@ async function completeGuildTrial(uid, body) {
     const daily = safeTrialDailyResults(memberData.trialDailyResults);
     daily[day] = [...(daily[day] || []), { trialId, deliveryMode: material.deliveryMode, packId: material.packId, generationSummary: material.generationSummary, ...result }].slice(-12);
     const prunedDaily = safeTrialDailyResults(daily);
-    const rewardGuildCoins = overcome ? words.length * 5 : 0;
-    const rewardGuildPoints = overcome ? words.length * 10 : 0;
+    const rewardGuildCoins = overcome ? safeInt(trial.rewardGuildCoins, words.length * 5, 0, 1000) : 0;
     const guildCoins = currentCoins + rewardGuildCoins;
     tx.set(progressRef, { uid, activeAttemptId: FieldValue.delete(), activeQuestions: FieldValue.delete(), activeAnswerResults: FieldValue.delete(), activeAttemptStartedAt: FieldValue.delete(), attemptCount: nextHistory.length, retryCount: Math.max(0, nextHistory.length - 1), attemptHistory: nextHistory, hintKeys: FieldValue.delete(), hintsUsed: nextHistory.reduce((sum, entry) => sum + entry.hintsUsed, 0), lastWrongCount: words.length - correctCount, lastAttemptAt: FieldValue.serverTimestamp(), status: overcome ? 'overcome' : nextHistory.length >= TRIAL_MAX_ATTEMPTS ? 'exhausted' : 'retry-available', updatedAt: FieldValue.serverTimestamp() }, { merge: true });
     const memberUpdate = { trialAttempts: FieldValue.increment(1), trialRetries: FieldValue.increment(attemptNo > 1 ? 1 : 0), trialHintsUsed: FieldValue.increment(hintsUsed), trialHintedCorrect: FieldValue.increment(correctAfterHint), trialUnassistedCorrect: FieldValue.increment(unassistedCorrect), trialUnassistedTries: FieldValue.increment(unassistedTries), trialDailyResults: prunedDaily, lastTrialActivityAt: FieldValue.serverTimestamp() };
     if (overcome) {
-      Object.assign(memberUpdate, { guildCoins, guildTrialCorrect: FieldValue.increment(words.length), guildPoints: FieldValue.increment(rewardGuildPoints), lastTrialCompletedAt: FieldValue.serverTimestamp() });
-      tx.set(completionRef, { uid, correctCount, rewardGuildCoins, rewardGuildPoints, attemptNo, completedAt: FieldValue.serverTimestamp() });
+      Object.assign(memberUpdate, { guildCoins, guildTrialCorrect: FieldValue.increment(words.length), guildPoints: FieldValue.increment(words.length * 10), lastTrialCompletedAt: FieldValue.serverTimestamp() });
+      tx.set(completionRef, { uid, correctCount, rewardGuildCoins, attemptNo, completedAt: FieldValue.serverTimestamp() });
     }
     tx.set(memberRef, memberUpdate, { merge: true });
-    return { result, deliveryMode: material.deliveryMode, generationSummary: material.generationSummary, attemptCount: nextHistory.length, remainingAttempts: Math.max(0, TRIAL_MAX_ATTEMPTS - nextHistory.length), overcome, exhausted: !overcome && nextHistory.length >= TRIAL_MAX_ATTEMPTS, rewardGuildCoins, rewardGuildPoints, guildCoins };
+    return { result, deliveryMode: material.deliveryMode, generationSummary: material.generationSummary, attemptCount: nextHistory.length, remainingAttempts: Math.max(0, TRIAL_MAX_ATTEMPTS - nextHistory.length), overcome, exhausted: !overcome && nextHistory.length >= TRIAL_MAX_ATTEMPTS, rewardGuildCoins, guildCoins };
   });
 }async function publish(uid, data) {
   if (!data.leaderboardOptIn) return leaderboard.doc(uid).delete();
@@ -1122,8 +1184,7 @@ async function leaveClass(uid) {
     const trialRef = classes.doc(classId).collection('trials').doc(activeTrialId);
     await Promise.all([
       trialRef.collection('progress').doc(uid).delete().catch(() => {}),
-      trialRef.collection('completions').doc(uid).delete().catch(() => {}),
-      trialRef.collection('assignments').doc(uid).delete().catch(() => {})
+      trialRef.collection('completions').doc(uid).delete().catch(() => {})
     ]);
   }
   await Promise.all([publish(uid, data), syncWorldBossVisibility(uid, data)]);

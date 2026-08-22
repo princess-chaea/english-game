@@ -72,6 +72,27 @@ async function deleteRefsInBatches(refs) {
 }
 
 const packCatalog = JSON.parse(readFileSync(new URL('../data/word-packs.json', import.meta.url), 'utf8'));
+function adaptiveRatioSet(value, fallback) {
+  const ratios = {
+    unresolved: safeInt(value?.unresolved, fallback.unresolved, 0, 100),
+    review: safeInt(value?.review, fallback.review, 0, 100),
+    current: safeInt(value?.current, fallback.current, 0, 100)
+  };
+  return Object.freeze(ratios.unresolved + ratios.review + ratios.current === 100 ? ratios : { ...fallback });
+}
+const adaptivePolicySource = packCatalog.adaptivePolicy || {};
+const ADAPTIVE_PATH_POLICY = Object.freeze({
+  resolvedStreak: safeInt(adaptivePolicySource.resolved?.streak, 3, 1, 20),
+  resolvedAccuracy: safeInt(adaptivePolicySource.resolved?.accuracy, 80, 1, 100),
+  supportMinTries: safeInt(adaptivePolicySource.supportMode?.minTries, 8, 1, 1000),
+  supportAccuracyBelow: safeInt(adaptivePolicySource.supportMode?.accuracyBelow, 75, 1, 100),
+  supportUnresolvedCount: safeInt(adaptivePolicySource.supportMode?.unresolvedCount, 3, 1, 1000),
+  supportUnresolvedWrongTotal: safeInt(adaptivePolicySource.supportMode?.unresolvedWrongTotal, 4, 1, 1000000),
+  ratios: Object.freeze({
+    normal: adaptiveRatioSet(adaptivePolicySource.targetRatios?.normal, { unresolved: 20, review: 20, current: 60 }),
+    support: adaptiveRatioSet(adaptivePolicySource.targetRatios?.support, { unresolved: 55, review: 30, current: 15 })
+  })
+});
 const MIN_LEARNING_GRADE = 3;
 const MAX_LEARNING_GRADE = 12;
 const wordByKey = new Map((packCatalog.words || []).map((entry) => {
@@ -588,6 +609,72 @@ function wordLearningRows(value) {
   }).filter(Boolean);
 }
 
+function adaptivePathForMember(learningRows, wordPackId) {
+  const pack = wordPackById.get(wordPackId);
+  const packWords = packWordsById.get(wordPackId);
+  if (!pack || !packWords) return null;
+  const statsByWord = new Map((learningRows || []).map((entry) => [String(entry.word || '').toLowerCase(), entry]));
+  const supportLimit = Math.max(0, Number(pack.supportWordCount) || 0);
+  const candidates = [...packWords.keys()].map((key, index) => {
+    const row = statsByWord.get(key) || {};
+    const correct = safeInt(row.correctCount, 0, 0, 1000000);
+    const wrong = safeInt(row.wrongCount, 0, 0, 1000000);
+    const tries = correct + wrong;
+    const accuracy = tries ? correct / tries * 100 : 0;
+    const streak = safeInt(row.streak, 0, 0, 1000000);
+    const rank = Math.max(0, Number(wordByKey.get(key)?.spiralRank) || index + 1);
+    const unresolved = wrong > 0 && (streak < ADAPTIVE_PATH_POLICY.resolvedStreak || accuracy < ADAPTIVE_PATH_POLICY.resolvedAccuracy);
+    const review = supportLimit > 0 && rank > 0 && rank <= supportLimit;
+    return { correct, wrong, tries, unresolved, review };
+  });
+  const evidence = candidates.reduce((summary, item) => {
+    summary.correct += item.correct;
+    summary.wrong += item.wrong;
+    if (item.unresolved) {
+      summary.unresolvedCount += 1;
+      summary.unresolvedWrongTotal += item.wrong;
+    }
+    if (item.tries === 0) summary.unseenCount += 1;
+    return summary;
+  }, { correct: 0, wrong: 0, unresolvedCount: 0, unresolvedWrongTotal: 0, unseenCount: 0 });
+  evidence.tries = evidence.correct + evidence.wrong;
+  evidence.accuracy = evidence.tries ? Math.round(evidence.correct / evidence.tries * 1000) / 10 : 0;
+  const triggers = {
+    lowAccuracy: evidence.tries >= ADAPTIVE_PATH_POLICY.supportMinTries
+      && evidence.correct / evidence.tries * 100 < ADAPTIVE_PATH_POLICY.supportAccuracyBelow,
+    unresolvedCount: evidence.unresolvedCount >= ADAPTIVE_PATH_POLICY.supportUnresolvedCount,
+    unresolvedWrongTotal: evidence.unresolvedWrongTotal >= ADAPTIVE_PATH_POLICY.supportUnresolvedWrongTotal
+  };
+  const supportMode = Object.values(triggers).some(Boolean);
+  return {
+    mode: supportMode ? 'support' : 'normal',
+    modeLabel: supportMode ? '문항 보충 경로' : '일반 경로',
+    selectedPack: {
+      id: pack.id,
+      label: pack.label,
+      wordCount: candidates.length,
+      supportWordCount: supportLimit,
+      currentWordCount: Math.max(0, candidates.length - supportLimit)
+    },
+    ratios: { ...(supportMode ? ADAPTIVE_PATH_POLICY.ratios.support : ADAPTIVE_PATH_POLICY.ratios.normal) },
+    candidateCounts: {
+      unresolved: candidates.filter((item) => item.unresolved).length,
+      review: candidates.filter((item) => item.review && !item.unresolved).length,
+      current: candidates.filter((item) => !item.review && !item.unresolved).length
+    },
+    evidence,
+    triggers,
+    policy: {
+      resolvedStreak: ADAPTIVE_PATH_POLICY.resolvedStreak,
+      resolvedAccuracy: ADAPTIVE_PATH_POLICY.resolvedAccuracy,
+      supportMinTries: ADAPTIVE_PATH_POLICY.supportMinTries,
+      supportAccuracyBelow: ADAPTIVE_PATH_POLICY.supportAccuracyBelow,
+      supportUnresolvedCount: ADAPTIVE_PATH_POLICY.supportUnresolvedCount,
+      supportUnresolvedWrongTotal: ADAPTIVE_PATH_POLICY.supportUnresolvedWrongTotal
+    }
+  };
+}
+
 const ANALYTICS_DAY_MS = 24 * 60 * 60 * 1000;
 const TRIAL_HISTORY_DAYS = 120;
 const TRIAL_MAX_ATTEMPTS = 3;
@@ -606,6 +693,84 @@ function safeDailyLearning(value) {
     };
   });
   return result;
+}
+const ADAPTIVE_PATH_ROUTE_KEYS = Object.freeze(['nu', 'nr', 'nc', 'su', 'sr', 'sc']);
+function safeAdaptivePathTuple(value) {
+  const source = Array.isArray(value) ? value : [];
+  const routed = safeInt(source[0], 0, 0, 1000000000);
+  const firstCorrect = Math.min(routed, safeInt(source[1], 0, 0, 1000000000));
+  const attempts = Math.max(routed, safeInt(source[2], routed, 0, 1000000000));
+  const additionalWrong = Math.min(attempts, safeInt(source[3], 0, 0, 1000000000));
+  const fallback = Math.min(routed, safeInt(source[4], 0, 0, 1000000000));
+  return [routed, firstCorrect, attempts, additionalWrong, fallback];
+}
+function safeAdaptivePathDaily(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(Object.entries(value)
+    .filter(([day]) => /^d{4}-d{2}-d{2}$/.test(day))
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-TRIAL_HISTORY_DAYS)
+    .map(([day, rawPacks]) => {
+      const packs = {};
+      if (rawPacks && typeof rawPacks === 'object' && !Array.isArray(rawPacks)) {
+        Object.entries(rawPacks).slice(0, wordPackById.size).forEach(([rawPackId, rawRoutes]) => {
+          const packId = text(rawPackId, 80);
+          if (!wordPackById.has(packId) || !rawRoutes || typeof rawRoutes !== 'object' || Array.isArray(rawRoutes)) return;
+          packs[packId] = Object.fromEntries(ADAPTIVE_PATH_ROUTE_KEYS.map((key) => [key, safeAdaptivePathTuple(rawRoutes[key])]));
+        });
+      }
+      return [day, packs];
+    }));
+}
+function addAdaptivePathTuples(...values) {
+  return values.reduce((total, value) => {
+    const tuple = safeAdaptivePathTuple(value);
+    return total.map((entry, index) => entry + tuple[index]);
+  }, [0, 0, 0, 0, 0]);
+}
+function readableAdaptivePathTotals(value) {
+  const [routed, firstCorrect, attempts, additionalWrong, fallback] = safeAdaptivePathTuple(value);
+  return {
+    routed,
+    firstCorrect,
+    firstAccuracy: routed ? Math.round(firstCorrect / routed * 1000) / 10 : 0,
+    attempts,
+    additionalWrong,
+    fallback
+  };
+}
+function adaptivePathSeries(value) {
+  const daily = safeAdaptivePathDaily(value);
+  return Object.entries(daily).map(([day, packs]) => {
+    const packRows = Object.entries(packs).map(([packId, routes]) => {
+      const normal = addAdaptivePathTuples(routes.nu, routes.nr, routes.nc);
+      const support = addAdaptivePathTuples(routes.su, routes.sr, routes.sc);
+      const unresolved = addAdaptivePathTuples(routes.nu, routes.su);
+      const review = addAdaptivePathTuples(routes.nr, routes.sr);
+      const current = addAdaptivePathTuples(routes.nc, routes.sc);
+      return {
+        packId,
+        packLabel: wordPackById.get(packId)?.label || packId,
+        totals: readableAdaptivePathTotals(addAdaptivePathTuples(normal, support)),
+        modes: { normal: readableAdaptivePathTotals(normal), support: readableAdaptivePathTotals(support) },
+        groups: { unresolved: readableAdaptivePathTotals(unresolved), review: readableAdaptivePathTotals(review), current: readableAdaptivePathTotals(current) }
+      };
+    });
+    const sumRows = (selector) => packRows.reduce((total, row) => addAdaptivePathTuples(total, selector(row)), [0, 0, 0, 0, 0]);
+    const rawFromReadable = (row) => [row.routed, row.firstCorrect, row.attempts, row.additionalWrong, row.fallback];
+    const normal = sumRows((row) => rawFromReadable(row.modes.normal));
+    const support = sumRows((row) => rawFromReadable(row.modes.support));
+    const unresolved = sumRows((row) => rawFromReadable(row.groups.unresolved));
+    const review = sumRows((row) => rawFromReadable(row.groups.review));
+    const current = sumRows((row) => rawFromReadable(row.groups.current));
+    return {
+      day,
+      totals: readableAdaptivePathTotals(addAdaptivePathTuples(normal, support)),
+      modes: { normal: readableAdaptivePathTotals(normal), support: readableAdaptivePathTotals(support) },
+      groups: { unresolved: readableAdaptivePathTotals(unresolved), review: readableAdaptivePathTotals(review), current: readableAdaptivePathTotals(current) },
+      packs: packRows
+    };
+  });
 }
 function safeTrialDailyResults(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
@@ -905,6 +1070,7 @@ async function memberLearningReport(uid, body) {
   const totalQuizTries = Math.max(totalCorrect, safeInt(state.totalQuizTries, safeInt(member.totalQuizTries, totalCorrect, 0), 0, 1000000000));
   const wrong = state.wrongWordCounts && typeof state.wrongWordCounts === 'object' && !Array.isArray(state.wrongWordCounts) ? state.wrongWordCounts : {};
   const learningRows = wordLearningRows(state.wordLearningStats || member.wordLearningStats);
+  const adaptivePath = adaptivePathForMember(learningRows, learningSettings.wordPackId);
   const rowKeys = new Set(learningRows.map((entry) => entry.word.toLowerCase()));
   Object.entries(wrong).forEach(([rawWord, rawCount]) => {
     const key = text(rawWord, 80).toLowerCase();
@@ -921,6 +1087,8 @@ async function memberLearningReport(uid, body) {
   const trialUnassistedCorrect = Math.min(trialUnassistedTries, safeInt(member.trialUnassistedCorrect, 0, 0, 1000000));
   const trialHintedAccuracy = percent(trialHintedCorrect, trialHintsUsed);
   const trialUnassistedAccuracy = percent(trialUnassistedCorrect, trialUnassistedTries);
+  const adaptivePathDaily = safeAdaptivePathDaily(member.adaptivePathDaily);
+  const adaptivePathStartedDay = /^d{4}-d{2}-d{2}$/.test(member.adaptivePathStartedDay || '') ? member.adaptivePathStartedDay : null;
   return {
     memberId,
     nickname: text(member.nickname, 30) || '이름 없는 용사',
@@ -953,12 +1121,171 @@ async function memberLearningReport(uid, body) {
     dailySeries: dailySeriesForMembers([{ dailyLearning: safeDailyLearning(member.dailyLearning) }], 120),
     usesGuildLearningDefaults: learningSettings.usesGuildLearningDefaults,
     assignedWordPackIds: learningSettings.wordPackIds,
+    adaptivePath,
+    adaptivePathDaily,
+    adaptivePathSeries: adaptivePathSeries(adaptivePathDaily),
+    adaptivePathStartedDay,
     questionTypes: learningSettings.questionTypes,
     questionTypeStats: safeQuestionTypeStats(state.questionTypeStats || member.questionTypeStats),
     wrongWords,
     lastActiveAt: member.lastActiveAt?.toDate?.().toISOString?.() || null
   };
 }const TRIAL_TYPES = new Set(['meaning-choice', 'word-choice', 'spelling', 'unscramble']);
+const TRIAL_GROUPS = Object.freeze(['unresolved', 'review', 'current']);
+const TRIAL_TYPE_FROM_LEARNING_TYPE = Object.freeze({
+  'meaning-choice': 'meaning-choice',
+  'listen-meaning': 'meaning-choice',
+  'word-choice': 'word-choice',
+  'fill-blank': 'spelling',
+  'short-answer': 'spelling',
+  'word-order': 'unscramble'
+});
+function trialDeliveryMode(value) {
+  return value === 'personalized' ? 'personalized' : 'common';
+}
+function trialPackForClass(classData, requestedPackId) {
+  const requested = text(requestedPackId, 80);
+  const grade = safeInt(classData?.grade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE);
+  const source = requested || classData?.wordPackIds || classData?.wordPackId;
+  const pack = highestAllowedWordPack(source, grade);
+  if (!pack || (requested && pack.id !== requested)) throw apiError(400, 'INVALID_TRIAL_WORD_PACK', '시련에 사용할 유효한 누적 단어팩을 선택해 주세요.');
+  return pack;
+}
+function normalizedTrialMemberIds(value) {
+  return [...new Set((Array.isArray(value) ? value : []).map((id) => text(id, 128)).filter(Boolean))].slice(0, 200);
+}
+function targetTrialGroupCounts(count, ratios) {
+  const entries = TRIAL_GROUPS.map((group) => {
+    const exact = count * safeInt(ratios?.[group], 0, 0, 100) / 100;
+    return { group, count: Math.floor(exact), fraction: exact - Math.floor(exact) };
+  });
+  let remaining = count - entries.reduce((sum, entry) => sum + entry.count, 0);
+  entries.slice().sort((a, b) => b.fraction - a.fraction || TRIAL_GROUPS.indexOf(a.group) - TRIAL_GROUPS.indexOf(b.group)).forEach((entry) => {
+    if (remaining > 0) { entry.count += 1; remaining -= 1; }
+  });
+  return Object.fromEntries(entries.map((entry) => [entry.group, entry.count]));
+}
+function trialTypesForSettings(settings) {
+  const types = [...new Set((settings?.questionTypes || []).map((type) => TRIAL_TYPE_FROM_LEARNING_TYPE[type]).filter((type) => TRIAL_TYPES.has(type)))];
+  return types.length ? types : ['meaning-choice'];
+}
+function personalizedTrialForMember(memberSnap, classData, count) {
+  const member = memberSnap.data() || {};
+  const settings = effectiveMemberLearningSettings(member, classData);
+  const pack = wordPackById.get(settings.wordPackId);
+  const packWords = packWordsById.get(settings.wordPackId);
+  if (!pack || !packWords || packWords.size < count) return { excluded: true, reason: '배정 단어팩의 문항 후보가 부족해요.' };
+  const learningRows = wordLearningRows(member.wordLearningStats);
+  const rowByWord = new Map(learningRows.map((row) => [row.word.toLowerCase(), row]));
+  const adaptivePath = adaptivePathForMember(learningRows, settings.wordPackId);
+  const mode = adaptivePath?.mode === 'support' ? 'support' : 'normal';
+  const ratios = ADAPTIVE_PATH_POLICY.ratios[mode];
+  const requestedGroupCounts = targetTrialGroupCounts(count, ratios);
+  const supportLimit = Math.max(0, Number(pack.supportWordCount) || 0);
+  const pools = Object.fromEntries(TRIAL_GROUPS.map((group) => [group, []]));
+  [...packWords.entries()].forEach(([key, word], index) => {
+    const row = rowByWord.get(key) || {};
+    const correct = safeInt(row.correctCount, 0, 0, 1000000);
+    const wrong = safeInt(row.wrongCount, 0, 0, 1000000);
+    const tries = correct + wrong;
+    const accuracy = tries ? correct / tries * 100 : 0;
+    const streak = safeInt(row.streak, 0, 0, 1000000);
+    const rank = Math.max(0, Number(wordByKey.get(key)?.spiralRank) || index + 1);
+    const unresolved = wrong > 0 && (streak < ADAPTIVE_PATH_POLICY.resolvedStreak || accuracy < ADAPTIVE_PATH_POLICY.resolvedAccuracy);
+    const group = unresolved ? 'unresolved' : supportLimit > 0 && rank <= supportLimit ? 'review' : 'current';
+    pools[group].push({ ...word, key, wrongCount: wrong, tries, accuracy, streak, lastSeenAt: safeInt(row.lastSeenAt, 0, 0, 9999999999999) });
+  });
+  pools.unresolved.sort((a, b) => b.wrongCount - a.wrongCount || a.accuracy - b.accuracy || b.lastSeenAt - a.lastSeenAt || a.word.localeCompare(b.word));
+  ['review', 'current'].forEach((group) => pools[group].sort((a, b) => {
+    const aPriority = a.tries > 0 ? 0 : 1;
+    const bPriority = b.tries > 0 ? 0 : 1;
+    return aPriority - bPriority || a.accuracy - b.accuracy || b.wrongCount - a.wrongCount || a.lastSeenAt - b.lastSeenAt || a.word.localeCompare(b.word);
+  }));
+  const requestedSlots = TRIAL_GROUPS.flatMap((group) => Array.from({ length: requestedGroupCounts[group] }, () => group));
+  const selected = [];
+  const used = new Set();
+  requestedSlots.forEach((requestedSourceGroup, slotIndex) => {
+    const actualSourceGroup = [requestedSourceGroup, ...TRIAL_GROUPS.filter((group) => group !== requestedSourceGroup)]
+      .find((group) => pools[group].some((entry) => !used.has(entry.key)));
+    if (!actualSourceGroup) return;
+    const source = pools[actualSourceGroup].find((entry) => !used.has(entry.key));
+    if (!source) return;
+    used.add(source.key);
+    const typePool = trialTypesForSettings(settings);
+    selected.push({
+      word: source.word,
+      meaning: source.meaning,
+      wrongCount: source.wrongCount,
+      type: typePool[slotIndex % typePool.length],
+      packId: settings.wordPackId,
+      requestedSourceGroup,
+      actualSourceGroup,
+      fallback: requestedSourceGroup !== actualSourceGroup
+    });
+  });
+  if (selected.length !== count) return { excluded: true, reason: '학생별 맞춤 문항 수를 동일하게 구성하지 못했어요.' };
+  const groupCounts = Object.fromEntries(TRIAL_GROUPS.map((group) => [group, selected.filter((entry) => entry.actualSourceGroup === group).length]));
+  const generationSummary = {
+    mode,
+    packId: settings.wordPackId,
+    packLabel: pack.label,
+    questionCount: selected.length,
+    requestedGroupCounts,
+    groupCounts,
+    fallbackCount: selected.filter((entry) => entry.fallback).length
+  };
+  return {
+    excluded: false,
+    memberId: memberSnap.id,
+    nickname: text(member.nickname, 30) || '이름 없는 용사',
+    packId: settings.wordPackId,
+    packLabel: pack.label,
+    mode,
+    questionCount: selected.length,
+    groupCounts,
+    fallbackCount: generationSummary.fallbackCount,
+    generationSummary,
+    words: selected
+  };
+}
+async function personalizedTrialPlan(uid, body) {
+  const classId = text(body.classId, 128);
+  const classSnap = await ownedClass(uid, classId);
+  const memberIds = normalizedTrialMemberIds(body.memberIds);
+  if (!memberIds.length) throw apiError(400, 'MEMBER_SELECTION_REQUIRED', '개별 맞춤 시련을 받을 길드원을 선택해 주세요.');
+  const count = safeInt(body.count, 5, 5, 20);
+  const memberSnaps = await Promise.all(memberIds.map((id) => classSnap.ref.collection('members').doc(id).get()));
+  const members = [];
+  const excluded = [];
+  memberSnaps.forEach((memberSnap, index) => {
+    if (!memberSnap.exists) {
+      excluded.push({ memberId: memberIds[index], nickname: null, reason: '현재 길드원이 아니에요.' });
+      return;
+    }
+    const generated = personalizedTrialForMember(memberSnap, classSnap.data() || {}, count);
+    if (generated.excluded) excluded.push({ memberId: memberSnap.id, nickname: text(memberSnap.data()?.nickname, 30) || '이름 없는 용사', reason: generated.reason });
+    else members.push(generated);
+  });
+  return { classSnap, count, memberIds, members, excluded };
+}
+async function previewPersonalizedTrial(uid, body) {
+  const plan = await personalizedTrialPlan(uid, body);
+  return {
+    classId: plan.classSnap.id,
+    members: plan.members.map((member) => ({
+      memberId: member.memberId,
+      nickname: member.nickname,
+      packId: member.packId,
+      packLabel: member.packLabel,
+      mode: member.mode,
+      questionCount: member.questionCount,
+      groupCounts: member.groupCounts,
+      fallbackCount: member.fallbackCount,
+      words: member.words.map(({ word, meaning, type, requestedSourceGroup, actualSourceGroup, fallback }) => ({ word, meaning, type, requestedSourceGroup, actualSourceGroup, fallback }))
+    })),
+    excluded: plan.excluded
+  };
+}
 async function activeTrialStats(classRef, classData) {
   const trialId = text(classData?.activeTrialId, 128);
   if (!trialId) return null;
@@ -976,10 +1303,14 @@ async function activeTrialStats(classRef, classData) {
     hintCount += safeInt(doc.data()?.hintsUsed, 0, 0, 10000);
   });
   const trial = trialSnap.data();
+  const deliveryMode = trialDeliveryMode(trial.deliveryMode);
   return {
     id: trialId,
+    deliveryMode,
     questionCount: safeInt(trial.questionCount, 0, 0, 20),
     rewardGuildCoins: safeInt(trial.rewardGuildCoins, 0, 0, 1000),
+    targetCount: safeInt(trial.targetCount, deliveryMode === 'common' ? progress.size : 0, 0, 200),
+    generationSummary: trial.generationSummary && typeof trial.generationSummary === 'object' && !Array.isArray(trial.generationSummary) ? trial.generationSummary : null,
     participantCount: progress.size,
     completedCount: completions.size,
     attemptCount,
@@ -991,7 +1322,8 @@ async function activeTrialStats(classRef, classData) {
 async function wrongWordSummary(uid, body, memberRows = null) {
   const classId = text(body.classId, 128);
   const classSnap = await ownedClass(uid, classId);
-  const eligibleWords = wordByKey;
+  const pack = trialPackForClass(classSnap.data() || {}, body.wordPackId);
+  const eligibleWords = packWordsById.get(pack.id) || new Map();
   const rows = Array.isArray(memberRows) ? memberRows.slice(0, 200).map((member) => ({ id: member.memberId, wrongWordCounts: member.wrongWordCounts })) : (await classSnap.ref.collection('members').select('wrongWordCounts').limit(200).get()).docs.map((member) => ({ id: member.id, wrongWordCounts: member.data()?.wrongWordCounts }));
   const memberIds = rows.map((member) => member.id);
   const totals = new Map();
@@ -1022,39 +1354,78 @@ async function wrongWordSummary(uid, body, memberRows = null) {
     .map(([key, wrongCount]) => ({ ...eligibleWords.get(key), wrongCount }))
     .sort((a, b) => b.wrongCount - a.wrongCount || a.word.localeCompare(b.word))
     .slice(0, 100);
-  return { classId, guildName: guildName(classSnap.data()), memberCount: memberIds.length, words, activeTrial: await activeTrialStats(classSnap.ref, classSnap.data()) };
+  return { classId, guildName: guildName(classSnap.data()), memberCount: memberIds.length, wordPackId: pack.id, wordPackLabel: pack.label, words, activeTrial: await activeTrialStats(classSnap.ref, classSnap.data()) };
 }
 async function createGuildTrial(uid, body) {
-  const summary = await wrongWordSummary(uid, body);
+  const deliveryMode = trialDeliveryMode(body.deliveryMode);
   const count = safeInt(body.count, 5, 5, 20);
-  const candidates = summary.words.slice(0, count);
-  if (candidates.length < 5) throw apiError(409, 'NOT_ENOUGH_WRONG_WORDS', '시련을 만들려면 뜻이 등록된 길드 오답 단어가 5개 이상 필요해요.');
-  const candidateByKey = new Map(candidates.map((entry) => [entry.word.toLowerCase(), entry]));
-  const requested = Array.isArray(body.items) ? body.items.slice(0, count) : [];
-  const seen = new Set();
-  const words = requested.map((item) => {
-    const key = text(item?.word, 80).toLowerCase();
-    const source = candidateByKey.get(key);
-    const type = text(item?.type, 32);
-    if (!source || seen.has(key) || !TRIAL_TYPES.has(type)) return null;
-    seen.add(key);
-    return { word: source.word, meaning: source.meaning, wrongCount: source.wrongCount, type };
-  }).filter(Boolean);
-  if (words.length !== candidates.length) throw apiError(400, 'INVALID_TRIAL_REVIEW', '검토한 단어와 문제 유형을 다시 확인해 주세요.');
-  const classRef = classes.doc(summary.classId);
+  let classRef;
+  let classId;
+  let guildLabel;
+  let words = [];
+  let wordPackId = null;
+  let targetCount = 0;
+  let generationSummary = null;
+  let personalizedMembers = [];
+  if (deliveryMode === 'personalized') {
+    const plan = await personalizedTrialPlan(uid, body);
+    if (plan.excluded.length || plan.members.length !== plan.memberIds.length) {
+      throw apiError(409, 'PERSONALIZED_TRIAL_INCOMPLETE', '일부 길드원의 맞춤 문항을 동일한 수로 만들지 못했어요. 미리보기에서 제외 사유를 확인해 주세요.');
+    }
+    classRef = plan.classSnap.ref;
+    classId = plan.classSnap.id;
+    guildLabel = guildName(plan.classSnap.data());
+    personalizedMembers = plan.members;
+    targetCount = plan.members.length;
+    const groupCounts = Object.fromEntries(TRIAL_GROUPS.map((group) => [group, plan.members.reduce((sum, member) => sum + safeInt(member.groupCounts[group], 0, 0, 20), 0)]));
+    generationSummary = {
+      targetCount,
+      questionCountPerMember: count,
+      modeCounts: {
+        normal: plan.members.filter((member) => member.mode === 'normal').length,
+        support: plan.members.filter((member) => member.mode === 'support').length
+      },
+      groupCounts,
+      fallbackCount: plan.members.reduce((sum, member) => sum + member.fallbackCount, 0)
+    };
+  } else {
+    const summary = await wrongWordSummary(uid, body);
+    const candidates = summary.words.slice(0, count);
+    if (candidates.length < count) throw apiError(409, 'NOT_ENOUGH_WRONG_WORDS', '선택한 누적팩에서 시련 '+count+'문제를 만들 만큼 길드 오답 단어가 충분하지 않아요.');
+    const candidateByKey = new Map(candidates.map((entry) => [entry.word.toLowerCase(), entry]));
+    const requested = Array.isArray(body.items) ? body.items.slice(0, count) : [];
+    const seen = new Set();
+    words = requested.map((item) => {
+      const key = text(item?.word, 80).toLowerCase();
+      const source = candidateByKey.get(key);
+      const type = text(item?.type, 32);
+      if (!source || seen.has(key) || !TRIAL_TYPES.has(type)) return null;
+      seen.add(key);
+      return { word: source.word, meaning: source.meaning, wrongCount: source.wrongCount, type, packId: summary.wordPackId };
+    }).filter(Boolean);
+    if (words.length !== count) throw apiError(400, 'INVALID_TRIAL_REVIEW', '검토한 단어와 문제 유형을 다시 확인해 주세요.');
+    classRef = classes.doc(summary.classId);
+    classId = summary.classId;
+    guildLabel = summary.guildName;
+    wordPackId = summary.wordPackId;
+    targetCount = summary.memberCount;
+  }
   const trialRef = classRef.collection('trials').doc();
-  const rewardGuildCoins = words.length * 5;
+  const rewardGuildCoins = count * 5;
   const maxHintsPerQuestion = 1;
   // 구버전 클라이언트의 전체 힌트 한도 필드도 문제당 1회와 같은 총량으로 유지합니다.
-  const maxHints = words.length;
+  const maxHints = count;
   const expiresAt = Timestamp.fromMillis(Date.now() + 14 * 24 * 60 * 60 * 1000);
   const batch = adminDb.batch();
   batch.create(trialRef, {
-    schemaVersion: 3,
+    schemaVersion: 4,
     status: 'active',
-    kind: 'wrong-words',
-    words,
-    questionCount: words.length,
+    kind: deliveryMode === 'personalized' ? 'adaptive-words' : 'wrong-words',
+    deliveryMode,
+    ...(deliveryMode === 'common' ? { words, wordPackId } : {}),
+    questionCount: count,
+    targetCount,
+    ...(generationSummary ? { generationSummary } : {}),
     maxHintsPerQuestion,
     maxHints,
     rewardGuildCoins,
@@ -1062,9 +1433,18 @@ async function createGuildTrial(uid, body) {
     createdAt: FieldValue.serverTimestamp(),
     expiresAt
   });
+  personalizedMembers.forEach((member) => batch.create(trialRef.collection('assignments').doc(member.memberId), {
+    uid: member.memberId,
+    packId: member.packId,
+    packLabel: member.packLabel,
+    words: member.words,
+    questionCount: count,
+    generationSummary: member.generationSummary,
+    createdAt: FieldValue.serverTimestamp()
+  }));
   batch.update(classRef, { activeTrialId: trialRef.id, updatedAt: FieldValue.serverTimestamp() });
   await batch.commit();
-  return { id: trialRef.id, classId: summary.classId, guildName: summary.guildName, questionCount: words.length, maxHintsPerQuestion, maxHints, rewardGuildCoins, expiresAt: expiresAt.toDate().toISOString() };
+  return { id: trialRef.id, classId, guildName: guildLabel, deliveryMode, wordPackId, targetCount, questionCount: count, generationSummary, maxHintsPerQuestion, maxHints, rewardGuildCoins, expiresAt: expiresAt.toDate().toISOString() };
 }
 async function listSchoolGuilds(uid) {
   const teacherSnap = await verifiedTeacher(uid);
@@ -1186,6 +1566,15 @@ async function removeGuildMember(uid, body) {
       transaction.update(accountRef, update);
     }
   });
+  const activeTrialId = text(classSnap.data()?.activeTrialId, 128);
+  if (activeTrialId) {
+    const trialRef = classSnap.ref.collection('trials').doc(activeTrialId);
+    await Promise.all([
+      trialRef.collection('progress').doc(targetUid).delete().catch(() => {}),
+      trialRef.collection('completions').doc(targetUid).delete().catch(() => {}),
+      trialRef.collection('assignments').doc(targetUid).delete().catch(() => {})
+    ]);
+  }
   return { classId, memberUid: targetUid, removed: true };
 }
 async function removeGuildManager(uid, body) {
@@ -1395,6 +1784,7 @@ export default async function handler(req, res) {
     else if (body.action === 'updateGuildTag') response = { guild: await updateGuildTag(token.uid, body) };
     else if (body.action === 'setClassWordPack' || body.action === 'setWordPack') response = { assignment: await setWordPack(token.uid, body) };
     else if (body.action === 'guildWrongWords') response = { analysis: await wrongWordSummary(token.uid, body) };
+    else if (body.action === 'previewPersonalizedTrial') response = { preview: await previewPersonalizedTrial(token.uid, body) };
     else if (body.action === 'createGuildTrial') response = { trial: await createGuildTrial(token.uid, body) };
     else if (body.action === 'listGuildManagers') response = { management: await listGuildManagers(token.uid, body) };
     else if (body.action === 'removeGuildMember') response = { membership: await removeGuildMember(token.uid, body) };

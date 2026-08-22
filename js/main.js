@@ -75,9 +75,81 @@
             wrongWordCounts: {}, // { "apple": 2, "banana": 1 }
             wordLearningStats: {}, // 단어별 정답·오답·연속 정답·문제 유형 통계
             questionTypeStats: {},
+            adaptivePathStats: { v: 1, p: {} },
             assignedWordPackIds: [],
             assignedQuestionTypes: ["meaning-choice"]
         };
+
+        const ADAPTIVE_PATH_STAT_VERSION = 1;
+        const ADAPTIVE_PATH_PACK_LIMIT = 40;
+        const ADAPTIVE_PATH_COUNTER_MAX = 1_000_000_000;
+        const ADAPTIVE_PATH_BUCKET_KEYS = Object.freeze({
+            normal: Object.freeze({ unresolved: 'nu', review: 'nr', current: 'nc' }),
+            support: Object.freeze({ unresolved: 'su', review: 'sr', current: 'sc' })
+        });
+        const ADAPTIVE_PATH_ALL_BUCKET_KEYS = Object.freeze(['nu', 'nr', 'nc', 'su', 'sr', 'sc']);
+
+        function adaptivePathCounter(value) {
+            const number = Number(value);
+            return Number.isFinite(number) ? Math.max(0, Math.min(ADAPTIVE_PATH_COUNTER_MAX, Math.floor(number))) : 0;
+        }
+
+        function normalizeAdaptivePathBucket(value) {
+            const source = Array.isArray(value) ? value : [];
+            return Array.from({ length: 5 }, (_, index) => adaptivePathCounter(source[index]));
+        }
+
+        function normalizeAdaptivePathPackId(value) {
+            const normalized = String(value || '').trim().slice(0, 80).replace(/[^A-Za-z0-9_.:-]/g, '_');
+            return normalized || 'unassigned';
+        }
+
+        function normalizeAdaptivePathStats(value) {
+            const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+            const packs = source.p && typeof source.p === 'object' && !Array.isArray(source.p) ? source.p : {};
+            const normalizedPacks = {};
+            Object.entries(packs).slice(-ADAPTIVE_PATH_PACK_LIMIT).forEach(([rawPackId, rawPack]) => {
+                if (!rawPack || typeof rawPack !== 'object' || Array.isArray(rawPack)) return;
+                const packId = normalizeAdaptivePathPackId(rawPackId);
+                normalizedPacks[packId] = Object.fromEntries(ADAPTIVE_PATH_ALL_BUCKET_KEYS.map((key) => [key, normalizeAdaptivePathBucket(rawPack[key])]));
+            });
+            return { v: ADAPTIVE_PATH_STAT_VERSION, p: normalizedPacks };
+        }
+
+        function activeAdaptivePathPackId() {
+            const assigned = Array.isArray(gameState.assignedWordPackIds) ? gameState.assignedWordPackIds.find(Boolean) : null;
+            return normalizeAdaptivePathPackId(gameState.activeWordPackId || gameState.assignedWordPackId || assigned || 'unassigned');
+        }
+
+        function ensureAdaptivePathPack(packId) {
+            gameState.adaptivePathStats = normalizeAdaptivePathStats(gameState.adaptivePathStats);
+            const normalizedPackId = normalizeAdaptivePathPackId(packId);
+            const packs = gameState.adaptivePathStats.p;
+            if (!packs[normalizedPackId]) {
+                while (Object.keys(packs).length >= ADAPTIVE_PATH_PACK_LIMIT) delete packs[Object.keys(packs)[0]];
+                packs[normalizedPackId] = Object.fromEntries(ADAPTIVE_PATH_ALL_BUCKET_KEYS.map((key) => [key, [0, 0, 0, 0, 0]]));
+            }
+            return { packId: normalizedPackId, pack: packs[normalizedPackId] };
+        }
+
+        function recordAdaptivePathSubmission(route, correct) {
+            if (!route || !ADAPTIVE_PATH_BUCKET_KEYS[route.mode] || !ADAPTIVE_PATH_BUCKET_KEYS[route.mode][route.actualGroup]) return;
+            const { pack } = ensureAdaptivePathPack(route.packId || activeAdaptivePathPackId());
+            const bucketKey = ADAPTIVE_PATH_BUCKET_KEYS[route.mode][route.actualGroup];
+            const bucket = normalizeAdaptivePathBucket(pack[bucketKey]);
+            const firstSubmission = route.firstAnswered !== true;
+            bucket[2] = Math.min(ADAPTIVE_PATH_COUNTER_MAX, bucket[2] + 1);
+            if (firstSubmission) {
+                bucket[0] = Math.min(ADAPTIVE_PATH_COUNTER_MAX, bucket[0] + 1);
+                if (correct) bucket[1] = Math.min(ADAPTIVE_PATH_COUNTER_MAX, bucket[1] + 1);
+                if (route.fallback) bucket[4] = Math.min(ADAPTIVE_PATH_COUNTER_MAX, bucket[4] + 1);
+                route.firstAnswered = true;
+            } else if (!correct) {
+                bucket[3] = Math.min(ADAPTIVE_PATH_COUNTER_MAX, bucket[3] + 1);
+            }
+            route.submissionCount = Math.min(ADAPTIVE_PATH_COUNTER_MAX, adaptivePathCounter(route.submissionCount) + 1);
+            pack[bucketKey] = bucket;
+        }
 
         const BOSS_UNLOCK_LIMIT = 10; // Capped at 10 monster defeats as requested
 
@@ -309,6 +381,7 @@
         let monsterCurrentHp = 10;
         let monsterMaxHp = 10;
         let currentQuizChoices = [];
+        let currentAdaptiveQuizRoute = null;
         let currentQuizCorrectValue = "";
         let currentQuizType = "meaning-choice";
 
@@ -843,6 +916,7 @@
                 if (!gameState.masteredWords) gameState.masteredWords = [];
                 if (!gameState.wrongWordCounts) gameState.wrongWordCounts = {};
                 if (!gameState.wordLearningStats || typeof gameState.wordLearningStats !== "object") gameState.wordLearningStats = {};
+                gameState.adaptivePathStats = normalizeAdaptivePathStats(gameState.adaptivePathStats);
                 if (!gameState.lockedPotentialSlots) gameState.lockedPotentialSlots = {};
             } else {
                 gameState.schoolName = schoolName;
@@ -875,6 +949,7 @@
                 gameState.skillFusionPity = { normal: 0, rare: 0, hero: 0, legendary: 0 };
                 gameState.wrongWordCounts = {};
                 gameState.wordLearningStats = {};
+                gameState.adaptivePathStats = { v: ADAPTIVE_PATH_STAT_VERSION, p: {} };
                 gameState.lockedPotentialSlots = {};
                 gameState.lastSaved = Date.now();
                 gameState.tutorialCompleted = false;
@@ -982,6 +1057,7 @@
             gameState.wrongWordCounts = extra.wrongWordCounts || data.wrongWordCounts || {};
             gameState.wordLearningStats = extra.wordLearningStats || data.wordLearningStats || {};
             gameState.questionTypeStats = extra.questionTypeStats || data.questionTypeStats || {};
+            gameState.adaptivePathStats = normalizeAdaptivePathStats(extra.adaptivePathStats ?? data.adaptivePathStats);
             gameState.equippedTitle = extra.equippedTitle || data.equippedTitle || "";
             gameState.wbTitle = extra.wbTitle || data.wbTitle || "";
             gameState.unlockedTitles = extra.unlockedTitles || data.unlockedTitles || [];
@@ -1060,6 +1136,7 @@
                 wrongWordCounts: gameState.wrongWordCounts || {},
                 wordLearningStats: gameState.wordLearningStats || {},
                 questionTypeStats: gameState.questionTypeStats || {},
+                adaptivePathStats: normalizeAdaptivePathStats(gameState.adaptivePathStats),
                 activeSkillDeck: gameState.activeSkillDeck || [],
                 skillEssence: gameState.skillEssence || 0,
                 skillResearchTargets: gameState.skillResearchTargets || [],
@@ -1135,6 +1212,45 @@
         }
 
         let curriculumWordPackCatalogPromise = null;
+        const DEFAULT_ADAPTIVE_QUESTION_POLICY = Object.freeze({
+            resolved: Object.freeze({ streak: 3, accuracy: 80 }),
+            supportMode: Object.freeze({ minTries: 8, accuracyBelow: 75, unresolvedCount: 3, unresolvedWrongTotal: 4 }),
+            targetRatios: Object.freeze({
+                normal: Object.freeze({ unresolved: 20, review: 20, current: 60 }),
+                support: Object.freeze({ unresolved: 55, review: 30, current: 15 })
+            })
+        });
+
+        function normalizeAdaptiveQuestionPolicy(value) {
+            const finite = (raw, fallback, min, max) => {
+                const number = Number(raw);
+                return Number.isFinite(number) ? Math.max(min, Math.min(max, number)) : fallback;
+            };
+            const ratios = (raw, fallback) => {
+                const result = {
+                    unresolved: finite(raw?.unresolved, fallback.unresolved, 0, 100),
+                    review: finite(raw?.review, fallback.review, 0, 100),
+                    current: finite(raw?.current, fallback.current, 0, 100)
+                };
+                return result.unresolved + result.review + result.current === 100 ? result : { ...fallback };
+            };
+            return {
+                resolved: {
+                    streak: finite(value?.resolved?.streak, DEFAULT_ADAPTIVE_QUESTION_POLICY.resolved.streak, 1, 20),
+                    accuracy: finite(value?.resolved?.accuracy, DEFAULT_ADAPTIVE_QUESTION_POLICY.resolved.accuracy, 1, 100)
+                },
+                supportMode: {
+                    minTries: finite(value?.supportMode?.minTries, DEFAULT_ADAPTIVE_QUESTION_POLICY.supportMode.minTries, 1, 1000),
+                    accuracyBelow: finite(value?.supportMode?.accuracyBelow, DEFAULT_ADAPTIVE_QUESTION_POLICY.supportMode.accuracyBelow, 1, 100),
+                    unresolvedCount: finite(value?.supportMode?.unresolvedCount, DEFAULT_ADAPTIVE_QUESTION_POLICY.supportMode.unresolvedCount, 1, 1000),
+                    unresolvedWrongTotal: finite(value?.supportMode?.unresolvedWrongTotal, DEFAULT_ADAPTIVE_QUESTION_POLICY.supportMode.unresolvedWrongTotal, 1, 1000000)
+                },
+                targetRatios: {
+                    normal: ratios(value?.targetRatios?.normal, DEFAULT_ADAPTIVE_QUESTION_POLICY.targetRatios.normal),
+                    support: ratios(value?.targetRatios?.support, DEFAULT_ADAPTIVE_QUESTION_POLICY.targetRatios.support)
+                }
+            };
+        }
 
         async function loadCurriculumWordPackCatalog() {
             if (curriculumWordPackCatalogPromise) return curriculumWordPackCatalogPromise;
@@ -1236,7 +1352,8 @@
                 supportWordCount: Math.max(0, ...selectedPacks.map((pack) => Number(pack.supportWordCount) || 0)),
                 packId: selectedPacks[0]?.id || ids[0],
                 packLabel: selectedPacks[0]?.label || selectedPacks[0]?.name || '',
-                packWordCount: Number(selectedPacks[0]?.wordCount) || merged.size
+                packWordCount: Number(selectedPacks[0]?.wordCount) || merged.size,
+                adaptivePolicy: normalizeAdaptiveQuestionPolicy(catalog.adaptivePolicy)
             };
         }
         async function fetchWordsFromSpreadsheet() {
@@ -1250,6 +1367,7 @@
                 gameState.activeWordPackLabel = String(metadata.packLabel || `${learningGradeLabel(gameState.learningGrade || gameState.grade)} 임시 단어 목록`);
                 gameState.activeWordPackWordCount = Math.max(0, Number(metadata.packWordCount) || words.length);
                 gameState.activeWordPackNewCount = Math.max(0, gameState.activeWordPackWordCount - gameState.activeWordPackSupportCount);
+                gameState.activeAdaptiveQuestionPolicy = normalizeAdaptiveQuestionPolicy(metadata.adaptivePolicy);
                 gameState.currentQuizIndex = gameState.progress % (gameState.wordsPool.length || 1);
                 console.log(`[WordsPool] source: ${source}, grade: ${gameState.grade}, words: ${gameState.wordsPool.length}`);
                 initGameEngine();
@@ -1735,6 +1853,7 @@
         }
         window.refreshHeroIdentity = refreshHeroIdentity;
         function initGameEngine() {
+            gameState.adaptivePathStats = normalizeAdaptivePathStats(gameState.adaptivePathStats);
             // 로그인 완료 후 숨겨두었던 게임 UI 노출
             const antiFlash = document.getElementById("antiFlashStyle");
             if (antiFlash) antiFlash.remove();
@@ -3960,7 +4079,7 @@
             return label;
         }
 
-        function selectAdaptiveQuizIndex(pool, learningStats, supportWordCount, previousIndex, random = Math.random) {
+        function selectLegacyAdaptiveQuizIndex(pool, learningStats, supportWordCount, previousIndex, random = Math.random) {
             if (!Array.isArray(pool) || pool.length <= 1) return 0;
             const stats = learningStats && typeof learningStats === "object" && !Array.isArray(learningStats) ? learningStats : {};
             const supportLimit = Math.max(0, Number(supportWordCount) || 0);
@@ -4012,20 +4131,111 @@
             }
             return weighted[weighted.length - 1]?.index ?? 0;
         }
+        function selectAdaptiveQuizIndex(pool, learningStats, supportWordCount, previousIndex, random = Math.random, includeMetadata = false) {
+            const finish = (selection) => includeMetadata ? selection : selection.index;
+            const emptySelection = { index: 0, mode: 'normal', intendedGroup: 'current', actualGroup: 'current', fallback: false };
+            if (!Array.isArray(pool) || pool.length === 0) return finish(emptySelection);
+            const stats = learningStats && typeof learningStats === 'object' && !Array.isArray(learningStats) ? learningStats : {};
+            const policy = normalizeAdaptiveQuestionPolicy(gameState.activeAdaptiveQuestionPolicy);
+            const supportLimit = Math.max(0, Number(supportWordCount) || 0);
+            const candidates = pool.map((entry, index) => {
+                const key = String(entry?.word || '').trim().toLowerCase();
+                const row = stats[key] && typeof stats[key] === 'object' ? stats[key] : {};
+                const correct = Math.max(0, Number(row.c) || 0);
+                const wrong = Math.max(0, Number(row.x) || 0);
+                const tries = correct + wrong;
+                const accuracy = tries ? correct / tries : 0;
+                const streak = Math.max(0, Number(row.s) || 0);
+                const rank = Math.max(0, Number(entry?.spiralRank) || 0);
+                const unresolved = wrong > 0 && (streak < policy.resolved.streak || accuracy < policy.resolved.accuracy / 100);
+                const review = supportLimit > 0 && rank > 0 && rank <= supportLimit;
+                const mastered = correct >= WORD_MASTERY_CORRECT_THRESHOLD && accuracy >= WORD_MASTERY_ACCURACY_THRESHOLD;
+                return { index, correct, wrong, tries, accuracy, unresolved, review, mastered };
+            });
+            const totals = candidates.reduce((sum, item) => {
+                sum.correct += item.correct;
+                sum.wrong += item.wrong;
+                return sum;
+            }, { correct: 0, wrong: 0 });
+            const totalTries = totals.correct + totals.wrong;
+            const unresolved = candidates.filter((item) => item.unresolved);
+            const review = candidates.filter((item) => item.review && !item.unresolved);
+            const current = candidates.filter((item) => !item.review && !item.unresolved);
+            const supportMode = (totalTries >= policy.supportMode.minTries && totals.correct / totalTries < policy.supportMode.accuracyBelow / 100)
+                || unresolved.length >= policy.supportMode.unresolvedCount
+                || unresolved.reduce((sum, item) => sum + item.wrong, 0) >= policy.supportMode.unresolvedWrongTotal;
+            const mode = supportMode ? 'support' : 'normal';
+            const actualGroupFor = (item) => item?.unresolved ? 'unresolved' : item?.review ? 'review' : 'current';
+            if (pool.length === 1) {
+                const actualGroup = actualGroupFor(candidates[0]);
+                return finish({ index: 0, mode, intendedGroup: actualGroup, actualGroup, fallback: false });
+            }
+            const roll = Math.max(0, Math.min(0.999999, Number(random()) || 0));
+            const ratios = supportMode ? policy.targetRatios.support : policy.targetRatios.normal;
+            let intendedGroup;
+            let groupOrder;
+            if (roll < ratios.unresolved / 100) {
+                intendedGroup = 'unresolved';
+                groupOrder = supportMode ? ['unresolved', 'review', 'current'] : ['unresolved', 'current', 'review'];
+            } else if (roll < (ratios.unresolved + ratios.review) / 100) {
+                intendedGroup = 'review';
+                groupOrder = supportMode ? ['review', 'unresolved', 'current'] : ['review', 'current', 'unresolved'];
+            } else {
+                intendedGroup = 'current';
+                groupOrder = ['current', 'unresolved', 'review'];
+            }
+            const groupMap = { unresolved, review, current };
+            const selectedDescriptor = groupOrder
+                .map((name) => ({ name, items: groupMap[name] }))
+                .find(({ items }) => items.some((item) => item.index !== previousIndex));
+            let selectedGroup = selectedDescriptor?.items || candidates.filter((item) => item.index !== previousIndex);
+            if (!selectedGroup.length) selectedGroup = candidates;
+            selectedGroup = selectedGroup.filter((item) => item.index !== previousIndex || selectedGroup.length === 1);
+            const weighted = selectedGroup.map((item) => {
+                let weight = item.tries === 0 ? 3 : 1 + item.wrong * 2 + (1 - item.accuracy) * 3;
+                if (item.unresolved) weight += 4;
+                if (item.mastered) weight *= 0.2;
+                return { ...item, weight: Math.max(0.05, weight) };
+            });
+            const totalWeight = weighted.reduce((sum, item) => sum + item.weight, 0);
+            let cursor = Math.max(0, Math.min(0.999999, Number(random()) || 0)) * totalWeight;
+            let selected = weighted[weighted.length - 1] || candidates[0];
+            for (const item of weighted) {
+                cursor -= item.weight;
+                if (cursor <= 0) {
+                    selected = item;
+                    break;
+                }
+            }
+            const actualGroup = actualGroupFor(selected);
+            return finish({ index: selected?.index ?? 0, mode, intendedGroup, actualGroup, fallback: actualGroup !== intendedGroup });
+        }
+        function selectAdaptiveQuizMetadata(pool, learningStats, supportWordCount, previousIndex, random = Math.random) {
+            return selectAdaptiveQuizIndex(pool, learningStats, supportWordCount, previousIndex, random, true);
+        }
         window.__vocaSelectAdaptiveQuizIndex = selectAdaptiveQuizIndex;
+        window.__vocaSelectAdaptiveQuizMetadata = selectAdaptiveQuizMetadata;
 
         function generateQuizCard() {
             if (!gameState.wordsPool || gameState.wordsPool.length === 0) {
+                currentAdaptiveQuizRoute = null;
                 document.getElementById("quizWordEng").innerText = "마법 성역의 단어가 고갈되었습니다";
                 return;
             }
 
-            gameState.currentQuizIndex = selectAdaptiveQuizIndex(
+            const adaptiveSelection = selectAdaptiveQuizMetadata(
                 gameState.wordsPool,
                 gameState.wordLearningStats,
                 gameState.activeWordPackSupportCount,
                 gameState.currentQuizIndex
             );
+            gameState.currentQuizIndex = adaptiveSelection.index;
+            currentAdaptiveQuizRoute = {
+                ...adaptiveSelection,
+                packId: activeAdaptivePathPackId(),
+                firstAnswered: false,
+                submissionCount: 0
+            };
             const current = gameState.wordsPool[gameState.currentQuizIndex];
             const allowed = new Set(["meaning-choice", "fill-blank", "word-choice", "listen-meaning", "word-order", "short-answer"]);
             const selected = [...new Set((Array.isArray(gameState.assignedQuestionTypes) ? gameState.assignedQuestionTypes : ["meaning-choice"]).filter((type) => allowed.has(type)))];
@@ -5244,13 +5454,15 @@
                 buttons[i].style.pointerEvents = "none";
             }
             const current = gameState.wordsPool[gameState.currentQuizIndex];
+            const isCorrect = index === gameState.currentQuizCorrectAnswer;
             if (!gameState.questionTypeStats || typeof gameState.questionTypeStats !== "object") gameState.questionTypeStats = {};
             const typeStats = gameState.questionTypeStats[currentQuizType] || { tries: 0, correct: 0 };
             typeStats.tries = Number(typeStats.tries || 0) + 1;
             gameState.questionTypeStats[currentQuizType] = typeStats;
-            recordWordLearningResult(current, currentQuizType, index === gameState.currentQuizCorrectAnswer);
+            recordWordLearningResult(current, currentQuizType, isCorrect);
+            recordAdaptivePathSubmission(currentAdaptiveQuizRoute, isCorrect);
 
-            if (index === gameState.currentQuizCorrectAnswer) {
+            if (isCorrect) {
                 if (!gameState.tutorialCompleted && tutorialStep === 1) {
                     tutorialStep = 2;
                     setTimeout(showTutorialOverlay, 500);

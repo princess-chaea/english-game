@@ -124,6 +124,8 @@ const DELETE_PAGE_SIZE = 100;
 const GOOGLE_LINK_PENDING_MS = 15 * 60 * 1000;
 const TRIAL_MAX_ATTEMPTS = 3;
 const TRIAL_HISTORY_DAYS = 120;
+const ADAPTIVE_PATH_ROUTE_KEYS = Object.freeze(['nu', 'nr', 'nc', 'su', 'sr', 'sc']);
+const ADAPTIVE_PATH_METRIC_LIMIT = 1000000000;
 function seoulDayKey(now = Date.now()) {
   return new Date(now + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
@@ -140,6 +142,84 @@ function safeDailyLearning(value) {
     });
   }
   return Object.fromEntries(rows.sort(([a], [b]) => a.localeCompare(b)).slice(-120));
+}
+function safeAdaptivePathTuple(value) {
+  const source = Array.isArray(value) ? value : [];
+  const routed = safeInt(source[0], 0, 0, ADAPTIVE_PATH_METRIC_LIMIT);
+  const firstCorrect = Math.min(routed, safeInt(source[1], 0, 0, ADAPTIVE_PATH_METRIC_LIMIT));
+  const attempts = Math.max(routed, safeInt(source[2], routed, 0, ADAPTIVE_PATH_METRIC_LIMIT));
+  const additionalWrong = Math.min(attempts, safeInt(source[3], 0, 0, ADAPTIVE_PATH_METRIC_LIMIT));
+  const fallback = Math.min(routed, safeInt(source[4], 0, 0, ADAPTIVE_PATH_METRIC_LIMIT));
+  return [routed, firstCorrect, attempts, additionalWrong, fallback];
+}
+function safeAdaptivePathStats(value) {
+  const source = value && typeof value === 'object' && !Array.isArray(value) && safeInt(value.v, 0, 0, 1) === 1
+    && value.p && typeof value.p === 'object' && !Array.isArray(value.p) ? value.p : {};
+  const packs = {};
+  Object.entries(source).slice(0, STUDENT_WORD_PACK_BY_ID.size).forEach(([rawPackId, rawRoutes]) => {
+    const packId = text(rawPackId, 80);
+    if (!STUDENT_WORD_PACK_BY_ID.has(packId) || !rawRoutes || typeof rawRoutes !== 'object' || Array.isArray(rawRoutes)) return;
+    packs[packId] = Object.fromEntries(ADAPTIVE_PATH_ROUTE_KEYS.map((key) => [key, safeAdaptivePathTuple(rawRoutes[key])]));
+  });
+  return { v: 1, p: packs };
+}
+function safeAdaptivePathDaily(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const rows = Object.entries(value)
+    .filter(([day]) => /^d{4}-d{2}-d{2}$/.test(day))
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-TRIAL_HISTORY_DAYS)
+    .map(([day, rawPacks]) => {
+      const packs = {};
+      if (rawPacks && typeof rawPacks === 'object' && !Array.isArray(rawPacks)) {
+        Object.entries(rawPacks).slice(0, STUDENT_WORD_PACK_BY_ID.size).forEach(([rawPackId, rawRoutes]) => {
+          const packId = text(rawPackId, 80);
+          if (!STUDENT_WORD_PACK_BY_ID.has(packId) || !rawRoutes || typeof rawRoutes !== 'object' || Array.isArray(rawRoutes)) return;
+          packs[packId] = Object.fromEntries(ADAPTIVE_PATH_ROUTE_KEYS.map((key) => [key, safeAdaptivePathTuple(rawRoutes[key])]));
+        });
+      }
+      return [day, packs];
+    });
+  return Object.fromEntries(rows);
+}
+function mergeAdaptivePathBaselines(previousValue, currentValue) {
+  const previous = safeAdaptivePathStats(previousValue);
+  const current = safeAdaptivePathStats(currentValue);
+  const packIds = [...new Set([...Object.keys(previous.p), ...Object.keys(current.p)])];
+  return {
+    v: 1,
+    p: Object.fromEntries(packIds.map((packId) => [packId, Object.fromEntries(ADAPTIVE_PATH_ROUTE_KEYS.map((key) => [key,
+      safeAdaptivePathTuple(Array.from({ length: 5 }, (_, index) => Math.max(
+        previous.p[packId]?.[key]?.[index] || 0,
+        current.p[packId]?.[key]?.[index] || 0
+      )))
+    ]))]))
+  };
+}
+function advanceAdaptivePathDaily(member, currentValue, day) {
+  const current = safeAdaptivePathStats(currentValue);
+  const initialized = Object.prototype.hasOwnProperty.call(member, 'countedAdaptivePathStats');
+  const previous = initialized ? safeAdaptivePathStats(member.countedAdaptivePathStats) : current;
+  const daily = safeAdaptivePathDaily(member.adaptivePathDaily);
+  const dayPacks = daily[day] || {};
+  if (initialized) {
+    Object.entries(current.p).forEach(([packId, routes]) => {
+      ADAPTIVE_PATH_ROUTE_KEYS.forEach((key) => {
+        const prior = previous.p[packId]?.[key] || [0, 0, 0, 0, 0];
+        const delta = routes[key].map((value, index) => Math.max(0, value - (prior[index] || 0)));
+        if (!delta.some(Boolean)) return;
+        const existing = dayPacks[packId]?.[key] || [0, 0, 0, 0, 0];
+        dayPacks[packId] ||= Object.fromEntries(ADAPTIVE_PATH_ROUTE_KEYS.map((routeKey) => [routeKey, [0, 0, 0, 0, 0]]));
+        dayPacks[packId][key] = safeAdaptivePathTuple(existing.map((value, index) => value + delta[index]));
+      });
+    });
+  }
+  daily[day] = dayPacks;
+  return {
+    countedAdaptivePathStats: mergeAdaptivePathBaselines(previous, current),
+    adaptivePathDaily: safeAdaptivePathDaily(daily),
+    adaptivePathStartedDay: /^d{4}-d{2}-d{2}$/.test(member.adaptivePathStartedDay || '') ? member.adaptivePathStartedDay : day
+  };
 }
 function safeTrialAttemptHistory(value) {
   if (!Array.isArray(value)) return [];
@@ -234,9 +314,9 @@ function normalizedQuestionTypes(value) { const types=[...new Set((Array.isArray
 function assignedPackMetadata(ids) { return (ids || []).map((id) => STUDENT_WORD_PACK_BY_ID.get(id)).filter(Boolean).map((pack) => ({ id: pack.id, label: text(pack.label, 120) || pack.id, wordCount: safeInt(pack.wordCount, Array.isArray(pack.wordKeys) ? pack.wordKeys.length : Array.isArray(pack.words) ? pack.words.length : 0, 0, 5000), supportWordCount: safeInt(pack.supportWordCount, 0, 0, 5000) })); }
 function safeQuestionTypeStats(value) { const result={};LEARNING_QUESTION_TYPES.forEach((type)=>{const row=value&&typeof value==='object'&&!Array.isArray(value)?value[type]:null;result[type]={tries:safeInt(row?.tries,0,0,1000000000),correct:safeInt(row?.correct,0,0,1000000000)};});return result; }
 function classPack(grade, wordPackIds) { return normalizedPackIds(wordPackIds, grade)[0]; }
-const fields = new Set(['avatarType','gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petType','petLvl','petLevels','stage','progress','totalQuizTries','totalQuizCorrect','masteredWords','currentQuizIndex','skillsInventory','skillTierOrderVersion','equippedSkills','activeSkillDeck','skillEssence','skillResearchTargets','skillLockedWords','skillDiscoveredWords','skillSummonPity','skillFusionPity','lockedPotentialSlots','wrongWordCounts','wordLearningStats','questionTypeStats','combatPower','masteryPoints','necklaceLvl','braceletLvl','ringLvl','acquiredRelics','equippedRelicId','gearPotentials','isPotentialUnlocked','equippedTitle','wbTitle','unlockedTitles','bossTokens','relicEssence','relicTranscendLvl','soundSettings','tutorialCompleted','lastSaved','guildBoostCharges']);
+const fields = new Set(['avatarType','gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petType','petLvl','petLevels','stage','progress','totalQuizTries','totalQuizCorrect','masteredWords','currentQuizIndex','skillsInventory','skillTierOrderVersion','equippedSkills','activeSkillDeck','skillEssence','skillResearchTargets','skillLockedWords','skillDiscoveredWords','skillSummonPity','skillFusionPity','lockedPotentialSlots','wrongWordCounts','wordLearningStats','questionTypeStats','adaptivePathStats','combatPower','masteryPoints','necklaceLvl','braceletLvl','ringLvl','acquiredRelics','equippedRelicId','gearPotentials','isPotentialUnlocked','equippedTitle','wbTitle','unlockedTitles','bossTokens','relicEssence','relicTranscendLvl','soundSettings','tutorialCompleted','lastSaved','guildBoostCharges']);
 
-function defaultState() { return { avatarType:'male', gold:0, accGold:0, helmetLvl:1, armorLvl:1, weaponLvl:1, shieldLvl:1, shoesLvl:1, stage:1, progress:0, totalQuizTries:0, totalQuizCorrect:0, masteredWords:[], skillsInventory:[], skillTierOrderVersion:2, equippedSkills:[], activeSkillDeck:[], skillEssence:0, skillResearchTargets:[], skillLockedWords:[], skillDiscoveredWords:[], skillSummonPity:{growthWithoutFocus:0}, skillFusionPity:{normal:0,rare:0,hero:0,legendary:0}, wrongWordCounts:{}, wordLearningStats:{}, questionTypeStats:{}, combatPower:0, masteryPoints:0, tutorialCompleted:false }; }
+function defaultState() { return { avatarType:'male', gold:0, accGold:0, helmetLvl:1, armorLvl:1, weaponLvl:1, shieldLvl:1, shoesLvl:1, stage:1, progress:0, totalQuizTries:0, totalQuizCorrect:0, masteredWords:[], skillsInventory:[], skillTierOrderVersion:2, equippedSkills:[], activeSkillDeck:[], skillEssence:0, skillResearchTargets:[], skillLockedWords:[], skillDiscoveredWords:[], skillSummonPity:{growthWithoutFocus:0}, skillFusionPity:{normal:0,rare:0,hero:0,legendary:0}, wrongWordCounts:{}, wordLearningStats:{}, questionTypeStats:{}, adaptivePathStats:{v:1,p:{}}, combatPower:0, masteryPoints:0, tutorialCompleted:false }; }
 function cleanState(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw apiError(400,'INVALID_STATE','저장할 학습 기록 형식이 올바르지 않아요.');
   const state = {};
@@ -248,6 +328,7 @@ function cleanState(input) {
   state.wrongWordCounts = safeWrongWordCounts(state.wrongWordCounts);
   state.wordLearningStats = safeWordLearningStats(state.wordLearningStats);
   state.questionTypeStats = safeQuestionTypeStats(state.questionTypeStats);
+  if (Object.hasOwn(state, 'adaptivePathStats')) state.adaptivePathStats = safeAdaptivePathStats(state.adaptivePathStats);
   state.guildBoostCharges = safeGuildBoostCharges(state.guildBoostCharges);
   const compactSkills=compactSkillInventory(state.skillsInventory);
   const requestedSkillCount=Array.isArray(state.skillsInventory)?state.skillsInventory.length:0;
@@ -409,10 +490,11 @@ async function loadGuildTrial(uid, prefetchedAssignment = null) {
   const trialId = text(classSnap.data()?.activeTrialId, 128);
   if (!trialId) return { guildName: assignment.classLabel, guildLogoUrl: assignment.guildLogoUrl || null, ...assignmentPayload, guildCoins, trial: null };
   const trialRef = classRef.collection('trials').doc(trialId);
-  const [trialSnap, completionSnap, progressSnap] = await Promise.all([trialRef.get(), trialRef.collection('completions').doc(uid).get(), trialRef.collection('progress').doc(uid).get()]);
+  const [trialSnap, assignmentSnap, completionSnap, progressSnap] = await Promise.all([trialRef.get(), trialRef.collection('assignments').doc(uid).get(), trialRef.collection('completions').doc(uid).get(), trialRef.collection('progress').doc(uid).get()]);
   if (!trialSnap.exists) return { guildName: assignment.classLabel, guildLogoUrl: assignment.guildLogoUrl || null, ...assignmentPayload, guildCoins, trial: null };
   const trial = trialSnap.data();
-  if (trial.status !== 'active' || isExpired(trial.expiresAt) || !Array.isArray(trial.words)) return { guildName: assignment.classLabel, guildLogoUrl: assignment.guildLogoUrl || null, ...assignmentPayload, guildCoins, trial: null };
+  const material = resolveTrialMaterial(trial, assignmentSnap.exists ? assignmentSnap.data() : null);
+  if (trial.status !== 'active' || isExpired(trial.expiresAt) || !material.assigned || !material.words.length) return { guildName: assignment.classLabel, guildLogoUrl: assignment.guildLogoUrl || null, ...assignmentPayload, guildCoins, trial: null };
   const history = safeTrialAttemptHistory(progressSnap.data()?.attemptHistory);
   const attemptCount = Math.max(history.length, safeInt(progressSnap.data()?.attemptCount, 0, 0, TRIAL_MAX_ATTEMPTS));
   const overcome = completionSnap.exists;
@@ -424,8 +506,11 @@ async function loadGuildTrial(uid, prefetchedAssignment = null) {
     guildCoins,
     trial: {
       id: trialId,
+      deliveryMode: material.deliveryMode,
+      packId: material.packId,
+      generationSummary: material.generationSummary,
       sceneImage: '/media/test/test' + (parseInt(hash(uid + ':' + trialId).slice(0, 8), 16) % 5 + 1) + '.webp?v=20260810-1',
-      questionCount: trial.words.slice(0, 20).filter((entry) => text(entry?.word, 80) && text(entry?.meaning, 160)).length,
+      questionCount: material.words.length,
       maxHintsPerQuestion: 1,
       hintHelp: '객관식은 오답 보기 2개를 지우고, 입력형은 첫 글자와 영문 글자 수를 알려줘요.',
       attemptHistory: history,
@@ -654,15 +739,18 @@ async function guildTrialEvent(uid, body) {
   const classRef = classes.doc(assignment.classId);
   const trialRef = classRef.collection('trials').doc(trialId);
   const memberRef = classRef.collection('members').doc(uid);
+  const assignmentRef = trialRef.collection('assignments').doc(uid);
   const progressRef = trialRef.collection('progress').doc(uid);
   const completionRef = trialRef.collection('completions').doc(uid);
   return adminDb.runTransaction(async (tx) => {
-    const [classSnap, trialSnap, memberSnap, progressSnap, completionSnap] = await Promise.all([tx.get(classRef), tx.get(trialRef), tx.get(memberRef), tx.get(progressRef), tx.get(completionRef)]);
+    const [classSnap, trialSnap, memberSnap, assignmentSnap, progressSnap, completionSnap] = await Promise.all([tx.get(classRef), tx.get(trialRef), tx.get(memberRef), tx.get(assignmentRef), tx.get(progressRef), tx.get(completionRef)]);
     if (!classSnap.exists || !memberSnap.exists) throw apiError(403, 'GUILD_REQUIRED', '참여 중인 길드를 확인해 주세요.');
     if (text(classSnap.data()?.activeTrialId, 128) !== trialId || !trialSnap.exists) throw apiError(409, 'TRIAL_REPLACED', '선생님이 새 시련을 보냈어요. 새 문제를 불러와 주세요.');
     const trial = trialSnap.data();
     if (trial.status !== 'active' || isExpired(trial.expiresAt)) throw apiError(409, 'TRIAL_EXPIRED', '이 시련의 도전 기간이 끝났어요.');
-    const trialWords = (Array.isArray(trial.words) ? trial.words : []).slice(0, 20).filter((entry) => text(entry?.word, 80) && text(entry?.meaning, 160));
+    const material = resolveTrialMaterial(trial, assignmentSnap.exists ? assignmentSnap.data() : null);
+    if (!material.assigned) throw apiError(403, 'TRIAL_NOT_ASSIGNED', '이 개별 맞춤 시련의 대상 길드원이 아니에요.');
+    const trialWords = material.words;
     if (!trialWords.length) throw apiError(409, 'TRIAL_EMPTY', '시련 문제를 다시 만들어 주세요.');
     const current = progressSnap.data() || {};
     const history = safeTrialAttemptHistory(current.attemptHistory);
@@ -670,14 +758,14 @@ async function guildTrialEvent(uid, body) {
     const completed = completionSnap.exists;
     if (event === 'start') {
       const exhausted = !completed && attemptCount >= TRIAL_MAX_ATTEMPTS;
-      if (completed || exhausted) return { attemptId: null, questions: [], completed, exhausted, attemptCount, retryCount: Math.max(0, attemptCount - 1), remainingAttempts: Math.max(0, TRIAL_MAX_ATTEMPTS - attemptCount), attemptHistory: history };
+      if (completed || exhausted) return { attemptId: null, questions: [], deliveryMode: material.deliveryMode, generationSummary: material.generationSummary, completed, exhausted, attemptCount, retryCount: Math.max(0, attemptCount - 1), remainingAttempts: Math.max(0, TRIAL_MAX_ATTEMPTS - attemptCount), attemptHistory: history };
       const existingAttemptId = text(current.activeAttemptId, 128).toLowerCase();
       const existingQuestions = safeActiveTrialQuestions(current.activeQuestions, trialWords.length);
       const canResume = existingAttemptId.length >= 8 && existingQuestions.length === trialWords.length;
       const attemptId = canResume ? existingAttemptId : proposedAttemptId;
       const activeQuestions = canResume ? existingQuestions : createActiveTrialQuestions(trialWords);
       if (!canResume) tx.set(progressRef, { uid, activeAttemptId: attemptId, activeQuestions, activeAnswerResults: [], hintKeys: FieldValue.delete(), activeAttemptStartedAt: FieldValue.serverTimestamp(), startedAt: current.startedAt || FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-      return { attemptId, questions: publicTrialQuestions(trialWords, activeQuestions, attemptId), answerResults: canResume ? safeActiveTrialAnswerResults(current.activeAnswerResults) : [], completed: false, exhausted: false, attemptCount, retryCount: Math.max(0, attemptCount - 1), remainingAttempts: Math.max(0, TRIAL_MAX_ATTEMPTS - attemptCount), attemptHistory: history };
+      return { attemptId, questions: publicTrialQuestions(trialWords, activeQuestions, attemptId), deliveryMode: material.deliveryMode, generationSummary: material.generationSummary, answerResults: canResume ? safeActiveTrialAnswerResults(current.activeAnswerResults) : [], completed: false, exhausted: false, attemptCount, retryCount: Math.max(0, attemptCount - 1), remainingAttempts: Math.max(0, TRIAL_MAX_ATTEMPTS - attemptCount), attemptHistory: history };
     }
     if (completed) return { completed: true, exhausted: false, attemptCount, retryCount: Math.max(0, attemptCount - 1), remainingAttempts: 0, attemptHistory: history };
     if (attemptCount >= TRIAL_MAX_ATTEMPTS) throw apiError(409, 'TRIAL_ATTEMPTS_EXHAUSTED', '이번 시련의 도전 기회를 모두 사용했어요.');
@@ -724,6 +812,7 @@ async function guildTrialEvent(uid, body) {
       const triesGain = Math.max(correctGain, tries - countedTries);
       const stageGain = Math.max(0, stage - countedStage);
       const day = seoulDayKey();
+      const adaptivePathProgress = advanceAdaptivePathDaily(member, state.adaptivePathStats, day);
       const dailyLearning = safeDailyLearning(member.dailyLearning);
       const currentDay = dailyLearning[day] || { tries: 0, correct: 0, stageClears: 0 };
       const previousDailyCorrect = safeInt(currentDay.correct, 0, 0, 1000000);
@@ -762,6 +851,7 @@ async function guildTrialEvent(uid, body) {
         countedTries: Math.max(countedTries, tries),
         countedStage: Math.max(countedStage, stage),
         dailyLearning: prunedDailyLearning,
+        ...adaptivePathProgress,
         guildCorrectCount: FieldValue.increment(correctGain),
         guildStageClears: FieldValue.increment(stageGain),
         guildPoints: FieldValue.increment(correctGain + stageGain * 20),
@@ -823,23 +913,26 @@ async function completeGuildTrial(uid, body) {
   const classRef = classes.doc(assignment.classId);
   const trialRef = classRef.collection('trials').doc(trialId);
   const memberRef = classRef.collection('members').doc(uid);
+  const assignmentRef = trialRef.collection('assignments').doc(uid);
   const progressRef = trialRef.collection('progress').doc(uid);
   const completionRef = trialRef.collection('completions').doc(uid);
   const answerMap = new Map(answers.map((entry) => [text(entry?.questionId, 80).toLowerCase(), normalizedTrialAnswer(entry?.answer)]));
   return adminDb.runTransaction(async (tx) => {
-    const [classSnap, trialSnap, memberSnap, progressSnap, completionSnap] = await Promise.all([tx.get(classRef), tx.get(trialRef), tx.get(memberRef), tx.get(progressRef), tx.get(completionRef)]);
+    const [classSnap, trialSnap, memberSnap, assignmentSnap, progressSnap, completionSnap] = await Promise.all([tx.get(classRef), tx.get(trialRef), tx.get(memberRef), tx.get(assignmentRef), tx.get(progressRef), tx.get(completionRef)]);
     if (!classSnap.exists || !memberSnap.exists) throw apiError(403, 'GUILD_REQUIRED', '참여 중인 길드를 확인해 주세요.');
     if (text(classSnap.data()?.activeTrialId, 128) !== trialId || !trialSnap.exists) throw apiError(409, 'TRIAL_REPLACED', '선생님이 새 시련을 보냈어요. 새 문제를 불러와 주세요.');
     const trial = trialSnap.data();
     if (trial.status !== 'active' || isExpired(trial.expiresAt)) throw apiError(409, 'TRIAL_EXPIRED', '이 시련의 도전 기간이 끝났어요.');
-    const words = (Array.isArray(trial.words) ? trial.words : []).slice(0, 20).filter((entry) => text(entry?.word, 80) && text(entry?.meaning, 160));
+    const material = resolveTrialMaterial(trial, assignmentSnap.exists ? assignmentSnap.data() : null);
+    if (!material.assigned) throw apiError(403, 'TRIAL_NOT_ASSIGNED', '이 개별 맞춤 시련의 대상 길드원이 아니에요.');
+    const words = material.words;
     if (words.length < 1) throw apiError(409, 'TRIAL_EMPTY', '시련 문제를 다시 만들어 주세요.');
     const current = progressSnap.data() || {};
     const history = safeTrialAttemptHistory(current.attemptHistory);
     const prior = history.find((entry) => entry.attemptId === attemptId);
     const currentCoins = safeInt(memberSnap.data()?.guildCoins, 0, 0, 1000000000);
-    if (prior) return { result: prior, attemptCount: history.length, remainingAttempts: Math.max(0, TRIAL_MAX_ATTEMPTS - history.length), overcome: prior.overcome || completionSnap.exists, exhausted: !prior.overcome && history.length >= TRIAL_MAX_ATTEMPTS, rewardGuildCoins: 0, guildCoins: currentCoins, alreadyRecorded: true };
-    if (completionSnap.exists) return { result: history.at(-1) || null, attemptCount: history.length, remainingAttempts: 0, overcome: true, exhausted: false, rewardGuildCoins: 0, guildCoins: currentCoins, alreadyCompleted: true };
+    if (prior) return { result: prior, attemptCount: history.length, remainingAttempts: Math.max(0, TRIAL_MAX_ATTEMPTS - history.length), overcome: prior.overcome || completionSnap.exists, exhausted: !prior.overcome && history.length >= TRIAL_MAX_ATTEMPTS, rewardGuildCoins: 0, rewardGuildPoints: 0, guildCoins: currentCoins, alreadyRecorded: true };
+    if (completionSnap.exists) return { result: history.at(-1) || null, attemptCount: history.length, remainingAttempts: 0, overcome: true, exhausted: false, rewardGuildCoins: 0, rewardGuildPoints: 0, guildCoins: currentCoins, alreadyCompleted: true };
     if (history.length >= TRIAL_MAX_ATTEMPTS) throw apiError(409, 'TRIAL_ATTEMPTS_EXHAUSTED', '이번 시련의 도전 기회를 모두 사용했어요.');
     if (text(current.activeAttemptId, 128).toLowerCase() !== attemptId) throw apiError(409, 'TRIAL_ATTEMPT_REPLACED', '새로 시작한 도전이 있어요. 길드 본부에서 다시 시작해 주세요.');
     const activeQuestions = safeActiveTrialQuestions(current.activeQuestions, words.length);
@@ -850,7 +943,7 @@ async function completeGuildTrial(uid, body) {
     const results = activeQuestions.map((question) => {
       const spec = trialQuestionSpec(words, question, attemptId);
       const expected = spec.correctOptionId || spec.expected;
-      return { wordKey: question.id, correct: answerMap.get(question.id) === normalizedTrialAnswer(expected), hinted: hintedWords.has(question.id) };
+      return { sourceIndex: question.sourceIndex, correct: answerMap.get(question.id) === normalizedTrialAnswer(expected), hinted: hintedWords.has(question.id), actualSourceGroup: words[question.sourceIndex]?.actualSourceGroup || null };
     });
     const correctCount = results.filter((entry) => entry.correct).length;
     const hintsUsed = results.filter((entry) => entry.hinted).length;
@@ -860,23 +953,24 @@ async function completeGuildTrial(uid, body) {
     const overcome = correctCount === words.length;
     const attemptNo = history.length + 1;
     const completedAtMs = Date.now();
-    const result = { attemptId, attemptNo, correctCount, questionCount: words.length, accuracy: Math.round(correctCount / words.length * 1000) / 10, hintsUsed, correctAfterHint, unassistedCorrect, unassistedTries, completedAtMs, overcome };
+    const result = { attemptId, attemptNo, correctCount, questionCount: words.length, accuracy: Math.round(correctCount / words.length * 1000) / 10, hintsUsed, correctAfterHint, unassistedCorrect, unassistedTries, completedAtMs, overcome, items: results };
     const nextHistory = [...history, result].slice(-TRIAL_MAX_ATTEMPTS);
     const day = seoulDayKey(completedAtMs);
     const memberData = memberSnap.data() || {};
     const daily = safeTrialDailyResults(memberData.trialDailyResults);
-    daily[day] = [...(daily[day] || []), { trialId, ...result }].slice(-12);
+    daily[day] = [...(daily[day] || []), { trialId, deliveryMode: material.deliveryMode, packId: material.packId, generationSummary: material.generationSummary, ...result }].slice(-12);
     const prunedDaily = safeTrialDailyResults(daily);
-    const rewardGuildCoins = overcome ? safeInt(trial.rewardGuildCoins, words.length * 5, 0, 1000) : 0;
+    const rewardGuildCoins = overcome ? words.length * 5 : 0;
+    const rewardGuildPoints = overcome ? words.length * 10 : 0;
     const guildCoins = currentCoins + rewardGuildCoins;
     tx.set(progressRef, { uid, activeAttemptId: FieldValue.delete(), activeQuestions: FieldValue.delete(), activeAnswerResults: FieldValue.delete(), activeAttemptStartedAt: FieldValue.delete(), attemptCount: nextHistory.length, retryCount: Math.max(0, nextHistory.length - 1), attemptHistory: nextHistory, hintKeys: FieldValue.delete(), hintsUsed: nextHistory.reduce((sum, entry) => sum + entry.hintsUsed, 0), lastWrongCount: words.length - correctCount, lastAttemptAt: FieldValue.serverTimestamp(), status: overcome ? 'overcome' : nextHistory.length >= TRIAL_MAX_ATTEMPTS ? 'exhausted' : 'retry-available', updatedAt: FieldValue.serverTimestamp() }, { merge: true });
     const memberUpdate = { trialAttempts: FieldValue.increment(1), trialRetries: FieldValue.increment(attemptNo > 1 ? 1 : 0), trialHintsUsed: FieldValue.increment(hintsUsed), trialHintedCorrect: FieldValue.increment(correctAfterHint), trialUnassistedCorrect: FieldValue.increment(unassistedCorrect), trialUnassistedTries: FieldValue.increment(unassistedTries), trialDailyResults: prunedDaily, lastTrialActivityAt: FieldValue.serverTimestamp() };
     if (overcome) {
-      Object.assign(memberUpdate, { guildCoins, guildTrialCorrect: FieldValue.increment(words.length), guildPoints: FieldValue.increment(words.length * 10), lastTrialCompletedAt: FieldValue.serverTimestamp() });
-      tx.set(completionRef, { uid, correctCount, rewardGuildCoins, attemptNo, completedAt: FieldValue.serverTimestamp() });
+      Object.assign(memberUpdate, { guildCoins, guildTrialCorrect: FieldValue.increment(words.length), guildPoints: FieldValue.increment(rewardGuildPoints), lastTrialCompletedAt: FieldValue.serverTimestamp() });
+      tx.set(completionRef, { uid, correctCount, rewardGuildCoins, rewardGuildPoints, attemptNo, completedAt: FieldValue.serverTimestamp() });
     }
     tx.set(memberRef, memberUpdate, { merge: true });
-    return { result, attemptCount: nextHistory.length, remainingAttempts: Math.max(0, TRIAL_MAX_ATTEMPTS - nextHistory.length), overcome, exhausted: !overcome && nextHistory.length >= TRIAL_MAX_ATTEMPTS, rewardGuildCoins, guildCoins };
+    return { result, deliveryMode: material.deliveryMode, generationSummary: material.generationSummary, attemptCount: nextHistory.length, remainingAttempts: Math.max(0, TRIAL_MAX_ATTEMPTS - nextHistory.length), overcome, exhausted: !overcome && nextHistory.length >= TRIAL_MAX_ATTEMPTS, rewardGuildCoins, rewardGuildPoints, guildCoins };
   });
 }async function publish(uid, data) {
   if (!data.leaderboardOptIn) return leaderboard.doc(uid).delete();
@@ -933,6 +1027,9 @@ function guardProgress(previous, next, storedGuard, now = Date.now()) {
   next.totalQuizCorrect = correct;
   const oldTries = safeInt(previous?.totalQuizTries, oldCorrect, oldCorrect);
   next.totalQuizTries = Math.max(oldTries, safeInt(next.totalQuizTries, correct, correct));
+  next.adaptivePathStats = Object.hasOwn(next, 'adaptivePathStats')
+    ? safeAdaptivePathStats(next.adaptivePathStats)
+    : safeAdaptivePathStats(previous?.adaptivePathStats);
   assertProgressStats(next);
   const maxStage = Math.max(safeInt(previous?.stage, 1, 1), Math.floor(correct / 10) + 2);
   if (safeInt(next.stage, 1, 1) > maxStage) next.stage = maxStage;
@@ -993,7 +1090,7 @@ async function joinClass(uid, body) {
     const account=accountSnap.data(),classLabel=text(classSnap.data().guildName||classSnap.data().classLabel||invite.classLabel,40)||'길드',guildLogoUrl=safeGuildLogoUrl(classSnap.data().guildLogoUrl),correct=safeInt(account.state?.totalQuizCorrect,0,0),stage=safeInt(account.state?.stage,1,1,9999);
     const classroom=classSnap.data()||{},defaultPacks=normalizedPackIds(classroom.wordPackIds||classroom.wordPackId,account.learningGrade),defaultTypes=normalizedQuestionTypes(classroom.defaultQuestionTypes);
     const conqueredCount=Array.isArray(account.state?.masteredWords)?account.state.masteredWords.length:0,mastery=wordMasterySummary(account.state?.wordLearningStats,conqueredCount);const base={nickname:account.nickname,learningGrade:account.learningGrade,totalCorrect:correct,totalQuizTries:safeInt(account.state?.totalQuizTries,correct,correct,1000000000),questionTypeStats:safeQuestionTypeStats(account.state?.questionTypeStats),wrongWordCounts:safeWrongWordCounts(account.state?.wrongWordCounts),wordLearningStats:mastery.stats,conqueredCount,masteredCount:mastery.masteredCount,combatPower:safeInt(account.state?.combatPower,0,0,9999999999999),titleName:text(account.state?.equippedTitle||account.state?.wbTitle,80)||null,stage,lastActiveAt:FieldValue.serverTimestamp()};
-    if(!memberSnap.exists)Object.assign(base,{usesGuildLearningDefaults:true,assignedWordPackIds:defaultPacks,questionTypes:defaultTypes,countedCorrect:correct,countedTries:base.totalQuizTries,countedStage:stage,dailyLearning:{},guildCorrectCount:0,guildStageClears:0,guildBossDamage:0,guildBossPointTotal:0,guildTrialCorrect:0,trialAttempts:0,trialRetries:0,trialHintsUsed:0,guildPoints:0,guildCoins:0,joinedAt:FieldValue.serverTimestamp()});
+    if(!memberSnap.exists)Object.assign(base,{usesGuildLearningDefaults:true,assignedWordPackIds:defaultPacks,questionTypes:defaultTypes,countedCorrect:correct,countedTries:base.totalQuizTries,countedStage:stage,dailyLearning:{},countedAdaptivePathStats:safeAdaptivePathStats(account.state?.adaptivePathStats),adaptivePathDaily:{},adaptivePathStartedDay:seoulDayKey(),guildCorrectCount:0,guildStageClears:0,guildBossDamage:0,guildBossPointTotal:0,guildTrialCorrect:0,trialAttempts:0,trialRetries:0,trialHintsUsed:0,guildPoints:0,guildCoins:0,joinedAt:FieldValue.serverTimestamp()});
     (Array.isArray(account.classIds)?account.classIds:[]).slice(0,100).filter(id=>id&&id!==invite.classId).forEach(id=>tx.delete(classes.doc(id).collection('members').doc(uid)));
     tx.set(memberRef,base,{merge:true});tx.update(accountRef,{classIds:[invite.classId],activeClassId:invite.classId,activeGuildName:classLabel,activeGuildLogoUrl:guildLogoUrl,updatedAt:FieldValue.serverTimestamp()});return {classId:invite.classId,classLabel,guildLogoUrl};
   });
@@ -1025,7 +1122,8 @@ async function leaveClass(uid) {
     const trialRef = classes.doc(classId).collection('trials').doc(activeTrialId);
     await Promise.all([
       trialRef.collection('progress').doc(uid).delete().catch(() => {}),
-      trialRef.collection('completions').doc(uid).delete().catch(() => {})
+      trialRef.collection('completions').doc(uid).delete().catch(() => {}),
+      trialRef.collection('assignments').doc(uid).delete().catch(() => {})
     ]);
   }
   await Promise.all([publish(uid, data), syncWorldBossVisibility(uid, data)]);

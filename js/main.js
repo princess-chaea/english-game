@@ -3463,7 +3463,7 @@
                 const expHtml = (isAcquired && starsCount < 6) ? `<span class="text-[7px] text-gray-400 font-normal mr-1">(${acquired.exp || 0}/${reqExp})</span>` : "";
 
                 html += `
-                    <div class="border ${cardBorder} p-2 text-center flex flex-col justify-between min-h-[145px] rounded-none-forced relative group transition">
+                    <div class="theme-dark-card border ${cardBorder} p-2 text-center flex flex-col justify-between min-h-[145px] rounded-none-forced relative group transition">
                         <div>
                             <div class="flex justify-between items-center text-[8px] text-gray-300 font-bold mb-1">
                                 <span class="${isAcquired ? 'text-yellow-300 font-black' : 'text-gray-500'}">${isAcquired ? gradeInfo.name : '미해금'}</span>
@@ -5041,7 +5041,7 @@
                         const starsHtml = "⭐".repeat(starsCount);
 
                         eqHtml += `
-                            <div class="border-2 ${gradeInfo.colorClass} rounded-none-forced p-2 text-center relative flex flex-col justify-between min-h-[85px] group">
+                            <div class="theme-dark-card border-2 ${gradeInfo.colorClass} rounded-none-forced p-2 text-center relative flex flex-col justify-between min-h-[85px] group">
                                 <button onclick="unequipSkill('${skill.id}')" class="absolute -top-1.5 -right-1.5 bg-[#e22718] hover:bg-[#b91c1c] text-white w-4.5 h-4.5 rounded-full flex items-center justify-center text-4xs transition opacity-0 group-hover:opacity-100 font-bold shadow-sm z-20">
                                     ×
                                 </button>
@@ -5096,7 +5096,7 @@
                 const borderStyle = isSelectedForCombine ? 'border-yellow-400 ring-4 ring-yellow-500/80 scale-95 shadow-[0_0_15px_rgba(234,179,8,0.9)]' : (isEquipped ? 'border-white ring-2 ring-white/50' : 'border-[#262626]');
 
                 invHtml += `
-                    <div onclick="toggleSelectCombineSkill('${skill.id}')" class="border-2 ${borderStyle} ${gradeInfo.colorClass} bg-[#0d0d0d] rounded-none-forced p-2 text-center flex flex-col justify-between min-h-[125px] relative group hover:border-yellow-400 cursor-pointer transition">
+                    <div onclick="toggleSelectCombineSkill('${skill.id}')" class="theme-dark-card skill-inventory-card border-2 ${borderStyle} ${gradeInfo.colorClass} bg-[#0d0d0d] rounded-none-forced p-2 text-center flex flex-col justify-between min-h-[125px] relative group hover:border-yellow-400 cursor-pointer transition">
                         ${isSelectedForCombine ? '<span class="absolute -top-2 -left-2 bg-yellow-400 text-black text-[8px] font-black px-1.5 py-0.5 z-20 shadow-md animate-bounce">[조합 3개 중 선택됨]</span>' : ''}
                         <div>
                             <div class="flex justify-between items-center text-[8px] font-bold text-[#7e7e7e] mb-0.5">
@@ -5154,7 +5154,7 @@
                     const pct = isOnCooldown ? Math.round((skill.cooldownRemaining / skill.maxCooldown) * 100) : 0;
 
                     html += `
-                        <button id="btn-skill-${escapeSkillUiHtml(skill.id)}" onclick="castWordSkill(${skillUiJsArg(skill.id)})" ${isOnCooldown ? 'disabled' : ''} class="relative overflow-hidden p-2.5 ${gradeInfo.colorClass} border-2 text-left rounded-none-forced transition duration-150 flex flex-col justify-between h-16 group">
+                        <button id="btn-skill-${escapeSkillUiHtml(skill.id)}" onclick="castWordSkill(${skillUiJsArg(skill.id)})" ${isOnCooldown ? 'disabled' : ''} class="theme-dark-card relative overflow-hidden p-2.5 ${gradeInfo.colorClass} border-2 text-left rounded-none-forced transition duration-150 flex flex-col justify-between h-16 group">
                             ${isOnCooldown ? `<div class="cooldown-bar absolute bottom-0 left-0 h-1.5 bg-[#e22718] transition-all" style="width: ${100 - pct}%"></div>` : ''}
                             
                             <div class="flex justify-between items-center w-full z-10">
@@ -6517,12 +6517,17 @@
                 ivoryButton.setAttribute('aria-checked', String(selected));
                 ivoryButton.setAttribute('aria-pressed', String(selected));
             }
+            document.querySelectorAll('[data-theme-choice-status]').forEach(status => {
+                const selected = status.dataset.themeChoiceStatus === theme;
+                status.hidden = !selected;
+                status.textContent = selected ? '사용 중' : '';
+            });
             const nextTheme = theme === 'dark' ? 'ivory' : 'dark';
-            const label = nextTheme === 'ivory' ? '밝은 화면' : '다크 화면';
+            const label = nextTheme === 'ivory' ? '라이트 모드' : '다크 모드';
             document.querySelectorAll('[data-theme-toggle]').forEach(button => {
                 button.dataset.nextTheme = nextTheme;
-                button.setAttribute('aria-label', `${label}으로 변경`);
-                button.title = `${label}으로 변경`;
+                button.setAttribute('aria-label', `${label}로 전환`);
+                button.title = `${label}로 전환`;
                 const icon = button.querySelector('[data-theme-toggle-icon]');
                 const text = button.querySelector('[data-theme-toggle-label]');
                 if (icon) icon.textContent = nextTheme === 'ivory' ? '☀️' : '🌙';
@@ -6544,7 +6549,7 @@
             saveLocalCache();
             if (gameState.isAnonymousStudent && typeof window._secureStudentSave === 'function') window._secureStudentSave(true);
             else if (gameState.name && gameState.name !== '방문자') saveSessionToCloud(true);
-            if (theme !== previous) showToast(theme === 'ivory' ? '☀️ 따뜻한 아이보리 화면으로 바꿨어요.' : '🌙 기본 다크 화면으로 바꿨어요.');
+            if (theme !== previous) showToast(theme === 'ivory' ? '☀️ 라이트 모드로 바꿨어요.' : '🌙 다크 모드로 바꿨어요.');
         }
 
         function toggleAppearanceTheme() {
@@ -6932,13 +6937,15 @@
             tabButtons.forEach(btnId => {
                 const btn = document.getElementById(btnId);
                 if (btn) {
-                    btn.className = "py-2.5 text-center font-bold text-xs uppercase tracking-widest text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition";
+                    btn.className = "app-main-tab py-2.5 text-center font-bold text-xs uppercase tracking-widest rounded-none-forced flex items-center justify-center gap-1 transition";
+                    btn.setAttribute("aria-selected", "false");
                 }
             });
 
             const activeBtn = document.getElementById(`${tabId}Btn`);
             if (activeBtn) {
-                activeBtn.className = "py-2.5 text-center font-bold text-xs uppercase tracking-widest text-black bg-white rounded-none-forced flex items-center justify-center gap-1";
+                activeBtn.className = "app-main-tab py-2.5 text-center font-bold text-xs uppercase tracking-widest rounded-none-forced flex items-center justify-center gap-1";
+                activeBtn.setAttribute("aria-selected", "true");
             }
 
             if (tabId === 'skillTab') {
@@ -7209,7 +7216,7 @@
                 const currentTitle = getTitlePresentation(gameState.equippedTitle);
                 equippedText.innerText = gameState.equippedTitle ? `[${currentTitle.name}]` : "[칭호 미장착]";
                 equippedText.className = gameState.equippedTitle
-                    ? `inline-block border px-1.5 py-0.5 text-[10px] font-bold ${currentTitle.style}`
+                    ? `theme-dark-card inline-block border px-1.5 py-0.5 text-[10px] font-bold ${currentTitle.style}`
                     : "inline-block border border-gray-700 bg-gray-950 px-1.5 py-0.5 text-[10px] font-bold text-gray-400";
             }
 
@@ -7230,7 +7237,7 @@
                                        t.tier === "희귀" ? "bg-sky-600 text-white font-bold" : "bg-gray-700 text-gray-300";
 
                 html += `
-                    <div class="p-2.5 border ${isUnlocked ? 'border-gray-700 bg-black' : 'border-gray-900 bg-[#080808] opacity-50'} flex justify-between items-center text-xs rounded-none-forced">
+                    <div class="theme-dark-card p-2.5 border ${isUnlocked ? 'border-gray-700 bg-black' : 'border-gray-900 bg-[#080808] opacity-50'} flex justify-between items-center text-xs rounded-none-forced">
                         <div>
                             <div class="flex items-center gap-1.5 mb-1">
                                 <span class="text-[8px] px-1 py-0.2 rounded-none-forced uppercase ${tierBadgeColor}">${t.tier}</span>
@@ -7624,7 +7631,7 @@
                             const starsHtml = "⭐".repeat(s.stars || 0);
                             const previewMult = getSkillMultiplier(s);
                             skillHtml += `
-                                <div class="p-1.5 border-2 ${gradeInfo.colorClass} flex flex-col justify-between min-h-[56px] min-w-0">
+                                <div class="theme-dark-card p-1.5 border-2 ${gradeInfo.colorClass} flex flex-col justify-between min-h-[56px] min-w-0">
                                     <div class="flex justify-between items-center text-[8px]">
                                         <span class="font-bold uppercase tracking-wider text-left">${gradeInfo.name} 티어${s.tier || 3}</span>
                                         <span class="text-yellow-300 font-bold text-[8px]">${starsHtml}</span>
@@ -8552,7 +8559,7 @@
 
                     html += `
                         <button id="wb-skill-btn-${s.id}" onclick="castWorldBossSkill('${s.id}')" ${isCd ? 'disabled' : ''} 
-                                class="relative overflow-hidden p-1.5 ${gradeInfo.colorClass} border-2 hover:scale-[1.02] text-left rounded-none-forced flex flex-col justify-between h-14 transition duration-150 group cursor-pointer shadow-lg ${isCd ? 'opacity-60 cursor-not-allowed' : ''}">
+                                class="theme-dark-card relative overflow-hidden p-1.5 ${gradeInfo.colorClass} border-2 hover:scale-[1.02] text-left rounded-none-forced flex flex-col justify-between h-14 transition duration-150 group cursor-pointer shadow-lg ${isCd ? 'opacity-60 cursor-not-allowed' : ''}">
                             <div class="wb-cd-overlay absolute bottom-0 left-0 h-1 bg-red-600 transition-all pointer-events-none" style="width: ${pct}%; display: ${isCd ? 'block' : 'none'};"></div>
                             <div class="flex justify-between items-center w-full z-10">
                                 <span class="text-[8px] sm:text-[9px] font-extrabold  truncate tracking-tighter text-white group-hover:text-yellow-300">${capitalizeFirstLetter(s.word)}</span>

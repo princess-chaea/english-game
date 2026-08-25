@@ -600,7 +600,7 @@
             touch-action: manipulation; /* Prevent double-tap to zoom */
         }
 
-        /* 다크(기본) / 따뜻한 아이보리 화면 테마 */
+        /* 다크 모드 / 라이트 모드 화면 테마 */
         :root {
             --vh-canvas: #000000;
             --vh-surface: #0d0d0d;
@@ -802,7 +802,29 @@
 
         html[data-theme="ivory"] #secureWelcomeTitle { color: #785100 !important; text-shadow: 0 0 12px rgba(120, 81, 0, .16) !important; }
         html[data-theme="ivory"] #secureWelcomeGoogle { color: #075985 !important; border-color: #0c7aa6 !important; }
-        html[data-theme="ivory"] [data-theme-toggle] { background-color: #3d3328 !important; color: #fff1bf !important; border-color: #b78318 !important; }
+        /* 테마 전환 버튼은 이동할 테마의 명암으로 표시 */
+        html[data-theme="dark"] [data-theme-toggle] {
+            background-color: #f6cf58 !important;
+            color: #21180b !important;
+            border-color: #ffe69a !important;
+        }
+
+        html[data-theme="dark"] [data-theme-toggle]:hover {
+            background-color: #ffe28a !important;
+            color: #140f08 !important;
+        }
+
+        html[data-theme="ivory"] [data-theme-toggle] {
+            background-color: #2b231b !important;
+            color: #fff8e8 !important;
+            border-color: #8f6b32 !important;
+        }
+
+        html[data-theme="ivory"] [data-theme-toggle]:hover {
+            background-color: #17120e !important;
+            color: #ffffff !important;
+            border-color: #b78318 !important;
+        }
 
         html[data-theme="ivory"] [class~="border-[#1c1c1c]"],
         html[data-theme="ivory"] [class~="border-[#222]"],
@@ -927,6 +949,115 @@
             box-shadow: 0 0 0 2px rgba(240, 185, 11, .24);
             color: var(--vh-text);
         }
+
+        html[data-theme="dark"] .theme-choice-btn[aria-pressed="true"] {
+            background: #332710;
+            color: #fff1b8;
+        }
+
+        html[data-theme="ivory"] .theme-choice-btn {
+            background: #fffaf1;
+            color: #5f5245;
+        }
+
+        html[data-theme="ivory"] .theme-choice-btn[aria-pressed="true"] {
+            background: #f6d879;
+            color: #261c0d;
+            border-color: #9a6b00;
+            box-shadow: 0 0 0 2px rgba(154, 107, 0, .22);
+        }
+
+        .theme-choice-status {
+            min-height: 1rem;
+            font-size: .55rem;
+            font-weight: 900;
+            letter-spacing: .06em;
+        }
+
+        /* 탭과 본문을 양쪽 테마에서 분리하고 활성 탭을 명확히 표시 */
+        #mainTabsNav {
+            background-color: #111111 !important;
+            border-color: #454545 !important;
+            box-shadow: 0 4px 0 rgba(0, 0, 0, .28);
+        }
+
+        .app-main-tab,
+        .secureGuildTab,
+        .secureTeacherTab,
+        .teacher-guild-tab {
+            background-color: #151515 !important;
+            color: #c7c7c7 !important;
+            border-color: #3c3c3c !important;
+        }
+
+        :is(.app-main-tab, .secureGuildTab, .secureTeacherTab, .teacher-guild-tab)[aria-selected="true"] {
+            background-color: #f6cf58 !important;
+            color: #21180b !important;
+            border-color: #ffe69a !important;
+            box-shadow: inset 0 -3px 0 #b78318, 0 0 0 1px rgba(246, 207, 88, .22);
+        }
+
+        html[data-theme="ivory"] #mainTabsNav {
+            background-color: #e5d5bd !important;
+            border-color: #9f896a !important;
+            box-shadow: 0 4px 0 rgba(83, 62, 36, .14);
+        }
+
+        html[data-theme="ivory"] :is(.app-main-tab, .secureGuildTab, .secureTeacherTab, .teacher-guild-tab) {
+            background-color: #efe2cf !important;
+            color: #55483b !important;
+            border-color: #b9a992 !important;
+        }
+
+        html[data-theme="ivory"] :is(.app-main-tab, .secureGuildTab, .secureTeacherTab, .teacher-guild-tab)[aria-selected="true"] {
+            background-color: #e6f4f8 !important;
+            color: #075985 !important;
+            border-color: #0c7aa6 !important;
+            box-shadow: inset 0 -4px 0 #0284c7, 0 0 0 1px rgba(2, 132, 199, .12);
+        }
+
+        html[data-theme="dark"] :is(#mainTabsNav, #secureGuildModal, #secureTeacherModal) :is(.app-main-tab, .secureGuildTab, .secureTeacherTab, .teacher-guild-tab)[aria-selected="false"] {
+            background-color: #151515 !important;
+            color: #d1d5db !important;
+            border-color: #3c3c3c !important;
+        }
+
+        html[data-theme="ivory"] :is(#mainTabsNav, #secureGuildModal, #secureTeacherModal) :is(.app-main-tab, .secureGuildTab, .secureTeacherTab, .teacher-guild-tab)[aria-selected="false"] {
+            background-color: #efe2cf !important;
+            color: #4a3c2f !important;
+            border-color: #b9a992 !important;
+        }
+
+        html[data-theme="ivory"] #rightMainPanel > [id$="Tab"] {
+            background-color: #fffaf1 !important;
+            border-color: #b9a992 !important;
+        }
+
+        /* 희귀도 연출용 어두운 카드는 라이트 모드에서도 배경과 글자를 함께 보존 */
+        html[data-theme="ivory"] .theme-dark-card {
+            background-color: #0f1115 !important;
+            color: #f8fafc !important;
+        }
+
+        html[data-theme="ivory"] .theme-dark-card :is([class~="text-white"], [class~="text-[#ffffff]"]) { color: #ffffff !important; }
+        html[data-theme="ivory"] .theme-dark-card :is([class~="text-gray-200"], [class~="text-gray-300"], [class~="text-gray-400"], [class~="text-gray-500"], [class~="text-gray-600"], [class~="text-[#bbbbbb]"], [class~="text-[#7e7e7e]"]) { color: #cbd5e1 !important; }
+        html[data-theme="ivory"] .theme-dark-card :is([class~="text-yellow-200"], [class~="text-yellow-300"], [class~="text-yellow-400"], [class~="text-amber-300"]) { color: #fde68a !important; }
+        html[data-theme="ivory"] .theme-dark-card :is([class~="text-sky-200"], [class~="text-sky-300"], [class~="text-sky-400"], [class~="text-cyan-200"], [class~="text-cyan-300"], [class~="text-[#7dd3fc]"]) { color: #7dd3fc !important; }
+        html[data-theme="ivory"] .theme-dark-card :is([class~="text-violet-200"], [class~="text-violet-300"], [class~="text-purple-200"], [class~="text-purple-300"], [class~="text-[#e9d5ff]"]) { color: #ddd6fe !important; }
+        html[data-theme="ivory"] .theme-dark-card :is([class~="text-emerald-200"], [class~="text-emerald-300"], [class~="text-green-300"]) { color: #6ee7b7 !important; }
+        html[data-theme="ivory"] .theme-dark-card :is([class~="text-pink-200"], [class~="text-pink-300"], [class~="text-pink-400"], [class~="text-red-300"], [class~="text-rose-300"], [class~="text-[#fca5a5]"]) { color: #fda4af !important; }
+        html[data-theme="ivory"] .theme-dark-card :is([class~="text-orange-300"], [class~="text-[#fdba74]"]) { color: #fdba74 !important; }
+        html[data-theme="ivory"] .theme-dark-card :is([class~="bg-black/80"], [class~="bg-black/60"], [class~="bg-black/50"], [class~="bg-[#111]"]) { background-color: rgba(0, 0, 0, .62) !important; }
+
+        /* 전역 테마 변환의 id 우선순위보다 높게 희귀도 카드 내부색을 확정 */
+        html[data-theme="ivory"] :is(#gameMainLayout, #secureTeacherModal) .theme-dark-card :is([class~="text-white"], [class~="text-[#ffffff]"]) { color: #ffffff !important; }
+        html[data-theme="ivory"] :is(#gameMainLayout, #secureTeacherModal) .theme-dark-card :is([class~="text-gray-200"], [class~="text-gray-300"], [class~="text-gray-400"], [class~="text-gray-500"], [class~="text-gray-600"], [class~="text-[#bbb]"], [class~="text-[#bbbbbb]"], [class~="text-[#7e7e7e]"]) { color: #cbd5e1 !important; }
+        html[data-theme="ivory"] :is(#gameMainLayout, #secureTeacherModal) .theme-dark-card :is([class~="text-yellow-200"], [class~="text-yellow-300"], [class~="text-yellow-400"], [class~="text-amber-300"]) { color: #fde68a !important; }
+        html[data-theme="ivory"] :is(#gameMainLayout, #secureTeacherModal) .theme-dark-card :is([class~="text-sky-200"], [class~="text-sky-300"], [class~="text-sky-400"], [class~="text-cyan-200"], [class~="text-cyan-300"], [class~="text-[#7dd3fc]"]) { color: #7dd3fc !important; }
+        html[data-theme="ivory"] :is(#gameMainLayout, #secureTeacherModal) .theme-dark-card :is([class~="text-violet-200"], [class~="text-violet-300"], [class~="text-purple-200"], [class~="text-purple-300"], [class~="text-[#e9d5ff]"]) { color: #ddd6fe !important; }
+        html[data-theme="ivory"] :is(#gameMainLayout, #secureTeacherModal) .theme-dark-card :is([class~="text-emerald-200"], [class~="text-emerald-300"], [class~="text-green-300"]) { color: #6ee7b7 !important; }
+        html[data-theme="ivory"] :is(#gameMainLayout, #secureTeacherModal) .theme-dark-card :is([class~="text-pink-200"], [class~="text-pink-300"], [class~="text-pink-400"], [class~="text-red-300"], [class~="text-rose-300"], [class~="text-[#fca5a5]"]) { color: #fda4af !important; }
+        html[data-theme="ivory"] :is(#gameMainLayout, #secureTeacherModal) .theme-dark-card :is([class~="text-orange-300"], [class~="text-[#fdba74]"]) { color: #fdba74 !important; }
 
         .theme-preview-dark { background: linear-gradient(135deg, #050506 0 48%, #1a1a1a 48%); }
         .theme-preview-ivory { background: linear-gradient(135deg, #fffaf1 0 48%, #eadbc4 48%); }
@@ -1278,7 +1409,7 @@
         }
     </script>
     <div id="secureWelcomeModal" class="fixed inset-0 z-[99999] overflow-y-auto bg-[#050506] text-white">
-        <button type="button" data-theme-toggle onclick="toggleAppearanceTheme()" class="fixed right-4 top-4 z-10 flex items-center gap-2 border border-amber-500/70 bg-black/80 px-3 py-2 text-xs font-bold text-amber-300 shadow-lg transition hover:border-amber-300 sm:right-6 sm:top-6" aria-label="밝은 화면으로 변경" title="화면 테마 바꾸기"><span data-theme-toggle-icon aria-hidden="true">☀️</span><span data-theme-toggle-label>밝은 화면</span></button>
+        <button type="button" data-theme-toggle onclick="toggleAppearanceTheme()" class="fixed right-4 top-4 z-10 flex items-center gap-2 border border-amber-500/70 bg-black/80 px-3 py-2 text-xs font-bold text-amber-300 shadow-lg transition hover:border-amber-300 sm:right-6 sm:top-6" aria-label="라이트 모드로 전환" title="라이트 모드로 전환"><span data-theme-toggle-icon aria-hidden="true">☀️</span><span data-theme-toggle-label>라이트 모드</span></button>
         <button id="secureWelcomeTeacher" class="fixed left-4 top-4 z-10 flex items-center gap-2 border border-sky-500/70 bg-sky-950/80 px-4 py-2 text-xs font-bold text-sky-300 shadow-lg transition hover:bg-sky-900/80 sm:left-6 sm:top-6"><i data-lucide="graduation-cap" class="h-4 w-4"></i>교사 로그인</button>
         <main id="secureWelcomeContent" class="mx-auto flex min-h-full w-full max-w-5xl items-center px-4 pb-8 pt-20 sm:px-6 sm:pb-10 sm:pt-24" aria-labelledby="secureWelcomeTitle">
             <section class="grid w-full overflow-hidden border border-[#3c3218] bg-[#090909] shadow-[0_0_40px_rgba(234,179,8,.12)] lg:grid-cols-[minmax(0,.9fr)_minmax(0,1.1fr)]">
@@ -1333,10 +1464,6 @@
                     class="hidden bg-[#1a1a1a] border border-[#3c3c3c] px-4 py-1.5 rounded-none-forced text-xs font-bold flex items-center gap-1.5 text-[#e6e6e6] tracking-wider uppercase">
                     <span id="displayStudentName">불러오는 중...</span>
                 </div>
-                <button type="button" data-theme-toggle onclick="toggleAppearanceTheme()" title="화면 테마 바꾸기" aria-label="밝은 화면으로 변경"
-                    class="bg-[#1a1a1a] hover:bg-[#262626] border border-[#3c3c3c] hover:border-amber-500 text-amber-400 px-2 py-1.5 rounded-none-forced transition flex items-center justify-center gap-1 cursor-pointer shadow-md">
-                    <span data-theme-toggle-icon aria-hidden="true">☀️</span><span data-theme-toggle-label class="hidden lg:inline text-[10px] font-bold">밝은 화면</span>
-                </button>
                 <!-- ⚙️ 환경 설정 버튼 -->
                 <button onclick="openSettingsModal()" title="환경 설정"
                     class="bg-[#1a1a1a] hover:bg-[#262626] border border-[#3c3c3c] hover:border-yellow-500 text-yellow-400 p-1.5 rounded-none-forced transition flex items-center justify-center cursor-pointer shadow-md">
@@ -1532,37 +1659,37 @@
             <!-- Header Navigation & Title -->
             <nav id="mainTabsNav" class="sticky top-0 z-50 grid grid-cols-3 sm:grid-cols-7 gap-1 bg-[#0d0d0d] p-1 border border-[#3c3c3c] rounded-none-forced">
                 <button onclick="switchTab('quizTab')" id="quizTabBtn"
-                    class="py-2 text-center font-bold text-xs uppercase tracking-wide text-black bg-white rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap overflow-hidden">
+                    class="app-main-tab py-2 text-center font-bold text-xs uppercase tracking-wide rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap overflow-hidden" aria-selected="true">
                     <i data-lucide="help-circle" class="w-3.5 h-3.5 shrink-0"></i>
                     <span class="whitespace-nowrap truncate">퀴즈 전투</span>
                 </button>
                 <button onclick="switchTab('gearTab')" id="gearTabBtn"
-                    class="py-2 text-center font-bold text-xs uppercase tracking-wide text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap overflow-hidden">
+                    class="app-main-tab py-2 text-center font-bold text-xs uppercase tracking-wide rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap overflow-hidden" aria-selected="false">
                     <i data-lucide="hammer" class="w-3.5 h-3.5 shrink-0"></i>
                     <span class="whitespace-nowrap truncate">대장간</span>
                 </button>
                 <button onclick="switchTab('petTab')" id="petTabBtn"
-                    class="py-2 text-center font-bold text-xs uppercase tracking-wide text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap overflow-hidden">
+                    class="app-main-tab py-2 text-center font-bold text-xs uppercase tracking-wide rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap overflow-hidden" aria-selected="false">
                     <i data-lucide="cat" class="w-3.5 h-3.5 shrink-0"></i>
                     <span class="whitespace-nowrap truncate">펫/유물 소환</span>
                 </button>
                 <button onclick="switchTab('skillTab')" id="skillTabBtn"
-                    class="py-2 text-center font-bold text-xs uppercase tracking-wide text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap overflow-hidden">
+                    class="app-main-tab py-2 text-center font-bold text-xs uppercase tracking-wide rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap overflow-hidden" aria-selected="false">
                     <i data-lucide="sparkles" class="w-3.5 h-3.5 shrink-0"></i>
                     <span class="whitespace-nowrap truncate">스킬</span>
                 </button>
                 <button onclick="switchTab('worldBossTab')" id="worldBossTabBtn"
-                    class="py-2 text-center font-bold text-xs uppercase tracking-wide text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition animate-pulse whitespace-nowrap overflow-hidden">
+                    class="app-main-tab py-2 text-center font-bold text-xs uppercase tracking-wide rounded-none-forced flex items-center justify-center gap-1 transition animate-pulse whitespace-nowrap overflow-hidden" aria-selected="false">
                     <i data-lucide="swords" class="w-3.5 h-3.5 text-red-500 shrink-0"></i>
                     <span class="whitespace-nowrap truncate">월드보스</span>
                 </button>
                 <button onclick="switchTab('hallOfFameTab')" id="hallOfFameTabBtn"
-                    class="py-2 text-center font-bold text-xs uppercase tracking-wide text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap overflow-hidden">
+                    class="app-main-tab py-2 text-center font-bold text-xs uppercase tracking-wide rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap overflow-hidden" aria-selected="false">
                     <i data-lucide="trophy" class="w-3.5 h-3.5 text-yellow-400 shrink-0"></i>
                     <span class="whitespace-nowrap truncate">명예의 전당</span>
                 </button>
                 <button onclick="switchTab('statsTab')" id="statsTabBtn"
-                    class="py-2 text-center font-bold text-xs uppercase tracking-wide text-[#7e7e7e] hover:text-white rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap overflow-hidden">
+                    class="app-main-tab py-2 text-center font-bold text-xs uppercase tracking-wide rounded-none-forced flex items-center justify-center gap-1 transition whitespace-nowrap overflow-hidden" aria-selected="false">
                     <i data-lucide="user-check" class="w-3.5 h-3.5 text-cyan-400 shrink-0"></i>
                     <span class="whitespace-nowrap truncate">내 영웅 정보</span>
                 </button>
@@ -3060,16 +3187,18 @@
                     <section class="border border-amber-700/50 bg-[#121216] p-3" aria-labelledby="appearanceThemeTitle">
                         <div class="mb-2">
                             <h4 id="appearanceThemeTitle" class="text-[11px] font-black text-amber-300">🎨 화면 테마</h4>
-                            <p class="mt-1 text-[9px] leading-relaxed text-gray-400">기본 다크 또는 눈부심을 줄인 따뜻한 아이보리 화면을 선택할 수 있어요.</p>
+                            <p class="mt-1 text-[9px] leading-relaxed text-gray-400">다크 모드 또는 눈부심을 줄인 따뜻한 라이트 모드를 선택할 수 있어요.</p>
                         </div>
                         <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="화면 테마 선택">
                             <button id="themeChoiceDark" type="button" class="theme-choice-btn flex flex-col items-center justify-center gap-1.5 p-2 text-[10px] font-bold" onclick="setAppearanceTheme('dark')" role="radio" aria-checked="true" aria-pressed="true">
                                 <span class="theme-preview-dark h-6 w-full border border-gray-600" aria-hidden="true"></span>
-                                <span>🌙 기본 다크</span>
+                                <span>🌙 다크 모드</span>
+                                <span class="theme-choice-status" data-theme-choice-status="dark">사용 중</span>
                             </button>
                             <button id="themeChoiceIvory" type="button" class="theme-choice-btn flex flex-col items-center justify-center gap-1.5 p-2 text-[10px] font-bold" onclick="setAppearanceTheme('ivory')" role="radio" aria-checked="false" aria-pressed="false">
                                 <span class="theme-preview-ivory h-6 w-full border border-amber-300" aria-hidden="true"></span>
-                                <span>☀️ 따뜻한 아이보리</span>
+                                <span>☀️ 라이트 모드</span>
+                                <span class="theme-choice-status" data-theme-choice-status="ivory" hidden></span>
                             </button>
                         </div>
                     </section>

@@ -1840,7 +1840,8 @@
             }
             if (activeTitle) {
                 const title = document.createElement("span");
-                title.className = `inline-block shrink-0 border px-1.5 py-0.5 text-[10px] ${titlePresentation.style}`;
+                title.className = `title-rarity-badge inline-block shrink-0 border px-1.5 py-0.5 text-[10px] ${titlePresentation.style}`;
+                title.dataset.titleTier = titlePresentation.tier || "일반";
                 title.textContent = `[${titlePresentation.name}]`;
                 heroRow.append(title);
             }
@@ -2595,12 +2596,12 @@
                         </div>
                         <div class="text-[9px] text-[#bbbbbb] ">${bonusLine}</div>
                         <div class="text-[9px] mt-0.5 flex flex-col gap-0.5">
-                            <span>성공: <span class="text-green-500 font-bold">${chanceInfo.success}%</span>${chanceInfo.guildForgeBonus > 0 ? ` <span class="font-black text-red-500">(+${chanceInfo.guildForgeBonus}%p 길드·아이템)</span>` : ''}</span>
+                            <span>성공: <span class="forge-success-text text-green-500 font-bold">${chanceInfo.success}%</span>${chanceInfo.guildForgeBonus > 0 ? ` <span class="font-black text-red-500">(+${chanceInfo.guildForgeBonus}%p 길드·아이템)</span>` : ''}</span>
                             ${chanceInfo.dropChance > 0
                                 ? (shieldRate > 0
                                     ? `<span class="text-[#e22718] font-bold">실패 시 ${effectiveDropChance}% 확률 하락 <span class="text-emerald-400 text-[8px]">(방패 -${shieldRate}%)</span></span>`
                                     : `<span class="text-[#e22718] font-bold">실패 시 ${chanceInfo.dropChance}% 확률 하락</span>`)
-                                : '<span class="text-green-500">실패해도 강화 유지</span>'}
+                                : '<span class="forge-success-text text-green-500">실패해도 강화 유지</span>'}
                         </div>
                     `;
                 }
@@ -2615,11 +2616,11 @@
                             <div class="mt-1">${rateHtml}</div>
                         </div>
                         <button onclick="event.stopPropagation(); ${isMax ? '' : `upgradeGearItem('${gearKey}')`}" ${isMax ? 'disabled' : ''}
-                            class="flex-shrink-0 flex flex-col items-center justify-center w-20 ${isMax ? 'bg-[#1a1a1a] opacity-50 cursor-not-allowed' : 'bg-[#0066b1] hover:bg-[#0088ee] cursor-pointer'} transition px-2 py-3 border-l border-[#262626]">
+                            class="forge-action-button flex-shrink-0 flex flex-col items-center justify-center w-20 ${isMax ? 'bg-[#1a1a1a] opacity-50 cursor-not-allowed' : 'bg-[#0066b1] hover:bg-[#0088ee] cursor-pointer'} transition px-2 py-3 border-l border-[#262626]">
                             ${isMax
                                 ? '<span class="text-white text-[10px] font-bold">MAX</span>'
-                                : `<span class="text-yellow-300 text-[11px] font-bold">🪙 ${cost.toLocaleString()}G</span>
-                                   <span class="text-white text-[9px] mt-0.5 opacity-80">강화 시도</span>`}
+                                : `<span class="forge-action-cost text-yellow-300 text-[11px] font-bold">🪙 ${cost.toLocaleString()}G</span>
+                                   <span class="forge-action-label text-white text-[9px] mt-0.5 opacity-80">강화 시도</span>`}
                         </button>
                     </div>
                 `;
@@ -2773,10 +2774,10 @@
                                     : `<span>🔨 강화 성공률: +${((info.forgeBonus || 0) * Math.max(1, petLevel)).toFixed(1)}%</span>`
                                 }
                             </div>
-                            <button onclick="${isMax ? '' : `interactUpgradePet('${petKey}')`}" ${isMax ? 'disabled' : ''} class="w-full mt-2 bmw-btn-primary py-2.5 flex flex-col items-center justify-center ${isMax ? 'opacity-50 cursor-not-allowed' : ''}">
+                            <button onclick="${isMax ? '' : `interactUpgradePet('${petKey}')`}" ${isMax ? 'disabled' : ''} class="pet-upgrade-button w-full mt-2 bmw-btn-primary py-2.5 flex flex-col items-center justify-center ${isMax ? 'opacity-50 cursor-not-allowed' : ''}">
                                 ${isMax ? '<span class="text-white font-bold text-[9px]">진화 최종 도달 (Lv.100)</span>' : `
-                                    <span class="text-[#e22718] font-bold text-[9px]">🪙 ${cost.toLocaleString()}G</span>
-                                    <span class="text-[8px] opacity-70">${petLevel === 0 ? '연구 및 소환' : '연구 및 진화'}</span>
+                                    <span class="pet-upgrade-cost text-[#e22718] font-bold text-[9px]">🪙 ${cost.toLocaleString()}G</span>
+                                    <span class="pet-upgrade-label text-[8px] opacity-70">${petLevel === 0 ? '연구 및 소환' : '연구 및 진화'}</span>
                                 `}
                             </button>
                         </div>
@@ -3463,7 +3464,7 @@
                 const expHtml = (isAcquired && starsCount < 6) ? `<span class="text-[7px] text-gray-400 font-normal mr-1">(${acquired.exp || 0}/${reqExp})</span>` : "";
 
                 html += `
-                    <div class="theme-dark-card border ${cardBorder} p-2 text-center flex flex-col justify-between min-h-[145px] rounded-none-forced relative group transition">
+                    <div class="theme-dark-card relic-inventory-card border ${cardBorder} p-2 text-center flex flex-col justify-between min-h-[145px] rounded-none-forced relative group transition" data-acquired="${isAcquired}" data-equipped="${isEquipped}">
                         <div>
                             <div class="flex justify-between items-center text-[8px] text-gray-300 font-bold mb-1">
                                 <span class="${isAcquired ? 'text-yellow-300 font-black' : 'text-gray-500'}">${isAcquired ? gradeInfo.name : '미해금'}</span>
@@ -3484,11 +3485,11 @@
 
                         <div class="mt-2">
                             ${isAcquired ? `
-                                <button onclick="equipRelic('${r.id}')" class="w-full py-1 text-[9px] font-black rounded-none-forced transition ${isEquipped ? 'bg-yellow-400 text-black border border-yellow-500 shadow-md' : 'bg-gray-800 hover:bg-gray-700 text-gray-200'}">
+                                <button onclick="equipRelic('${r.id}')" class="relic-equip-btn w-full py-1 text-[9px] font-black rounded-none-forced transition ${isEquipped ? 'bg-yellow-400 text-black border border-yellow-500 shadow-md' : 'bg-gray-800 hover:bg-gray-700 text-gray-200'}" data-equipped="${isEquipped}">
                                     ${isEquipped ? '✨ 장착중' : '⚔️ 장착하기'}
                                 </button>
                             ` : `
-                                <span class="block py-1 text-[8px] font-bold text-gray-500 bg-gray-950 border border-gray-900">🔒 소환 필요</span>
+                                <span class="relic-locked-status block py-1 text-[8px] font-bold text-gray-500 bg-gray-950 border border-gray-900">🔒 소환 필요</span>
                             `}
                         </div>
                     </div>
@@ -7010,7 +7011,7 @@
                     else if (titleDef.tier === "희귀") badgeClass = "text-sky-300 bg-sky-950/90 border-sky-600";
                     else badgeClass = "text-gray-300 bg-gray-900 border-gray-700";
                 }
-                return `<span class="text-[8.5px] font-bold px-1 py-0.2 border shrink-0 mr-0.5 whitespace-nowrap rounded-none-forced ${badgeClass}">[${titleName}]</span>`;
+                return `<span class="title-rarity-badge text-[8.5px] font-bold px-1 py-0.2 border shrink-0 mr-0.5 whitespace-nowrap rounded-none-forced ${badgeClass}" data-title-tier="${titleDef?.tier || '일반'}">[${titleName}]</span>`;
             };
 
             // Firestore에서 학년 내 전체 유저 데이터 조회 + 월드보스 데미지 병합
@@ -7216,8 +7217,9 @@
                 const currentTitle = getTitlePresentation(gameState.equippedTitle);
                 equippedText.innerText = gameState.equippedTitle ? `[${currentTitle.name}]` : "[칭호 미장착]";
                 equippedText.className = gameState.equippedTitle
-                    ? `theme-dark-card inline-block border px-1.5 py-0.5 text-[10px] font-bold ${currentTitle.style}`
-                    : "inline-block border border-gray-700 bg-gray-950 px-1.5 py-0.5 text-[10px] font-bold text-gray-400";
+                    ? `theme-dark-card title-rarity-badge inline-block border px-1.5 py-0.5 text-[10px] font-bold ${currentTitle.style}`
+                    : "title-rarity-badge inline-block border border-gray-700 bg-gray-950 px-1.5 py-0.5 text-[10px] font-bold text-gray-400";
+                equippedText.dataset.titleTier = gameState.equippedTitle ? (currentTitle.tier || "일반") : "일반";
             }
 
             if (!gameState.unlockedTitles) gameState.unlockedTitles = [];
@@ -7237,19 +7239,19 @@
                                        t.tier === "희귀" ? "bg-sky-600 text-white font-bold" : "bg-gray-700 text-gray-300";
 
                 html += `
-                    <div class="theme-dark-card p-2.5 border ${isUnlocked ? 'border-gray-700 bg-black' : 'border-gray-900 bg-[#080808] opacity-50'} flex justify-between items-center text-xs rounded-none-forced">
+                    <div class="title-inventory-card p-2.5 border ${isUnlocked ? 'border-gray-700 bg-black' : 'border-gray-900 bg-[#080808]'} flex justify-between items-center text-xs rounded-none-forced" data-unlocked="${isUnlocked}" data-equipped="${isEquipped}">
                         <div>
                             <div class="flex items-center gap-1.5 mb-1">
-                                <span class="text-[8px] px-1 py-0.2 rounded-none-forced uppercase ${tierBadgeColor}">${t.tier}</span>
-                                <span class="font-bold px-1.5 py-0.5 border text-[11px] ${isUnlocked ? t.style : 'text-gray-600 border-gray-800 bg-gray-950'}">[${t.name}]</span>
-                                ${isEquipped ? '<span class="text-[9px] text-green-400 font-bold bg-green-950 px-1 border border-green-700">장착중</span>' : ''}
+                                <span class="title-tier-badge text-[8px] px-1 py-0.2 rounded-none-forced uppercase ${tierBadgeColor}" data-title-tier="${t.tier}">${t.tier}</span>
+                                <span class="title-rarity-badge font-bold px-1.5 py-0.5 border text-[11px] ${isUnlocked ? t.style : 'text-gray-600 border-gray-800 bg-gray-950'}" data-title-tier="${isUnlocked ? t.tier : '잠김'}">[${t.name}]</span>
+                                ${isEquipped ? '<span class="title-equipped-status text-[9px] text-green-400 font-bold bg-green-950 px-1 border border-green-700">장착중</span>' : ''}
                             </div>
                             <p class="text-[9px] text-gray-400">${t.desc}</p>
                         </div>
                         <div>
                             ${isUnlocked ? 
-                                `<button onclick="equipTitle('${t.id}')" class="text-[10px] px-3 py-1 font-bold transition ${isEquipped ? 'bg-gray-800 text-gray-400 border border-gray-700 cursor-default' : 'bg-yellow-950 text-yellow-300 border border-yellow-600 hover:bg-yellow-900'}">${isEquipped ? '해제' : '장착'}</button>`
-                                : `<span class="text-[9px] text-gray-600 font-bold border border-gray-800 px-2 py-0.5">🔒 미해금</span>`
+                                `<button onclick="equipTitle('${t.id}')" class="title-action-btn text-[10px] px-3 py-1 font-bold transition ${isEquipped ? 'bg-gray-800 text-gray-400 border border-gray-700 cursor-default' : 'bg-yellow-950 text-yellow-300 border border-yellow-600 hover:bg-yellow-900'}" data-equipped="${isEquipped}">${isEquipped ? '해제' : '장착'}</button>`
+                                : `<span class="title-locked-status text-[9px] text-gray-600 font-bold border border-gray-800 px-2 py-0.5">🔒 미해금</span>`
                             }
                         </div>
                     </div>

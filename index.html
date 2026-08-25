@@ -621,7 +621,7 @@
             --vh-surface-soft: #efe2cf;
             --vh-text: #2c251d;
             --vh-text-soft: #5f5245;
-            --vh-text-muted: #796b5d;
+            --vh-text-muted: #6b5b4d;
             --vh-line: #b9a992;
             --vh-line-soft: #d8c9b5;
             --vh-overlay-soft: rgba(69, 53, 34, .12);
@@ -751,11 +751,16 @@
         html[data-theme="ivory"] [class~="text-white"],
         html[data-theme="ivory"] [class~="text-[#ffffff]"],
         html[data-theme="ivory"] [class~="text-[#e6e6e6]"],
+        html[data-theme="ivory"] [class~="text-gray-100"],
         html[data-theme="ivory"] [class~="text-gray-200"] {
             color: var(--vh-text) !important;
         }
 
+        html[data-theme="ivory"] [class~="text-[#bbb]"],
         html[data-theme="ivory"] [class~="text-[#bbbbbb]"],
+        html[data-theme="ivory"] [class~="text-[#cccccc]"],
+        html[data-theme="ivory"] [class~="text-[#ddd]"],
+        html[data-theme="ivory"] [class~="text-[#dddddd]"],
         html[data-theme="ivory"] [class~="text-gray-300"],
         html[data-theme="ivory"] [class~="text-gray-400"],
         html[data-theme="ivory"] [class~="text-slate-400"] {
@@ -770,29 +775,32 @@
         }
 
         /* 밝은 바탕에서는 네온 계열을 같은 의미의 짙은 색으로 바꿔 읽기 대비를 확보 */
-        html[data-theme="ivory"] :is([class~="text-yellow-200"], [class~="text-yellow-300"], [class~="text-yellow-400"], [class~="text-amber-200"], [class~="text-amber-300"], [class~="text-amber-400"]):not([data-theme-toggle], #battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) {
+        html[data-theme="ivory"] :is([class~="text-yellow-100"], [class~="text-yellow-200"], [class~="text-yellow-300"], [class~="text-yellow-300/90"], [class~="text-yellow-400"], [class~="text-yellow-400/70"], [class~="text-amber-100"], [class~="text-amber-200"], [class~="text-amber-200/80"], [class~="text-amber-300"], [class~="text-amber-400"], [class~="text-[#fde68a]"], [class~="text-[#ffdd88]"]):not([data-theme-toggle], #battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) {
             color: #785100 !important;
         }
 
-        html[data-theme="ivory"] :is([class~="text-sky-100"], [class~="text-sky-200"], [class~="text-sky-300"], [class~="text-sky-400"], [class~="text-cyan-100"], [class~="text-cyan-200"], [class~="text-cyan-300"], [class~="text-cyan-400"], [class~="text-[#7dd3fc]"], [class~="text-[#53b5ee]"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) {
+        html[data-theme="ivory"] :is([class~="text-sky-100"], [class~="text-sky-200"], [class~="text-sky-200/80"], [class~="text-sky-300"], [class~="text-sky-400"], [class~="text-cyan-100"], [class~="text-cyan-200"], [class~="text-cyan-300"], [class~="text-cyan-400"], [class~="text-[#7dd3fc]"], [class~="text-[#53b5ee]"], [class~="text-[#cffafe]"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) {
             color: #075985 !important;
         }
 
-        html[data-theme="ivory"] :is([class~="text-blue-200"], [class~="text-blue-300"], [class~="text-blue-400"], [class~="text-indigo-200"], [class~="text-indigo-300"], [class~="text-indigo-400"], [class~="text-violet-200"], [class~="text-violet-300"], [class~="text-violet-400"], [class~="text-purple-200"], [class~="text-purple-300"], [class~="text-purple-400"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) {
+        html[data-theme="ivory"] :is([class~="text-blue-200"], [class~="text-blue-300"], [class~="text-blue-400"], [class~="text-indigo-200"], [class~="text-indigo-300"], [class~="text-indigo-400"], [class~="text-violet-100"], [class~="text-violet-200"], [class~="text-violet-300"], [class~="text-violet-400"], [class~="text-purple-100"], [class~="text-purple-200"], [class~="text-purple-200/80"], [class~="text-purple-300"], [class~="text-purple-400"], [class~="text-fuchsia-100"], [class~="text-fuchsia-200"], [class~="text-fuchsia-300"], [class~="text-[#c7d2fe]"], [class~="text-[#ddd6fe]"], [class~="text-[#e0e7ff]"], [class~="text-[#e9d5ff]"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) {
             color: #5b21b6 !important;
         }
 
-        html[data-theme="ivory"] :is([class~="text-emerald-100"], [class~="text-emerald-200"], [class~="text-emerald-300"], [class~="text-emerald-400"], [class~="text-green-200"], [class~="text-green-300"], [class~="text-green-400"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) {
+        html[data-theme="ivory"] :is([class~="text-emerald-100"], [class~="text-emerald-200"], [class~="text-emerald-300"], [class~="text-emerald-400"], [class~="text-green-200"], [class~="text-green-300"], [class~="text-green-400"], [class~="text-[#a7f3d0]"], [class~="text-[#ccfbf1]"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) {
             color: #047857 !important;
         }
 
-        html[data-theme="ivory"] :is([class~="text-pink-100"], [class~="text-pink-200"], [class~="text-pink-300"], [class~="text-pink-400"], [class~="text-rose-100"], [class~="text-rose-200"], [class~="text-rose-300"], [class~="text-rose-400"], [class~="text-red-200"], [class~="text-red-300"], [class~="text-red-400"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) {
+        html[data-theme="ivory"] :is([class~="text-pink-100"], [class~="text-pink-200"], [class~="text-pink-300"], [class~="text-pink-400"], [class~="text-rose-100"], [class~="text-rose-200"], [class~="text-rose-300"], [class~="text-rose-400"], [class~="text-red-100"], [class~="text-red-200"], [class~="text-red-200/80"], [class~="text-red-300"], [class~="text-red-400"], [class~="text-[#fbcfe8]"], [class~="text-[#fecdd3]"], [class~="text-[#fca5a5]"], [class~="text-[#ff8080]"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) {
             color: #be123c !important;
         }
 
-        html[data-theme="ivory"] :is([class~="text-orange-300"], [class~="text-orange-400"], [class~="text-[#e22718]"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) {
+        html[data-theme="ivory"] :is([class~="text-orange-200"], [class~="text-orange-300"], [class~="text-orange-400"], [class~="text-[#fdba74]"], [class~="text-[#e22718]"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) {
             color: #9a3412 !important;
         }
+
+        html[data-theme="ivory"] [class~="text-green-500"]:not(#battleArena *, #worldBossBattleArena *, #wbVisualStage *) { color: #047857 !important; }
+        html[data-theme="ivory"] [class~="text-red-500"]:not(#battleArena *, #worldBossBattleArena *, #wbVisualStage *) { color: #b91c1c !important; }
 
         html[data-theme="ivory"] :is([class*="bg-sky-950"], [class*="bg-cyan-950"], [class*="bg-blue-950"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) { background-color: #e6f4f8 !important; }
         html[data-theme="ivory"] :is([class*="bg-violet-950"], [class*="bg-purple-950"], [class*="bg-indigo-950"]):not(#battleArena *, #worldBossBattleArena *, #gachaOverlayModal *, #skillAcquireModal *, #gacha10xResultModal *, #gacha100xResultModal *, #relicDrawResultModal *, #criticalDefenseModal *, #wbVictoryNoticeModal *, #wbRaidResultModal *, #damageOverlay *, #customModalBox *, #forgeResultBox *) { background-color: #f1eafa !important; }
@@ -1058,6 +1066,243 @@
         html[data-theme="ivory"] :is(#gameMainLayout, #secureTeacherModal) .theme-dark-card :is([class~="text-emerald-200"], [class~="text-emerald-300"], [class~="text-green-300"]) { color: #6ee7b7 !important; }
         html[data-theme="ivory"] :is(#gameMainLayout, #secureTeacherModal) .theme-dark-card :is([class~="text-pink-200"], [class~="text-pink-300"], [class~="text-pink-400"], [class~="text-red-300"], [class~="text-rose-300"], [class~="text-[#fca5a5]"]) { color: #fda4af !important; }
         html[data-theme="ivory"] :is(#gameMainLayout, #secureTeacherModal) .theme-dark-card :is([class~="text-orange-300"], [class~="text-[#fdba74]"]) { color: #fdba74 !important; }
+
+        /* 전역의 밝은색 보정을 어두운 희귀도 카드 안에서는 다시 밝게 유지 */
+        html[data-theme="ivory"] :is(#gameMainLayout, #secureTeacherModal) .theme-dark-card :is([class~="text-yellow-100"], [class~="text-yellow-300/90"], [class~="text-yellow-400/70"], [class~="text-amber-100"], [class~="text-amber-200/80"], [class~="text-[#fde68a]"], [class~="text-[#ffdd88]"]) { color: #fde68a !important; }
+        html[data-theme="ivory"] :is(#gameMainLayout, #secureTeacherModal) .theme-dark-card :is([class~="text-sky-100"], [class~="text-sky-200/80"], [class~="text-cyan-100"], [class~="text-[#cffafe]"]) { color: #7dd3fc !important; }
+        html[data-theme="ivory"] :is(#gameMainLayout, #secureTeacherModal) .theme-dark-card :is([class~="text-violet-100"], [class~="text-purple-100"], [class~="text-purple-200/80"], [class~="text-fuchsia-100"], [class~="text-fuchsia-200"], [class~="text-fuchsia-300"], [class~="text-[#c7d2fe]"], [class~="text-[#ddd6fe]"], [class~="text-[#e0e7ff]"]) { color: #ddd6fe !important; }
+        html[data-theme="ivory"] :is(#gameMainLayout, #secureTeacherModal) .theme-dark-card :is([class~="text-emerald-100"], [class~="text-[#a7f3d0]"], [class~="text-[#ccfbf1]"]) { color: #6ee7b7 !important; }
+        html[data-theme="ivory"] :is(#gameMainLayout, #secureTeacherModal) .theme-dark-card :is([class~="text-pink-100"], [class~="text-red-100"], [class~="text-red-200/80"], [class~="text-rose-100"], [class~="text-[#fbcfe8]"], [class~="text-[#fecdd3]"], [class~="text-[#ff8080]"]) { color: #fda4af !important; }
+        html[data-theme="ivory"] :is(#gameMainLayout, #secureTeacherModal) .theme-dark-card [class~="text-orange-200"] { color: #fdba74 !important; }
+
+        /* 라이트 모드에서 어두운 희귀도 카드·상태 배지를 의미 단위로 고정 */
+        html[data-theme="ivory"] #relicsInventoryGrid .relic-inventory-card {
+            background-color: #0f1115 !important;
+            color: #f8fafc !important;
+        }
+
+        html[data-theme="ivory"] #relicsInventoryGrid .relic-equip-btn[data-equipped="false"] {
+            background-color: #273344 !important;
+            border: 1px solid #64748b !important;
+            color: #f8fafc !important;
+        }
+
+        html[data-theme="ivory"] #relicsInventoryGrid .relic-equip-btn[data-equipped="false"]:hover,
+        html[data-theme="ivory"] #relicsInventoryGrid .relic-equip-btn[data-equipped="false"]:focus-visible {
+            background-color: #3d4b60 !important;
+            border-color: #93c5fd !important;
+            color: #ffffff !important;
+        }
+
+        html[data-theme="ivory"] #relicsInventoryGrid .relic-equip-btn[data-equipped="true"] {
+            background-color: #facc15 !important;
+            border-color: #a16207 !important;
+            color: #21180b !important;
+        }
+
+        html[data-theme="ivory"] #relicsInventoryGrid .relic-equip-btn[data-equipped="true"]:hover,
+        html[data-theme="ivory"] #relicsInventoryGrid .relic-equip-btn[data-equipped="true"]:focus-visible {
+            background-color: #fde047 !important;
+            border-color: #713f12 !important;
+            color: #140f08 !important;
+        }
+
+        html[data-theme="ivory"] .title-inventory-card {
+            background: #fffaf1 !important;
+            border-color: #b9a992 !important;
+            color: #2c251d !important;
+            opacity: 1 !important;
+        }
+
+        html[data-theme="ivory"] .title-inventory-card[data-unlocked="false"] {
+            background: #eee4d5 !important;
+            border-color: #c8b79f !important;
+        }
+
+        html[data-theme="ivory"] .title-inventory-card .title-equipped-status {
+            background: #dff4e8 !important;
+            border-color: #047857 !important;
+            color: #065f46 !important;
+        }
+
+        html[data-theme="ivory"] .title-inventory-card .title-action-btn[data-equipped="false"] {
+            background: #f8e6a6 !important;
+            border-color: #9a6b00 !important;
+            color: #4a3200 !important;
+        }
+
+        html[data-theme="ivory"] .title-inventory-card .title-action-btn[data-equipped="false"]:hover,
+        html[data-theme="ivory"] .title-inventory-card .title-action-btn[data-equipped="false"]:focus-visible {
+            background: #f6cf58 !important;
+            color: #21180b !important;
+        }
+
+        html[data-theme="ivory"] .title-inventory-card .title-action-btn[data-equipped="true"] {
+            background: #e0d4c3 !important;
+            border-color: #796b5d !important;
+            color: #3f352b !important;
+        }
+
+        html[data-theme="ivory"] .title-inventory-card .title-action-btn[data-equipped="true"]:hover,
+        html[data-theme="ivory"] .title-inventory-card .title-action-btn[data-equipped="true"]:focus-visible {
+            background: #cfc0aa !important;
+            color: #211a14 !important;
+        }
+
+        html[data-theme="ivory"] .title-inventory-card .title-locked-status {
+            border-color: #a8977f !important;
+            color: #5f5245 !important;
+        }
+
+        html[data-theme="ivory"] .title-rarity-badge[data-title-tier="신화"] { background: #3d2d08 !important; border-color: #d6a514 !important; color: #fef3c7 !important; }
+        html[data-theme="ivory"] .title-rarity-badge[data-title-tier="전설"] { background: #4c1515 !important; border-color: #dc2626 !important; color: #fecaca !important; }
+        html[data-theme="ivory"] .title-rarity-badge[data-title-tier="영웅"] { background: #32195b !important; border-color: #7c3aed !important; color: #ede9fe !important; }
+        html[data-theme="ivory"] .title-rarity-badge[data-title-tier="희귀"] { background: #123951 !important; border-color: #0284c7 !important; color: #bae6fd !important; }
+        html[data-theme="ivory"] .title-rarity-badge[data-title-tier="일반"] { background: #2f3640 !important; border-color: #64748b !important; color: #e5e7eb !important; }
+        html[data-theme="ivory"] .title-rarity-badge[data-title-tier="잠김"] { background: #d9ccba !important; border-color: #a8977f !important; color: #514438 !important; box-shadow: none !important; }
+
+        html[data-theme="ivory"] .title-tier-badge[data-title-tier="신화"] { background: #f2c94c !important; color: #2c2100 !important; }
+        html[data-theme="ivory"] .title-tier-badge[data-title-tier="전설"] { background: #b91c1c !important; color: #ffffff !important; }
+        html[data-theme="ivory"] .title-tier-badge[data-title-tier="영웅"] { background: #6d28d9 !important; color: #ffffff !important; }
+        html[data-theme="ivory"] .title-tier-badge[data-title-tier="희귀"] { background: #0369a1 !important; color: #ffffff !important; }
+        html[data-theme="ivory"] .title-tier-badge[data-title-tier="일반"] { background: #475569 !important; color: #ffffff !important; }
+
+        /* Tailwind 런타임과 ID 기반 테마 규칙보다 칭호 등급색을 확실히 우선 */
+        html[data-theme="ivory"] :is(body, body #gameMainLayout) .title-rarity-badge[data-title-tier="신화"] { color: #fef3c7 !important; }
+        html[data-theme="ivory"] :is(body, body #gameMainLayout) .title-rarity-badge[data-title-tier="전설"] { color: #fecaca !important; }
+        html[data-theme="ivory"] :is(body, body #gameMainLayout) .title-rarity-badge[data-title-tier="영웅"] { color: #ede9fe !important; }
+        html[data-theme="ivory"] :is(body, body #gameMainLayout) .title-rarity-badge[data-title-tier="희귀"] { color: #bae6fd !important; }
+        html[data-theme="ivory"] :is(body, body #gameMainLayout) .title-rarity-badge[data-title-tier="일반"] { color: #e5e7eb !important; }
+        html[data-theme="ivory"] :is(body, body #gameMainLayout) .title-rarity-badge[data-title-tier="잠김"] { color: #514438 !important; }
+
+        html[data-theme="ivory"] #wbWeekBadge {
+            background: #7f1d1d !important;
+            border-color: #ef4444 !important;
+            color: #fff3bf !important;
+        }
+
+        html[data-theme="ivory"] body #gameMainLayout #worldBossTab #wbWeekBadge { color: #fff3bf !important; }
+        html[data-theme="ivory"] body #gameMainLayout #worldBossTab .world-boss-guide-label { color: #fff7d6 !important; }
+
+        html[data-theme="ivory"] #worldBossHpText {
+            color: #ffffff !important;
+            text-shadow: 0 1px 2px #000000, 0 0 4px rgba(0, 0, 0, .9) !important;
+        }
+
+        html[data-theme="ivory"] body #gameMainLayout .forge-action-cost { color: #ffffff !important; text-shadow: 0 1px 2px rgba(0, 0, 0, .7); }
+        html[data-theme="ivory"] body #gameMainLayout .forge-action-button,
+        html[data-theme="ivory"] body #gameMainLayout .forge-action-label { color: #ffffff !important; }
+        html[data-theme="ivory"] body #gameMainLayout .forge-success-text { color: #047857 !important; }
+        html[data-theme="ivory"] body #gameMainLayout .pet-upgrade-button {
+            background-color: #075985 !important;
+            border-color: #0284c7 !important;
+            color: #ffffff !important;
+        }
+        html[data-theme="ivory"] body #gameMainLayout .pet-upgrade-button:hover:not(:disabled),
+        html[data-theme="ivory"] body #gameMainLayout .pet-upgrade-button:focus-visible:not(:disabled) {
+            background-color: #0c4a6e !important;
+            border-color: #38bdf8 !important;
+            color: #ffffff !important;
+        }
+        html[data-theme="ivory"] body #gameMainLayout .pet-upgrade-cost { color: #fef3c7 !important; }
+        html[data-theme="ivory"] body #gameMainLayout .pet-upgrade-label { color: #ffffff !important; }
+        html[data-theme="ivory"] body #gameMainLayout #relicAltarUnlockedSection .relic-summon-single { color: #f5f3ff !important; }
+        html[data-theme="ivory"] body #gameMainLayout #relicsInventoryGrid .relic-locked-status { background: #1f2937 !important; border-color: #64748b !important; color: #e5e7eb !important; }
+
+        /* 교사 길드 카드·초대·시련 하위 탭의 양쪽 테마 대비 */
+        html[data-theme="ivory"] #secureClassList > button,
+        html[data-theme="ivory"] #secureTeacherOtherGuildList > button {
+            background: linear-gradient(135deg, #fffdf8 0%, #eee2d0 100%) !important;
+            border-color: #a7957d !important;
+            color: #2c251d !important;
+        }
+
+        html[data-theme="ivory"] #secureClassList > button:hover,
+        html[data-theme="ivory"] #secureClassList > button:focus-visible,
+        html[data-theme="ivory"] #secureTeacherOtherGuildList > button:hover,
+        html[data-theme="ivory"] #secureTeacherOtherGuildList > button:focus-visible {
+            background: linear-gradient(135deg, #ffffff 0%, #e5d5bd 100%) !important;
+            border-color: #6d28d9 !important;
+            color: #211a14 !important;
+        }
+
+        html[data-theme="dark"] #secureTeacherInviteStudent { background: rgba(46, 16, 101, .42) !important; color: #ede9fe !important; }
+        html[data-theme="dark"] #secureTeacherInviteManager { background: rgba(8, 47, 73, .45) !important; color: #e0f2fe !important; }
+        html[data-theme="dark"] :is(#secureTeacherInviteStudent, #secureTeacherInviteManager):hover,
+        html[data-theme="dark"] :is(#secureTeacherInviteStudent, #secureTeacherInviteManager):focus-visible { filter: brightness(1.22); box-shadow: inset 0 -3px 0 rgba(255, 255, 255, .14); }
+        html[data-theme="ivory"] #secureTeacherInviteStudent { background: #eee6fb !important; border-color: #7c3aed !important; color: #4c1d95 !important; }
+        html[data-theme="ivory"] #secureTeacherInviteManager { background: #e3f3f8 !important; border-color: #0284c7 !important; color: #075985 !important; }
+        html[data-theme="ivory"] :is(#secureTeacherInviteStudent, #secureTeacherInviteManager):hover,
+        html[data-theme="ivory"] :is(#secureTeacherInviteStudent, #secureTeacherInviteManager):focus-visible { filter: brightness(.94); box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .12); }
+
+        /* 라이트 화면에서 다음 테마(다크)를 가리키는 버튼은 어두운 면과 밝은 글자를 한 쌍으로 유지 */
+        html[data-theme="ivory"] body [data-theme-toggle] {
+            background-color: #2b231b !important;
+            border-color: #8f6b32 !important;
+            color: #fff8e8 !important;
+        }
+
+        html[data-theme="ivory"] body #secureTeacherModal #secureTeacherThemeToggle {
+            background-color: #2b231b !important;
+            border-color: #8f6b32 !important;
+            color: #fff8e8 !important;
+        }
+
+        html[data-theme="ivory"] body [data-theme-toggle]:hover,
+        html[data-theme="ivory"] body [data-theme-toggle]:focus-visible,
+        html[data-theme="ivory"] body #secureTeacherModal #secureTeacherThemeToggle:hover,
+        html[data-theme="ivory"] body #secureTeacherModal #secureTeacherThemeToggle:focus-visible {
+            background-color: #17120e !important;
+            border-color: #b78318 !important;
+            color: #ffffff !important;
+        }
+
+        html[data-theme="dark"] #secureTrialModeControls [data-trial-delivery-mode] {
+            background: #151515 !important;
+            border-color: #4b5563 !important;
+            color: #d1d5db !important;
+        }
+
+        html[data-theme="dark"] #secureTrialModeControls [data-trial-delivery-mode="common"][aria-pressed="true"] {
+            background: #4c0b19 !important;
+            border-color: #fb7185 !important;
+            color: #ffe4e6 !important;
+            box-shadow: inset 0 -3px 0 #e11d48;
+        }
+
+        html[data-theme="dark"] #secureTrialModeControls [data-trial-delivery-mode="personalized"][aria-pressed="true"] {
+            background: #3b0a45 !important;
+            border-color: #e879f9 !important;
+            color: #fae8ff !important;
+            box-shadow: inset 0 -3px 0 #c026d3;
+        }
+
+        html[data-theme="ivory"] #secureTrialModeControls [data-trial-delivery-mode] {
+            background: #efe2cf !important;
+            border-color: #b9a992 !important;
+            color: #4a3c2f !important;
+        }
+
+        html[data-theme="ivory"] #secureTrialModeControls [data-trial-delivery-mode="common"][aria-pressed="true"] {
+            background: #ffe1dc !important;
+            border-color: #be123c !important;
+            color: #881337 !important;
+            box-shadow: inset 0 -4px 0 #e11d48;
+        }
+
+        html[data-theme="ivory"] #secureTrialModeControls [data-trial-delivery-mode="personalized"][aria-pressed="true"] {
+            background: #eadcf5 !important;
+            border-color: #7e22ce !important;
+            color: #581c87 !important;
+            box-shadow: inset 0 -4px 0 #a21caf;
+        }
+
+        html[data-theme="dark"] .teacher-trial-band-btn[aria-pressed="true"] { background: #263244 !important; color: #ffffff !important; }
+        html[data-theme="ivory"] .teacher-trial-band-btn { background: #fffaf1 !important; color: #4a3c2f !important; }
+        html[data-theme="ivory"] .teacher-trial-band-btn[aria-pressed="true"] { background: #dceef5 !important; border-color: #0369a1 !important; color: #075985 !important; box-shadow: inset 0 -3px 0 #0284c7; }
+
+        html[data-theme="dark"] #relicsInventoryGrid .relic-equip-btn[data-equipped="true"]:hover,
+        html[data-theme="dark"] #relicsInventoryGrid .relic-equip-btn[data-equipped="true"]:focus-visible { background-color: #fde047 !important; border-color: #fef08a !important; color: #140f08 !important; }
 
         .theme-preview-dark { background: linear-gradient(135deg, #050506 0 48%, #1a1a1a 48%); }
         .theme-preview-ivory { background: linear-gradient(135deg, #fffaf1 0 48%, #eadbc4 48%); }
@@ -1872,7 +2117,7 @@
                                 </span>
                                 
                                 <div class="flex gap-1 ml-1">
-                                    <button onclick="drawRelicCapsule(1)" class="px-1.5 md:px-2.5 py-1 bg-purple-900 hover:bg-purple-800 text-purple-200 font-bold text-[9px] md:text-[10px] border border-purple-500 rounded-none-forced transition">
+                                    <button onclick="drawRelicCapsule(1)" class="relic-summon-single px-1.5 md:px-2.5 py-1 bg-purple-900 hover:bg-purple-800 text-purple-200 font-bold text-[9px] md:text-[10px] border border-purple-500 rounded-none-forced transition">
                                         🏺 1회(50)
                                     </button>
                                     <button onclick="drawRelicCapsule(10)" class="px-1.5 md:px-2.5 py-1 bg-gradient-to-r from-yellow-600 to-amber-500 hover:from-yellow-500 hover:to-amber-400 text-black font-extrabold text-[9px] md:text-[10px] shadow-md rounded-none-forced transition">
@@ -2186,7 +2431,7 @@
                                     <!-- Active Boss Debuff & Pattern -->
                                     <div class="bg-[#0b0c10] p-1.5 border border-red-950 flex flex-col gap-0.5 min-w-0">
                                         <div class="flex items-center gap-1.5 min-w-0">
-                                            <span class="text-[10px] bg-red-900 text-yellow-300 font-extrabold px-1.5 py-0.2 shrink-0">고유 패턴</span>
+                                            <span class="world-boss-guide-label text-[10px] bg-red-900 text-yellow-300 font-extrabold px-1.5 py-0.2 shrink-0">고유 패턴</span>
                                             <span id="wbGuideDebuffName" class="text-xs font-bold text-red-400 whitespace-nowrap truncate">🔥 심연의 화염 (보기 가림)</span>
                                         </div>
                                         <p id="wbGuideDebuffDesc" class="text-[10.5px] text-gray-300 font-medium leading-relaxed pl-1 mt-0.5">
@@ -2197,7 +2442,7 @@
                                     <!-- Active Boss Weakness Conquest Method -->
                                     <div class="bg-[#0b0c10] p-1.5 border border-amber-950 flex flex-col gap-0.5 min-w-0">
                                         <div class="flex items-center gap-1.5 min-w-0">
-                                            <span class="text-[10px] bg-amber-900 text-yellow-300 font-extrabold px-1.5 py-0.2 shrink-0">약점 파훼</span>
+                                            <span class="world-boss-guide-label text-[10px] bg-amber-900 text-yellow-300 font-extrabold px-1.5 py-0.2 shrink-0">약점 파훼</span>
                                             <span id="wbGuideWeaknessName" class="text-xs font-bold text-amber-400 whitespace-nowrap truncate">⚡ 비늘 파괴 (화염 정답 조준 / 5연속 정답)</span>
                                         </div>
                                         <p id="wbGuideWeaknessEffect" class="text-[10.5px] text-yellow-200 font-medium leading-relaxed pl-1 mt-0.5">
@@ -2208,7 +2453,7 @@
                                     <!-- Active Boss Ultimate Intercept Skill -->
                                     <div class="bg-[#0b0c10] p-1.5 border border-purple-950 flex flex-col gap-0.5 min-w-0">
                                         <div class="flex items-center gap-1.5 min-w-0">
-                                            <span class="text-[10px] bg-purple-900 text-pink-300 font-extrabold px-1.5 py-0.2 shrink-0">필살기 카운터</span>
+                                            <span class="world-boss-guide-label text-[10px] bg-purple-900 text-pink-300 font-extrabold px-1.5 py-0.2 shrink-0">필살기 카운터</span>
                                             <span id="wbGuideCounterName" class="text-xs font-bold text-purple-300 whitespace-nowrap truncate">🔥 멸망의 흑염 브레스</span>
                                         </div>
                                         <p id="wbGuideCounterDesc" class="text-[10.5px] text-gray-300 font-medium leading-relaxed pl-1 mt-0.5">

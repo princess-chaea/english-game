@@ -648,6 +648,27 @@
         html[data-theme="ivory"] [class~="bg-[#000000]"],
         html[data-theme="ivory"] [class~="bg-[#050505]"],
         html[data-theme="ivory"] [class~="bg-[#050506]"],
+        html[data-theme="ivory"] [class~="bg-[#06060e]"],
+        html[data-theme="ivory"] [class~="bg-[#061015]"],
+        html[data-theme="ivory"] [class~="bg-[#07070a]"],
+        html[data-theme="ivory"] [class~="bg-[#08060e]"],
+        html[data-theme="ivory"] [class~="bg-[#08070d]"],
+        html[data-theme="ivory"] [class~="bg-[#08080a]"],
+        html[data-theme="ivory"] [class~="bg-[#08080c]"],
+        html[data-theme="ivory"] [class~="bg-[#080a0f]"],
+        html[data-theme="ivory"] [class~="bg-[#080b0f]"],
+        html[data-theme="ivory"] [class~="bg-[#080c08]"],
+        html[data-theme="ivory"] [class~="bg-[#080c14]"],
+        html[data-theme="ivory"] [class~="bg-[#090b0d]"],
+        html[data-theme="ivory"] [class~="bg-[#0a0a0a]"],
+        html[data-theme="ivory"] [class~="bg-[#0a0d12]"],
+        html[data-theme="ivory"] [class~="bg-[#0a0f12]"],
+        html[data-theme="ivory"] [class~="bg-[#0a1015]"],
+        html[data-theme="ivory"] [class~="bg-[#0b0612]"],
+        html[data-theme="ivory"] [class~="bg-[#0b0b0e]"],
+        html[data-theme="ivory"] [class~="bg-[#0b1015]"],
+        html[data-theme="ivory"] [class~="bg-[#0c090a]"],
+        html[data-theme="ivory"] [class~="bg-[#0c0910]"],
         html[data-theme="ivory"] [class~="bg-[#070a09]"],
         html[data-theme="ivory"] [class~="bg-[#080808]"],
         html[data-theme="ivory"] [class~="bg-[#08070b]"],
@@ -662,6 +683,22 @@
             background-color: var(--vh-surface) !important;
         }
 
+        html[data-theme="ivory"] [class~="bg-[#100a24]"],
+        html[data-theme="ivory"] [class~="bg-[#111820]"],
+        html[data-theme="ivory"] [class~="bg-[#111827]"],
+        html[data-theme="ivory"] [class~="bg-[#121016]"],
+        html[data-theme="ivory"] [class~="bg-[#121820]"],
+        html[data-theme="ivory"] [class~="bg-[#151010]"],
+        html[data-theme="ivory"] [class~="bg-[#170e1b]"],
+        html[data-theme="ivory"] [class~="bg-[#1a1122]"],
+        html[data-theme="ivory"] [class~="bg-[#1a1822]"],
+        html[data-theme="ivory"] [class~="bg-[#221719]"],
+        html[data-theme="ivory"] [class~="bg-[#24151d]"],
+        html[data-theme="ivory"] [class~="bg-[#242018]"],
+        html[data-theme="ivory"] [class~="bg-[#242424]"],
+        html[data-theme="ivory"] [class~="bg-[#25252b]"],
+        html[data-theme="ivory"] [class~="bg-[#2d2d2d]"],
+        html[data-theme="ivory"] [class~="bg-[#3c3c3c]"],
         html[data-theme="ivory"] [class~="bg-[#10141c]"],
         html[data-theme="ivory"] [class~="bg-[#111]"],
         html[data-theme="ivory"] [class~="bg-[#121212]"],
@@ -674,8 +711,10 @@
         html[data-theme="ivory"] [class~="bg-[#262626]"],
         html[data-theme="ivory"] [class~="bg-gray-950"],
         html[data-theme="ivory"] [class~="bg-gray-900"],
+        html[data-theme="ivory"] [class~="bg-gray-900/50"],
         html[data-theme="ivory"] [class~="bg-gray-800"],
-        html[data-theme="ivory"] [class~="bg-gray-700"] {
+        html[data-theme="ivory"] [class~="bg-gray-700"],
+        html[data-theme="ivory"] [class~="bg-slate-950"] {
             background-color: var(--vh-surface-raised) !important;
         }
 
@@ -689,6 +728,24 @@
         html[data-theme="ivory"] [class~="bg-black/40"]:not(.fixed),
         html[data-theme="ivory"] [class~="bg-black/20"]:not(.fixed) {
             background-color: rgba(248, 239, 223, .92) !important;
+        }
+        /* 일반 UI 모달의 암막도 검정 대신 따뜻한 반투명 배경을 사용 */
+        html[data-theme="ivory"] .fixed:is([class~="bg-black/95"], [class~="bg-black/90"], [class~="bg-black/85"], [class~="bg-black/80"], [class~="bg-black/70"], [class~="bg-black/60"], [class~="bg-black/50"], [class~="bg-black/40"], [class~="bg-black/20"]):not([data-theme-toggle]):not(#gameLoadingOverlay):not(#relicDrawResultModal):not(#criticalDefenseModal):not(#wbRaidResultModal) {
+            background-color: rgba(69, 53, 34, .22) !important;
+        }
+
+        html[data-theme="ivory"] #customModalOverlay,
+        html[data-theme="ivory"] #retireModalOverlay {
+            background: rgba(69, 53, 34, .24) !important;
+        }
+
+        /* 길드·교사 카드의 검정 그라데이션 끝색을 아이보리 계열로 치환 */
+        html[data-theme="ivory"] [class~="to-black"]:not(#battleArena *):not(#worldBossBattleArena *):not(#wbVisualStage *):not(#gachaOverlayModal *):not(#skillAcquireModal *):not(#gacha10xResultModal *):not(#gacha100xResultModal *):not(#relicDrawResultModal *):not(#criticalDefenseModal *):not(#wbVictoryNoticeModal *):not(#wbRaidResultModal *):not(#forgeResultBox *) {
+            --tw-gradient-to: var(--vh-surface-raised) var(--tw-gradient-to-position) !important;
+        }
+
+        html[data-theme="ivory"] [class~="via-black"]:not(#battleArena *):not(#worldBossBattleArena *):not(#wbVisualStage *):not(#gachaOverlayModal *):not(#skillAcquireModal *):not(#gacha10xResultModal *):not(#gacha100xResultModal *):not(#relicDrawResultModal *):not(#criticalDefenseModal *):not(#wbVictoryNoticeModal *):not(#wbRaidResultModal *):not(#forgeResultBox *) {
+            --tw-gradient-stops: var(--tw-gradient-from), var(--vh-surface-raised) var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
         }
 
         html[data-theme="ivory"] [class~="text-white"],
@@ -814,7 +871,8 @@
 
         /* 전투·희귀도 연출은 테마와 관계없이 원래의 어두운 무대를 유지 */
         html[data-theme="ivory"] #battleArena,
-        html[data-theme="ivory"] #worldBossBattleArena {
+        html[data-theme="ivory"] #worldBossBattleArena,
+        html[data-theme="ivory"] #wbVisualStage {
             background-color: #050608 !important;
             color: #ffffff !important;
         }
@@ -829,6 +887,23 @@
 
         html[data-theme="ivory"] :is(#battleArena, #worldBossBattleArena) :is([class~="text-[#bbbbbb]"], [class~="text-[#7e7e7e]"], [class~="text-gray-500"], [class~="text-gray-600"]) {
             color: #d1d5db !important;
+        }
+        html[data-theme="ivory"] #customModalBox {
+            background: linear-gradient(135deg, #fffaf1 0%, #f1eafa 100%) !important;
+            border-color: var(--vh-line) !important;
+            color: var(--vh-text) !important;
+        }
+
+        html[data-theme="ivory"] #customModalBox #customModalTitle { color: var(--vh-text) !important; }
+        html[data-theme="ivory"] #customModalBox #customModalMessage { color: var(--vh-text-soft) !important; }
+        html[data-theme="ivory"] #customModalBox #customModalBtns button:not(.text-white) {
+            background: #fffdf8 !important;
+            border-color: var(--vh-line) !important;
+            color: var(--vh-text-soft) !important;
+        }
+
+        html[data-theme="ivory"] #retireModalOverlay > div {
+            background: linear-gradient(135deg, #fffaf1 0%, #fae8e8 100%) !important;
         }
 
         html[data-theme="ivory"] [class~="bg-[#e22718]"][class~="text-white"],

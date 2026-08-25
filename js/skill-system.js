@@ -14,6 +14,14 @@
     const MAX_STARS = 6;
     const MAX_PROGRESS_INDEX = 20;
     const ESSENCE_PER_BAR = 100;
+    const DIRECT_ESSENCE_AMOUNT = 25;
+    const ESSENCE_BAR_COST = Object.freeze({
+        normal: 500,
+        rare: 1200,
+        hero: 2500,
+        legendary: 4500,
+        mythic: 7500
+    });
 
     function clamp(value, minimum, maximum) {
         return Math.min(maximum, Math.max(minimum, value));
@@ -42,6 +50,11 @@
 
     function getRequiredExpForStar(grade) {
         return GRADE_EXP[normalizeGrade(grade)];
+    }
+
+    function getEssenceCostForBar(skillOrGrade) {
+        const grade = typeof skillOrGrade === "object" ? skillOrGrade?.grade : skillOrGrade;
+        return ESSENCE_BAR_COST[normalizeGrade(grade)];
     }
 
     function normalizeSkillCard(skill = {}) {
@@ -119,6 +132,44 @@
         };
     }
 
+    function addSkillExperience(skill, experience = 0) {
+        let card = normalizeSkillCard(skill);
+        const requestedExperience = Math.max(0, Math.floor(finiteNumber(experience, 0)));
+        const events = [];
+        let remainingExperience = requestedExperience;
+        let experienceApplied = 0;
+        let essenceDelta = 0;
+
+        if (getSkillProgressIndex(card) >= MAX_PROGRESS_INDEX) {
+            if (requestedExperience > 0) {
+                essenceDelta = ESSENCE_PER_BAR;
+                events.push({ type: "max-essence", amount: essenceDelta });
+            }
+            return { card, experienceApplied, essenceDelta, events };
+        }
+
+        while (remainingExperience > 0 && getSkillProgressIndex(card) < MAX_PROGRESS_INDEX) {
+            const needed = Math.max(1, card.maxExp - card.exp);
+            const applied = Math.min(needed, remainingExperience);
+            card.exp += applied;
+            experienceApplied += applied;
+            remainingExperience -= applied;
+            events.push({ type: "growth-progress", amount: applied, current: card.exp, maximum: card.maxExp });
+            if (card.exp < card.maxExp) break;
+
+            card.exp = 0;
+            const advanced = advanceSkillBars(card, 1);
+            card = advanced.card;
+            events.push(...advanced.events);
+        }
+
+        if (remainingExperience > 0 && getSkillProgressIndex(card) >= MAX_PROGRESS_INDEX) {
+            essenceDelta = ESSENCE_PER_BAR;
+            events.push({ type: "max-essence", amount: essenceDelta });
+        }
+        return { card, experienceApplied, essenceDelta, events };
+    }
+
     function applyGrowthOutcome(skill, outcome = {}) {
         const before = normalizeSkillCard(skill);
         let card = { ...before };
@@ -143,12 +194,14 @@
             events.push({ type: "tier-up", fromTier, toTier: rolledTier });
         }
 
-        // 같은 등급이나 낮은 등급도 현재 카드 기준 성장 바를 최소 1칸 보장한다.
+        // 같은 등급이나 낮은 등급은 뽑힌 카드 등급만큼 EXP를 준다.
+        // 이 덕분에 고등급 보유 카드는 낮은 등급 중복 한 장으로 곧바로 별이 오르지 않는다.
         if (rolledGradeRank <= oldGradeRank) {
-            const advanced = advanceSkillBars(card, Math.max(1, Math.floor(finiteNumber(outcome.bars, 1))));
-            card = advanced.card;
-            essenceDelta += advanced.essenceDelta;
-            events.push(...advanced.events);
+            const gainedExperience = Math.max(1, Math.floor(finiteNumber(outcome.experience, GRADE_EXP[rolledGrade])));
+            const progressed = addSkillExperience(card, gainedExperience);
+            card = progressed.card;
+            essenceDelta += progressed.essenceDelta;
+            events.push(...progressed.events);
         }
 
         return { card, essenceDelta, events };
@@ -167,9 +220,8 @@
         const cardId = String(skill?.id || "");
         const word = normalizeWordKey(skill);
         const equippedIds = new Set((protection.equippedIds || []).map(String));
-        const researchWords = new Set((protection.researchWords || []).map(normalizeWordKey));
         const lockedWords = new Set((protection.lockedWords || []).map(normalizeWordKey));
-        return equippedIds.has(cardId) || researchWords.has(word) || lockedWords.has(word);
+        return equippedIds.has(cardId) || lockedWords.has(word);
     }
 
     function getFusionProgressRatio(skill) {
@@ -351,24 +403,19 @@
 
     function pickGrowthTarget(candidates, options = {}, rng = Math.random) {
         if (!Array.isArray(candidates) || candidates.length === 0) {
-            return { target: null, focusMisses: 0, forcedFocus: false };
+            return { target: null, growthWithoutEquipped: 0, forcedEquipped: false };
         }
-        const researchWords = new Set((options.researchWords || []).map(normalizeWordKey));
         const equippedIds = new Set((options.equippedIds || []).map(String));
-        const focused = candidates.filter(card => researchWords.has(normalizeWordKey(card)));
-        const currentMisses = Math.max(0, Math.floor(finiteNumber(options.focusMisses, 0)));
-        const forcedFocus = focused.length > 0 && currentMisses >= 7;
-        const source = forcedFocus ? focused : candidates;
-        const target = pickWeighted(source, card => {
-            if (researchWords.has(normalizeWordKey(card))) return 5;
-            if (equippedIds.has(String(card?.id || ""))) return 2;
-            return 1;
-        }, rng);
-        const selectedFocus = Boolean(target && researchWords.has(normalizeWordKey(target)));
+        const equipped = candidates.filter(card => equippedIds.has(String(card?.id || "")));
+        const currentMisses = Math.max(0, Math.floor(finiteNumber(options.growthWithoutEquipped, 0)));
+        const forcedEquipped = equipped.length > 0 && currentMisses >= 7;
+        const source = forcedEquipped ? equipped : candidates;
+        const target = pickWeighted(source, card => equippedIds.has(String(card?.id || "")) ? 5 : 1, rng);
+        const selectedEquipped = Boolean(target && equippedIds.has(String(target?.id || "")));
         return {
             target,
-            forcedFocus,
-            focusMisses: focused.length === 0 || selectedFocus ? 0 : currentMisses + 1
+            forcedEquipped,
+            growthWithoutEquipped: equipped.length === 0 || selectedEquipped ? 0 : currentMisses + 1
         };
     }
 
@@ -379,6 +426,8 @@
         FUSION_GRADE_WEIGHT,
         SUMMON_CATEGORY_WEIGHT,
         ESSENCE_PER_BAR,
+        DIRECT_ESSENCE_AMOUNT,
+        ESSENCE_BAR_COST,
         normalizeGrade,
         normalizeTier,
         normalizeWordKey,
@@ -386,10 +435,12 @@
         getSkillPowerMultiplier,
         normalizeSkillCard,
         getRequiredExpForStar,
+        getEssenceCostForBar,
         getProgressRatio,
         getSkillProgressIndex,
         decodeSkillProgressIndex,
         advanceSkillBars,
+        addSkillExperience,
         applyGrowthOutcome,
         getDismantleYield,
         isSkillProtected,

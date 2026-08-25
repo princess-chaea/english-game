@@ -125,8 +125,34 @@ const maxOverflow = skills.advanceSkillBars(progressCard, 1);
 assert.deepEqual({ tier: maxOverflow.card.tier, stars: maxOverflow.card.stars }, { tier: 1, stars: 6 });
 assert.equal(maxOverflow.essenceDelta, 100, "max-level duplicate must become one essence bar");
 
+assert.deepEqual(
+    skills.GRADE_ORDER.map((grade) => skills.getEssenceCostForBar(grade)),
+    [500, 1200, 2500, 4500, 7500],
+    "essence cost must rise by owned-card grade"
+);
+assert.equal(skills.DIRECT_ESSENCE_AMOUNT, 25, "direct essence result must stay at 25");
+const gradeRates = { normal: 0.75, rare: 0.18, hero: 0.05, legendary: 0.0195, mythic: 0.0005 };
+const tierRates = { 3: 0.70, 2: 0.25, 1: 0.05 };
+const averageFreshDismantle = Object.entries(gradeRates).reduce((gradeSum, [grade, gradeRate]) => (
+    gradeSum + gradeRate * Object.entries(tierRates).reduce((tierSum, [tier, tierRate]) => (
+        tierSum + tierRate * skills.getDismantleYield(makeCard(grade, { tier: Number(tier), stars: 0, exp: 0 }))
+    ), 0)
+), 0);
+assertClose(averageFreshDismantle, 124.807, 1e-12, "fresh-card dismantle expectation including cumulative tier value");
+const halfUnwantedNewDismantledPerDraw = skills.SUMMON_CATEGORY_WEIGHT.essence * skills.DIRECT_ESSENCE_AMOUNT
+    + skills.SUMMON_CATEGORY_WEIGHT.new * 0.5 * averageFreshDismantle;
+assertClose(halfUnwantedNewDismantledPerDraw, 27.4614, 1e-12, "baseline essence income per draw");
+assert.deepEqual(
+    skills.GRADE_ORDER.map((grade) => Math.ceil(skills.getEssenceCostForBar(grade) / halfUnwantedNewDismantledPerDraw)),
+    [19, 44, 92, 164, 274],
+    "targeted star costs must reflect direct essence plus dismantling half of unwanted new cards"
+);
 const mythicGrowth = skills.applyGrowthOutcome(makeCard("mythic"), { grade: "normal", tier: 3 });
-assert.equal(mythicGrowth.card.stars, 1, "lower-grade duplicate must grant a full current growth bar");
+assert.equal(mythicGrowth.card.stars, 0, "a normal duplicate must not instantly star-up a mythic card");
+assert.equal(mythicGrowth.card.exp, 1, "a normal duplicate must contribute one mythic EXP");
+const mythicSameGradeGrowth = skills.applyGrowthOutcome(makeCard("mythic"), { grade: "mythic", tier: 3 });
+assert.equal(mythicSameGradeGrowth.card.stars, 1, "a same-grade duplicate must complete one current-grade EXP bar");
+assert.equal(mythicSameGradeGrowth.card.exp, 0);
 
 assert.equal(
     skills.getDismantleYield(makeCard("rare", { tier: 2, stars: 2, exp: 1 })),
@@ -153,7 +179,9 @@ for (const [grade, expected] of Object.entries(gradePowerRanges)) {
 
 const indexSource = await readFile(new URL("../index.html", import.meta.url), "utf8");
 assert.match(indexSource, /퀴즈 정답으로 <strong>정복 포인트\(FP\)<\/strong>를 모은 뒤/, "quiz guide must explain the FP-to-capsule path");
-assert.match(indexSource, /후보가 소진되면 남은 분기로 재분배/, "summon guide must explain exhausted-candidate redistribution");
+assert.match(indexSource, /새 스킬이나 성장 대상이 없으면 각성 정수로 바뀝니다/, "summon guide must explain exhausted-candidate conversion without internal terminology");
+const skillUiLogicSource = await readFile(new URL("../js/skill-rework.js", import.meta.url), "utf8");
+assert.match(skillUiLogicSource, /pickGrowthSkill\(random, usedGrowthIds\)/, "a skill must grow at most once per ten-draw block");
 assert.match(indexSource, /T1 5% · T2 25% · T3 70%/, "skill guide must expose tier rates");
 for (const expected of Object.values(gradePowerRanges)) {
     assert.match(indexSource, new RegExp(`지수 ×${expected.base} ~ ×${expected.max}`), `skill guide must show the ${expected.base}-${expected.max} cumulative power range`);
@@ -179,20 +207,20 @@ for (const boundary of evolutionBoundaries) {
 
 const focus = makeCard("hero", { id: "focus", word: "focus" });
 const other = makeCard("hero", { id: "other", word: "other" });
-let focusMisses = 0;
+let growthWithoutEquipped = 0;
 for (let index = 0; index < 7; index += 1) {
-    const pick = skills.pickGrowthTarget([focus, other], { researchWords: ["focus"], focusMisses }, () => 0.999999);
+    const pick = skills.pickGrowthTarget([focus, other], { equippedIds: ["focus"], growthWithoutEquipped }, () => 0.999999);
     assert.equal(pick.target.id, "other");
-    focusMisses = pick.focusMisses;
+    growthWithoutEquipped = pick.growthWithoutEquipped;
 }
 const pityPick = skills.pickGrowthTarget(
     [focus, other],
-    { researchWords: ["focus"], focusMisses },
+    { equippedIds: ["focus"], growthWithoutEquipped },
     () => 0.999999
 );
-assert.equal(pityPick.target.id, "focus", "eighth growth result must force a research target after seven misses");
-assert.equal(pityPick.focusMisses, 0);
-assert.equal(pityPick.forcedFocus, true);
+assert.equal(pityPick.target.id, "focus", "eighth growth result must force an equipped target after seven misses");
+assert.equal(pityPick.growthWithoutEquipped, 0);
+assert.equal(pityPick.forcedEquipped, true);
 
 const skillReworkSource = await readFile(new URL("../js/skill-rework.js", import.meta.url), "utf8");
 assert.match(skillReworkSource, /const inventory = sortSkillInventory\(gameState\.skillsInventory\);/, "inventory must use the mythic-safe sorter");
@@ -204,7 +232,6 @@ const reworkContext = {
         skillsInventory: [],
         equippedSkills: [],
         activeSkillDeck: [],
-        skillResearchTargets: [],
         skillLockedWords: [],
         skillDiscoveredWords: [],
         skillEssence: 0
@@ -231,4 +258,4 @@ console.table(categoryResults.map(({ packSize, counts, ratios }) => ({
     growth: `${counts.growth} (${(ratios.growth * 100).toFixed(3)}%)`,
     essence: `${counts.essence} (${(ratios.essence * 100).toFixed(3)}%)`
 })));
-console.log("[skill-economy] OK: category invariance, guarantees, fusion, pity, cumulative evolution value, power ranges, and dismantle yields verified.");
+console.log("[skill-economy] OK: category invariance, full-pack growth, EXP, summon+dismantle essence income, grade costs, guarantees, fusion, equipped pity, power, and dismantling verified.");

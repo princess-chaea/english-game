@@ -408,7 +408,7 @@ async function listVerificationRequests(token) {
   assertReviewer(token);
   const snapshot = await verificationRequests.where('status', '==', 'pending').limit(50).get();
   const bucket = adminStorage.bucket();
-  const activeDocs = snapshot.docs.filter((doc) => !isExpired(doc.data()?.expiresAt));
+  const activeDocs = snapshot.docs.filter((doc) => doc.data()?.uid !== token.uid && !isExpired(doc.data()?.expiresAt));
   const rows = await Promise.all(activeDocs.map(async (doc) => {
     const data = doc.data();
     let reviewUrl = '';

@@ -90,10 +90,11 @@ const adaptiveQuizStart = mainJs.indexOf('function selectAdaptiveQuizIndex(');
 const adaptiveQuizEnd = mainJs.indexOf('window.__vocaSelectAdaptiveQuizIndex', adaptiveQuizStart);
 const adaptiveQuizBlock = adaptiveQuizStart >= 0 && adaptiveQuizEnd > adaptiveQuizStart ? mainJs.slice(adaptiveQuizStart, adaptiveQuizEnd) : '';
 if (!assignedPackLoadBlock.includes('adaptivePolicy: normalizeAdaptiveQuestionPolicy(catalog.adaptivePolicy)') || !mainJs.includes('gameState.activeAdaptiveQuestionPolicy = normalizeAdaptiveQuestionPolicy(metadata.adaptivePolicy)') || !adaptiveQuizBlock.includes('policy.resolved.streak') || !adaptiveQuizBlock.includes('policy.supportMode.minTries') || !adaptiveQuizBlock.includes('policy.targetRatios.support')) throw new Error('The student quiz selector must use the shared catalog adaptive policy.');
+if (!mainJs.includes('let recentQuizWordKeys = [];') || !adaptiveQuizBlock.includes('!recentSet.has(item.key)') || !mainJs.includes('recentQuizWordKeys = [...recentQuizWordKeys.filter')) throw new Error('Student quizzes must keep a bounded recent-word cooldown with safe fallback.');
 const teacherLearningStart = secureAccount.indexOf('function teacherSpiralPackRow(');
 const teacherLearningEnd = secureAccount.indexOf('async function previewTeacherWordPack', teacherLearningStart);
 const teacherLearningBlock = teacherLearningStart >= 0 && teacherLearningEnd > teacherLearningStart ? secureAccount.slice(teacherLearningStart, teacherLearningEnd) : '';
-if (!teacherLearningBlock.includes('Number(pack.grade)<=guildGrade') || !teacherLearningBlock.includes(`input.type='radio'`) || !teacherLearningBlock.includes('teacherSpiralPackGuide') || !teacherLearningBlock.includes('teacherAdaptivePathGuide') || !teacherLearningBlock.includes('오답 55%') || !teacherLearningBlock.includes('오답 20%') || !teacherLearningBlock.includes('현재 단계 단어')) throw new Error('Teacher spiral pack grouping, single selection, or adaptive-path guidance is incomplete.');
+if (!teacherLearningBlock.includes('Number(pack.grade)<=guildGrade') || !teacherLearningBlock.includes(`input.type='radio'`) || !teacherLearningBlock.includes('teacherSpiralPackGuide') || !teacherLearningBlock.includes('teacherAdaptivePathGuide') || !teacherLearningBlock.includes('오답·기초 자동 복습') || !teacherLearningBlock.includes('배정된 누적팩 안에서만 자동 조정') || !teacherLearningBlock.includes('이전 학년 누적팩을 직접 배정')) throw new Error('Teacher spiral pack grouping, single selection, or adaptive-path guidance is incomplete.');
 const memberReportStart = teacherApi.indexOf('async function memberLearningReport(');
 const memberReportEnd = teacherApi.indexOf('const TRIAL_TYPES', memberReportStart);
 const memberReportBlock = memberReportStart >= 0 && memberReportEnd > memberReportStart ? teacherApi.slice(memberReportStart, memberReportEnd) : '';
@@ -155,11 +156,27 @@ const skillSnapshotBlock = skillSnapshotStart >= 0 && skillSnapshotEnd > skillSn
 if (
   !skillSnapshotBlock.includes('const actual = ownedSkill ? SkillRules.normalizeSkill(ownedSkill) : null;')
   || !skillSnapshotBlock.includes('stars: Number(actual?.stars) || 0, exp: Number(actual?.exp) || 0,')
-  || (skillRework.match(/outcome\.skill, outcome\.essenceGained\)/g) || []).length < 2
+  || (skillRework.match(/outcome\.skill, outcome\.essenceGained, outcome\.experienceGained\)/g) || []).length < 2
   || !skillRework.includes('"max-essence": "MAX 정수 +100"')
   || !skillRework.includes('Number(result.essenceAmount) || 100')
-  || !skillRework.includes('후보가 없으면 재배분')
-) throw new Error('Skill draw results must show final owned growth, MAX +100 essence, and candidate redistribution guidance.');
+  || !skillRework.includes('pickGrowthSkill(random, usedGrowthIds)')
+  || !indexHtml.includes('새 스킬이나 성장 대상이 없으면 각성 정수로 바뀝니다')
+) throw new Error('Skill draw results must show final owned growth, MAX +100 essence, one-growth-per-block protection, and candidate conversion guidance.');
+if (
+  !skillSystem.includes('const DIRECT_ESSENCE_AMOUNT = 25;')
+  || !skillSystem.includes('normal: 500')
+  || !skillSystem.includes('rare: 1200')
+  || !skillSystem.includes('hero: 2500')
+  || !skillSystem.includes('legendary: 4500')
+  || !skillSystem.includes('mythic: 7500')
+  || !skillSystem.includes('function addSkillExperience(')
+  || !skillRework.includes('return full.filter((entry) => !owned.has(wordKey(entry.word)))')
+  || !skillRework.includes('growthWithoutEquipped')
+  || skillRework.includes('skillResearchTargets')
+  || mainJs.includes('skillResearchTargets')
+  || !teacherManual.includes('일반 500 · 희귀 1,200 · 영웅 2,500 · 전설 4,500 · 신화 7,500개')
+  || !teacherQuickGuide.includes('일반 500·희귀 1,200·영웅 2,500·전설 4,500·신화 7,500개')
+) throw new Error('Skills must use full-pack acquisition, equipped auto-focus, EXP duplicates, and summon+dismantle-tuned essence costs without focus-research state.');
 
 const coreManualStart = indexHtml.indexOf('용사 여정 핵심 매뉴얼');
 const coreManualEnd = indexHtml.indexOf('</details>', coreManualStart);
@@ -199,8 +216,8 @@ if (!secureAccount.includes('legacyShortcuts?.remove()') || secureAccount.includ
 if (!secureAccount.includes('#secureTeacherGuildNav{display:flex!important') || !secureAccount.includes('#secureTeacherGlobalSummary{grid-template-columns:repeat(4,minmax(0,1fr))!important')) throw new Error('Teacher mobile navigation and summary must remain single-row compact layouts.');
 if (!secureAccount.includes('#secureTeacherSelectedGuildLogoButton{display:flex!important') || secureAccount.includes('#secureTeacherSelectedGuildLogoButton{display:none!important')) throw new Error('Teacher mobile guild logo must remain visible.');
 if (!secureAccount.includes(`teacherChromePreferenceKey='vocahero_teacher_chrome_collapsed_v1'`) || !secureAccount.includes(`toggle.setAttribute('aria-controls','secureTeacherPortalHeader secureTeacherGuildHeader')`) || !secureAccount.includes(`button.setAttribute('aria-expanded',String(!collapsed))`) || !secureAccount.includes('.teacher-workspace-active.teacher-chrome-collapsed #secureTeacherPortalHeader{display:none!important}') || !secureAccount.includes('@media(max-width:900px),(pointer:coarse){#secureTeacherChromeToggle{display:none!important}')) throw new Error('Teacher desktop header collapse must remain accessible, persistent, workspace-scoped, and disabled on mobile/coarse pointers.');
-if (!teacherQuickGuide.includes(`image:C+'teacher-member-adaptive-path-actual.png'`) || !teacherQuickGuide.includes('학생 리포트에서 <em>실제 문항 경로</em>') || !teacherQuickGuide.includes('PC 상단 접기·펼치기') || !teacherQuickGuide.includes('기본 목표 비중') || !teacherQuickGuide.includes('지원 필요·성장 중·안정은 참여·전체 성취 그룹')) throw new Error('The detailed teacher quick guide must show the real adaptive-path report, desktop collapse, and separate support-group semantics.');
-if (!teacherManual.includes('실제 적용 중인 일반·문항 보충 경로') || !teacherManual.includes('지원 필요·성장 중·안정') || !teacherManual.includes('### 데스크톱에서 리포트 공간 넓게 보기') || !teacherManual.includes('휴대폰·터치 중심 화면은')) throw new Error('The teacher manual must remain aligned with the adaptive report and desktop-only collapse behavior.');
+if (!teacherQuickGuide.includes(`image:C+'teacher-member-adaptive-path-actual.png'`) || !teacherQuickGuide.includes('학생 리포트에서 <em>오답·기초 자동 복습</em>') || !teacherQuickGuide.includes('PC 상단 접기·펼치기') || !teacherQuickGuide.includes('다음 문항 목표') || !teacherQuickGuide.includes('지원 필요·성장 중·안정은 참여·전체 성취 그룹')) throw new Error('The detailed teacher quick guide must show the real adaptive-path report, desktop collapse, and separate support-group semantics.');
+if (!teacherManual.includes('현재 적용 중인 일반 출제·오답·기초 자동 복습') || !teacherManual.includes('지원 필요·성장 중·안정') || !teacherManual.includes('### 데스크톱에서 리포트 공간 넓게 보기') || !teacherManual.includes('휴대폰·터치 중심 화면은')) throw new Error('The teacher manual must remain aligned with the adaptive report and desktop-only collapse behavior.');
 if (!secureAccount.includes(`teacherCatalogStorageKey='vocahero_teacher_catalog_v20260820_spiral1'`) || !secureAccount.includes('teacherGuildReportPromises=new Map()') || !secureAccount.includes('teacherCacheFresh(cached,teacherListCacheMs)')) throw new Error('Teacher catalog and report request caches must remain enabled.');
 if (!secureAccount.includes(`Promise.all([refreshClasses(),teacher.verificationStatus==='verified'?refreshTeacherSchoolData():Promise.resolve()])`)) throw new Error('Teacher dashboard data must load in parallel after login.');
 const listClassesStart = teacherApi.indexOf('async function listClasses(uid)');
@@ -225,7 +242,11 @@ if (!relicDrawBlock.includes(relicExpMap) || !relicDrawBlock.includes('rolledGra
 const relicPresentationStart = mainJs.indexOf('function getRelicDrawResultPresentation');
 const relicPresentationEnd = mainJs.indexOf('function showRelicDrawResultModal', relicPresentationStart);
 const relicPresentationBlock = relicPresentationStart >= 0 && relicPresentationEnd > relicPresentationStart ? mainJs.slice(relicPresentationStart, relicPresentationEnd) : '';
-if (!relicPresentationBlock.includes('const rolledGrade =') || !relicPresentationBlock.includes('const currentGrade =') || !relicPresentationBlock.includes('const gainedExp =') || !relicPresentationBlock.includes('return { rolledGrade, currentGrade') || !mainJs.includes('getRelicDrawResultPresentation };')) throw new Error('Relic draw presentation or its test hook is missing.');
+if (!relicPresentationBlock.includes('const rolledGrade =') || !relicPresentationBlock.includes('const currentGrade =') || !relicPresentationBlock.includes('const gainedExp =') || !relicPresentationBlock.includes('basicEffectText') || !relicPresentationBlock.includes('applicationText') || !relicPresentationBlock.includes('MAX 중복 → 신화 정수') || !relicPresentationBlock.includes('return { rolledGrade, currentGrade') || !mainJs.includes('getRelicDrawResultPresentation };')) throw new Error('Relic draw presentation must separate the pulled relic from its owned-card application result.');
+const relicResultStart = mainJs.indexOf('function showRelicDrawResultModal');
+const relicResultEnd = mainJs.indexOf('function closeRelicDrawResultModal', relicResultStart);
+const relicResultBlock = relicResultStart >= 0 && relicResultEnd > relicResultStart ? mainJs.slice(relicResultStart, relicResultEnd) : '';
+if (!relicResultBlock.includes('basicEffectText') || !relicResultBlock.includes('applicationText') || relicResultBlock.includes('starsHtml') || relicResultBlock.includes('res.currentExp')) throw new Error('Relic summon cards must show pulled grade/basic effect without owned stars or EXP fractions.');
 const relicRestoreStart = mainJs.indexOf('const savedRelicTranscendLvl = Number(');
 const relicRestoreEnd = mainJs.indexOf('gameState.totalQuizTries', relicRestoreStart);
 const relicRestoreBlock = relicRestoreStart >= 0 && relicRestoreEnd > relicRestoreStart ? mainJs.slice(relicRestoreStart, relicRestoreEnd) : '';
@@ -275,6 +296,9 @@ const learningEvaluateEnd = mainJs.indexOf('let currentCriticalWord', learningEv
 const learningEvaluateBlock = learningEvaluateStart >= 0 && learningEvaluateEnd > learningEvaluateStart ? mainJs.slice(learningEvaluateStart, learningEvaluateEnd) : '';
 if (learningTypes.some((type) => !learningRecordBlock.includes(`"${type}"`)) || !learningEvaluateBlock.includes('recordWordLearningResult(current, currentQuizType,')) {
   throw new Error('Every main quiz type must record per-word learning results through the shared evaluator.');
+}
+if (!mainJs.includes('.sort((a, b) => b.correct - a.correct || b.tries - a.tries || a.word.localeCompare(b.word, "en"))') || !mainJs.includes('정답 횟수 높은 순')) {
+  throw new Error('The full word-learning record must remain sorted by correct count, then attempts, then word.');
 }
 const manualQuizAdvancePattern = /(?:\+\+\s*gameState\.currentQuizIndex|gameState\.currentQuizIndex\s*(?:\+\+|\+=\s*1|=\s*\(?\s*gameState\.currentQuizIndex\s*\+\s*1))/;
 if (!learningEvaluateBlock.includes('generateQuizCard();') || manualQuizAdvancePattern.test(learningEvaluateBlock)) throw new Error('Correct answers must hand the next question to adaptive generation without manually incrementing currentQuizIndex.');

@@ -58,7 +58,6 @@ const state = {
   skillsInventory: cards,
   equippedSkills: cards.slice(0, 4).map((card) => card.id),
   activeSkillDeck: sourceWords.slice(0, 24).map(({ word, meaning }) => ({ word, meaning })),
-  skillResearchTargets: sourceWords.slice(0, 4).map((entry) => entry.word),
   skillLockedWords: sourceWords.slice(0, 3000).map((entry) => entry.word),
   skillDiscoveredWords: sourceWords.map((entry) => entry.word),
   masteredWords: sourceWords.map((entry) => entry.word),

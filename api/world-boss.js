@@ -103,6 +103,8 @@ async function status(uid) {
     totalDamage,
     myDamage: safeInt(contribution.damage, 0, 0),
     canAttack: contribution.lastPlayedKstDay !== kstDay(),
+    lastRewardGold: contribution.lastPlayedKstDay === kstDay() ? safeInt(contribution.lastRewardGold, 0, 0) : null,
+    lastRewardTokens: contribution.lastPlayedKstDay === kstDay() ? safeInt(contribution.lastRewardTokens, 0, 0) : null,
     myRank: myRankIndex < 0 ? null : myRankIndex + 1,
     top
   };
@@ -323,6 +325,8 @@ async function contribute(uid, body) {
       publicTitleName: account.leaderboardOptIn ? (typeof account.state?.equippedTitle === 'string' ? account.state.equippedTitle : (typeof account.state?.wbTitle === 'string' ? account.state.wbTitle : null)) : null,
       reportedCorrectAnswers: FieldValue.increment(reportedCorrectAnswers),
       verifiedCorrectAnswers: FieldValue.increment(verifiedCorrectAnswers),
+      lastRewardGold: rewardGold,
+      lastRewardTokens: rewardTokens,
       updatedAt: FieldValue.serverTimestamp()
     }, { merge: true });
     tx.update(raidSessionRef, { reportedCorrectAnswers, verifiedCorrectAnswers, submitted: true, submittedAt: FieldValue.serverTimestamp() });

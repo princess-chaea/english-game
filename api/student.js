@@ -323,14 +323,15 @@ function normalizedQuestionTypes(value) { const types=[...new Set((Array.isArray
 function assignedPackMetadata(ids) { return (ids || []).map((id) => STUDENT_WORD_PACK_BY_ID.get(id)).filter(Boolean).map((pack) => ({ id: pack.id, label: text(pack.label, 120) || pack.id, wordCount: safeInt(pack.wordCount, Array.isArray(pack.wordKeys) ? pack.wordKeys.length : Array.isArray(pack.words) ? pack.words.length : 0, 0, 5000), supportWordCount: safeInt(pack.supportWordCount, 0, 0, 5000) })); }
 function safeQuestionTypeStats(value) { const result={};LEARNING_QUESTION_TYPES.forEach((type)=>{const row=value&&typeof value==='object'&&!Array.isArray(value)?value[type]:null;result[type]={tries:safeInt(row?.tries,0,0,1000000000),correct:safeInt(row?.correct,0,0,1000000000)};});return result; }
 function classPack(grade, wordPackIds) { return normalizedPackIds(wordPackIds, grade)[0]; }
-const fields = new Set(['avatarType','appearanceTheme','gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petType','petLvl','petLevels','stage','progress','totalQuizTries','totalQuizCorrect','masteredWords','currentQuizIndex','skillsInventory','skillTierOrderVersion','equippedSkills','activeSkillDeck','skillEssence','skillResearchTargets','skillLockedWords','skillDiscoveredWords','skillSummonPity','skillFusionPity','lockedPotentialSlots','wrongWordCounts','wordLearningStats','questionTypeStats','adaptivePathStats','combatPower','masteryPoints','necklaceLvl','braceletLvl','ringLvl','acquiredRelics','equippedRelicId','gearPotentials','isPotentialUnlocked','equippedTitle','wbTitle','unlockedTitles','bossTokens','relicEssence','relicTranscendLvl','soundSettings','tutorialCompleted','lastSaved','guildBoostCharges']);
+const fields = new Set(['avatarType','appearanceTheme','gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petType','petLvl','petLevels','stage','progress','totalQuizTries','totalQuizCorrect','masteredWords','currentQuizIndex','skillsInventory','skillTierOrderVersion','equippedSkills','activeSkillDeck','skillEssence','skillLockedWords','skillDiscoveredWords','skillSummonPity','skillFusionPity','lockedPotentialSlots','wrongWordCounts','wordLearningStats','questionTypeStats','adaptivePathStats','combatPower','masteryPoints','necklaceLvl','braceletLvl','ringLvl','acquiredRelics','equippedRelicId','gearPotentials','isPotentialUnlocked','equippedTitle','wbTitle','unlockedTitles','bossTokens','relicEssence','relicTranscendLvl','soundSettings','tutorialCompleted','lastSaved','guildBoostCharges']);
 
-function defaultState() { return { avatarType:'male', gold:0, accGold:0, helmetLvl:1, armorLvl:1, weaponLvl:1, shieldLvl:1, shoesLvl:1, stage:1, progress:0, totalQuizTries:0, totalQuizCorrect:0, masteredWords:[], skillsInventory:[], skillTierOrderVersion:2, equippedSkills:[], activeSkillDeck:[], skillEssence:0, skillResearchTargets:[], skillLockedWords:[], skillDiscoveredWords:[], skillSummonPity:{growthWithoutFocus:0}, skillFusionPity:{normal:0,rare:0,hero:0,legendary:0}, wrongWordCounts:{}, wordLearningStats:{}, questionTypeStats:{}, adaptivePathStats:{v:1,p:{}}, combatPower:0, masteryPoints:0, tutorialCompleted:false }; }
+function defaultState() { return { avatarType:'male', gold:0, accGold:0, helmetLvl:1, armorLvl:1, weaponLvl:1, shieldLvl:1, shoesLvl:1, stage:1, progress:0, totalQuizTries:0, totalQuizCorrect:0, masteredWords:[], skillsInventory:[], skillTierOrderVersion:2, equippedSkills:[], activeSkillDeck:[], skillEssence:0, skillLockedWords:[], skillDiscoveredWords:[], skillSummonPity:{growthWithoutEquipped:0}, skillFusionPity:{normal:0,rare:0,hero:0,legendary:0}, wrongWordCounts:{}, wordLearningStats:{}, questionTypeStats:{}, adaptivePathStats:{v:1,p:{}}, combatPower:0, masteryPoints:0, tutorialCompleted:false }; }
 function cleanState(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw apiError(400,'INVALID_STATE','저장할 학습 기록 형식이 올바르지 않아요.');
   const state = {};
   fields.forEach((key) => { if (Object.hasOwn(input,key)) state[key] = input[key]; });
-  ['gold','accGold','helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petLvl','stage','progress','totalQuizTries','totalQuizCorrect','currentQuizIndex','masteryPoints','necklaceLvl','braceletLvl','ringLvl','skillEssence','bossTokens','relicEssence','combatPower'].forEach((key) => { if (Object.hasOwn(state,key)) state[key]=safeInt(state[key],0,0,9999999999); });
+  ['gold','accGold','combatPower'].forEach((key) => { if (Object.hasOwn(state,key)) state[key]=safeInt(state[key],0,0,Number.MAX_SAFE_INTEGER); });
+  ['helmetLvl','armorLvl','weaponLvl','shieldLvl','shoesLvl','petLvl','stage','progress','totalQuizTries','totalQuizCorrect','currentQuizIndex','masteryPoints','necklaceLvl','braceletLvl','ringLvl','skillEssence','bossTokens','relicEssence'].forEach((key) => { if (Object.hasOwn(state,key)) state[key]=safeInt(state[key],0,0,9999999999); });
   if (Object.hasOwn(state,'relicTranscendLvl')) state.relicTranscendLvl=safeInt(state.relicTranscendLvl,0,0,10000);
   if (Object.hasOwn(state,'skillTierOrderVersion')) state.skillTierOrderVersion=safeInt(state.skillTierOrderVersion,2,0,2);
   if (Object.hasOwn(state,'appearanceTheme')) state.appearanceTheme=state.appearanceTheme==='ivory'?'ivory':'dark';
@@ -347,10 +348,9 @@ function cleanState(input) {
   const validSkillIds=new Set(state.skillsInventory.map((skill)=>skill.id));
   state.equippedSkills=[...new Set((Array.isArray(state.equippedSkills)?state.equippedSkills:[]).map((item)=>compactSkills.idAliases.get(String(item))||'').filter((id)=>validSkillIds.has(id)))].slice(0,4);
   state.activeSkillDeck=(Array.isArray(state.activeSkillDeck)?state.activeSkillDeck:[]).filter((item)=>item&&typeof item==='object'&&!Array.isArray(item)).map((item)=>({word:text(item.word,80),meaning:text(item.meaning,160)})).filter((item)=>item.word).slice(0,24);
-  state.skillResearchTargets=cleanWordKeys(state.skillResearchTargets,4);
   state.skillLockedWords=cleanWordKeys(state.skillLockedWords,4000);
   state.skillDiscoveredWords=cleanWordKeys([...(Array.isArray(state.skillDiscoveredWords)?state.skillDiscoveredWords:[]),...(state.skillsInventory||[]).map((skill)=>skill?.word)],4000);
-  state.skillSummonPity={growthWithoutFocus:safeInt(state.skillSummonPity?.growthWithoutFocus,0,0,7)};
+  state.skillSummonPity={growthWithoutEquipped:safeInt(state.skillSummonPity?.growthWithoutEquipped ?? state.skillSummonPity?.growthWithoutFocus,0,0,7)};
   state.skillFusionPity=Object.fromEntries(['normal','rare','hero','legendary'].map((grade)=>[grade,safeInt(state.skillFusionPity?.[grade],0,0,5)]));
   if ((state.masteredWords?.length||0)>5000 || requestedSkillCount>MAX_STORED_SKILL_CARDS || Buffer.byteLength(JSON.stringify(state),'utf8')>MAX_STORED_STATE_BYTES) throw apiError(400,'STATE_TOO_LARGE','저장할 학습 기록이 너무 커요.');
   return state;
@@ -780,7 +780,7 @@ async function buyGuildConsumable(uid,body){
     const coins=safeInt(memberSnap.data()?.guildCoins,0,0,1000000000);
     if(coins<item.cost)throw apiError(409,'GUILD_COIN_SHORTAGE',`길드 코인이 ${item.cost-coins}개 부족해요.`);
     const accountData=accountSnap.data(),state={...defaultState(),...(accountData.state||{})},charges=safeGuildBoostCharges(state.guildBoostCharges);
-    if(item.type==='exchange')state[item.resource]=Math.min(9999999999,safeInt(state[item.resource],0,0,9999999999)+item.amount);
+    if(item.type==='exchange'){const resourceMax=['gold','accGold'].includes(item.resource)?Number.MAX_SAFE_INTEGER:9999999999;state[item.resource]=Math.min(resourceMax,safeInt(state[item.resource],0,0,resourceMax)+item.amount);}
     else charges[item.id]=Math.min(10000,charges[item.id]+item.charges);
     state.guildBoostCharges=charges;
     tx.update(memberRef,{guildCoins:coins-item.cost,lastActiveAt:FieldValue.serverTimestamp()});

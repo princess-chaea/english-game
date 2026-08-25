@@ -62,12 +62,11 @@
             // Upgraded Advanced Skill Customization System
             skillsInventory: [], // Unlocked skills: { id, word, meaning, grade, cooldownRemaining, maxCooldown }
             skillTierOrderVersion: 2, // Tier 1 is strongest (v2)
-            activeSkillDeck: [], // Small repeatable deck; the complete word bank stays in learning quizzes
+            activeSkillDeck: [], // Compatibility/display cache only; new skills draw from the complete cumulative pack
             skillEssence: 0, // Universal awakening material from a new skill card
-            skillResearchTargets: [], // Up to four owned focus skills or current-pack wishlist words
             skillLockedWords: [], // Manually protected skill word keys
             skillDiscoveredWords: [], // Permanent codex, retained after fusion/dismantling
-            skillSummonPity: { growthWithoutFocus: 0 },
+            skillSummonPity: { growthWithoutEquipped: 0 },
             skillFusionPity: { normal: 0, rare: 0, hero: 0, legendary: 0 },
             equippedSkills: [], // Array storing up to 4 skill ids currently placed in combat slots
 
@@ -385,6 +384,7 @@
         let currentQuizCorrectValue = "";
         let currentQuizType = "meaning-choice";
         let currentAdaptiveQuizRoute = null;
+        let recentQuizWordKeys = [];
 
         // Custom Synthesizer using Web Audio API
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -943,10 +943,9 @@
                 gameState.equippedSkills = [];
                 gameState.activeSkillDeck = [];
                 gameState.skillEssence = 0;
-                gameState.skillResearchTargets = [];
                 gameState.skillLockedWords = [];
                 gameState.skillDiscoveredWords = [];
-                gameState.skillSummonPity = { growthWithoutFocus: 0 };
+                gameState.skillSummonPity = { growthWithoutEquipped: 0 };
                 gameState.skillFusionPity = { normal: 0, rare: 0, hero: 0, legendary: 0 };
                 gameState.wrongWordCounts = {};
                 gameState.wordLearningStats = {};
@@ -1037,10 +1036,9 @@
             gameState.equippedSkills = data.equippedSkills || [];
             gameState.activeSkillDeck = extra.activeSkillDeck ?? data.activeSkillDeck ?? [];
             gameState.skillEssence = extra.skillEssence ?? data.skillEssence ?? 0;
-            gameState.skillResearchTargets = extra.skillResearchTargets ?? data.skillResearchTargets ?? [];
             gameState.skillLockedWords = extra.skillLockedWords ?? data.skillLockedWords ?? [];
             gameState.skillDiscoveredWords = extra.skillDiscoveredWords ?? data.skillDiscoveredWords ?? [];
-            gameState.skillSummonPity = extra.skillSummonPity ?? data.skillSummonPity ?? { growthWithoutFocus: 0 };
+            gameState.skillSummonPity = extra.skillSummonPity ?? data.skillSummonPity ?? { growthWithoutEquipped: 0 };
             gameState.skillFusionPity = extra.skillFusionPity ?? data.skillFusionPity ?? { normal: 0, rare: 0, hero: 0, legendary: 0 };
             gameState.masteryPoints = data.masteryPoints || 0;
 
@@ -1143,10 +1141,9 @@
                 adaptivePathStats: normalizeAdaptivePathStats(gameState.adaptivePathStats),
                 activeSkillDeck: gameState.activeSkillDeck || [],
                 skillEssence: gameState.skillEssence || 0,
-                skillResearchTargets: gameState.skillResearchTargets || [],
                 skillLockedWords: gameState.skillLockedWords || [],
                 skillDiscoveredWords: gameState.skillDiscoveredWords || [],
-                skillSummonPity: gameState.skillSummonPity || { growthWithoutFocus: 0 },
+                skillSummonPity: gameState.skillSummonPity || { growthWithoutEquipped: 0 },
                 skillFusionPity: gameState.skillFusionPity || { normal: 0, rare: 0, hero: 0, legendary: 0 },
                 appearanceTheme: normalizeAppearanceTheme(gameState.appearanceTheme),
                 soundSettings: gameState.soundSettings || { masterMute: false, sfxAttack: true, sfxQuiz: true, sfxLevelup: true }
@@ -1367,6 +1364,7 @@
             const finish = (words, source, supportWordCount = 0, metadata = {}) => {
                 if (loadVersion !== wordPoolLoadVersion) return false;
                 gameState.wordsPool = words;
+                recentQuizWordKeys = [];
                 gameState.activeWordPackSupportCount = Math.max(0, Math.min(words.length, Number(supportWordCount) || 0));
                 gameState.activeWordPackId = String(metadata.packId || source || '');
                 gameState.activeWordPackLabel = String(metadata.packLabel || `${learningGradeLabel(gameState.learningGrade || gameState.grade)} 임시 단어 목록`);
@@ -3113,7 +3111,7 @@
                 const style = gradeColorMap[opt.grade] || gradeColorMap.normal;
 
                 html += `
-                    <div class="border ${style} p-2 text-center flex flex-col justify-between min-h-[80px] relative rounded-none-forced">
+                    <div class="potential-option-card border ${style} p-2 text-center flex flex-col justify-between min-h-[80px] relative rounded-none-forced" data-potential-grade="${opt.grade}">
                         <button onclick="toggleLockPotentialSlot('${selectedGearKey}', ${i})" class="absolute -top-2 -right-2 px-1.5 py-0.5 text-[9px] font-black rounded-none-forced transition border shadow-md cursor-pointer ${isLocked ? 'bg-yellow-400 text-black border-yellow-600' : 'bg-gray-800 text-gray-300 border-gray-600 hover:text-white'}">
                             ${isLocked ? '🔒 잠금' : '🔓 해제'}
                         </button>
@@ -3370,25 +3368,25 @@
                            </div>`;
 
                 html += `
-                    <div class="bg-[#0d0d0d] border ${isUnlocked ? 'border-purple-900/80 shadow-[0_0_10px_rgba(147,51,234,0.15)]' : 'border-gray-900 opacity-50'} p-3 rounded-none-forced flex flex-col justify-between min-h-[135px] min-w-0">
+                    <div class="accessory-upgrade-card bg-[#0d0d0d] border ${isUnlocked ? 'border-purple-900/80 shadow-[0_0_10px_rgba(147,51,234,0.15)]' : 'border-gray-900 opacity-50'} p-3 rounded-none-forced flex flex-col justify-between min-h-[135px] min-w-0">
                         <div>
                             <div class="flex justify-between items-center mb-1">
-                                <h4 class="font-extrabold text-xs text-purple-300 flex items-center gap-1 truncate">
+                                <h4 class="accessory-name font-extrabold text-xs text-purple-300 flex items-center gap-1 truncate">
                                     <img src="${info.img}" class="w-4 h-4 object-contain inline">
                                     <span>${info.name}</span>
                                 </h4>
                                 ${currentLvl > 0 ? `<span class="text-[10px] font-bold text-yellow-300 bg-purple-950/80 border border-purple-700 px-1.5 py-0.5 ">Lv.${currentLvl}</span>` : ''}
                             </div>
-                            <p class="text-[11px] text-gray-400 mb-1.5">${isUnlocked ? info.desc : `🔒 ${info.unlockStage}스테이지 달성 시 해금`}</p>
+                            <p class="accessory-description text-[11px] text-gray-400 mb-1.5">${isUnlocked ? info.desc : `🔒 ${info.unlockStage}스테이지 달성 시 해금`}</p>
                             ${isUnlocked ? `
-                                <div class="text-[10px] bg-black p-1.5 border border-purple-900/50 rounded-none-forced  mb-2">
-                                    <div class="text-purple-300 font-bold">현재: ${currentLvl > 0 ? currentBonusText : '연마 전 (0강)'}</div>
-                                    ${!isMax ? `<div class="text-yellow-400 mt-0.5">다음: ${nextBonusText}</div>` : ''}
+                                <div class="accessory-effect-box text-[10px] bg-black p-1.5 border border-purple-900/50 rounded-none-forced  mb-2">
+                                    <div class="accessory-current text-purple-300 font-bold">현재: ${currentLvl > 0 ? currentBonusText : '연마 전 (0강)'}</div>
+                                    ${!isMax ? `<div class="accessory-next text-yellow-400 mt-0.5">다음: ${nextBonusText}</div>` : ''}
                                 </div>
                             ` : ''}
                         </div>
                         <div>
-                            <button onclick="${isUnlocked && !isMax ? `upgradeAccessory('${accKey}')` : ''}" ${!isUnlocked || isMax ? 'disabled' : ''} class="w-full py-1.5 text-[9px] font-extrabold rounded-none-forced transition ${btnColorClass}">
+                            <button onclick="${isUnlocked && !isMax ? `upgradeAccessory('${accKey}')` : ''}" ${!isUnlocked || isMax ? 'disabled' : ''} class="accessory-upgrade-button w-full py-1.5 text-[9px] font-extrabold rounded-none-forced transition ${btnColorClass}">
                                 ${btnText}
                             </button>
                         </div>
@@ -3455,16 +3453,18 @@
                     }
                 }
 
-                const cardBorder = isEquipped 
-                    ? "border-2 border-yellow-400 bg-yellow-950/60 shadow-[0_0_15px_rgba(250,204,21,0.7)]" 
-                    : (isAcquired ? gradeInfo.colorClass : 'border-gray-900 bg-black/60 opacity-40');
+                const cardBorder = isAcquired ? gradeInfo.colorClass : 'border-gray-900 bg-black/60 opacity-40';
+                const equippedAccent = isEquipped
+                    ? " ring-2 ring-yellow-300 ring-offset-2 ring-offset-black shadow-[0_0_18px_rgba(250,204,21,0.8)]"
+                    : "";
 
                 const expMap = { normal: 1, rare: 3, hero: 9, legendary: 27, mythic: 81 };
                 const reqExp = isAcquired ? expMap[acquired.grade] || 1 : 1;
                 const expHtml = (isAcquired && starsCount < 6) ? `<span class="text-[7px] text-gray-400 font-normal mr-1">(${acquired.exp || 0}/${reqExp})</span>` : "";
 
                 html += `
-                    <div class="theme-dark-card relic-inventory-card border ${cardBorder} p-2 text-center flex flex-col justify-between min-h-[145px] rounded-none-forced relative group transition" data-acquired="${isAcquired}" data-equipped="${isEquipped}">
+                    <div class="theme-dark-card relic-inventory-card border ${cardBorder}${equippedAccent} p-2 text-center flex flex-col justify-between min-h-[145px] rounded-none-forced relative group transition" data-acquired="${isAcquired}" data-equipped="${isEquipped}" data-relic-grade="${isAcquired ? acquired.grade : 'locked'}">
+                        ${isEquipped ? '<span class="absolute left-1 top-1 z-10 border border-yellow-300 bg-yellow-400 px-1.5 py-0.5 text-[7px] font-black text-black">장착 중</span>' : ''}
                         <div>
                             <div class="flex justify-between items-center text-[8px] text-gray-300 font-bold mb-1">
                                 <span class="${isAcquired ? 'text-yellow-300 font-black' : 'text-gray-500'}">${isAcquired ? gradeInfo.name : '미해금'}</span>
@@ -3741,7 +3741,7 @@
             style.textContent = `
                 @keyframes relicCardAppear{0%{opacity:0;transform:translateY(12px) scale(.94);filter:blur(7px) brightness(1.7)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0) brightness(1)}}
                 @keyframes relicHighReveal{0%{opacity:0;transform:scale(.82);filter:blur(9px) brightness(3)}55%{opacity:1;transform:scale(1.06);filter:blur(1px) brightness(1.8)}100%{opacity:1;transform:scale(1);filter:blur(0) brightness(1)}}
-                @keyframes relicLegendGlow{0%,100%{box-shadow:0 0 18px rgba(250,204,21,.55),inset 0 0 20px rgba(250,204,21,.08)}50%{box-shadow:0 0 38px rgba(250,204,21,.95),0 0 58px rgba(245,158,11,.38),inset 0 0 30px rgba(250,204,21,.18)}}
+                @keyframes relicLegendGlow{0%,100%{box-shadow:0 0 18px rgba(248,113,113,.65),inset 0 0 20px rgba(220,38,38,.12)}50%{box-shadow:0 0 38px rgba(239,68,68,.95),0 0 58px rgba(185,28,28,.45),inset 0 0 30px rgba(248,113,113,.2)}}
                 @keyframes relicMythicGlow{0%,100%{box-shadow:0 0 26px rgba(255,45,149,.75),0 0 42px rgba(168,85,247,.4),inset 0 0 25px rgba(255,45,149,.14)}50%{box-shadow:0 0 50px rgba(255,45,149,1),0 0 82px rgba(168,85,247,.8),inset 0 0 42px rgba(255,45,149,.3)}}
                 .relic-result-card{opacity:0;animation:relicCardAppear .72s cubic-bezier(.2,.8,.2,1) forwards}
                 .relic-high-card{overflow:hidden;background:linear-gradient(145deg,#111827,#08090e)}
@@ -3750,9 +3750,10 @@
                 .relic-high-card.is-revealed .hidden-overlay{opacity:0;pointer-events:none;transform:scale(1.1);filter:blur(8px)}
                 .relic-high-card .relic-actual-content{opacity:0}
                 .relic-high-card.is-revealed .relic-actual-content{animation:relicHighReveal .9s cubic-bezier(.16,.8,.2,1) forwards}
-                .relic-grade-legendary.is-revealed{border-color:#facc15!important;background:radial-gradient(circle at 50% 38%,rgba(250,204,21,.2),#090807 72%);animation:relicLegendGlow 1.6s ease-in-out infinite}
+                .relic-grade-legendary.is-revealed{border:2px solid #ef4444!important;background:radial-gradient(circle at 50% 38%,rgba(248,113,113,.24),#7f1d1d 50%,#180607 84%);animation:relicLegendGlow 1.6s ease-in-out infinite}
                 .relic-grade-mythic.is-revealed{border:2px solid #ff2d95!important;background:radial-gradient(circle at 50% 35%,rgba(255,45,149,.28),rgba(88,28,135,.22) 45%,#08030b 76%);animation:relicMythicGlow 1.25s ease-in-out infinite}
-                .relic-grade-legendary.is-revealed img{filter:drop-shadow(0 0 10px #facc15) drop-shadow(0 0 20px #f59e0b)!important}
+                .relic-grade-legendary.is-revealed img{filter:drop-shadow(0 0 10px #f87171) drop-shadow(0 0 20px #dc2626)!important}
+                .relic-grade-legendary.is-revealed h5{color:#fecaca!important;text-shadow:0 0 10px rgba(248,113,113,.9)}
                 .relic-grade-mythic.is-revealed img{filter:drop-shadow(0 0 13px #ff2d95) drop-shadow(0 0 27px #a855f7)!important}
                 .relic-grade-mythic.is-revealed h5{color:#ff70ce!important;text-shadow:0 0 12px rgba(255,45,149,.95)}
             `;
@@ -3786,17 +3787,16 @@
             const rolledGradeInfo = SKILL_GRADES[rolledGrade] || SKILL_GRADES.normal;
             const currentGradeInfo = SKILL_GRADES[currentGrade] || SKILL_GRADES.normal;
             const gainedExp = Math.max(0, Number(res?.gainedExp || 0));
-            const currentStars = Math.max(0, Math.floor(Number(res?.stars) || 0));
-            const previousStars = Math.max(0, Math.floor(Number(res?.previousStars) || 0));
-            const starGain = Math.max(0, currentStars - previousStars);
-            const starGainText = starGain > 0 ? ` · ${starGain}성 강화` : "";
-            let outcomeText = `${rolledGradeInfo.name} 획득`;
-            if (res?.isEssenceRefund) outcomeText = `${rolledGradeInfo.name} 획득 → 6성 ${currentGradeInfo.name} · 신화 정수 +${Math.max(0, Number(res.refundAmount || 0))}`;
-            else if (res?.isNew) outcomeText = `신규 ${rolledGradeInfo.name} 유물 획득`;
-            else if (res?.isGradePromotion) outcomeText = `${rolledGradeInfo.name} 획득 → 보유 등급 ${currentGradeInfo.name} 승급 · EXP +${gainedExp}${starGainText}`;
-            else if (rolledGrade === currentGrade) outcomeText = `동일 등급 ${rolledGradeInfo.name} 획득 · EXP +${gainedExp}${starGainText}`;
-            else outcomeText = `${rolledGradeInfo.name} 획득 → 보유 ${currentGradeInfo.name} EXP +${gainedExp}${starGainText}`;
-            return { rolledGrade, currentGrade, rolledGradeInfo, currentGradeInfo, gainedExp, starGain, outcomeText };
+            const previousGrade = res?.previousGrade || null;
+            const previousGradeInfo = previousGrade ? (SKILL_GRADES[previousGrade] || SKILL_GRADES.normal) : null;
+            const rankMultiplier = { normal: 1, rare: 1.2, hero: 1.5, legendary: 2, mythic: 3 }[rolledGrade] || 1;
+            const baseValue = Math.floor(Number(res?.def?.baseBonus || 0) * 100 * rankMultiplier);
+            const basicEffectText = String(res?.def?.effectDescTemplate || "기본 효과 +{val}%").replace("{val}", baseValue);
+            let applicationText = `보유 카드 반영 · EXP +${gainedExp}`;
+            if (res?.isNew) applicationText = "새 유물로 보관";
+            else if (res?.isEssenceRefund) applicationText = `보유 카드 반영 · MAX 중복 → 신화 정수 +${Math.max(0, Number(res.refundAmount || 0))}`;
+            else if (res?.isGradePromotion) applicationText = `보유 카드 반영 · ${previousGradeInfo?.name || "기존"} → ${currentGradeInfo.name} 승급`;
+            return { rolledGrade, currentGrade, rolledGradeInfo, currentGradeInfo, gainedExp, basicEffectText, applicationText };
         }
         window.__vocaHeroTestHooks = { ...(window.__vocaHeroTestHooks || {}), getRelicDrawResultPresentation };
         function showRelicDrawResultModal(results) {
@@ -3811,23 +3811,16 @@
             let hiddenCount = 0;
             results.forEach((res, index) => {
                 const presentation = getRelicDrawResultPresentation(res);
-                const { rolledGrade, currentGrade, rolledGradeInfo, outcomeText } = presentation;
+                const { rolledGrade, rolledGradeInfo, basicEffectText, applicationText } = presentation;
                 const isHighGrade = (rolledGrade === 'legendary' || rolledGrade === 'mythic');
-                const starsHtml = res.stars > 0 ? "⭐".repeat(res.stars) : "0성";
                 const innerHtml = `
-                        <div class="flex justify-between items-center text-[7px] text-gray-300 font-bold mb-1 w-full">
-                            <span class="text-gray-200">${rolledGradeInfo.name}</span>
-                            <div class="flex items-center">
-                                ${res.stars < 6 && res.currentExp !== undefined ? `<span class="text-[6px] text-gray-400 font-normal mr-1">(${res.currentExp}/${res.reqExp})</span>` : ""}
-                                <span class="text-yellow-400">${starsHtml}</span>
-                            </div>
-                        </div>
+                        <div class="mb-1 w-full text-left text-[8px] font-black text-gray-100">${rolledGradeInfo.name}</div>
                         <div class="w-10 h-10 mx-auto my-1 flex items-center justify-center bg-black/50 border border-gray-800 p-1">
                             <img src="${res.def.img}" class="w-full h-full object-contain filter drop-shadow-[0_0_8px_#fbbf24]">
                         </div>
                         <h5 class="text-[9px] font-black text-white whitespace-nowrap overflow-hidden text-ellipsis px-1 tracking-tighter w-full">${res.def.name}</h5>
-                        <p class="mt-1 w-full text-[7px] font-black leading-[1.25] text-sky-200">${outcomeText}</p>
-                        <p class="text-[7px] font-bold text-yellow-300 mt-0.5 leading-[1.2] tracking-tighter w-full">${getRelicEffectString(res.def, {grade: currentGrade, stars: res.stars})}</p>
+                        <p class="mt-1 w-full text-[7px] font-bold leading-[1.2] tracking-tighter text-yellow-200">${basicEffectText}</p>
+                        <p class="mt-1.5 w-full border-t border-white/20 pt-1.5 text-[7px] font-black leading-[1.3] text-sky-200">${applicationText}</p>
                 `;
 
                 if (isHighGrade) {
@@ -4104,8 +4097,9 @@
                 const unresolved = wrong > 0 && (streak < policy.resolved.streak || accuracy < policy.resolved.accuracy / 100);
                 const review = supportLimit > 0 && rank > 0 && rank <= supportLimit;
                 const mastered = correct >= WORD_MASTERY_CORRECT_THRESHOLD && accuracy >= WORD_MASTERY_ACCURACY_THRESHOLD;
-                return { index, correct, wrong, tries, accuracy, unresolved, review, mastered };
+                return { index, key, correct, wrong, tries, accuracy, unresolved, review, mastered };
             });
+            const recentSet = new Set(recentQuizWordKeys);
             const totals = candidates.reduce((sum, item) => {
                 sum.correct += item.correct;
                 sum.wrong += item.wrong;
@@ -4139,12 +4133,19 @@
                 groupOrder = ["current", "unresolved", "review"];
             }
             const groupMap = { unresolved, review, current };
+            const isFreshCandidate = (item) => item.index !== previousIndex && !recentSet.has(item.key);
             const selectedDescriptor = groupOrder
                 .map((name) => ({ name, items: groupMap[name] }))
-                .find(({ items }) => items.some((item) => item.index !== previousIndex));
+                .find(({ items }) => items.some(isFreshCandidate))
+                || groupOrder
+                    .map((name) => ({ name, items: groupMap[name] }))
+                    .find(({ items }) => items.some((item) => item.index !== previousIndex));
             let selectedGroup = selectedDescriptor?.items || candidates.filter((item) => item.index !== previousIndex);
             if (!selectedGroup.length) selectedGroup = candidates;
-            selectedGroup = selectedGroup.filter((item) => item.index !== previousIndex || selectedGroup.length === 1);
+            const freshGroup = selectedGroup.filter(isFreshCandidate);
+            selectedGroup = freshGroup.length
+                ? freshGroup
+                : selectedGroup.filter((item) => item.index !== previousIndex || selectedGroup.length === 1);
             const weighted = selectedGroup.map((item) => {
                 let weight = item.tries === 0 ? 3 : 1 + item.wrong * 2 + (1 - item.accuracy) * 3;
                 if (item.unresolved) weight += 4;
@@ -4191,6 +4192,9 @@
                 submissionCount: 0
             };
             const current = gameState.wordsPool[gameState.currentQuizIndex];
+            const currentWordKey = String(current?.word || "").trim().toLowerCase();
+            const recentLimit = Math.min(6, Math.max(2, Math.floor(Math.sqrt(gameState.wordsPool.length))));
+            recentQuizWordKeys = [...recentQuizWordKeys.filter((key) => key !== currentWordKey), currentWordKey].filter(Boolean).slice(-recentLimit);
             const allowed = new Set(["meaning-choice", "fill-blank", "word-choice", "listen-meaning", "word-order", "short-answer"]);
             const selected = [...new Set((Array.isArray(gameState.assignedQuestionTypes) ? gameState.assignedQuestionTypes : ["meaning-choice"]).filter((type) => allowed.has(type)))];
             currentQuizType = selected[(gameState.totalQuizTries || 0) % Math.max(1, selected.length)] || "meaning-choice";
@@ -4263,7 +4267,7 @@
         }
 
         function getRequiredExpForStar(grade) {
-            // 등급별 1별 달성에 필요한 경험치 가치 (1장 = 1EXP, 희귀 3, 영웅 9, 전설 27, 신화 81)
+            // 등급별 다음 성급에 필요한 경험치 (일반 1, 희귀 3, 영웅 9, 전설 27, 신화 81)
             const expMap = { normal: 1, rare: 3, hero: 9, legendary: 27, mythic: 81 };
             return expMap[grade] || 1;
         }
@@ -5026,7 +5030,7 @@
             const deckInfo = document.getElementById("skillDeckInfo");
             if (deckInfo) {
 
-                deckInfo.textContent = `새 카드 후보는 현재 적용된 누적 단어팩 ${getSkillSourcePool().length}개이며, 보유 카드 성장은 현재 팩과 무관하게 전체 보유 카드에서 선택됩니다. 기본 분기는 신규 40% · 성장 50% · 각성 정수 10%이고 후보가 없으면 재분배됩니다.`;
+                deckInfo.textContent = `새 스킬을 얻거나 보유 스킬이 성장합니다. 장착한 4개 스킬은 성장 대상으로 더 자주 선택되며, 같은 스킬은 10회 소환마다 최대 한 번만 성장합니다.`;
             }
             const eqGrid = document.getElementById("equippedSkillsGrid");
             let eqHtml = "";
@@ -5941,11 +5945,11 @@
                 </div>`;
             const wrongHtml = wrongRows.length ? wrongRows.slice(0, 12).map((row, index) => `<article class="border border-[#3a252a] bg-black p-2.5"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><b class="block truncate text-[10px] text-white">${index + 1}. ${esc(row.word)}</b><span class="mt-0.5 block truncate text-[8px] text-gray-400">${esc(row.meaning || "뜻 정보 없음")}</span></div><span class="shrink-0 text-[9px] font-bold text-rose-300">오답 ${row.wrong}회</span></div><div class="mt-2 flex items-center justify-between border-t border-[#311d22] pt-1.5 text-[8px]"><span class="text-sky-300">정답 ${row.correct}회</span><span class="text-gray-500">정답률 ${row.accuracy.toFixed(0)}%</span></div></article>`).join("") : '<p class="col-span-full border border-dashed border-emerald-900/60 p-5 text-center text-[10px] text-emerald-300">아직 기록된 오답 단어가 없어요.</p>';
             const masteredHtml = [...masteredRows].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 20).map((row) => `<article class="border border-emerald-900/60 bg-black p-2.5"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><b class="block truncate text-[10px] text-emerald-200">${esc(row.word)}</b><span class="mt-0.5 block truncate text-[8px] text-gray-400">${esc(row.meaning || "뜻 정보 없음")}</span></div><span class="shrink-0 text-[9px] font-bold text-emerald-300">숙련</span></div><p class="mt-2 border-t border-[#173128] pt-1.5 text-[8px] text-gray-500">정답 ${row.correct}회 · 정답률 ${row.accuracy.toFixed(0)}%</p></article>`).join("") || '<p class="col-span-full border border-dashed border-emerald-900/60 p-5 text-center text-[10px] text-gray-500">정답 10회·정답률 80%를 달성하면 숙련 단어가 나타나요.</p>';
-            const detailRows = [...learningRows].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 300).map((row) => {
+            const detailRows = [...learningRows].sort((a, b) => b.correct - a.correct || b.tries - a.tries || a.word.localeCompare(b.word, "en")).slice(0, 300).map((row) => {
                 const typeBreakdown = Object.entries(row.byType || {}).filter(([, values]) => Array.isArray(values) && Number(values[0] || 0) > 0).map(([type, values]) => `${typeLabels[type] || type} 정답 ${Math.max(0, Number(values[1] || 0))}회`).join(" · ");
                 return `<div class="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 border-b border-[#1f2933] py-2 text-[9px]"><span class="min-w-0"><b class="block truncate font-medium text-gray-200">${esc(row.word)} · ${esc(row.meaning)}</b><small class="mt-0.5 block truncate text-[8px] text-violet-300">${esc(typeBreakdown || "유형별 기록 없음")}</small></span><span class="text-sky-300">${row.correct}정답</span><span class="${row.mastered ? "text-emerald-300" : row.wrong ? "text-rose-300" : "text-gray-400"}">${row.mastered ? "숙련" : row.wrong + "오답"}</span></div>`;
             }).join("");
-            listDiv.innerHTML = `${insightCards}<div class="mt-3 grid gap-3 lg:grid-cols-2"><section class="border border-rose-900/50 bg-rose-950/5 p-3"><div class="flex items-center justify-between"><b class="text-xs text-rose-300">내가 많이 틀린 단어</b><span class="text-[8px] text-gray-500">오답 횟수 높은 순</span></div><div class="mt-2 grid gap-2 sm:grid-cols-2">${wrongHtml}</div></section><section class="border border-emerald-900/50 bg-emerald-950/5 p-3"><div class="flex items-center justify-between"><b class="text-xs text-emerald-300">숙련 단어</b><span class="text-[8px] text-gray-500">최근 숙련 순</span></div><div class="mt-2 grid gap-2 sm:grid-cols-2">${masteredHtml}</div></section></div><details class="mt-3 border border-[#27323a] bg-black"><summary class="cursor-pointer px-3 py-2 text-[10px] font-bold text-gray-300">전체 단어 학습 기록 펼쳐보기 (${learningRows.length}개)</summary><div class="max-h-64 overflow-y-auto px-3 pb-3">${detailRows || '<p class="py-4 text-center text-[10px] text-gray-500">아직 단어별 학습 기록이 없어요.</p>'}</div></details>`;
+            listDiv.innerHTML = `${insightCards}<div class="mt-3 grid gap-3 lg:grid-cols-2"><section class="border border-rose-900/50 bg-rose-950/5 p-3"><div class="flex items-center justify-between"><b class="text-xs text-rose-300">내가 많이 틀린 단어</b><span class="text-[8px] text-gray-500">오답 횟수 높은 순</span></div><div class="mt-2 grid gap-2 sm:grid-cols-2">${wrongHtml}</div></section><section class="border border-emerald-900/50 bg-emerald-950/5 p-3"><div class="flex items-center justify-between"><b class="text-xs text-emerald-300">숙련 단어</b><span class="text-[8px] text-gray-500">최근 숙련 순</span></div><div class="mt-2 grid gap-2 sm:grid-cols-2">${masteredHtml}</div></section></div><details class="mt-3 border border-[#27323a] bg-black"><summary class="cursor-pointer px-3 py-2 text-[10px] font-bold text-gray-300">전체 단어 학습 기록 펼쳐보기 (${learningRows.length}개) · 정답 횟수 높은 순</summary><div class="max-h-64 overflow-y-auto px-3 pb-3">${detailRows || '<p class="py-4 text-center text-[10px] text-gray-500">아직 단어별 학습 기록이 없어요.</p>'}</div></details>`;
         }
         // ==========================================
         // STAGE BOSS SYSTEM
@@ -7086,7 +7090,7 @@
                     }).join('')
                     : '<p class="text-gray-500 text-center py-4">기록 없음</p>';
 
-                cachedHofData = { myStageRank, myBossRank, myGoldRank };
+                applyHallOfFameRanks({ myStageRank, myBossRank, myGoldRank });
             }).catch(err => {
                 console.error("[HoF] Firestore query error:", err);
                 ['hofStageList','hofBossList','hofGoldList'].forEach(id => {
@@ -7117,7 +7121,7 @@
             // 🌟 [신화 등급 - Mythic] — 최상위 랭커 전용
             // ========================================
             { id: "수호신", name: "수호신", tier: "신화", desc: "월드보스 완전 격퇴 및 기여도 1위 (주간 결산 시 수여)", condition: (gs) => (gs.unlockedTitles || []).includes("수호신") || gs.wbTitle === "수호신", style: "mythic-aurora-card border-[#f59e0b] text-yellow-300 shadow-[0_0_15px_rgba(245,158,11,0.8)]" },
-            { id: "정복왕", name: "정복왕", tier: "신화", desc: "스테이지 정복 랭킹 전체 1위", condition: (gs, res) => res?.myStageRank === 1 && ((gs.stage||1)>1 || (gs.progress||0)>0), style: "mythic-aurora-card border-[#3b82f6] text-sky-300 shadow-[0_0_15px_rgba(59,130,246,0.8)]" },
+            { id: "정복왕", name: "정복왕", tier: "신화", desc: "스테이지 정복 랭킹 전체 1위", condition: (gs, res) => res?.myStageRank === 1, style: "mythic-aurora-card border-[#3b82f6] text-sky-300 shadow-[0_0_15px_rgba(59,130,246,0.8)]" },
             { id: "황금 거상", name: "황금 거상", tier: "신화", desc: "누적 골드 획득량 100,000,000(1억) 이상", condition: (gs) => (gs.accGold || gs.gold || 0) >= 100000000, style: "mythic-aurora-card border-[#eab308] text-yellow-200 shadow-[0_0_15px_rgba(234,179,8,0.8)]" },
             { id: "단어의 신", name: "단어의 신", tier: "신화", desc: "단어 정답 1,000개 이상 누적 달성", condition: (gs) => (gs.totalQuizCorrect || 0) >= 1000, style: "mythic-aurora-card border-[#10b981] text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.8)]" },
             { id: "유물의 신", name: "유물의 신", tier: "신화", desc: "고대 유물 10종 수집 및 모두 6성(MAX) 돌파", condition: (gs) => (gs.acquiredRelics || []).filter(r => (r.stars||0) >= 6).length >= 10, style: "mythic-aurora-card border-[#8b5cf6] text-violet-300 shadow-[0_0_15px_rgba(139,92,246,0.8)]" },
@@ -7132,7 +7136,7 @@
             // ========================================
             // 🔥 [전설 등급 - Legendary]
             // ========================================
-            { id: "개척자", name: "개척자", tier: "전설", desc: "스테이지 Top 3 이내 진입", condition: (gs, res) => typeof res?.myStageRank === 'number' && res.myStageRank > 0 && res.myStageRank <= 3 && ((gs.stage||1)>1 || (gs.progress||0)>0), style: "border-[#dc2626] bg-gradient-to-r from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] shadow-[0_0_10px_rgba(220,38,38,0.7)]" },
+            { id: "개척자", name: "개척자", tier: "전설", desc: "스테이지 Top 3 이내 진입", condition: (gs, res) => typeof res?.myStageRank === 'number' && res.myStageRank > 0 && res.myStageRank <= 3, style: "border-[#dc2626] bg-gradient-to-r from-[#b91c1c] to-[#7f1d1d] text-[#fca5a5] shadow-[0_0_10px_rgba(220,38,38,0.7)]" },
             { id: "전설의 대장장이", name: "전설의 대장장이", tier: "전설", desc: "모든 무구 50강(MAX) 달성", condition: (gs) => (gs.helmetLvl||1)>=50 && (gs.armorLvl||1)>=50 && (gs.weaponLvl||1)>=50 && (gs.shieldLvl||1)>=50 && (gs.shoesLvl||1)>=50, style: "border-[#d97706] bg-gradient-to-r from-[#b45309] to-[#78350f] text-[#fde68a] shadow-[0_0_10px_rgba(217,119,6,0.7)]" },
             { id: "고고학자", name: "고고학자", tier: "전설", desc: "고대 유물 전종(10종) 수집 및 모두 3성 이상", condition: (gs) => (gs.acquiredRelics || []).length >= 10 && (gs.acquiredRelics || []).every(r => (r.stars||0) >= 3), style: "border-[#059669] bg-gradient-to-r from-[#047857] to-[#064e3b] text-[#a7f3d0] shadow-[0_0_10px_rgba(5,150,105,0.7)]" },
             { id: "잠재력 마스터", name: "잠재력 마스터", tier: "전설", desc: "잠재력 슬롯 30개 모두 해금", condition: (gs) => { let c=0; ["helmet","armor","weapon","shield","shoes"].forEach(k=>c+=(gs.gearPotentials?.[k]||[]).filter(x=>x).length); return c>=30; }, style: "border-[#059669] bg-gradient-to-r from-[#047857] to-[#064e3b] text-[#a7f3d0] shadow-[0_0_10px_rgba(5,150,105,0.7)]" },
@@ -7207,6 +7211,17 @@
         window.getHeroTitlePresentation = getTitlePresentation;
 
         let cachedHofData = null;
+
+        function applyHallOfFameRanks(ranks = {}) {
+            const before = (gameState.unlockedTitles || []).length;
+            cachedHofData = { ...(cachedHofData || {}), ...ranks };
+            renderTitleInventoryUI();
+            if ((gameState.unlockedTitles || []).length > before) {
+                saveLocalCache();
+                try { Promise.resolve(typeof saveSessionToCloud === 'function' ? saveSessionToCloud(true) : null).catch(() => {}); } catch {}
+            }
+        }
+        window._applySecureHallOfFameRanks = applyHallOfFameRanks;
 
         function renderTitleInventoryUI() {
             const container = document.getElementById("titleInventoryContainer");
@@ -7765,7 +7780,7 @@
                 document.getElementById("worldBossHpText").innerText = `${cachedWb.curHp.toLocaleString()} / ${cachedWb.maxHp.toLocaleString()} HP (${cachedPct.toFixed(1)}%) [캐시]`;
                 document.getElementById("myWorldBossDmgDisplay").innerText = cachedWb.myDamage.toLocaleString();
                 document.getElementById("myWorldBossShareDisplay").innerText = `${cachedWb.sharePct}%`;
-                renderWorldBossExpectedReward(cachedWb.myDamage, cachedWb.maxHp);
+                renderWorldBossExpectedReward(cachedWb.myDamage, cachedWb.maxHp, cachedWb.lastRewardTokens, cachedWb.titlePending);
 
                 // 캐시 기반 클리어 오버레이 즉시 표시
                 const defeatedOverlay = document.getElementById("wbDefeatedOverlay");
@@ -7924,16 +7939,18 @@
             }
         }
 
-        function renderWorldBossExpectedReward(myDamage, maxHp, rewardTokens = null) {
+        function renderWorldBossExpectedReward(myDamage, maxHp, rewardTokens = null, titlePending = false) {
             const safeDamage = Math.max(0, Number(myDamage) || 0);
             const safeMaxHp = Math.max(1, Number(maxHp) || 1);
             const defeatedFp = Math.round(100000 * Math.min(1, safeDamage / safeMaxHp));
             const reward = document.getElementById("myWorldBossRewardDisplay");
             if (!reward) return;
-            const tokenText = Number.isFinite(Number(rewardTokens))
-                ? `<span class="mt-1 block text-[8px] text-yellow-300">이번 참전 증표 +${Math.max(0, Number(rewardTokens)).toLocaleString()}</span>`
+            const hasRecordedTokens = rewardTokens !== null && rewardTokens !== undefined && Number.isFinite(Number(rewardTokens));
+            const tokenText = hasRecordedTokens
+                ? `<span class="wb-reward-tokens mt-1 block text-[8px] text-yellow-300">이번 참전 증표 +${Math.max(0, Number(rewardTokens)).toLocaleString()}</span>`
                 : '';
-            reward.innerHTML = `처치 시: <span style="color:white">+${defeatedFp.toLocaleString()} FP</span> | 미처치 시: <span style="color:#9ca3af">+${Math.floor(defeatedFp / 2).toLocaleString()} FP</span>${tokenText}`;
+            const titleText = titlePending ? '<span class="wb-title-pending mt-1 block text-[8px]">👑 현재 피해 1위 · 수호신 칭호는 다음 월요일 첫 접속 때 주간 결산으로 지급</span>' : '';
+            reward.innerHTML = `처치 시: <span class="wb-reward-win">+${defeatedFp.toLocaleString()} FP</span> | 미처치 시: <span class="wb-reward-partial">+${Math.floor(defeatedFp / 2).toLocaleString()} FP</span>${tokenText}${titleText}`;
         }
 
         function applySecureWorldBossStatus(boss) {
@@ -7951,11 +7968,12 @@
             if (hpText) hpText.innerText = `${wbCurBossHp.toLocaleString()} / ${wbMaxBossHp.toLocaleString()} HP (${pct.toFixed(1)}%)`;
             if (damage) damage.innerText = myDamage.toLocaleString();
             if (share) share.innerText = `${sharePct}%`;
-            renderWorldBossExpectedReward(myDamage, wbMaxBossHp);
+            const titlePending = wbCurBossHp <= 0 && Number(boss.myRank) === 1;
+            renderWorldBossExpectedReward(myDamage, wbMaxBossHp, boss.lastRewardTokens, titlePending);
             const bossDay = typeof boss.day === 'string' ? boss.day : getKstDayString();
             if (boss.canAttack) clearWorldBossCompletion();
             else markWorldBossCompleted(bossDay);
-            localStorage.setItem(getWorldBossCacheKey(), JSON.stringify({ day: bossDay, curHp: wbCurBossHp, maxHp: wbMaxBossHp, myDamage, sharePct, canAttack: Boolean(boss.canAttack), cachedAt: Date.now() }));
+            localStorage.setItem(getWorldBossCacheKey(), JSON.stringify({ day: bossDay, curHp: wbCurBossHp, maxHp: wbMaxBossHp, myDamage, sharePct, canAttack: Boolean(boss.canAttack), lastRewardTokens: boss.lastRewardTokens, titlePending, cachedAt: Date.now() }));
             const btn = document.getElementById("startWorldBossBtn");
             const badge = document.getElementById("worldBossEntryBadge");
             const defeated = wbCurBossHp <= 0;

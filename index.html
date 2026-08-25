@@ -878,7 +878,22 @@
             opacity: 1;
         }
 
+        html[data-theme="ivory"] .choice-btn {
+            background-color: #eadcc6 !important;
+            border-color: #92785a !important;
+            color: #2b2118 !important;
+            box-shadow: inset 0 -2px 0 rgba(91, 72, 48, .13);
+        }
+
+        html[data-theme="ivory"] .choice-btn:nth-child(even) { background-color: #e2edf0 !important; }
         html[data-theme="ivory"] .choice-btn:hover,
+        html[data-theme="ivory"] .choice-btn:focus-visible {
+            background-color: #cfe8f0 !important;
+            border-color: #0369a1 !important;
+            color: #102a3a !important;
+            box-shadow: inset 0 -3px 0 rgba(3, 105, 161, .25), 0 0 0 2px rgba(3, 105, 161, .12);
+        }
+
         html[data-theme="ivory"] .skill-inventory-card:hover {
             background-color: #fff8e8 !important;
             color: #211a14 !important;
@@ -1209,6 +1224,56 @@
         html[data-theme="ivory"] body #gameMainLayout #relicAltarUnlockedSection .relic-summon-single { color: #f5f3ff !important; }
         html[data-theme="ivory"] body #gameMainLayout #relicsInventoryGrid .relic-locked-status { background: #1f2937 !important; border-color: #64748b !important; color: #e5e7eb !important; }
 
+        /* 유물함은 장착 여부와 무관하게 획득 등급 배경을 유지 */
+        html[data-theme="ivory"] body #gameMainLayout #relicsInventoryGrid .relic-inventory-card[data-relic-grade="normal"] { background: linear-gradient(#263241, #17202b) !important; border-color: #64748b !important; color: #f8fafc !important; }
+        html[data-theme="ivory"] body #gameMainLayout #relicsInventoryGrid .relic-inventory-card[data-relic-grade="rare"] { background: linear-gradient(#075985, #0c4a6e) !important; border-color: #38bdf8 !important; color: #f0f9ff !important; }
+        html[data-theme="ivory"] body #gameMainLayout #relicsInventoryGrid .relic-inventory-card[data-relic-grade="hero"] { background: linear-gradient(#6b21a8, #3b0764) !important; border-color: #c084fc !important; color: #faf5ff !important; }
+        html[data-theme="ivory"] body #gameMainLayout #relicsInventoryGrid .relic-inventory-card[data-relic-grade="legendary"] { background: linear-gradient(#b91c1c, #5f1111) !important; border-color: #f87171 !important; color: #fff1f2 !important; }
+        html[data-theme="ivory"] body #gameMainLayout #relicsInventoryGrid .relic-inventory-card[data-relic-grade="mythic"] { background: radial-gradient(circle at 50% 20%, #854d0e, #3b0764 58%, #130713) !important; border-color: #facc15 !important; color: #fffbeb !important; }
+        html[data-theme="ivory"] body #gameMainLayout #relicsInventoryGrid .relic-inventory-card :is(h5, [class~="text-white"]) { color: #ffffff !important; }
+        html[data-theme="ivory"] body #gameMainLayout #relicsInventoryGrid .relic-inventory-card [class~="text-yellow-300"] { color: #fef08a !important; }
+        html[data-theme="ivory"] body #gameMainLayout #relicsInventoryGrid .relic-equip-btn[data-equipped="false"] { background: #f8fafc !important; border: 1px solid #cbd5e1 !important; color: #17202b !important; }
+
+        /* 전장 안의 유물·장신구 슬롯은 밝은 테마에서도 검은 무대 위에 유지 */
+        html[data-theme="ivory"] body #gameMainLayout :is(#heroRelicSlot, #accSlot_necklace, #accSlot_bracelet, #accSlot_ring) {
+            background-color: rgba(0, 0, 0, .86) !important;
+            color: #ffffff !important;
+        }
+
+        /* 장신구 연구실의 이름·효과·버튼 대비 */
+        html[data-theme="ivory"] body #gameMainLayout .accessory-upgrade-card {
+            background-color: #fffaf1 !important;
+            border-color: #8b6fb4 !important;
+            color: #2b2118 !important;
+        }
+        html[data-theme="ivory"] body #gameMainLayout .accessory-upgrade-card .accessory-name { color: #5b21b6 !important; }
+        html[data-theme="ivory"] body #gameMainLayout .accessory-upgrade-card .accessory-description { color: #5f5245 !important; }
+        html[data-theme="ivory"] body #gameMainLayout .accessory-upgrade-card .accessory-effect-box { background: #eee6fb !important; border-color: #8b6fb4 !important; }
+        html[data-theme="ivory"] body #gameMainLayout .accessory-upgrade-card .accessory-current { color: #4c1d95 !important; }
+        html[data-theme="ivory"] body #gameMainLayout .accessory-upgrade-card .accessory-next { color: #8a5a00 !important; }
+        html[data-theme="ivory"] body #gameMainLayout .accessory-upgrade-card .accessory-upgrade-button:not(:disabled) { background: #6d28d9 !important; color: #ffffff !important; }
+
+        /* 잠재력은 등급 자체가 정보이므로 라이트 모드에서도 등급 배경색을 보존 */
+        html[data-theme="ivory"] body #gameMainLayout .potential-option-card { color: #f8fafc !important; }
+        html[data-theme="ivory"] body #gameMainLayout .potential-option-card[data-potential-grade="normal"] { background: #263241 !important; border-color: #64748b !important; }
+        html[data-theme="ivory"] body #gameMainLayout .potential-option-card[data-potential-grade="rare"] { background: #0c4a6e !important; border-color: #38bdf8 !important; }
+        html[data-theme="ivory"] body #gameMainLayout .potential-option-card[data-potential-grade="hero"] { background: #4c1d95 !important; border-color: #a78bfa !important; }
+        html[data-theme="ivory"] body #gameMainLayout .potential-option-card[data-potential-grade="legendary"] { background: #7f1d1d !important; border-color: #f87171 !important; }
+        html[data-theme="ivory"] body #gameMainLayout .potential-option-card[data-potential-grade="mythic"] { background: #5c3b08 !important; border-color: #facc15 !important; }
+        html[data-theme="ivory"] body #gameMainLayout .potential-option-card :is([class~="text-gray-400"], [class~="text-yellow-300"]) { color: #fef3c7 !important; }
+
+        html[data-theme="ivory"] body #gameMainLayout .pet-lab-heading { border-color: #9f896a !important; }
+
+        /* 월드보스 로비는 밝은 화면, 실제 전투 HUD는 어두운 무대로 명확히 분리 */
+        html[data-theme="ivory"] body #gameMainLayout #worldBossTab #myWorldBossRewardDisplay { color: #9f1239 !important; }
+        html[data-theme="ivory"] body #gameMainLayout #worldBossTab .wb-reward-win { color: #075985 !important; }
+        html[data-theme="ivory"] body #gameMainLayout #worldBossTab .wb-reward-partial { color: #5f5245 !important; }
+        html[data-theme="ivory"] body #gameMainLayout #worldBossTab .wb-reward-tokens { color: #8a4b00 !important; }
+        html[data-theme="ivory"] body #gameMainLayout #worldBossTab .wb-title-pending { color: #5b21b6 !important; }
+        html[data-theme="ivory"] body #gameMainLayout :is(#worldBossBattleArena, #wbVisualStage, #wbRaidHudBoard) { background-color: #050608 !important; color: #ffffff !important; }
+        html[data-theme="ivory"] body #gameMainLayout #wbRaidHudBoard :is(#wbComboText, [class~="text-yellow-300"]) { color: #fef3c7 !important; }
+        html[data-theme="ivory"] body #gameMainLayout #wbPetHintBtn { color: #1c1917 !important; }
+
         /* 교사 길드 카드·초대·시련 하위 탭의 양쪽 테마 대비 */
         html[data-theme="ivory"] #secureClassList > button,
         html[data-theme="ivory"] #secureTeacherOtherGuildList > button {
@@ -1230,10 +1295,17 @@
         html[data-theme="dark"] #secureTeacherInviteManager { background: rgba(8, 47, 73, .45) !important; color: #e0f2fe !important; }
         html[data-theme="dark"] :is(#secureTeacherInviteStudent, #secureTeacherInviteManager):hover,
         html[data-theme="dark"] :is(#secureTeacherInviteStudent, #secureTeacherInviteManager):focus-visible { filter: brightness(1.22); box-shadow: inset 0 -3px 0 rgba(255, 255, 255, .14); }
-        html[data-theme="ivory"] #secureTeacherInviteStudent { background: #eee6fb !important; border-color: #7c3aed !important; color: #4c1d95 !important; }
-        html[data-theme="ivory"] #secureTeacherInviteManager { background: #e3f3f8 !important; border-color: #0284c7 !important; color: #075985 !important; }
+        html[data-theme="ivory"] #secureTeacherInviteStudent { background: #6d28d9 !important; border-color: #4c1d95 !important; color: #ffffff !important; }
+        html[data-theme="ivory"] #secureTeacherInviteManager { background: #0369a1 !important; border-color: #075985 !important; color: #ffffff !important; }
         html[data-theme="ivory"] :is(#secureTeacherInviteStudent, #secureTeacherInviteManager):hover,
         html[data-theme="ivory"] :is(#secureTeacherInviteStudent, #secureTeacherInviteManager):focus-visible { filter: brightness(.94); box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .12); }
+
+        /* 학년별 누적팩을 한눈에 비교할 수 있도록 교사 선택 영역의 높이를 확보 */
+        #secureTeacherWordPacks {
+            min-height: 24rem !important;
+            max-height: 36rem !important;
+            align-content: start;
+        }
 
         /* 라이트 화면에서 다음 테마(다크)를 가리키는 버튼은 어두운 면과 밝은 글자를 한 쌍으로 유지 */
         html[data-theme="ivory"] body [data-theme-toggle] {
@@ -2083,7 +2155,7 @@
                 class="bg-black border border-[#3c3c3c] p-3 flex-grow hidden flex-col justify-between min-h-0 rounded-none-forced overflow-y-auto custom-scrollbar">
                 <div>
                     <!-- Top Title: Pet Lab Only -->
-                    <div class="flex justify-between items-center mb-3 border-b border-[#262626] pb-2">
+                    <div class="pet-lab-heading flex justify-between items-center mb-3 border-b border-[#262626] pb-2">
                         <h3 class="bmw-label-uppercase text-white flex items-center gap-2 text-sm font-extrabold tracking-wider">
                             <i data-lucide="paw-print" class="w-4 h-4 text-[#0066b1]"></i>
                             <span>소환수 연구실</span>
@@ -2233,30 +2305,17 @@
                     <p class="text-xs text-gray-400 font-medium mb-3">퀴즈 정답으로 쌓은 정복 포인트(FP)로 단어 캡슐을 뽑고, 최대 4개의 마법 필살기를 장착하세요.</p>
                     <p data-guild-luck-source class="mb-3 border border-violet-900/50 bg-violet-950/10 p-2 text-[8px] leading-relaxed text-violet-300"></p>
 
-                    <!-- Research focus / wishlist (four research slots, separate from four equipped slots) -->
-                    <section class="mb-4 border border-cyan-900/70 bg-cyan-950/10 p-3" aria-labelledby="skillResearchHeading">
-                        <div class="flex flex-wrap items-center justify-between gap-2">
-                            <div>
-                                <h4 id="skillResearchHeading" class="text-xs font-black text-cyan-200">🔬 집중 연구 대상 (최대 4개)</h4>
-                                <p class="mt-1 text-[9px] text-gray-400">보유 스킬은 성장, 미보유 단어는 신규 획득 대상으로 기본 가중치의 5배가 적용됩니다. 집중 성장을 7번 놓치면 다음 성장 결과는 연구 대상이 확정됩니다. 장착·연구·잠금 카드는 합성·분해에서 보호되며, 각성 정수 100개로 원하는 스킬의 성장 바 1칸을 완성할 수 있습니다.</p>
-                            </div>
-                            <b class="border border-amber-700 bg-amber-950/30 px-2 py-1 text-[10px] text-amber-200">각성 정수 <span id="skillEssenceCount">0</span></b>
-                        </div>
-                        <div class="mt-2 flex flex-wrap gap-2">
-                            <input id="skillResearchWordInput" list="skillResearchWordOptions" type="search" autocomplete="off" placeholder="현재 단어팩에서 단어 검색" class="min-w-52 flex-1 border border-[#3c3c3c] bg-black px-2 py-1.5 text-[10px] text-white outline-none focus:border-cyan-400">
-                            <datalist id="skillResearchWordOptions"></datalist>
-                            <button type="button" onclick="addSkillResearchTargetFromInput()" class="border border-cyan-600 bg-cyan-950/40 px-3 py-1.5 text-[10px] font-black text-cyan-100 hover:bg-cyan-900/60">대상 지정</button>
-                        </div>
-                        <div id="skillResearchTargetSlots" class="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4"></div>
-                    </section>
-
                     <!-- Equipped Slots (4 slots) -->
                     <div class="mb-4 bg-[#0d0d0d] p-3 border border-[#3c3c3c] rounded-none-forced">
-                        <div class="flex justify-between items-center mb-2">
-                            <h4 class="text-xs font-bold text-[#0066b1] flex items-center gap-1.5 uppercase tracking-wider">
-                                <i data-lucide="layout-grid" class="w-4 h-4"></i>
-                                <span>장착된 마법 스킬 (전투 슬롯 4개)</span>
-                            </h4>
+                        <div class="mb-2 flex flex-wrap items-start justify-between gap-2">
+                            <div>
+                                <h4 class="text-xs font-bold text-[#0066b1] flex items-center gap-1.5 uppercase tracking-wider">
+                                    <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                                    <span>집중 성장·전투 스킬 (최대 4개)</span>
+                                </h4>
+                                <p class="mt-1 text-[9px] text-gray-400">장착한 스킬은 전투에 사용되며 소환 성장 결과에서도 우선 선택됩니다. 장착·잠금 카드는 합성·분해에서 보호됩니다.</p>
+                            </div>
+                            <b class="border border-amber-700 bg-amber-950/30 px-2 py-1 text-[10px] text-amber-200">각성 정수 <span id="skillEssenceCount">0</span></b>
                         </div>
                         <div class="grid grid-cols-4 gap-2" id="equippedSkillsGrid">
                             <!-- Filled dynamically -->
@@ -2310,11 +2369,11 @@
                             <i data-lucide="info" class="w-4 h-4"></i>
                             <span>스킬 수집 & 합성 가이드</span>
                         </span>
-                        <span class="text-[11px] text-gray-400 ">기본 분기 · 신규 40% · 보유 성장 50% · 각성 정수 +25 10%</span>
+                        <span class="text-[11px] text-gray-400 ">새 스킬 획득 · 보유 스킬 성장 · 각성 정수</span>
                     </div>
 
                     <div class="border border-cyan-950 bg-black/60 p-2 text-[9px] leading-relaxed text-gray-400">
-                        신규·성장 후보가 모두 있을 때의 기본 분기이며, 한쪽 후보가 소진되면 남은 분기로 확률이 재분배됩니다. 가능한 경우 매 10회 묶음마다 <b class="text-cyan-200">신규 1회 이상·보유 성장 3회 이상</b>, 카드 결과 중 <b class="text-cyan-200">희귀 이상 1회</b>를 보장합니다.
+                        새 스킬은 선택한 누적 단어팩 전체에서 고르게 나옵니다. 장착한 스킬 4개는 자동 집중 성장 대상으로 더 자주 선택됩니다. 같은 10회 소환 안에서는 한 스킬이 한 번만 성장하며, 가능한 경우 신규 1회·성장 3회 이상과 카드 결과 중 <b class="text-cyan-200">희귀 이상 1회</b>를 보장합니다. 새 스킬이나 성장 대상이 없으면 각성 정수로 바뀝니다.
                     </div>
 
                     <!-- 5 Grades Multiplier & Probability Cards -->
@@ -2351,11 +2410,11 @@
                         </div>
                         <div class="bg-black p-2.5 border border-[#262626] flex items-center gap-2">
                             <span class="bg-yellow-950 text-yellow-300 border border-yellow-600 px-2 py-1 font-black shrink-0 text-[10px]">⭐ 별 & 티어 성장</span>
-                            <p class="leading-tight text-[10px]">상위 등급은 현재 성급과 EXP 비율을 보존해 승급하고, 더 좋은 티어는 즉시 적용됩니다. 동일·하위 등급은 성장 바 1칸을 완성합니다. 6성 다음 성장에 T3→T2→T1로 진화하며 완료한 별 보너스는 누적됩니다. T1 6성 MAX의 추가 성장은 정수 +100으로 바뀝니다.</p>
+                            <p class="leading-tight text-[10px]">상위 등급은 현재 성급과 EXP 비율을 보존해 승급하고, 더 좋은 티어는 즉시 적용됩니다. 동일·하위 등급 중복은 뽑힌 등급만큼 EXP(1/3/9/27/81)를 줍니다. 6성 다음 성장에 T3→T2→T1로 진화하며 완료한 별 보너스는 누적됩니다. T1 6성 MAX의 추가 성장은 정수 +100으로 바뀝니다.</p>
                         </div>
                         <div class="bg-black p-2.5 border border-[#262626] flex items-center gap-2">
-                            <span class="bg-cyan-950 text-cyan-200 border border-cyan-700 px-2 py-1 font-black shrink-0 text-[10px]">🔬 연구 & 보호</span>
-                            <p class="leading-tight text-[10px]">연구 대상은 최대 4개이며 신규·성장 선택 가중치 ×5, 장착 카드는 성장 가중치 ×2입니다. 연구 대상을 7번 놓친 뒤 다음 성장에서 확정됩니다. 장착·연구·잠금 카드는 합성·분해에서 제외됩니다.</p>
+                            <span class="bg-cyan-950 text-cyan-200 border border-cyan-700 px-2 py-1 font-black shrink-0 text-[10px]">⚔️ 장착 & 보호</span>
+                            <p class="leading-tight text-[10px]">전투에 장착한 최대 4개가 집중 성장 카드가 되어 다른 보유 카드보다 5배 자주 선택됩니다. 7번 연속 빗나가면 다음 가능한 성장은 장착 카드 중 하나입니다. 장착·잠금 카드는 합성·분해에서 제외됩니다.</p>
                         </div>
                         <div class="bg-black p-2.5 border border-[#262626] flex items-center gap-2">
                             <span class="bg-red-950 text-red-300 border border-red-700 px-2 py-1 font-black shrink-0 text-[10px]">♻️ 신화 & 분해</span>
@@ -2552,7 +2611,7 @@
                                     <ul class="text-[10px] text-gray-400 flex flex-col gap-1 list-disc list-inside">
                                         <li><strong class="text-gray-200">일일 참전 보상:</strong> 기본 200 증표 + 천만 데미지 당 20 합산 최대 <span class="text-pink-300 font-bold">500 증표</span> 및 <span class="text-yellow-400 font-bold">골드</span> 획득</li>
                                         <li><strong class="text-gray-200">주간 결산 보상:</strong> 매주 월요일 자정 결산 시 기여도 비례하여 최대 <span class="text-pink-400 font-bold">100,000 FP</span> 분배 (보스 미처치 시 1/2 지급)</li>
-                                        <li><strong class="text-gray-200">최우수 용사:</strong> 보스 토벌 성공 시 누적 딜량 1위 유저에게 영구 <span class="text-purple-400 font-bold">[수호신] 칭호</span> 부여</li>
+                                        <li><strong class="text-gray-200">최우수 용사:</strong> 보스 토벌 성공 시 누적 딜량 1위 유저에게 다음 주 월요일 첫 접속 결산에서 영구 <span class="text-purple-400 font-bold">[수호신] 칭호</span> 부여</li>
                                     </ul>
                                 </div>
                             </div>
@@ -2971,7 +3030,7 @@
                                     </li>
                                     <li class="flex items-start gap-1">
                                         <span class="shrink-0">📚 <b>누적팩 하나:</b></span>
-                                        <span>초3~고3의 하 ⊂ 중 ⊂ 상 누적팩 중 하나를 학습합니다. 선택팩 누적 풀이가 8회 이상이면서 정답률 75% 미만이거나, 미해결 오답이 3개 이상이거나, 미해결 오답의 누적 오답 합계가 4회 이상이면 문항 보충 모드가 켜집니다. 후보가 모두 있을 때의 기본 목표는 보충 모드에서 미해결 55%·직전 단계 30%·현재 단계 15%, 일반 모드에서 20%·20%·60%이며 빈 후보는 가능한 다음 그룹으로 재배분됩니다. 이전 학년까지 낮추려면 교사가 그 누적팩을 지정합니다.</span>
+                                        <span>초3~고3의 하 ⊂ 중 ⊂ 상 누적팩 중 하나를 학습합니다. 자주 틀리는 단어가 쌓이면 선택한 누적팩 안에서 오답과 바로 전 단계 단어를 더 자주 섞어 자동 복습합니다. 더 기초부터 시작하려면 교사가 이전 학년 누적팩을 배정합니다.</span>
                                     </li>
                                 </ul>
                             </div>
@@ -3015,10 +3074,10 @@
                             <div class="bg-black/40 border border-cyan-800/30 p-2 rounded sm:col-span-2">
                                 <div class="text-cyan-300 font-black mb-1 text-[11px]">🔮 영단어 스킬 수집·성장·합성</div>
                                 <ul class="text-gray-300 space-y-1 leading-tight">
-                                    <li><b>획득:</b> 퀴즈 정답으로 FP를 모아 캡슐을 뽑습니다. 기본 분기는 신규 40%·보유 성장 50%·정수+25 10%이며, 후보가 소진되면 남은 분기로 재분배됩니다. 매 10회에는 가능한 신규 1회·성장 3회와 카드 중 희귀 이상 1회를 보장합니다.</li>
+                                    <li><b>획득:</b> 퀴즈 정답으로 FP를 모아 캡슐을 뽑습니다. 새 스킬·보유 스킬 성장·각성 정수가 나오며, 매 10회에는 가능한 경우 새 스킬과 성장이 고르게 포함되고 희귀 이상 카드 결과 1회를 보장합니다.</li>
                                     <li><b>등급·티어:</b> 카드 결과의 행운·10회 보정 전 기본 등급 확률은 일반 75%·희귀 18%·영웅 5%·전설 1.95%·신화 0.05%, 티어는 T1 5%·T2 25%·T3 70%입니다.</li>
-                                    <li><b>성장:</b> 상위 등급은 성급과 EXP 비율을 보존해 승급하고 더 좋은 티어는 즉시 적용됩니다. 동일·하위 등급은 성장 바 1칸, 정수 100개도 원하는 카드의 1칸을 완성합니다. 6성 다음에는 T3→T2→T1로 진화하며 완료한 별은 누적되고, T1 6성 MAX의 추가 성장은 정수 +100입니다.</li>
-                                    <li><b>연구·장착·보호:</b> 전투 장착과 집중 연구는 각각 최대 4개입니다. 연구 대상은 신규·성장 가중치 ×5이며 7번 놓치면 다음 성장에 확정됩니다. 장착·연구·잠금 카드는 합성·분해에서 보호됩니다.</li>
+                                    <li><b>성장:</b> 상위 등급은 성급과 EXP 비율을 보존해 승급하고 더 좋은 티어는 즉시 적용됩니다. 동일·하위 등급 중복은 뽑힌 등급만큼 EXP 1/3/9/27/81을 주며, 정수로 다음 성급을 완성할 때는 보유 등급별로 500/1,200/2,500/4,500/7,500개가 필요합니다. 6성 다음에는 T3→T2→T1로 진화하며 완료한 별은 누적되고, T1 6성 MAX의 추가 성장은 정수 +100입니다.</li>
+                                    <li><b>집중 성장·장착·보호:</b> 전투에 장착한 최대 4개 스킬이 곧 집중 성장 대상입니다. 장착 스킬은 성장 결과에서 우선되며, 같은 10회 묶음에서는 같은 스킬이 한 번만 성장합니다. 장착·잠금 카드는 합성·분해에서 보호됩니다.</li>
                                     <li><b>합성:</b> 동일 등급 3장은 현재/다음 등급 승급 도전(기본 20% + 누적 ⭐ 1개당 10%p + 각 카드 EXP 진행률당 최대 5%p + 실패당 15%p, 전체 최대 95%), 혼합 3장은 등급·티어·누적 ⭐·EXP 품질 가중 평균으로 최고 재료 등급 이하가 됩니다. 결과 단어·티어는 품질 가중치로 정해지고 성급·EXP는 0부터 시작합니다.</li>
                                     <li><b>분해:</b> 신화는 합성할 수 없지만 분해할 수 있습니다. 보호되지 않은 카드의 등급 기본값(1/3/9/27/81) + 누적 ⭐×50 + EXP 진행률 환산값(최대 49) + 티어 보너스(T3 0/T2 50/T1 100)만큼 정수를 얻으며 도감은 유지됩니다.</li>
                                 </ul>
@@ -3977,7 +4036,7 @@
             /* 가로 모드(짧은 화면)에서 전투창 상단 UI 강제 축소 (전투화면 비율 확보용) */
     </style>
 
-    <script src="js/config.js?v=20260809-29"></script><script src="js/skill-system.js?v=20260820-04"></script><script src="js/main.js?v=20260822-01"></script><script src="js/skill-rework.js?v=20260820-04"></script><script src="js/secure-account.js?v=20260822-02"></script>
+    <script src="js/config.js?v=20260809-29"></script><script src="js/skill-system.js?v=20260825-01"></script><script src="js/main.js?v=20260825-01"></script><script src="js/skill-rework.js?v=20260825-01"></script><script src="js/secure-account.js?v=20260825-01"></script>
 
     <!-- Damage Overlay (Scratch & Flash) -->
     <div id="damageOverlay" class="fixed inset-0 pointer-events-none hidden z-[100] flex-col items-center justify-center bg-red-900/60 transition-opacity duration-300">

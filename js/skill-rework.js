@@ -9,6 +9,8 @@
         normalizeSkill: RawSkillRules.normalizeSkillCard,
         gradeRank: (grade) => Math.max(0, Number(RawSkillRules.GRADE_RANK?.[grade] || 1) - 1),
         requiredExp: RawSkillRules.getRequiredExpForStar,
+        essenceCost: RawSkillRules.getEssenceCostForBar,
+        directEssenceAmount: RawSkillRules.DIRECT_ESSENCE_AMOUNT,
         isMaxSkill: (skill) => RawSkillRules.getSkillProgressIndex(skill) >= 20,
         completeGrowthBar(skill) {
             const result = RawSkillRules.advanceSkillBars(skill, 1);
@@ -19,8 +21,10 @@
             const result = RawSkillRules.applyGrowthOutcome(skill, { grade, tier });
             const hasGrade = result.events.some((event) => event.type === "grade-up");
             const hasTier = result.events.some((event) => event.type === "tier-evolution" || event.type === "tier-up");
-            const event = result.essenceDelta ? "essence" : hasGrade && hasTier ? "grade-tier-up" : hasGrade ? "grade-up" : hasTier ? "tier-up" : "star-up";
-            return { skill: result.card, event, essenceGained: result.essenceDelta || 0 };
+            const hasStar = result.events.some((event) => event.type === "growth");
+            const experienceGained = result.events.filter((event) => event.type === "growth-progress").reduce((sum, event) => sum + (Number(event.amount) || 0), 0);
+            const event = result.essenceDelta ? "essence" : hasGrade && hasTier ? "grade-tier-up" : hasGrade ? "grade-up" : hasTier ? "tier-up" : hasStar ? "star-up" : "growth-progress";
+            return { skill: result.card, event, essenceGained: result.essenceDelta || 0, experienceGained };
         },
         dismantleYield: RawSkillRules.getDismantleYield,
         effectiveFusionWeight: RawSkillRules.getFusionEffectiveWeight,
@@ -51,7 +55,6 @@
     const escapeSkillHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character]));
     const safeSkillId = (value) => String(value || "").replace(/[^A-Za-z0-9_:-]/g, "_");
     const plainSkillText = (value, limit) => String(value ?? "").normalize("NFKC").replace(/[\u0000-\u001f\u007f<>&]/g, " ").replace(/\s+/g, " ").trim().slice(0, limit);
-    const skillJsArg = (value) => escapeSkillHtml(JSON.stringify(String(value ?? "")).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029"));
 
     function skillInventorySortWeight(skill) {
         const normalized = SkillRules.normalizeSkill(skill || {});
@@ -88,7 +91,6 @@
         });
         const validIds = new Set(gameState.skillsInventory.map((skill) => String(skill.id)));
         gameState.equippedSkills = [...new Set(previousEquipped.map((id) => idAliases.get(id) || "").filter((id) => validIds.has(id)))].slice(0, 4);
-        gameState.skillResearchTargets = uniqueWords(gameState.skillResearchTargets, 4);
         gameState.skillLockedWords = uniqueWords(gameState.skillLockedWords, 4000);
         gameState.skillDiscoveredWords = uniqueWords([
             ...(Array.isArray(gameState.skillDiscoveredWords) ? gameState.skillDiscoveredWords : []),
@@ -99,21 +101,16 @@
             .map((entry) => ({ word: plainSkillText(entry.word, 80), meaning: plainSkillText(entry.meaning, 160) }));
         gameState.skillEssence = Math.max(0, Math.floor(Number(gameState.skillEssence) || 0));
         const summonPity = gameState.skillSummonPity && typeof gameState.skillSummonPity === "object" ? gameState.skillSummonPity : {};
-        gameState.skillSummonPity = { growthWithoutFocus: Math.max(0, Math.min(7, Math.floor(Number(summonPity.growthWithoutFocus) || 0))) };
+        gameState.skillSummonPity = { growthWithoutEquipped: Math.max(0, Math.min(7, Math.floor(Number(summonPity.growthWithoutEquipped ?? summonPity.growthWithoutFocus) || 0))) };
         const fusionPity = gameState.skillFusionPity && typeof gameState.skillFusionPity === "object" ? gameState.skillFusionPity : {};
         gameState.skillFusionPity = Object.fromEntries(["normal", "rare", "hero", "legendary"].map((grade) => [grade, Math.max(0, Math.min(5, Math.floor(Number(fusionPity[grade]) || 0)))]));
         sanitizeSelectedCombineSkillIds();
         return gameState;
     }
 
-    function isSkillResearchTarget(skillOrWord) {
-        return new Set(gameState.skillResearchTargets || []).has(wordKey(typeof skillOrWord === "object" ? skillOrWord.word : skillOrWord));
-    }
-
     function skillProtectionReason(skill) {
         if (!skill) return "카드를 찾지 못했습니다.";
         if ((gameState.equippedSkills || []).includes(skill.id)) return "장착 중인 카드는 보호됩니다.";
-        if (isSkillResearchTarget(skill)) return "집중 연구 카드는 보호됩니다.";
         if ((gameState.skillLockedWords || []).includes(wordKey(skill.word))) return "잠금 카드입니다.";
         return "";
     }
@@ -145,7 +142,6 @@
             const key = wordKey(value);
             if (key && sourceByKey.has(key) && !priorityKeys.includes(key)) priorityKeys.push(key);
         };
-        (gameState.skillResearchTargets || []).forEach(addPriority);
         (gameState.equippedSkills || []).forEach((id) => addPriority((gameState.skillsInventory || []).find((skill) => skill.id === id)?.word));
 
         const owned = [...(gameState.skillsInventory || [])].sort(() => Math.random() - 0.5);
@@ -166,8 +162,7 @@
     function newSkillCandidates(preferredPool = null) {
         const full = getSkillSourcePool(preferredPool);
         const owned = new Set((gameState.skillsInventory || []).map((skill) => wordKey(skill.word)));
-        const deck = ensureActiveSkillDeck(full).filter((entry) => !owned.has(wordKey(entry.word)));
-        return deck.length ? deck : full.filter((entry) => !owned.has(wordKey(entry.word)));
+        return full.filter((entry) => !owned.has(wordKey(entry.word)));
     }
 
     function growthSkillCandidates() {
@@ -176,24 +171,19 @@
 
     function pickNewSkillCandidate(random = Math.random) {
         const candidates = newSkillCandidates();
-        const targets = new Set(gameState.skillResearchTargets || []);
-        return SkillRules.weightedPick(candidates, (entry) => targets.has(wordKey(entry.word)) ? 5 : 1, random);
+        return SkillRules.weightedPick(candidates, () => 1, random);
     }
 
-    function pickGrowthSkill(random = Math.random) {
-        const candidates = growthSkillCandidates();
+    function pickGrowthSkill(random = Math.random, excludedIds = new Set()) {
+        const candidates = growthSkillCandidates().filter((skill) => !excludedIds.has(String(skill.id)));
         if (!candidates.length) return null;
-        const targets = new Set(gameState.skillResearchTargets || []);
-        const focused = candidates.filter((skill) => targets.has(wordKey(skill.word)));
-        const pity = Number(gameState.skillSummonPity?.growthWithoutFocus) || 0;
+        const equippedIds = new Set((gameState.equippedSkills || []).map(String));
+        const focused = candidates.filter((skill) => equippedIds.has(String(skill.id)));
+        const pity = Number(gameState.skillSummonPity?.growthWithoutEquipped) || 0;
         const pool = pity >= 7 && focused.length ? focused : candidates;
-        const picked = SkillRules.weightedPick(pool, (skill) => {
-            if (targets.has(wordKey(skill.word))) return 5;
-            if ((gameState.equippedSkills || []).includes(skill.id)) return 2;
-            return 1;
-        }, random);
-        if (picked && targets.has(wordKey(picked.word))) gameState.skillSummonPity.growthWithoutFocus = 0;
-        else if (focused.length) gameState.skillSummonPity.growthWithoutFocus = Math.min(7, pity + 1);
+        const picked = SkillRules.weightedPick(pool, (skill) => equippedIds.has(String(skill.id)) ? 5 : 1, random);
+        if (picked && equippedIds.has(String(picked.id))) gameState.skillSummonPity.growthWithoutEquipped = 0;
+        else if (focused.length) gameState.skillSummonPity.growthWithoutEquipped = Math.min(7, pity + 1);
         return picked;
     }
 
@@ -220,13 +210,13 @@
         const existing = (gameState.skillsInventory || []).find((skill) => wordKey(skill.word) === wordKey(word));
         if (!existing) {
             const skill = createOwnedSkill(word, meaning, rolledGrade, rolledTier);
-            return { skill, resultType: "new", alreadyOwned: false, essenceGained: 0 };
+            return { skill, resultType: "new", alreadyOwned: false, essenceGained: 0, experienceGained: 0 };
         }
         const result = SkillRules.applyGrowthOutcome(existing, rolledGrade, rolledTier);
         Object.assign(existing, result.skill);
         if (result.essenceGained) gameState.skillEssence += result.essenceGained;
         const labels = { "grade-up": "grade-up", "grade-tier-up": "grade-tier-up", "tier-up": "tier-up", "star-up": "star-up", essence: "max-essence" };
-        return { skill: existing, resultType: labels[result.event] || "growth", alreadyOwned: true, essenceGained: result.essenceGained || 0 };
+        return { skill: existing, resultType: labels[result.event] || result.event || "growth", alreadyOwned: true, essenceGained: result.essenceGained || 0, experienceGained: result.experienceGained || 0 };
     }
 
     addOrLevelUpSkill = function addOrLevelUpSkillReworked(word, meaning, rolledGrade, suppressModal = false, rolledTier = null) {
@@ -241,8 +231,8 @@
         return outcome.skill;
     };
 
-    createSkillDrawSnapshot = function createSkillDrawSnapshotReworked(word, meaning, rolledGrade, rolledTier, alreadyOwned = false, resultType = null, ownedSkill = null, essenceAmount = 0) {
-        if (resultType === "essence") return { word: "각성 정수", meaning: "원하는 스킬 성장에 사용", resultType: "essence", essenceAmount: 25, alreadyOwned: false };
+    createSkillDrawSnapshot = function createSkillDrawSnapshotReworked(word, meaning, rolledGrade, rolledTier, alreadyOwned = false, resultType = null, ownedSkill = null, essenceAmount = 0, experienceAmount = 0) {
+        if (resultType === "essence") return { word: "각성 정수", meaning: "원하는 스킬 성장에 사용", resultType: "essence", essenceAmount: SkillRules.directEssenceAmount, alreadyOwned: false };
         const actual = ownedSkill ? SkillRules.normalizeSkill(ownedSkill) : null;
         const snapshot = {
             word: String(actual?.word ?? word ?? ""), meaning: String(actual?.meaning ?? meaning ?? ""),
@@ -251,25 +241,26 @@
             maxExp: Number(actual?.maxExp) || SkillRules.requiredExp(actual?.grade ?? rolledGrade),
             rolledGrade: SkillRules.normalizeGrade(rolledGrade), rolledTier: SkillRules.normalizeTier(rolledTier),
             essenceAmount: Math.max(0, Number(essenceAmount) || 0),
+            experienceAmount: Math.max(0, Number(experienceAmount) || 0),
             alreadyOwned: Boolean(alreadyOwned), resultType: resultType || (alreadyOwned ? "growth" : "new")
         };
         snapshot.drawMultiplier = getSkillMultiplier(snapshot);
         return snapshot;
     };
 
-    const SKILL_RESULT_LABELS = { new: "신규", growth: "성장", "star-up": "성급 상승", "grade-up": "등급 상승", "grade-tier-up": "등급·티어 상승", "tier-up": "티어 상승", essence: "각성 정수", "max-essence": "MAX 정수 +100" };
+    const SKILL_RESULT_LABELS = { new: "신규", growth: "성장", "growth-progress": "EXP 성장", "star-up": "성급 상승", "grade-up": "등급 상승", "grade-tier-up": "등급·티어 상승", "tier-up": "티어 상승", essence: "각성 정수", "max-essence": "MAX 정수 +100" };
 
     renderSkillDrawResultCard = function renderSkillDrawResultCardReworked(drawResult) {
         if (drawResult.resultType === "essence") return `
             <div class="border-2 border-amber-500 bg-amber-950/40 p-2 text-center min-h-[90px]" data-draw-result="essence">
-                <b class="text-[10px] text-amber-200">각성 정수</b><p class="my-1 text-xl">✨</p><span class="text-[9px] font-black text-yellow-300">+${Number(drawResult.essenceAmount) || 25}</span>
+                <b class="text-[10px] text-amber-200">각성 정수</b><p class="my-1 text-xl">✨</p><span class="text-[9px] font-black text-yellow-300">+${Number(drawResult.essenceAmount) || SkillRules.directEssenceAmount}</span>
             </div>`;
         const gradeInfo = SKILL_GRADES[drawResult.grade] || SKILL_GRADES.normal;
         const tier = SkillRules.normalizeTier(drawResult.tier);
         return `
             <div class="border-2 ${gradeInfo.colorClass} p-2 text-center flex flex-col justify-between min-h-[90px]" data-draw-grade="${drawResult.grade}" data-draw-tier="${tier}" data-draw-result="${drawResult.resultType}">
                 <div><div class="flex items-center justify-between text-[9px] font-black"><span>${gradeInfo.name}</span><span class="text-yellow-300">T${tier} \u2605${Number(drawResult.stars) || 0}</span></div><p class="mt-0.5 truncate text-[11px] font-bold text-white">${escapeSkillHtml(capitalizeFirstLetter(drawResult.word))}</p></div>
-                <div><span class="block truncate text-[9px] text-[#ddd]">${escapeSkillHtml(drawResult.meaning)}</span><span class="block text-[8px] font-black text-cyan-200">${SKILL_RESULT_LABELS[drawResult.resultType] || "성장"}</span><span class="block text-[9px] font-bold text-pink-300">지수 ×${Number(drawResult.drawMultiplier || getSkillMultiplier(drawResult))}</span></div>
+                <div><span class="block truncate text-[9px] text-[#ddd]">${escapeSkillHtml(drawResult.meaning)}</span><span class="block text-[8px] font-black text-cyan-200">${SKILL_RESULT_LABELS[drawResult.resultType] || "성장"}${drawResult.resultType === "growth-progress" ? ` +${Number(drawResult.experienceAmount) || 0}` : ""}</span><span class="block text-[9px] font-bold text-pink-300">지수 ×${Number(drawResult.drawMultiplier || getSkillMultiplier(drawResult))}</span></div>
             </div>`;
     };
 
@@ -293,14 +284,16 @@
 
         const results = [];
         const summary = { newCards: 0, growth: 0, essenceResults: 0, essenceGained: 0 };
-        descriptors.forEach((descriptor) => {
+        const usedGrowthIds = new Set();
+        descriptors.forEach((descriptor, descriptorIndex) => {
+            if (descriptorIndex % 10 === 0) usedGrowthIds.clear();
             let category = descriptor.category;
             if (category === "new" && !newSkillCandidates().length) category = (gameState.skillsInventory || []).length ? "growth" : "essence";
             if (category === "growth" && !(gameState.skillsInventory || []).length) category = newSkillCandidates().length ? "new" : "essence";
             if (category === "essence") {
-                gameState.skillEssence += 25;
+                gameState.skillEssence += SkillRules.directEssenceAmount;
                 summary.essenceResults += 1;
-                summary.essenceGained += 25;
+                summary.essenceGained += SkillRules.directEssenceAmount;
                 results.push(createSkillDrawSnapshot("", "", null, null, false, "essence"));
                 return;
             }
@@ -315,15 +308,29 @@
                 }
                 const outcome = acquireSkillOutcome(picked.word, picked.meaning, descriptor.grade, descriptor.tier);
                 summary.newCards += 1;
-                results.push(createSkillDrawSnapshot(picked.word, picked.meaning, descriptor.grade, descriptor.tier, false, outcome.resultType, outcome.skill, outcome.essenceGained));
+                results.push(createSkillDrawSnapshot(picked.word, picked.meaning, descriptor.grade, descriptor.tier, false, outcome.resultType, outcome.skill, outcome.essenceGained, outcome.experienceGained));
                 return;
             }
-            const target = pickGrowthSkill(random);
-            if (!target) return;
+            const target = pickGrowthSkill(random, usedGrowthIds);
+            if (!target) {
+                const picked = pickNewSkillCandidate(random);
+                if (picked) {
+                    const outcome = acquireSkillOutcome(picked.word, picked.meaning, descriptor.grade, descriptor.tier);
+                    summary.newCards += 1;
+                    results.push(createSkillDrawSnapshot(picked.word, picked.meaning, descriptor.grade, descriptor.tier, false, outcome.resultType, outcome.skill, outcome.essenceGained, outcome.experienceGained));
+                } else {
+                    gameState.skillEssence += SkillRules.directEssenceAmount;
+                    summary.essenceResults += 1;
+                    summary.essenceGained += SkillRules.directEssenceAmount;
+                    results.push(createSkillDrawSnapshot("", "", null, null, false, "essence"));
+                }
+                return;
+            }
+            usedGrowthIds.add(String(target.id));
             const outcome = acquireSkillOutcome(target.word, target.meaning, descriptor.grade, descriptor.tier);
             summary.growth += 1;
             summary.essenceGained += outcome.essenceGained;
-            results.push(createSkillDrawSnapshot(target.word, target.meaning, descriptor.grade, descriptor.tier, true, outcome.resultType, outcome.skill, outcome.essenceGained));
+            results.push(createSkillDrawSnapshot(target.word, target.meaning, descriptor.grade, descriptor.tier, true, outcome.resultType, outcome.skill, outcome.essenceGained, outcome.experienceGained));
         });
         gameState.activeSkillDeck = [];
         ensureActiveSkillDeck();
@@ -355,7 +362,7 @@
         } else {
             const result = results[0];
             if (result?.resultType === "essence") {
-                showToast("✨ 각성 정수 +25 획득!");
+                showToast(`✨ 각성 정수 +${SkillRules.directEssenceAmount} 획득!`);
                 skillSummonBusy = false;
             } else if (result) {
                 if (result.resultType === "max-essence") showToast(`MAX 중복이 각성 정수 +${Number(result.essenceAmount) || 100}로 변환되었습니다.`);
@@ -409,49 +416,15 @@
         normalizeSkillSystemState();
         const target = gameState.skillsInventory.find((skill) => skill.id === skillId);
         if (!target) return;
-        if (gameState.skillEssence < 100) return showToast("⚠️ 성장 바 1칸에는 각성 정수 100개가 필요합니다.");
         if (SkillRules.isMaxSkill(target)) return showToast("⭐ T1 6성 MAX 스킬입니다.");
+        const cost = SkillRules.essenceCost(target);
+        if (gameState.skillEssence < cost) return showToast(`⚠️ ${SKILL_GRADES[target.grade]?.name || "현재"} 등급의 다음 성급에는 각성 정수 ${cost.toLocaleString()}개가 필요합니다.`);
         const result = SkillRules.completeGrowthBar(target);
         Object.assign(target, result.skill);
-        gameState.skillEssence -= 100;
-        showToast(result.event === "tier-up" ? `👑 ${target.word} 티어 진화! T${target.tier}` : `⭐ ${target.word} 성급 상승!`);
+        gameState.skillEssence -= cost;
+        showToast(result.event === "tier-up" ? `👑 ${target.word} 티어 진화! T${target.tier}` : `⭐ ${target.word} 성급 상승! · 정수 ${cost.toLocaleString()}개 사용`);
         buildSkillTabUI(); renderSkillsUI(); refreshStateVisuals(); saveLocalCache();
     }
-
-    function addResearchTarget(word) {
-        normalizeSkillSystemState();
-        const key = wordKey(word);
-        const source = getSkillSourcePool();
-        const entry = source.find((item) => wordKey(item.word) === key);
-        if (!entry) return showToast("⚠️ 현재 선택된 단어팩 안의 단어만 연구 대상으로 지정할 수 있습니다.");
-        if (gameState.skillResearchTargets.includes(key)) return showToast("이미 연구 대상으로 지정된 단어입니다.");
-        if (gameState.skillResearchTargets.length >= 4) return showToast("⚠️ 집중 연구 대상은 최대 4개입니다.");
-        gameState.skillResearchTargets.push(key);
-        sanitizeSelectedCombineSkillIds();
-        gameState.activeSkillDeck = [];
-        buildSkillTabUI(); saveLocalCache();
-    }
-
-    window.addSkillResearchTargetFromInput = function addSkillResearchTargetFromInputReworked() {
-        const input = document.getElementById("skillResearchWordInput");
-        if (!input || !input.value.trim()) return showToast("연구할 단어를 입력해 주세요.");
-        addResearchTarget(input.value);
-        input.value = "";
-    };
-
-    window.toggleSkillResearch = function toggleSkillResearchReworked(skillId) {
-        const skill = (gameState.skillsInventory || []).find((item) => item.id === skillId);
-        if (!skill) return;
-        const key = wordKey(skill.word);
-        if ((gameState.skillResearchTargets || []).includes(key)) gameState.skillResearchTargets = gameState.skillResearchTargets.filter((word) => word !== key);
-        else return addResearchTarget(skill.word);
-        sanitizeSelectedCombineSkillIds(); gameState.activeSkillDeck = []; buildSkillTabUI(); saveLocalCache();
-    };
-
-    window.removeSkillResearchTarget = function removeSkillResearchTargetReworked(word) {
-        gameState.skillResearchTargets = (gameState.skillResearchTargets || []).filter((target) => target !== wordKey(word));
-        gameState.activeSkillDeck = []; buildSkillTabUI(); saveLocalCache();
-    };
 
     window.toggleSkillLock = function toggleSkillLockReworked(skillId) {
         const skill = (gameState.skillsInventory || []).find((item) => item.id === skillId);
@@ -584,7 +557,7 @@
             const preview = SkillRules.fusionPreview(cards, gameState.skillFusionPity[cards[0].grade]);
             return `${index + 1}. ${SKILL_GRADES[cards[0].grade].name} 3장 → ${index === 0 ? fusionDistributionText(preview) : "앞선 결과에 따라 실패 보정 확률 변동"}`;
         }).join("<br>");
-        showCombinePreviewModal(`<b>낮은 품질 카드부터 ${groups.length}회 일괄 합성합니다.</b><br><br>${details}<br><br>장착·집중 연구·잠금 카드는 제외됩니다.`, () => {
+        showCombinePreviewModal(`<b>낮은 품질 카드부터 ${groups.length}회 일괄 합성합니다.</b><br><br>${details}<br><br>장착·잠금 카드는 제외됩니다.`, () => {
             const results = groups.map((cards) => resolveFusion(cards));
             selectedCombineSkillIds = [];
             showToast(`✨ 일괄 합성 ${results.length}회 완료!`);
@@ -620,32 +593,18 @@
         return `다음 성장: ★${(skill.stars || 0) + 1}`;
     }
 
-    function renderResearchTargets() {
-        const slots = document.getElementById("skillResearchTargetSlots");
-        const options = document.getElementById("skillResearchWordOptions");
+    function syncSkillEssenceUI() {
         const essence = document.getElementById("skillEssenceCount");
         if (essence) essence.textContent = Number(gameState.skillEssence || 0).toLocaleString();
-        if (options) options.innerHTML = getSkillSourcePool().map((entry) => `<option value="${escapeSkillHtml(entry.word)}">${escapeSkillHtml(entry.meaning)}</option>`).join("");
-        if (!slots) return;
-        const source = new Map(getSkillSourcePool().map((entry) => [wordKey(entry.word), entry]));
-        slots.innerHTML = Array.from({ length: 4 }, (_, index) => {
-            const key = gameState.skillResearchTargets[index];
-            if (!key) return `<div class="flex min-h-12 items-center justify-center border border-dashed border-cyan-900 text-[9px] text-gray-600">${index + 1} · 비어 있음</div>`;
-            const owned = gameState.skillsInventory.find((skill) => wordKey(skill.word) === key);
-            const entry = owned || source.get(key) || { word: key, meaning: "" };
-            const inCurrentPack = source.has(key);
-            const researchStatus = owned ? "보유 성장 ×5" : inCurrentPack ? "획득 희망 ×5" : "현재 팩 밖 · 획득 일시정지";
-            return `<button type="button" onclick="removeSkillResearchTarget(${skillJsArg(key)})" class="min-h-12 border border-cyan-700 bg-black p-2 text-left hover:border-red-400" title="클릭하여 연구 대상 해제"><b class="block truncate text-[10px] text-cyan-200">${index + 1}. ${escapeSkillHtml(capitalizeFirstLetter(entry.word))}</b><span class="block truncate text-[8px] text-gray-500">${researchStatus} · ${escapeSkillHtml(entry.meaning)}</span></button>`;
-        }).join("");
     }
 
     buildSkillTabUI = function buildSkillTabUIReworked() {
         normalizeSkillSystemState();
         ensureActiveSkillDeck();
         sanitizeSelectedCombineSkillIds();
-        renderResearchTargets();
+        syncSkillEssenceUI();
         const deckInfo = document.getElementById("skillDeckInfo");
-        if (deckInfo) deckInfo.textContent = `연구 후보 ${gameState.activeSkillDeck.length}/24 · 기본 분기 신규 40% / 보유 성장 50% / 각성 정수 10% · 후보가 없으면 재배분 · 보유 카드 성장은 현재 팩 ${getSkillSourcePool().length}개와 무관`;
+        if (deckInfo) deckInfo.textContent = `현재 누적 단어팩 전체에서 새 스킬을 고르게 얻습니다. 보유 스킬 성장은 장착한 4개가 자동 집중 대상으로 5배 자주 선택되며, 7회 연속 빗나가면 다음 성장에서 보장됩니다. 중복 카드는 등급만큼 EXP를 주고, 정수 성급 비용은 일반 500·희귀 1,200·영웅 2,500·전설 4,500·신화 7,500개입니다.`;
         const count = document.getElementById("selectedCombineCountText");
         if (count) count.textContent = String(selectedCombineSkillIds.length);
         const manualGroup = document.getElementById("selectedManualCombineGroup");
@@ -671,16 +630,16 @@
             const grade = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
             const selected = selectedCombineSkillIds.includes(skill.id);
             const equipped = gameState.equippedSkills.includes(skill.id);
-            const focused = isSkillResearchTarget(skill);
             const locked = gameState.skillLockedWords.includes(wordKey(skill.word));
             const maxExp = Math.max(1, skill.maxExp || SkillRules.requiredExp(skill.grade));
+            const essenceCost = SkillRules.essenceCost(skill);
             const pct = Math.min(100, Math.round((Number(skill.exp) || 0) / maxExp * 100));
             const id = safeSkillId(skill.id);
             return `<article data-skill-card data-skill-id="${id}" data-selected="${selected}" role="button" tabindex="0" aria-pressed="${selected}" onclick="toggleSelectCombineSkill('${id}')" onkeydown="handleSkillCardKeydown(event,'${id}')" class="theme-dark-card skill-inventory-card group relative flex min-h-[190px] cursor-pointer flex-col justify-between border-2 ${equipped ? "border-white" : "border-[#262626]"} ${grade.colorClass} bg-[#0d0d0d] p-2 text-center">
                 ${selected ? `<span class="absolute -left-1 -top-2 z-20 bg-yellow-400 px-1.5 py-0.5 text-[8px] font-black text-black">합성 선택</span>` : ""}
                 <div><div class="flex items-center justify-between text-[8px] font-bold"><span>${grade.name} T${skill.tier}</span><span class="text-yellow-400">★${skill.stars}${SkillRules.isMaxSkill(skill) ? " MAX" : ""}</span></div><b class="mt-1 block truncate text-xs text-white">${escapeSkillHtml(capitalizeFirstLetter(skill.word))}</b><span class="block truncate text-[9px] text-[#bbb]">${escapeSkillHtml(skill.meaning)}</span><span class="mt-1 block text-[9px] font-black text-pink-300">지수 ×${getSkillMultiplier(skill)}</span></div>
                 <div class="mt-1.5"><div class="h-1.5 w-full overflow-hidden border border-[#3c3c3c] bg-[#111]"><div class="h-full bg-yellow-500" style="width:${pct}%"></div></div><div class="mb-1 flex justify-between text-[7px] text-gray-400"><span>${skillProgressLabel(skill)}</span><span>${skill.exp}/${maxExp}</span></div>
-                    <div class="grid grid-cols-2 gap-1"><button type="button" data-skill-action="focus" onclick="event.stopPropagation();toggleSkillResearch('${id}')" class="border border-cyan-800 bg-cyan-950/50 py-1 text-[8px] font-bold text-cyan-200">${focused ? "연구 해제" : "집중 연구"}</button><button type="button" data-skill-action="lock" onclick="event.stopPropagation();toggleSkillLock('${id}')" class="border border-gray-700 bg-black py-1 text-[8px] font-bold text-gray-300">${locked ? "🔒 잠금 해제" : "🔓 잠금"}</button><button type="button" data-skill-action="essence" onclick="event.stopPropagation();applyEssenceToSkill('${id}')" class="border border-amber-800 bg-amber-950/30 py-1 text-[8px] font-bold text-amber-200">정수 100 투입</button><button type="button" data-skill-action="dismantle" onclick="event.stopPropagation();dismantleSkill('${id}')" class="border border-red-900 bg-red-950/30 py-1 text-[8px] font-bold text-red-300">분해 +${SkillRules.dismantleYield(skill)}</button></div>
+                    <div class="grid grid-cols-3 gap-1"><button type="button" data-skill-action="lock" onclick="event.stopPropagation();toggleSkillLock('${id}')" class="border border-gray-700 bg-black py-1 text-[8px] font-bold text-gray-300">${locked ? "🔒 잠금 해제" : "🔓 잠금"}</button><button type="button" data-skill-action="essence" onclick="event.stopPropagation();applyEssenceToSkill('${id}')" class="border border-amber-800 bg-amber-950/30 py-1 text-[8px] font-bold text-amber-200">정수 ${essenceCost.toLocaleString()}</button><button type="button" data-skill-action="dismantle" onclick="event.stopPropagation();dismantleSkill('${id}')" class="border border-red-900 bg-red-950/30 py-1 text-[8px] font-bold text-red-300">분해 +${SkillRules.dismantleYield(skill)}</button></div>
                     <button type="button" data-skill-action="equip" onclick="event.stopPropagation();${equipped ? `unequipSkill('${id}')` : `equipSkill('${id}')`}" class="mt-1 w-full py-1 text-[9px] font-black ${equipped ? "bg-red-600 text-white" : "bg-white text-black"}">${equipped ? "장착 해제" : "장착하기"}</button>
                 </div></article>`;
         }).join("");
@@ -710,7 +669,6 @@
                 { id: "test_vision", word: "vision", meaning: "비전", grade: "mythic", tier: 3, stars: 0, exp: 0, maxExp: 81, cooldownRemaining: 0, maxCooldown: 30 }
             ];
             gameState.equippedSkills = [];
-            gameState.skillResearchTargets = [];
             gameState.skillLockedWords = [];
             gameState.skillDiscoveredWords = [];
             gameState.skillEssence = 200;
@@ -719,7 +677,7 @@
             return true;
         },
         interactionState() {
-            return { selected: [...selectedCombineSkillIds], equipped: [...gameState.equippedSkills], research: [...gameState.skillResearchTargets], locked: [...gameState.skillLockedWords] };
+            return { selected: [...selectedCombineSkillIds], equipped: [...gameState.equippedSkills], locked: [...gameState.skillLockedWords] };
         }
     });
 

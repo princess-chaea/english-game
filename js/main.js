@@ -4046,6 +4046,7 @@
                 buttons[i].querySelector(".choice-text").innerText = formatAsWord && /^[A-Za-z]+(?:\s+[A-Za-z]+)*$/.test(String(value || ""))
                     ? formatEnglishWordDisplay(value)
                     : String(value || "").toLowerCase();
+                delete buttons[i].dataset.answerState;
                 buttons[i].className = "choice-btn p-3.5 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-[#3c3c3c] hover:border-white text-[#bbbbbb] hover:text-white font-bold rounded-none-forced text-center transition duration-150 flex items-center justify-center group";
             }
         }
@@ -5421,6 +5422,7 @@
                     setTimeout(showTutorialOverlay, 500);
                 }
                 playSoundEffect('correct');
+                buttons[index].dataset.answerState = "correct";
                 buttons[index].className = "choice-btn p-3.5 bg-green-950/80 border-2 border-green-500 text-white font-bold rounded-none-forced text-center transition flex items-center justify-center";
                 gameState.totalQuizCorrect++;
                 typeStats.correct = Number(typeStats.correct || 0) + 1;
@@ -5481,6 +5483,7 @@
             } else {
                 gameState.quizCombo = 0; // 오답 시 콤보 초기화
                 playSoundEffect('incorrect');
+                buttons[index].dataset.answerState = "incorrect";
                 buttons[index].className = "choice-btn p-3.5 bg-red-950/80 border-2 border-red-500 text-white font-bold rounded-none-forced text-center transition flex items-center justify-center";
                 
                 // 오답 노트 카운팅 트래킹

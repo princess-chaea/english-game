@@ -104,18 +104,31 @@ async function status(uid, { skipFinalize = false } = {}) {
   const week = currentWeek();
   if (!skipFinalize) await finalizeRolledOverRaid(uid, week);
   const ref = bossRef(week);
-  const [bossSnap, contributionSnap, topSnap] = await Promise.all([
+  const [bossSnap, contributionSnap, topSnap, accountSnap] = await Promise.all([
     ref.get(),
     ref.collection('contributions').doc(uid).get(),
-    ref.collection('contributions').orderBy('damage', 'desc').limit(100).get()
+    ref.collection('contributions').orderBy('damage', 'desc').limit(100).get(),
+    accounts.doc(uid).get()
   ]);
   const boss = bossSnap.data() || {};
   const maxHp = maxHpForWeek(week);
   const totalDamage = Math.min(maxHp, legacyTotal(boss) + safeInt(boss.secureDamageTotal, 0, 0));
   const contribution = contributionSnap.data() || {};
+  const account = accountSnap.data() || {};
+  const currentPublicTitle = account.leaderboardOptIn
+    ? (typeof account.state?.equippedTitle === 'string'
+      ? account.state.equippedTitle
+      : (typeof account.state?.wbTitle === 'string' ? account.state.wbTitle : null))
+    : null;
+  if (contributionSnap.exists && contribution.publicLeaderboard && contribution.publicTitleName !== currentPublicTitle) {
+    await contributionSnap.ref.set({
+      publicTitleName: currentPublicTitle,
+      updatedAt: FieldValue.serverTimestamp()
+    }, { merge: true });
+  }
   const rankedDocs = topSnap.docs;
   const publicDocs = rankedDocs.filter((doc) => doc.data().publicLeaderboard).slice(0, 100);
-  const top = publicDocs.map((doc, index) => ({ rank: index + 1, nickname: doc.data().publicNickname, guildName: typeof doc.data().publicGuildName === 'string' ? doc.data().publicGuildName : null, guildLogoUrl: typeof doc.data().publicGuildName === 'string' ? guildLogoUrl(doc.data().publicGuildLogoUrl) : null, titleName: typeof doc.data().publicTitleName === 'string' ? doc.data().publicTitleName : null, damage: safeInt(doc.data().damage, 0, 0) }));
+  const top = publicDocs.map((doc, index) => ({ rank: index + 1, nickname: doc.data().publicNickname, guildName: typeof doc.data().publicGuildName === 'string' ? doc.data().publicGuildName : null, guildLogoUrl: typeof doc.data().publicGuildName === 'string' ? guildLogoUrl(doc.data().publicGuildLogoUrl) : null, titleName: doc.id === uid ? currentPublicTitle : (typeof doc.data().publicTitleName === 'string' ? doc.data().publicTitleName : null), damage: safeInt(doc.data().damage, 0, 0) }));
   // 공개 설정은 이름표 노출만 제어합니다. 실제 기여 순위와 1위 칭호 판정은
   // 비공개 참가자도 포함한 전체 피해량 순서를 그대로 사용합니다.
   const myRankIndex = rankedDocs.findIndex((doc) => doc.id === uid);

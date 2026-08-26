@@ -40,7 +40,7 @@ const GUILD_CONSUMABLE_DEFINITIONS=Object.freeze([
   {id:'powerRune',type:'charge',name:'용사의 강공 룬',cost:50,charges:10,value:10,unit:'%',description:'다음 정답 공격 10회의 최종 피해 +10%'},
   {id:'masteryPointsExchange',type:'exchange',name:'단어정복 포인트 교환',cost:50,resource:'masteryPoints',amount:200,resourceName:'단어정복 포인트(FP)',description:'길드 코인 50개를 단어정복 포인트(FP) 200개로 교환'},
   {id:'relicEssenceExchange',type:'exchange',name:'고대 신화 정수 교환',cost:50,resource:'relicEssence',amount:5,resourceName:'고대 신화 정수',description:'길드 코인 50개를 6성 유물 중복 획득 화폐인 고대 신화 정수 5개로 교환'},
-  {id:'bossTokenExchange',type:'exchange',name:'보스 증표 교환',cost:50,resource:'bossTokens',amount:100,resourceName:'고대 보스 증표',description:'길드 코인 50개를 고대 보스 증표 100개로 교환'}
+  {id:'bossTokenExchange',type:'exchange',name:'보스 증표 교환',cost:50,resource:'bossTokens',amount:100,resourceName:'보스 증표',description:'길드 코인 50개를 보스 증표 100개로 교환'}
 ]);
 const GUILD_CONSUMABLE_BY_ID=new Map(GUILD_CONSUMABLE_DEFINITIONS.map((item)=>[item.id,item]));
 function safeGuildBoostCharges(value){const source=value&&typeof value==='object'&&!Array.isArray(value)?value:{};return Object.fromEntries(GUILD_CONSUMABLE_DEFINITIONS.filter((item)=>item.type==='charge').map((item)=>[item.id,safeInt(source[item.id],0,0,10000)]));}

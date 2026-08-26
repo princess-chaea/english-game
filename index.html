@@ -1201,6 +1201,133 @@
         html[data-theme="ivory"] :is(body, body #gameMainLayout) .title-rarity-badge[data-title-tier="일반"] { color: #e5e7eb !important; }
         html[data-theme="ivory"] :is(body, body #gameMainLayout) .title-rarity-badge[data-title-tier="잠김"] { color: #514438 !important; }
 
+        /* 칭호 등급색은 화면과 테마가 달라도 같은 팔레트를 유지한다. */
+        html :is(body, body #gameMainLayout, body #secureGuildModal) .title-rarity-badge[data-title-tier="신화"] {
+            background: linear-gradient(135deg, #713f12, #701a75 58%, #312e81) !important;
+            border-color: #facc15 !important;
+            color: #fef3c7 !important;
+            box-shadow: 0 0 11px rgba(250, 204, 21, .5) !important;
+        }
+        html :is(body, body #gameMainLayout, body #secureGuildModal) .title-rarity-badge[data-title-tier="전설"] {
+            background: linear-gradient(135deg, #7f1d1d, #450a0a) !important;
+            border-color: #ef4444 !important;
+            color: #fecaca !important;
+            box-shadow: 0 0 8px rgba(239, 68, 68, .4) !important;
+        }
+        html :is(body, body #gameMainLayout, body #secureGuildModal) .title-rarity-badge[data-title-tier="영웅"] {
+            background: linear-gradient(135deg, #581c87, #2e1065) !important;
+            border-color: #a855f7 !important;
+            color: #ede9fe !important;
+            box-shadow: 0 0 7px rgba(168, 85, 247, .34) !important;
+        }
+        html :is(body, body #gameMainLayout, body #secureGuildModal) .title-rarity-badge[data-title-tier="희귀"] {
+            background: linear-gradient(135deg, #075985, #082f49) !important;
+            border-color: #38bdf8 !important;
+            color: #e0f2fe !important;
+            box-shadow: 0 0 6px rgba(56, 189, 248, .28) !important;
+        }
+        html :is(body, body #gameMainLayout, body #secureGuildModal) .title-rarity-badge[data-title-tier="일반"] {
+            background: linear-gradient(135deg, #374151, #111827) !important;
+            border-color: #94a3b8 !important;
+            color: #f1f5f9 !important;
+            box-shadow: none !important;
+        }
+
+        /* 길드 허브 라이트 모드의 이름 영역과 동작 버튼 대비·상태 피드백 */
+        html[data-theme="ivory"] body #secureGuildCurrent {
+            background: linear-gradient(90deg, #dcecf2 0%, #f8f1e5 52%, #eee5f3 100%) !important;
+            border-color: #7c94a1 !important;
+            box-shadow: inset 0 -1px 0 rgba(80, 67, 51, .16) !important;
+        }
+        html[data-theme="ivory"] body #secureGuildCurrentName { color: #26211c !important; text-shadow: none !important; }
+        html[data-theme="ivory"] body #secureGuildCurrentCoins { color: #8a5a00 !important; text-shadow: none !important; }
+        html[data-theme="ivory"] body #secureGuildCurrentLogo,
+        html[data-theme="ivory"] body #secureGuildCurrentLogoFallback { box-shadow: 0 2px 7px rgba(12, 122, 166, .22) !important; }
+
+        .guild-action-button {
+            cursor: pointer;
+            transition: transform .15s ease, border-color .15s ease, background-color .15s ease, box-shadow .15s ease, color .15s ease;
+        }
+        .guild-action-button:not(:disabled):hover,
+        .guild-action-button:not(:disabled):focus-visible {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 16px rgba(0, 0, 0, .24), 0 0 0 2px rgba(255, 255, 255, .11) inset;
+        }
+        .guild-action-button:not(:disabled):active { transform: translateY(0) scale(.985); box-shadow: inset 0 2px 5px rgba(0, 0, 0, .28); }
+        .guild-action-button:disabled { cursor: not-allowed !important; filter: saturate(.35); box-shadow: none !important; }
+        .guild-action-violet { background: linear-gradient(135deg, #6d28d9, #4c1d95) !important; border-color: #a78bfa !important; color: #ffffff !important; }
+        .guild-action-amber { background: linear-gradient(135deg, #d97706, #92400e) !important; border-color: #fbbf24 !important; color: #fff7ed !important; }
+        .guild-action-sky { background: linear-gradient(135deg, #0369a1, #075985) !important; border-color: #38bdf8 !important; color: #f0f9ff !important; }
+        .guild-action-contribution { background: linear-gradient(135deg, #b45309, #78350f) !important; border-color: #f59e0b !important; color: #fffbeb !important; }
+        #secureGuildSummonOne { background: linear-gradient(135deg, #6d28d9, #4c1d95) !important; border-color: #a78bfa !important; color: #fff !important; }
+        #secureGuildSummonTen { background: linear-gradient(135deg, #d97706, #92400e) !important; border-color: #fbbf24 !important; color: #fff7ed !important; }
+        :is(#secureGuildSummonOne, #secureGuildSummonTen, #secureGuildConsumableShop button, #secureGuildEffectShop button) {
+            cursor: pointer;
+            transition: transform .15s ease, filter .15s ease, box-shadow .15s ease, border-color .15s ease;
+        }
+        :is(#secureGuildSummonOne, #secureGuildSummonTen, #secureGuildConsumableShop button, #secureGuildEffectShop button):not(:disabled):hover,
+        :is(#secureGuildSummonOne, #secureGuildSummonTen, #secureGuildConsumableShop button, #secureGuildEffectShop button):not(:disabled):focus-visible {
+            transform: translateY(-2px);
+            filter: brightness(1.16);
+            box-shadow: 0 7px 16px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.18);
+        }
+        #secureGuildConsumableShop button { background: linear-gradient(135deg, #0369a1, #075985) !important; border-color: #38bdf8 !important; color: #f0f9ff !important; }
+        #secureGuildEffectShop button { background: linear-gradient(135deg, #b45309, #78350f) !important; border-color: #f59e0b !important; color: #fffbeb !important; }
+        #secureGuildSkinCollection > button:not(:disabled) { transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
+        #secureGuildSkinCollection > button:not(:disabled):hover,
+        #secureGuildSkinCollection > button:not(:disabled):focus-visible { transform: translateY(-2px); border-color: #8b5cf6 !important; box-shadow: 0 8px 18px rgba(124,58,237,.22); }
+        #secureGuildSkinCollection > button > span.mt-1 { background: #111827; border: 1px solid currentColor; padding: .28rem; text-align: center; }
+        #secureGuildSkinCollection [role="button"] { background: #111827 !important; text-shadow: 0 1px 2px #000; }
+        html[data-theme="ivory"] #secureGuildSkinCollection > button { background: #fffaf1 !important; border-color: #9b8b76 !important; color: #2b2118 !important; }
+        html[data-theme="ivory"] #secureGuildSkinCollection > button > b { color: #211a14 !important; }
+        html[data-theme="ivory"] #secureGuildSkinCollection > button > span.mt-1 { background: #f1e7d8 !important; color: #5b21b6 !important; border-color: #8b5cf6 !important; }
+        html[data-theme="ivory"] #secureGuildSkinCollection [role="button"] { background: #30273b !important; text-shadow: none; }
+        #secureGuildLeaveConfirm { order: 1; }
+        #secureGuildLeaveCancel { order: 2; }
+        .guild-skin-card { transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease, background-color .16s ease; }
+        .guild-skin-card:not(:disabled):hover,
+        .guild-skin-card:not(:disabled):focus-visible { transform: translateY(-2px); border-color: #8b5cf6 !important; box-shadow: 0 8px 18px rgba(124, 58, 237, .22); }
+        .guild-shard-unlock { background: #111827 !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05); transition: transform .14s ease, filter .14s ease, box-shadow .14s ease; }
+        .guild-shard-unlock:hover,
+        .guild-shard-unlock:focus-visible { transform: translateY(-1px); filter: brightness(1.25); box-shadow: 0 4px 10px rgba(0, 0, 0, .28); }
+        html[data-theme="ivory"] body #secureGuildModal .guild-skin-card { background: #fffaf1 !important; border-color: #9b8b76 !important; color: #2b2118 !important; }
+        html[data-theme="ivory"] body #secureGuildModal .guild-skin-card[data-equipped="true"] { background: #e1f5ea !important; border-color: #059669 !important; box-shadow: inset 0 0 22px rgba(5, 150, 105, .12), 0 5px 13px rgba(5, 150, 105, .14); }
+        html[data-theme="ivory"] body #secureGuildModal .guild-skin-card > b { color: #211a14 !important; }
+        html[data-theme="ivory"] body #secureGuildModal .guild-skin-grade { color: #5b21b6 !important; font-weight: 900 !important; }
+
+        /* 일괄 연성 결과는 현재 테마 안에서 읽혀야 한다. */
+        html[data-theme="ivory"] #forgeResultBox {
+            background: #fffaf1 !important;
+            color: #2b2118 !important;
+            box-shadow: 0 14px 42px rgba(62, 43, 23, .24) !important;
+        }
+        html[data-theme="ivory"] #forgeResultDesc { color: #40362c !important; }
+        html[data-theme="ivory"] #forgeResultDesc .batch-fusion-summary-card {
+            background: #f4e9d7 !important;
+            border-color: #8b6b9e !important;
+            color: #2f2039 !important;
+        }
+        html[data-theme="ivory"] #forgeResultDesc .batch-fusion-summary-card b {
+            color: #6d28d9 !important;
+        }
+        html[data-theme="ivory"] #forgeResultDesc .batch-fusion-result-row,
+        html[data-theme="ivory"] #forgeResultDesc .batch-fusion-result-card { border-color: #c9b8a1 !important; }
+        html[data-theme="ivory"] #forgeResultDesc .batch-fusion-result-row b { color: #92400e !important; }
+        html[data-theme="ivory"] #forgeResultDesc .batch-fusion-result-card b { color: #2b2118 !important; }
+        html[data-theme="ivory"] #forgeResultDesc .batch-fusion-result-card span { color: #65584a !important; }
+        html[data-theme="ivory"] #forgeResultDesc .batch-fusion-muted { color: #65584a !important; }
+        html[data-theme="ivory"] #forgeResultDesc .batch-fusion-details {
+            background: #f5eee4 !important;
+            border-color: #8b5cf6 !important;
+            color: #382a46 !important;
+        }
+        html[data-theme="ivory"] #forgeResultDesc .batch-fusion-details summary { color: #5b21b6 !important; }
+
+        .quiz-stage-guide-card { background: #0d0d0d; border: 1px solid #3c3c3c; color: #bbbbbb; }
+        .quiz-stage-guide-step { background: rgba(255,255,255,.025); border: 1px solid #2d2d2d; }
+        html[data-theme="ivory"] .quiz-stage-guide-card { background: #fffaf1 !important; border-color: #b9a992 !important; color: #40362c !important; }
+        html[data-theme="ivory"] .quiz-stage-guide-step { background: #f5eee3 !important; border-color: #c9b8a1 !important; }
+
         html[data-theme="ivory"] #wbWeekBadge {
             background: #7f1d1d !important;
             border-color: #ef4444 !important;
@@ -2187,16 +2314,30 @@
                     </div>
                 </div>
 
-                <!-- Bottom Guide Banner -->
-                <div
-                    class="quiz-bottom-guide bg-[#0d0d0d] p-2.5 border border-[#3c3c3c] text-[11px] text-[#bbbbbb] flex items-start gap-2 rounded-none-forced mt-2">
-                    <i data-lucide="swords" class="w-4 h-4 text-[#e22718] flex-shrink-0 mt-0.5"></i>
-                    <p class="leading-snug">
-                        <strong class="block">약점 퀴즈 격파 및 스킬 장착 가이드</strong>
-                        <span class="mt-1 block">퀴즈 정답으로 <strong>정복 포인트(FP)</strong>를 모으세요.</span>
-                        <span class="block"><strong>[스킬]</strong> 탭에서 마법 스킬을 획득하세요.</span>
-                        <span class="block">보유 스킬은 최대 4개까지 장착해 전투에서 직접 시전할 수 있습니다.</span>
-                    </p>
+                <!-- 다음 스테이지·일반 보스 안내 -->
+                <div class="quiz-bottom-guide mt-2 grid grid-cols-1 gap-2 text-[10px] leading-snug md:grid-cols-2">
+                    <section class="quiz-stage-guide-card p-2.5" aria-labelledby="quizStagePathTitle">
+                        <h4 id="quizStagePathTitle" class="flex items-center gap-1.5 font-black text-sky-300">
+                            <i data-lucide="route" class="h-4 w-4"></i> 다음 스테이지로 가는 3단계
+                        </h4>
+                        <ol class="mt-2 grid gap-1.5">
+                            <li class="quiz-stage-guide-step flex gap-2 p-1.5"><b class="text-sky-300">1</b><span>퀴즈를 맞혀 일반 몬스터를 공격하고 처치해요.</span></li>
+                            <li class="quiz-stage-guide-step flex gap-2 p-1.5"><b class="text-sky-300">2</b><span><b id="quizStageGuideProgress">0 / 10</b>마리를 처치하면 <b>보스 몬스터 소환</b> 버튼이 열려요.</span></li>
+                            <li class="quiz-stage-guide-step flex gap-2 p-1.5"><b class="text-sky-300">3</b><span>보스를 쓰러뜨리면 <b id="quizStageGuideNext">다음 스테이지</b>로 이동하고 처치 수는 0으로 돌아가요.</span></li>
+                        </ol>
+                        <p class="mt-1.5 text-[9px]">퀴즈 정답으로 <strong>정복 포인트(FP)</strong>를 모으세요. FP는 <b>[스킬]</b> 탭의 영단어 캡슐 소환에 사용해요.</p>
+                    </section>
+                    <section class="quiz-stage-guide-card p-2.5" aria-labelledby="quizBossGuideTitle">
+                        <h4 id="quizBossGuideTitle" class="flex items-center gap-1.5 font-black text-red-300">
+                            <i data-lucide="skull" class="h-4 w-4"></i> 일반 보스 도전 규칙
+                        </h4>
+                        <ul class="mt-2 grid gap-1.5">
+                            <li class="quiz-stage-guide-step p-1.5"><b class="text-red-300">60초 안에 처치</b>하면 성공해요. 보스는 전투 중 강력한 공격도 사용해요.</li>
+                            <li class="quiz-stage-guide-step p-1.5">방어 퀴즈가 열리면 생각하는 동안 전투 시간이 멈춰요.</li>
+                            <li class="quiz-stage-guide-step p-1.5">실패해도 일반 몬스터 처치 수 <b>10 / 10</b>은 유지되어 바로 다시 도전할 수 있어요.</li>
+                            <li class="quiz-stage-guide-step p-1.5">성공 보상: <b id="quizBossRewardGuide" class="text-yellow-300">골드와 보스 증표</b></li>
+                        </ul>
+                    </section>
                 </div>
             </div>
 
@@ -2286,7 +2427,7 @@
                             <div class="flex items-center gap-1 justify-start md:justify-end whitespace-nowrap overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
                                 <!-- Boss Tokens & Essence Display -->
                                 <span class="text-[10px] md:text-xs text-yellow-300 font-bold bg-yellow-950/80 border border-yellow-600 px-1.5 md:px-2.5 py-1  shadow-md">
-                                    증표: <b id="bossTokenCountText" class="text-yellow-400 font-black text-xs md:text-sm">0</b>개
+                                    보스 증표: <b id="bossTokenCountText" class="text-yellow-400 font-black text-xs md:text-sm">0</b>개
                                 </span>
                                 <span class="text-[10px] md:text-xs text-purple-300 font-bold bg-purple-950/80 border border-purple-600 px-1.5 md:px-2.5 py-1  shadow-md">
                                     🏺 정수: <b id="relicEssenceCountText" class="text-pink-400 font-black text-xs md:text-sm">0</b>개
@@ -2316,7 +2457,7 @@
                     <div id="relicAltarLockedSection" class="border-t border-gray-800 pt-8 mt-2 pb-6 text-center hidden">
                         <i data-lucide="lock" class="w-8 h-8 text-gray-600 mx-auto mb-3"></i>
                         <p class="text-[12px] text-gray-400 font-bold uppercase tracking-widest">유물 소환 제단은 30스테이지부터 해금됩니다</p>
-                        <p class="text-[10px] text-gray-600 mt-2">획득하신 증표와 정수는 해금 전에도 정상적으로 누적됩니다.</p>
+                        <p class="text-[10px] text-gray-600 mt-2">획득한 보스 증표와 유물 정수는 해금 전에도 정상적으로 누적됩니다.</p>
                     </div>
 
                         <!-- 유물 소환 등급 확률 가이드 -->
@@ -2677,7 +2818,7 @@
                                         <span class="font-bold text-yellow-400 text-xs tracking-wider">월드보스 참전 및 주간 보상 안내</span>
                                     </div>
                                     <ul class="text-[10px] text-gray-400 flex flex-col gap-1 list-disc list-inside">
-                                        <li><strong class="text-gray-200">일일 참전 보상:</strong> 기본 200 증표 + 천만 데미지 당 20 합산 최대 <span class="text-pink-300 font-bold">500 증표</span> 및 <span class="text-yellow-400 font-bold">골드</span> 획득</li>
+                                        <li><strong class="text-gray-200">일일 참전 보상:</strong> 기본 200 보스 증표 + 천만 데미지당 20개, 최대 <span class="text-pink-300 font-bold">500 보스 증표</span> 및 <span class="text-yellow-400 font-bold">골드</span> 획득</li>
                                         <li><strong class="text-gray-200">주간 결산 보상:</strong> 매주 월요일 자정 결산 시 기여도 비례하여 최대 <span class="text-pink-400 font-bold">100,000 FP</span> 분배 (보스 미처치 시 1/2 지급)</li>
                                         <li><strong class="text-gray-200">최우수 용사:</strong> 보스 격퇴와 동시에 기여도 1위에게 영구 <span class="text-purple-400 font-bold">[수호신] 칭호</span> 지급 · 주간 결산은 누락 보상만 복구</li>
                                     </ul>
@@ -3035,7 +3176,7 @@
 
                     <!-- 3. 획득 재화 현황판 (상하 높이 축소 콤팩트 디자인) -->
                     <div class="bg-[#080c08] border border-emerald-900/50 p-2 mb-2 rounded-none-forced">
-                        <div class="grid grid-cols-3 gap-2 text-[9px] text-center">
+                        <div class="grid grid-cols-2 lg:grid-cols-5 gap-2 text-[9px] text-center">
                             <div class="bg-black/50 border border-yellow-900/40 p-1.5 rounded flex items-center justify-center gap-2">
                                 <span class="text-gray-400 text-[10px] font-bold flex items-center gap-1"><i data-lucide="coins" class="w-3.5 h-3.5 text-yellow-500"></i> 보유 골드</span>
                                 <span class="text-yellow-400 font-black text-lg " id="profileGoldTotal">0</span>
@@ -3047,6 +3188,14 @@
                             <div class="bg-black/50 border border-amber-900/40 p-1.5 rounded flex items-center justify-center gap-2">
                                 <span class="text-gray-400 text-[10px] font-bold flex items-center gap-1"><i data-lucide="medal" class="w-3.5 h-3.5 text-amber-500"></i> 보스 증표</span>
                                 <span class="text-amber-300 font-black text-lg " id="profileTokenTotal">0</span>
+                            </div>
+                            <div class="bg-black/50 border border-fuchsia-900/40 p-1.5 rounded flex items-center justify-center gap-2">
+                                <span class="text-gray-400 text-[10px] font-bold flex items-center gap-1"><i data-lucide="gem" class="w-3.5 h-3.5 text-fuchsia-400"></i> 유물 정수</span>
+                                <span class="text-fuchsia-300 font-black text-lg" id="profileRelicEssenceTotal">0</span>
+                            </div>
+                            <div class="bg-black/50 border border-rose-900/40 p-1.5 rounded flex items-center justify-center gap-2 lg:col-span-1 col-span-2">
+                                <span class="text-gray-400 text-[10px] font-bold flex items-center gap-1"><i data-lucide="flame" class="w-3.5 h-3.5 text-rose-400"></i> 각성 정수</span>
+                                <span class="text-rose-300 font-black text-lg" id="profileSkillEssenceTotal">0</span>
                             </div>
                         </div>
                     </div>
@@ -4104,7 +4253,7 @@
             /* 가로 모드(짧은 화면)에서 전투창 상단 UI 강제 축소 (전투화면 비율 확보용) */
     </style>
 
-    <script src="js/config.js?v=20260809-29"></script><script src="js/skill-system.js?v=20260825-01"></script><script src="js/main.js?v=20260826-01"></script><script src="js/skill-rework.js?v=20260826-01"></script><script src="js/secure-account.js?v=20260825-01"></script>
+    <script src="js/config.js?v=20260809-29"></script><script src="js/skill-system.js?v=20260825-01"></script><script src="js/main.js?v=20260826-02"></script><script src="js/skill-rework.js?v=20260826-02"></script><script src="js/secure-account.js?v=20260826-01"></script>
 
     <!-- Damage Overlay (Scratch & Flash) -->
     <div id="damageOverlay" class="fixed inset-0 pointer-events-none hidden z-[100] flex-col items-center justify-center bg-red-900/60 transition-opacity duration-300">
@@ -4202,7 +4351,7 @@
                     <span id="wbResultGoldVal" class="text-yellow-400 font-black">+0G</span>
                 </div>
                 <div class="bg-black/90 p-2.5 border border-purple-500/40 flex items-center justify-between">
-                    <span class="text-gray-300 font-bold">🏺 고대 증표</span>
+                    <span class="text-gray-300 font-bold">🏺 보스 증표</span>
                     <span id="wbResultTokensVal" class="text-purple-400 font-black">+0개</span>
                 </div>
             </div>

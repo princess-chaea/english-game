@@ -2407,7 +2407,7 @@
                 gameState.gold += reward; gameState.accGold = (gameState.accGold || gameState.gold || 0) + reward;
                 const tokenGain = Math.floor(gameState.stage * 3);
                 gameState.bossTokens += tokenGain;
-                showBattleToast(`🐉 보스 퇴치! +${reward.toLocaleString()}G / 🪙 [고대 보스 증표] +${tokenGain}개 획득!`);
+                showBattleToast(`🐉 보스 퇴치! +${reward.toLocaleString()}G / 🪙 보스 증표 +${tokenGain}개 획득!`);
                 playSoundEffect('levelup');
                 concludeBossSuccess();
             } else {
@@ -3545,7 +3545,7 @@
             const cost = drawCount === 10 ? 450 : 50 * drawCount;
 
             if (gameState.bossTokens < cost) {
-                showToast(`⚠️ 고대 유물 소환을 위해 [고대 보스 증표] ${cost}개가 필요합니다! 보스전을 통해 증표를 모으세요.`);
+                showToast(`⚠️ 고대 유물 소환에는 보스 증표 ${cost}개가 필요합니다! 보스전을 통해 보스 증표를 모으세요.`);
                 return;
             }
 
@@ -5822,10 +5822,14 @@
             const goldEl = document.getElementById("profileGoldTotal");
             const fpEl = document.getElementById("profileFpTotal");
             const tokenEl = document.getElementById("profileTokenTotal");
-            const bossTokenText = document.getElementById("bossTokenCountText"); // 유물 탭의 증표 표시
+            const relicEssenceEl = document.getElementById("profileRelicEssenceTotal");
+            const skillEssenceEl = document.getElementById("profileSkillEssenceTotal");
+            const bossTokenText = document.getElementById("bossTokenCountText"); // 유물 탭의 보스 증표 표시
             if (goldEl) goldEl.innerText = Math.floor(gameState.gold || 0).toLocaleString();
             if (fpEl) fpEl.innerText = Math.floor(gameState.masteryPoints || 0).toLocaleString();
             if (tokenEl) tokenEl.innerText = Math.floor(gameState.bossTokens || 0).toLocaleString();
+            if (relicEssenceEl) relicEssenceEl.innerText = Math.floor(gameState.relicEssence || 0).toLocaleString();
+            if (skillEssenceEl) skillEssenceEl.innerText = Math.floor(gameState.skillEssence || 0).toLocaleString();
             if (bossTokenText) bossTokenText.innerText = Math.floor(gameState.bossTokens || 0).toLocaleString();
 
             // 장신구 연마 레벨 및 효과 수치 실시간 갱신
@@ -6114,6 +6118,14 @@
 
             const unlockRatioEl = document.getElementById("bossUnlockRatio");
             if (unlockRatioEl) unlockRatioEl.innerText = `${curProg} / ${BOSS_UNLOCK_LIMIT}`;
+
+            // 퀴즈 하단 안내도 실제 진행도·다음 스테이지·보상식과 함께 갱신한다.
+            const stageGuideProgress = document.getElementById("quizStageGuideProgress");
+            const stageGuideNext = document.getElementById("quizStageGuideNext");
+            const bossRewardGuide = document.getElementById("quizBossRewardGuide");
+            if (stageGuideProgress) stageGuideProgress.innerText = `${Math.min(BOSS_UNLOCK_LIMIT, Math.max(0, Math.floor(curProg || 0)))} / ${BOSS_UNLOCK_LIMIT}`;
+            if (stageGuideNext) stageGuideNext.innerText = `스테이지 ${stageNum + 1}`;
+            if (bossRewardGuide) bossRewardGuide.innerText = `${(stageNum * 1500).toLocaleString()} 골드 + 보스 증표 ${(stageNum * 3).toLocaleString()}개`;
 
             const triggerBtn = document.getElementById("bossTriggerBtn");
             if (triggerBtn) {
@@ -7200,13 +7212,22 @@
             { id: "유물 입문자", name: "유물 입문자", tier: "일반", desc: "고대 유물 1개 이상 수집", condition: (gs) => (gs.acquiredRelics || []).length >= 1, style: "border-[#4b5563] bg-[#111827] text-gray-300" }
         ];
 
+        const TITLE_TIER_STYLE = Object.freeze({
+            "신화": "mythic-aurora-card border-[#facc15] text-yellow-100 shadow-[0_0_11px_rgba(250,204,21,0.5)]",
+            "전설": "border-red-500 bg-red-950 text-red-100 shadow-[0_0_8px_rgba(239,68,68,0.4)]",
+            "영웅": "border-purple-500 bg-purple-950 text-purple-100 shadow-[0_0_7px_rgba(168,85,247,0.34)]",
+            "희귀": "border-sky-400 bg-sky-950 text-sky-100 shadow-[0_0_6px_rgba(56,189,248,0.28)]",
+            "일반": "border-slate-400 bg-slate-900 text-slate-100"
+        });
+
         function getTitlePresentation(titleName) {
             const normalized = String(titleName || "").trim();
             const definition = AVAILABLE_TITLES.find(title => title.id === normalized || title.name === normalized);
+            const tier = definition?.tier || "일반";
             return {
                 name: definition?.name || normalized,
-                tier: definition?.tier || "",
-                style: definition?.style || "border-[#d97706] bg-[#1a1a1a] text-yellow-300 shadow-[0_0_8px_rgba(251,191,36,0.6)]"
+                tier,
+                style: TITLE_TIER_STYLE[tier] || TITLE_TIER_STYLE["일반"]
             };
         }
         window.getHeroTitlePresentation = getTitlePresentation;
@@ -7244,6 +7265,7 @@
             AVAILABLE_TITLES.forEach(t => {
                 const isUnlocked = t.condition(gameState, cachedHofData) || gameState.unlockedTitles.includes(t.id);
                 const isEquipped = gameState.equippedTitle === t.id;
+                const presentation = getTitlePresentation(t.id);
 
                 if (isUnlocked && !gameState.unlockedTitles.includes(t.id)) {
                     gameState.unlockedTitles.push(t.id);
@@ -7259,7 +7281,7 @@
                         <div>
                             <div class="flex items-center gap-1.5 mb-1">
                                 <span class="title-tier-badge text-[8px] px-1 py-0.2 rounded-none-forced uppercase ${tierBadgeColor}" data-title-tier="${t.tier}">${t.tier}</span>
-                                <span class="title-rarity-badge font-bold px-1.5 py-0.5 border text-[11px] ${isUnlocked ? t.style : 'text-gray-600 border-gray-800 bg-gray-950'}" data-title-tier="${isUnlocked ? t.tier : '잠김'}">[${t.name}]</span>
+                                <span class="title-rarity-badge font-bold px-1.5 py-0.5 border text-[11px] ${isUnlocked ? presentation.style : 'text-gray-600 border-gray-800 bg-gray-950'}" data-title-tier="${isUnlocked ? presentation.tier : '잠김'}">[${t.name}]</span>
                                 ${isEquipped ? '<span class="title-equipped-status text-[9px] text-green-400 font-bold bg-green-950 px-1 border border-green-700">장착중</span>' : ''}
                             </div>
                             <p class="text-[9px] text-gray-400">${t.desc}</p>
@@ -7948,7 +7970,7 @@
             if (!reward) return;
             const hasRecordedTokens = rewardTokens !== null && rewardTokens !== undefined && Number.isFinite(Number(rewardTokens));
             const tokenText = hasRecordedTokens
-                ? `<span class="wb-reward-tokens mt-1 block text-[8px] text-yellow-300">이번 참전 증표 +${Math.max(0, Number(rewardTokens)).toLocaleString()}</span>`
+                ? `<span class="wb-reward-tokens mt-1 block text-[8px] text-yellow-300">이번 참전 보스 증표 +${Math.max(0, Number(rewardTokens)).toLocaleString()}</span>`
                 : '';
             const titleText = guardianUnlocked ? '<span class="wb-title-pending mt-1 block text-[8px]">👑 월드보스 기여 1위 · [수호신] 칭호 획득 완료</span>' : '';
             reward.innerHTML = `처치 시: <span class="wb-reward-win">+${defeatedFp.toLocaleString()} FP</span> | 미처치 시: <span class="wb-reward-partial">+${Math.floor(defeatedFp / 2).toLocaleString()} FP</span>${tokenText}${titleText}`;
@@ -9460,7 +9482,7 @@
                 );
 
                 saveSessionToCloud(true);
-                showToast(`${reasonMessage} ⚔️ 실제 피해 ${appliedDamage.toLocaleString()} · 🪙 골드 +${rewardGold.toLocaleString()}G · 🏺 증표 +${rewardTokens}개`);
+                showToast(`${reasonMessage} ⚔️ 실제 피해 ${appliedDamage.toLocaleString()} · 🪙 골드 +${rewardGold.toLocaleString()}G · 🏺 보스 증표 +${rewardTokens}개`);
             }).catch((err) => {
                 console.error("World boss submission failed:", err);
                 updateWorldBossUI();

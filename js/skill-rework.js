@@ -618,7 +618,7 @@
             });
             const resultRows = [...transitions.entries()].map(([key, count]) => {
                 const [fromGrade, toGrade] = key.split(":");
-                return `<div class="flex items-center justify-between gap-4 border-b border-white/10 py-1.5"><span>${SKILL_GRADES[fromGrade].name} → ${SKILL_GRADES[toGrade].name}</span><b class="text-yellow-300">${count}장</b></div>`;
+                return `<div class="batch-fusion-result-row flex items-center justify-between gap-4 border-b border-white/10 py-1.5"><span>${SKILL_GRADES[fromGrade].name} → ${SKILL_GRADES[toGrade].name}</span><b class="text-yellow-300">${count}장</b></div>`;
             }).join("");
             const cardRows = results.map((resolved, index) => {
                 const fromGrade = groupSourceGrades[index];
@@ -627,12 +627,12 @@
             const resultHtml = `
                 <div class="min-w-[250px] text-left">
                     <div class="mb-2 grid grid-cols-2 gap-2 text-center">
-                        <span class="border border-violet-800 bg-violet-950/40 p-2">승급 <b class="block text-yellow-300">${promotions}장</b></span>
-                        <span class="border border-gray-700 bg-black/40 p-2">등급 유지 <b class="block text-gray-200">${results.length - promotions}장</b></span>
+                        <span class="batch-fusion-summary-card border border-violet-800 bg-violet-950/40 p-2">승급 <b class="block text-yellow-300">${promotions}장</b></span>
+                        <span class="batch-fusion-summary-card border border-gray-700 bg-black/40 p-2">등급 유지 <b class="block text-gray-200">${results.length - promotions}장</b></span>
                     </div>
                     ${resultRows}
-                    <p class="mt-2 text-center text-[10px] text-gray-400">재료 ${groups.length * 3}장으로 결과 카드 ${results.length}장을 획득했습니다.</p>
-                    <details class="mt-2 border border-violet-900/60 bg-black/30 p-2 text-[10px]">
+                    <p class="batch-fusion-muted mt-2 text-center text-[10px] text-gray-400">재료 ${groups.length * 3}장으로 결과 카드 ${results.length}장을 획득했습니다.</p>
+                    <details class="batch-fusion-details mt-2 border border-violet-900/60 bg-black/30 p-2 text-[10px]">
                         <summary class="cursor-pointer text-center font-bold text-violet-200">획득 카드 ${results.length}장 모두 보기</summary>
                         <div class="mt-1 max-h-36 overflow-y-auto pr-1">${cardRows}</div>
                     </details>

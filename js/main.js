@@ -345,15 +345,38 @@
         }
 
 
-        // Simulated Stage Monsters list (cycled by stage ID)
+        // Stage monster pools (cycled by stage ID)
         const MONSTER_PROFILES = [
-            { name: "진흙 구덩이 슬라임", color: "#10b981", hp: 15, isBoss: false },
-            { name: "길 잃은 아기 고블린", color: "#a855f7", hp: 35, isBoss: false },
-            { name: "심술궂은 협곡 트롤", color: "#b45309", hp: 65, isBoss: false },
-            { name: "강철 껍질 스톤골렘", color: "#64748b", hp: 110, isBoss: false },
-            { name: "유적의 낡은 해골전사", color: "#94a3b8", hp: 180, isBoss: false },
-            { name: "동굴 속 독니 거미", color: "#0653b6", hp: 280, isBoss: false },
-            { name: "외딴 성의 떠돌이 유령", color: "#38bdf8", hp: 420, isBoss: false }
+            { name: "진흙 구덩이 슬라임", color: "#10b981", hp: 15, image: "monster_slime.webp", isBoss: false },
+            { name: "길 잃은 아기 고블린", color: "#a855f7", hp: 35, image: "monster_goblin.webp", isBoss: false },
+            { name: "심술궂은 협곡 트롤", color: "#b45309", hp: 65, image: "monster_troll.webp", isBoss: false },
+            { name: "강철 껍질 스톤골렘", color: "#64748b", hp: 110, image: "monster_golem.webp", isBoss: false },
+            { name: "유적의 낡은 해골전사", color: "#94a3b8", hp: 180, image: "monster_skeleton.webp", isBoss: false },
+            { name: "동굴 속 독니 거미", color: "#0653b6", hp: 280, image: "monster_spider.webp", isBoss: false },
+            { name: "외딴 성의 떠돌이 유령", color: "#38bdf8", hp: 420, image: "monster_ghost.webp", isBoss: false },
+            { name: "묘지의 좀비 보병", color: "#65a30d", hp: 580, image: "monster_zombie.webp", isBoss: false },
+            { name: "동굴의 메아리 박쥐", color: "#7e22ce", hp: 760, image: "monster_bat.webp", isBoss: false },
+            { name: "속삭이는 숲 버섯", color: "#dc2626", hp: 980, image: "monster_mushroom.webp", isBoss: false },
+            { name: "달빛 송곳니 늑대", color: "#2563eb", hp: 1250, image: "monster_wolf.webp", isBoss: false },
+            { name: "폐광의 탐욕 미믹", color: "#d97706", hp: 1580, image: "monster_mimic.webp", isBoss: false },
+            { name: "유령불꽃 갑옷", color: "#06b6d4", hp: 1980, image: "monster_haunted_armor.webp", isBoss: false },
+            { name: "이끼등 늪지 도마뱀병", color: "#4d7c0f", hp: 2460, image: "monster_lizardman.webp", isBoss: false },
+            { name: "태양흉터 사막 전갈", color: "#ca8a04", hp: 3040, image: "monster_scorpion.webp", isBoss: false },
+            { name: "모래 석실 미라", color: "#a16207", hp: 3740, image: "monster_mummy.webp", isBoss: false },
+            { name: "붉은 협곡 오크 약탈자", color: "#65a30d", hp: 4580, image: "monster_orc.webp", isBoss: false },
+            { name: "황혼의 도적 궁수", color: "#78716c", hp: 5580, image: "monster_bandit_archer.webp", isBoss: false },
+            { name: "태엽 순찰 드론", color: "#0ea5e9", hp: 6760, image: "monster_clockwork_drone.webp", isBoss: false },
+            { name: "저주받은 들판 허수아비", color: "#9333ea", hp: 8140, image: "monster_scarecrow.webp", isBoss: false },
+            { name: "서리 동굴 임프", color: "#38bdf8", hp: 9740, image: "monster_frost_imp.webp", isBoss: false },
+            { name: "폭풍절벽 하피", color: "#0891b2", hp: 11600, image: "monster_harpy.webp", isBoss: false },
+            { name: "철목 숲 뿔딱정벌레", color: "#15803d", hp: 13750, image: "monster_beetle.webp", isBoss: false },
+            { name: "프리즘 수정 야수", color: "#8b5cf6", hp: 16220, image: "monster_crystal_beast.webp", isBoss: false },
+            { name: "잿불 대장간 화염 정령", color: "#f97316", hp: 19050, image: "monster_fire_elemental.webp", isBoss: false },
+            { name: "빙하의 얼음 골렘", color: "#3b82f6", hp: 22250, image: "monster_ice_golem.webp", isBoss: false },
+            { name: "그림자 지붕 암살자", color: "#6d28d9", hp: 25900, image: "monster_shadow_assassin.webp", isBoss: false },
+            { name: "검은 성채 기사", color: "#991b1b", hp: 30050, image: "monster_dark_knight.webp", isBoss: false },
+            { name: "공허의 감시안", color: "#a855f7", hp: 34750, image: "monster_void_eye.webp", isBoss: false },
+            { name: "심연 관문의 사신", color: "#14b8a6", hp: 40100, image: "monster_abyss_reaper.webp", isBoss: false }
         ];
 
         const BOSS_PROFILES = [
@@ -366,7 +389,17 @@
             { name: "맹독의 거대 히드라", color: "#22c55e", hp: 10000, image: "boss_hydra.webp" },
             { name: "고대 병기 콜로서스 타이탄", color: "#cbd5e1", hp: 16000, image: "boss_titan.webp" },
             { name: "차원의 종말 고대 드래곤", color: "#fbbf24", hp: 25000, image: "boss_dragon.webp" },
-            { name: "파멸의 군주 마왕 데몬 로드", color: "#dc2626", hp: 40000, image: "boss_demon_lord.webp" }
+            { name: "파멸의 군주 마왕 데몬 로드", color: "#dc2626", hp: 40000, image: "boss_demon_lord.webp" },
+            { name: "부서진 탑의 대마도왕", color: "#7e22ce", hp: 58000, image: "boss_warlock.webp" },
+            { name: "겨울왕관 서리 거인", color: "#2563eb", hp: 80000, image: "boss_frost_giant.webp" },
+            { name: "태양 신전의 스핑크스", color: "#eab308", hp: 108000, image: "boss_sphinx.webp" },
+            { name: "미궁의 미노타우로스 장군", color: "#b45309", hp: 144000, image: "boss_minotaur.webp" },
+            { name: "심해 제국의 바다뱀", color: "#0d9488", hp: 190000, image: "boss_sea_serpent.webp" },
+            { name: "월영 거미 여왕", color: "#e11d48", hp: 248000, image: "boss_spider_queen.webp" },
+            { name: "태엽 거신 프라임", color: "#d97706", hp: 322000, image: "boss_clockwork_colossus.webp" },
+            { name: "진홍 밤의 흡혈왕", color: "#991b1b", hp: 416000, image: "boss_vampire_king.webp" },
+            { name: "끝없는 공허의 핵", color: "#9333ea", hp: 534000, image: "boss_void_heart.webp" },
+            { name: "천공 관문의 수호자", color: "#fbbf24", hp: 680000, image: "boss_celestial_guardian.webp" }
         ];
 
         let isGoogleScriptActive = false;
@@ -1767,29 +1800,9 @@
                 ? BOSS_PROFILES[(gameState.stage - 1) % BOSS_PROFILES.length]
                 : MONSTER_PROFILES[index];
 
-            let imageUrl = "";
-
-            if (isBossBattleActive) {
-                const bossIndex = (gameState.stage - 1) % BOSS_PROFILES.length;
-                imageUrl = `media/bose/${BOSS_PROFILES[bossIndex].image}`;
-            } else {
-                const monsterIndex = (gameState.stage - 1) % MONSTER_PROFILES.length;
-                if (monsterIndex === 0) {
-                    imageUrl = "media/monster/monster_slime.webp";
-                } else if (monsterIndex === 1) {
-                    imageUrl = "media/monster/monster_goblin.webp";
-                } else if (monsterIndex === 2) {
-                    imageUrl = "media/monster/monster_troll.webp";
-                } else if (monsterIndex === 3) {
-                    imageUrl = "media/monster/monster_golem.webp";
-                } else if (monsterIndex === 4) {
-                    imageUrl = "media/monster/monster_skeleton.webp";
-                } else if (monsterIndex === 5) {
-                    imageUrl = "media/monster/monster_spider.webp";
-                } else {
-                    imageUrl = "media/monster/monster_ghost.webp";
-                }
-            }
+            const imageUrl = isBossBattleActive
+                ? `media/bose/${baseMonster.image}`
+                : `media/monster/${baseMonster.image}`;
 
             const innerHtml = `<image href="${imageUrl}" x="0" y="0" width="100" height="120" preserveAspectRatio="xMidYMid meet" style="mix-blend-mode: screen;" />`;
 
@@ -1799,13 +1812,9 @@
                 : baseMonster.name;
 
             const mContainer = document.getElementById("monsterContainer");
-            if (isBossBattleActive) {
-                mContainer.classList.remove("w-32", "h-32");
-                mContainer.classList.add("w-56", "h-56");
-            } else {
-                mContainer.classList.remove("w-56", "h-56");
-                mContainer.classList.add("w-32", "h-32");
-            }
+            mContainer.classList.remove("w-32", "h-32", "w-56", "h-56");
+            mContainer.dataset.battleScale = isBossBattleActive ? "boss" : "normal";
+            mContainer.style.maxWidth = isBossBattleActive ? "22rem" : "18rem";
         }
 
         function renderHeroIdentity(root) {

@@ -7309,8 +7309,15 @@
             refreshStateVisuals();
             renderTitleInventoryUI();
             saveLocalCache();
-            Promise.resolve(saveSessionToCloud())
-                .finally(() => fetchHallOfFameUI());
+            const titleSave = window._secureStudentSaveNow
+                ? window._secureStudentSaveNow()
+                : saveSessionToCloud(true);
+            Promise.resolve(titleSave)
+                .then(() => {
+                    if (window._secureHallOfFameTitleChanged) return window._secureHallOfFameTitleChanged();
+                    return fetchHallOfFameUI();
+                })
+                .catch((error) => console.error("칭호·랭킹 동기화 오류:", error));
         }
 
         // ==========================================

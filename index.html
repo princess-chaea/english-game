@@ -1905,9 +1905,18 @@
 
         /* 얇고 자연스러운 커스텀 스크롤바 */
         .skill-inventory-card {
+            height: 190px;
+            min-height: 190px;
+            align-self: start;
             outline: 2px solid transparent;
             outline-offset: -2px;
             transition: outline-color .16s ease, box-shadow .16s ease, filter .16s ease;
+        }
+
+        #skillsInventoryGrid {
+            align-content: start;
+            align-items: start;
+            grid-auto-rows: 190px;
         }
 
         .skill-inventory-card:hover {
@@ -1923,6 +1932,29 @@
 
         .skill-inventory-card:focus-visible {
             outline-color: #38bdf8 !important;
+        }
+
+        /* 밝은 배경에서도 튜토리얼 클릭 대상을 즉시 찾을 수 있도록 이중 강조한다. */
+        html[data-theme="ivory"] .tutorial-highlight {
+            --tw-ring-color: #f59e0b !important;
+            outline: 3px solid #9a3412 !important;
+            outline-offset: 3px !important;
+            box-shadow:
+                0 0 0 3px #fff7ed,
+                0 0 0 7px rgba(154, 52, 18, .92),
+                0 0 22px rgba(245, 158, 11, .88) !important;
+            animation: tutorial-highlight-ivory-pulse 1.05s ease-in-out infinite !important;
+        }
+
+        @keyframes tutorial-highlight-ivory-pulse {
+            0%, 100% {
+                filter: brightness(1);
+                box-shadow: 0 0 0 3px #fff7ed, 0 0 0 7px rgba(154, 52, 18, .92), 0 0 16px rgba(245, 158, 11, .68);
+            }
+            50% {
+                filter: brightness(1.08);
+                box-shadow: 0 0 0 3px #fff7ed, 0 0 0 9px rgba(194, 65, 12, 1), 0 0 30px rgba(245, 158, 11, 1);
+            }
         }
 
         ::-webkit-scrollbar {
@@ -4253,7 +4285,7 @@
             /* 가로 모드(짧은 화면)에서 전투창 상단 UI 강제 축소 (전투화면 비율 확보용) */
     </style>
 
-    <script src="js/config.js?v=20260809-29"></script><script src="js/skill-system.js?v=20260825-01"></script><script src="js/main.js?v=20260826-02"></script><script src="js/skill-rework.js?v=20260826-02"></script><script src="js/secure-account.js?v=20260826-01"></script>
+    <script src="js/config.js?v=20260809-29"></script><script src="js/skill-system.js?v=20260825-01"></script><script src="js/main.js?v=20260826-03"></script><script src="js/skill-rework.js?v=20260826-02"></script><script src="js/secure-account.js?v=20260826-02"></script>
 
     <!-- Damage Overlay (Scratch & Flash) -->
     <div id="damageOverlay" class="fixed inset-0 pointer-events-none hidden z-[100] flex-col items-center justify-center bg-red-900/60 transition-opacity duration-300">

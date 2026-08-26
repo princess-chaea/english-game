@@ -162,7 +162,7 @@ if (
   || !skillRework.includes('"max-essence": "MAX 정수 전환"')
   || !skillRework.includes('Number(result.essenceAmount) || 100')
   || !skillRework.includes('pickGrowthSkill(random, usedGrowthIds)')
-  || !indexHtml.includes('새 스킬이나 성장 대상이 없으면 각성 정수로 바뀝니다')
+  || !indexHtml.includes('새 스킬이나 성장 대상이 없으면 남은 결과로 재배분되거나 각성 정수로 바뀝니다')
 ) throw new Error('Skill draw results must show final owned growth, MAX +100 essence, one-growth-per-block protection, and candidate conversion guidance.');
 const skillResultCardStart = skillRework.indexOf('renderSkillDrawResultCard = function');
 const skillResultCardEnd = skillRework.indexOf('function executeSkillDrawBatch', skillResultCardStart);
@@ -240,11 +240,11 @@ if (!teacherManual.includes('현재 적용 중인 일반 출제·오답·기초 
 if (!secureAccount.includes(`teacherCatalogStorageKey='vocahero_teacher_catalog_v20260820_spiral1'`) || !secureAccount.includes('teacherGuildReportPromises=new Map()') || !secureAccount.includes('teacherCacheFresh(cached,teacherListCacheMs)')) throw new Error('Teacher catalog and report request caches must remain enabled.');
 if (!secureAccount.includes(`Promise.all([refreshClasses(),teacher.verificationStatus==='verified'?refreshTeacherSchoolData():Promise.resolve()])`)) throw new Error('Teacher dashboard data must load in parallel after login.');
 const listClassesStart = teacherApi.indexOf('async function listClasses(uid)');
-const listClassesEnd = teacherApi.indexOf('function safeQuestionTypeStats', listClassesStart);
+const listClassesEnd = teacherApi.indexOf('async function listGuildRanks(uid)', listClassesStart);
 const listClassesBlock = listClassesStart >= 0 && listClassesEnd > listClassesStart ? teacherApi.slice(listClassesStart, listClassesEnd) : '';
 if (!listClassesBlock.includes('return Promise.all(managedSnapshots.map(async (snap) =>') || !teacherApi.includes('async function guildMemberSummary') || !teacherApi.includes('[TeacherGuildSummary] Aggregate fallback') || !teacherApi.includes(`select('totalCorrect', 'guildPoints').limit(500).get()`)) throw new Error('Teacher guild summaries must use parallel aggregation with a bounded compatibility fallback.');
 if ((teacherApi.match(/guildManagerIds\(snap\.data\(\)\)\.includes\(uid\)/g)||[]).length<2) throw new Error('Teacher guild ownership checks must preserve legacy manager compatibility.');
-if (!listClassesBlock.includes('[TeacherGuildRank] Ranking unavailable during login') || !listClassesBlock.includes('return new Map();')) throw new Error('Teacher login must remain available when global guild ranking aggregation is temporarily unavailable.');
+if (listClassesBlock.includes('teacherGuildRankMap()') || !teacherApi.includes('async function listGuildRanks(uid)') || !secureAccount.includes('setTimeout(()=>loadTeacherGuildRanks(force),0)') || !secureAccount.includes("console.warn('Teacher guild ranks unavailable:',error)")) throw new Error('Teacher login must render guild summaries before the optional global rank aggregation finishes.');
 const listSchoolStart = teacherApi.indexOf('async function listSchoolGuilds(uid)');
 const listSchoolEnd = teacherApi.indexOf('async function schoolGuildPreview', listSchoolStart);
 const listSchoolBlock = listSchoolStart >= 0 && listSchoolEnd > listSchoolStart ? teacherApi.slice(listSchoolStart, listSchoolEnd) : '';
@@ -557,6 +557,7 @@ for (const block of [removeManagerBlock, deleteGuildBlock, deleteTeacherBlock]) 
 if (!mainJs.includes('wbSkillCastCount = 0;') || !/wbSkillCastCount,\r?\n\s+wbComboCount,/.test(mainJs) || !mainJs.includes('wbRichLockedSkillIds: [...wbRichLockedSkillIds]') || !mainJs.includes('attemptWorldBossRichSkillUnlock') || !mainJs.includes('nextTimer: triggered ? 20 : remaining')) throw new Error('Rich curse purification, 20-second seal cycle, unlock quiz, or reconnect persistence is incomplete.');
 if (!mainJs.includes('vocahero_secure_wb_raid_') || !mainJs.includes('Math.min(savedTimerRemaining, secureTimerRemaining)') || !mainJs.includes('World boss battle checkpoint error')) throw new Error('World-boss secure resume and checkpoint flow is incomplete.');
 if (!worldBossApi.includes('finalizeRolledOverRaid') || !worldBossApi.includes('async function checkpoint(uid, body)') || !worldBossApi.includes('autoFinalizedAtRollover: true')) throw new Error('World-boss rollover final-damage settlement is incomplete.');
+if (!worldBossApi.includes('async function ensureGuardianTitleAwarded') || !worldBossApi.includes("'state.unlockedTitles': FieldValue.arrayUnion('수호신')") || !worldBossApi.includes('guardianTitleUnlocked: guardianTitleAwardedTo === uid') || worldBossApi.includes("orderBy('damage', 'desc').limit(250)")) throw new Error('World-boss guardian title must be awarded immediately and status reads must stay bounded.');
 if (!secureAccount.includes('showGuildSummonResultsModal') || !secureAccount.includes('secureGuildSummonResultModal') || !secureAccount.includes('changeGuildSkin(\'unequip\'') || !secureAccount.includes('차원 파편')) throw new Error('Guild summon modal, skin toggle, or shard unlock UI is incomplete.');
 if (!secureAccount.includes('guildSummonPending') || !secureAccount.includes('setGuildSummonPending(true)') || !mainJs.includes('relicSummonBusy') || !mainJs.includes('skillSummonBusy') || !mainJs.includes('repeatSkillDraw')) throw new Error('Guild hero, relic, or magic-card summon re-entry lock is missing.');
 if (!mainJs.includes('getGuildRewardGradeRates') || !mainJs.includes('const grade = rollGuildRewardGrade()') || !indexHtml.includes('data-guild-reward-rate-table') || !secureAccount.includes('소환 확률(행운 미적용)')) throw new Error('Guild luck application or actual probability breakdown is incomplete.');

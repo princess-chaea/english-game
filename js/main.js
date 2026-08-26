@@ -7115,7 +7115,7 @@
             // ========================================
             // 🌟 [신화 등급 - Mythic] — 최상위 랭커 전용
             // ========================================
-            { id: "수호신", name: "수호신", tier: "신화", desc: "월드보스 완전 격퇴 및 기여도 1위 (주간 결산 시 수여)", condition: (gs) => (gs.unlockedTitles || []).includes("수호신") || gs.wbTitle === "수호신", style: "mythic-aurora-card border-[#f59e0b] text-yellow-300 shadow-[0_0_15px_rgba(245,158,11,0.8)]" },
+            { id: "수호신", name: "수호신", tier: "신화", desc: "월드보스 완전 격퇴 시점의 기여도 1위", condition: (gs) => (gs.unlockedTitles || []).includes("수호신") || gs.wbTitle === "수호신", style: "mythic-aurora-card border-[#f59e0b] text-yellow-300 shadow-[0_0_15px_rgba(245,158,11,0.8)]" },
             { id: "정복왕", name: "정복왕", tier: "신화", desc: "스테이지 정복 랭킹 전체 1위", condition: (gs, res) => res?.myStageRank === 1, style: "mythic-aurora-card border-[#3b82f6] text-sky-300 shadow-[0_0_15px_rgba(59,130,246,0.8)]" },
             { id: "황금 거상", name: "황금 거상", tier: "신화", desc: "누적 골드 획득량 100,000,000(1억) 이상", condition: (gs) => (gs.accGold || gs.gold || 0) >= 100000000, style: "mythic-aurora-card border-[#eab308] text-yellow-200 shadow-[0_0_15px_rgba(234,179,8,0.8)]" },
             { id: "단어의 신", name: "단어의 신", tier: "신화", desc: "단어 정답 1,000개 이상 누적 달성", condition: (gs) => (gs.totalQuizCorrect || 0) >= 1000, style: "mythic-aurora-card border-[#10b981] text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.8)]" },
@@ -7775,7 +7775,7 @@
                 document.getElementById("worldBossHpText").innerText = `${cachedWb.curHp.toLocaleString()} / ${cachedWb.maxHp.toLocaleString()} HP (${cachedPct.toFixed(1)}%) [캐시]`;
                 document.getElementById("myWorldBossDmgDisplay").innerText = cachedWb.myDamage.toLocaleString();
                 document.getElementById("myWorldBossShareDisplay").innerText = `${cachedWb.sharePct}%`;
-                renderWorldBossExpectedReward(cachedWb.myDamage, cachedWb.maxHp, cachedWb.lastRewardTokens, cachedWb.titlePending);
+                renderWorldBossExpectedReward(cachedWb.myDamage, cachedWb.maxHp, cachedWb.lastRewardTokens, cachedWb.guardianUnlocked);
 
                 // 캐시 기반 클리어 오버레이 즉시 표시
                 const defeatedOverlay = document.getElementById("wbDefeatedOverlay");
@@ -7934,7 +7934,7 @@
             }
         }
 
-        function renderWorldBossExpectedReward(myDamage, maxHp, rewardTokens = null, titlePending = false) {
+        function renderWorldBossExpectedReward(myDamage, maxHp, rewardTokens = null, guardianUnlocked = false) {
             const safeDamage = Math.max(0, Number(myDamage) || 0);
             const safeMaxHp = Math.max(1, Number(maxHp) || 1);
             const defeatedFp = Math.round(100000 * Math.min(1, safeDamage / safeMaxHp));
@@ -7944,7 +7944,7 @@
             const tokenText = hasRecordedTokens
                 ? `<span class="wb-reward-tokens mt-1 block text-[8px] text-yellow-300">이번 참전 증표 +${Math.max(0, Number(rewardTokens)).toLocaleString()}</span>`
                 : '';
-            const titleText = titlePending ? '<span class="wb-title-pending mt-1 block text-[8px]">👑 현재 피해 1위 · 수호신 칭호는 다음 월요일 첫 접속 때 주간 결산으로 지급</span>' : '';
+            const titleText = guardianUnlocked ? '<span class="wb-title-pending mt-1 block text-[8px]">👑 월드보스 기여 1위 · [수호신] 칭호 획득 완료</span>' : '';
             reward.innerHTML = `처치 시: <span class="wb-reward-win">+${defeatedFp.toLocaleString()} FP</span> | 미처치 시: <span class="wb-reward-partial">+${Math.floor(defeatedFp / 2).toLocaleString()} FP</span>${tokenText}${titleText}`;
         }
 
@@ -7963,12 +7963,12 @@
             if (hpText) hpText.innerText = `${wbCurBossHp.toLocaleString()} / ${wbMaxBossHp.toLocaleString()} HP (${pct.toFixed(1)}%)`;
             if (damage) damage.innerText = myDamage.toLocaleString();
             if (share) share.innerText = `${sharePct}%`;
-            const titlePending = wbCurBossHp <= 0 && Number(boss.myRank) === 1;
-            renderWorldBossExpectedReward(myDamage, wbMaxBossHp, boss.lastRewardTokens, titlePending);
+            const guardianUnlocked = Boolean(boss.guardianTitleUnlocked);
+            renderWorldBossExpectedReward(myDamage, wbMaxBossHp, boss.lastRewardTokens, guardianUnlocked);
             const bossDay = typeof boss.day === 'string' ? boss.day : getKstDayString();
             if (boss.canAttack) clearWorldBossCompletion();
             else markWorldBossCompleted(bossDay);
-            localStorage.setItem(getWorldBossCacheKey(), JSON.stringify({ day: bossDay, curHp: wbCurBossHp, maxHp: wbMaxBossHp, myDamage, sharePct, canAttack: Boolean(boss.canAttack), lastRewardTokens: boss.lastRewardTokens, titlePending, cachedAt: Date.now() }));
+            localStorage.setItem(getWorldBossCacheKey(), JSON.stringify({ day: bossDay, curHp: wbCurBossHp, maxHp: wbMaxBossHp, myDamage, sharePct, canAttack: Boolean(boss.canAttack), lastRewardTokens: boss.lastRewardTokens, guardianUnlocked, cachedAt: Date.now() }));
             const btn = document.getElementById("startWorldBossBtn");
             const badge = document.getElementById("worldBossEntryBadge");
             const defeated = wbCurBossHp <= 0;
@@ -9543,7 +9543,7 @@
             }
         }
 
-        function showForgeResult(isSuccess, title, desc, borderColor) {
+        function showForgeResult(isSuccess, title, desc, borderColor, autoCloseMs = 3000) {
             const overlay = document.getElementById("forgeResultOverlay");
             const box = document.getElementById("forgeResultBox");
             const icon = document.getElementById("forgeResultIcon");
@@ -9562,12 +9562,14 @@
             overlay.classList.remove("hidden");
             overlay.classList.add("flex");
 
-            // 3초 후 자동 닫기
+            // 긴 결과 요약은 사용자가 확인할 때까지 유지할 수 있다.
             clearTimeout(overlay._autoClose);
-            overlay._autoClose = setTimeout(() => {
-                overlay.classList.add("hidden");
-                overlay.classList.remove("flex");
-            }, 3000);
+            if (autoCloseMs > 0) {
+                overlay._autoClose = setTimeout(() => {
+                    overlay.classList.add("hidden");
+                    overlay.classList.remove("flex");
+                }, autoCloseMs);
+            }
         }
 
         function showCombinePreviewModal(htmlContent, onConfirm) {

@@ -76,14 +76,38 @@ async function finalizeRolledOverRaid(uid, week) {
     return requested;
   });
 }
-async function status(uid) {
+async function ensureGuardianTitleAwarded(week, winnerUid) {
+  if (!winnerUid) return { winnerUid: null, awardedNow: false };
+  const ref = bossRef(week);
+  const accountRef = accounts.doc(winnerUid);
+  return adminDb.runTransaction(async (tx) => {
+    const [bossSnap, accountSnap] = await Promise.all([tx.get(ref), tx.get(accountRef)]);
+    const boss = bossSnap.data() || {};
+    if (boss.guardianTitleAwardedTo) {
+      return { winnerUid: boss.guardianTitleAwardedTo, awardedNow: false };
+    }
+    const maxHp = Math.max(1, safeInt(boss.maxHp, maxHpForWeek(week), 1));
+    const totalDamage = legacyTotal(boss) + safeInt(boss.secureDamageTotal, 0, 0);
+    if (totalDamage < maxHp || !accountSnap.exists) return { winnerUid: null, awardedNow: false };
+    tx.set(ref, {
+      guardianTitleAwardedTo: winnerUid,
+      guardianTitleAwardedAt: FieldValue.serverTimestamp()
+    }, { merge: true });
+    tx.update(accountRef, {
+      'state.unlockedTitles': FieldValue.arrayUnion('수호신'),
+      updatedAt: FieldValue.serverTimestamp()
+    });
+    return { winnerUid, awardedNow: true };
+  });
+}
+async function status(uid, { skipFinalize = false } = {}) {
   const week = currentWeek();
-  await Promise.all([finalizeRolledOverRaid(uid, week), finalizeRolledOverRaid(uid, week - 1)]);
+  if (!skipFinalize) await finalizeRolledOverRaid(uid, week);
   const ref = bossRef(week);
   const [bossSnap, contributionSnap, topSnap] = await Promise.all([
     ref.get(),
     ref.collection('contributions').doc(uid).get(),
-    ref.collection('contributions').orderBy('damage', 'desc').limit(250).get()
+    ref.collection('contributions').orderBy('damage', 'desc').limit(100).get()
   ]);
   const boss = bossSnap.data() || {};
   const maxHp = maxHpForWeek(week);
@@ -95,17 +119,29 @@ async function status(uid) {
   // 공개 설정은 이름표 노출만 제어합니다. 실제 기여 순위와 1위 칭호 판정은
   // 비공개 참가자도 포함한 전체 피해량 순서를 그대로 사용합니다.
   const myRankIndex = rankedDocs.findIndex((doc) => doc.id === uid);
+  const myDamage = safeInt(contribution.damage, 0, 0);
+  let myRank = myRankIndex < 0 ? null : myRankIndex + 1;
+  if (myRank == null && myDamage > 0) {
+    const higherDamageAggregate = await ref.collection('contributions').where('damage', '>', myDamage).count().get();
+    myRank = safeInt(higherDamageAggregate.data()?.count, 0, 0) + 1;
+  }
+  let guardianTitleAwardedTo = typeof boss.guardianTitleAwardedTo === 'string' ? boss.guardianTitleAwardedTo : null;
+  if (totalDamage >= maxHp && !guardianTitleAwardedTo && rankedDocs[0]?.id) {
+    const titleAward = await ensureGuardianTitleAwarded(week, rankedDocs[0].id);
+    guardianTitleAwardedTo = titleAward.winnerUid;
+  }
   return {
     week,
     day: kstDay(),
     maxHp,
     curHp: Math.max(0, maxHp - totalDamage),
     totalDamage,
-    myDamage: safeInt(contribution.damage, 0, 0),
+    myDamage,
     canAttack: contribution.lastPlayedKstDay !== kstDay(),
     lastRewardGold: contribution.lastPlayedKstDay === kstDay() ? safeInt(contribution.lastRewardGold, 0, 0) : null,
     lastRewardTokens: contribution.lastPlayedKstDay === kstDay() ? safeInt(contribution.lastRewardTokens, 0, 0) : null,
-    myRank: myRankIndex < 0 ? null : myRankIndex + 1,
+    myRank,
+    guardianTitleUnlocked: guardianTitleAwardedTo === uid,
     top
   };
 }
@@ -146,7 +182,9 @@ async function claimWeeklyReward(uid) {
   const myRank = safeInt(higherDamageAggregate.data()?.count, 0, 0) + 1;
   const teamContributionRate = totalDamage > 0 ? myDamage / totalDamage : 0;
   const rewardContributionRate = Math.min(1, myDamage / maxHp);
-  const gotTitle = defeated && winnerSnap.docs[0]?.id === uid;
+  const winnerUid = defeated ? winnerSnap.docs[0]?.id : null;
+  const titleAward = winnerUid ? await ensureGuardianTitleAwarded(week, winnerUid) : { winnerUid: null, awardedNow: false };
+  const gotTitle = titleAward.awardedNow && winnerUid === uid;
   const result = await adminDb.runTransaction(async (tx) => {
     const [claimSnap, accountSnap] = await Promise.all([tx.get(claimRef), tx.get(accounts.doc(uid))]);
     if (claimSnap.exists) return { alreadyClaimed: true };
@@ -175,7 +213,7 @@ async function claimWeeklyReward(uid) {
 }
 async function start(uid) {
   const week = currentWeek();
-  await Promise.all([finalizeRolledOverRaid(uid, week), finalizeRolledOverRaid(uid, week - 1)]);
+  await finalizeRolledOverRaid(uid, week);
   const day = kstDay();
   const ref = sessionRef(uid, week);
   const token = secret();
@@ -366,10 +404,11 @@ async function contribute(uid, body) {
       verifiedCorrectAnswers,
       rewardGold,
       rewardTokens,
+      defeatedNow: currentTotal < maxHp && currentTotal + bossApplied >= maxHp,
       accountState: nextAccountState
     };
   });
-  return { ...result, boss: await status(uid) };
+  return { ...result, boss: await status(uid, { skipFinalize: true }) };
 }
 export default async function handler(req, res) {
   try {

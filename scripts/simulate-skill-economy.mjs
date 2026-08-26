@@ -178,10 +178,12 @@ for (const [grade, expected] of Object.entries(gradePowerRanges)) {
 }
 
 const indexSource = await readFile(new URL("../index.html", import.meta.url), "utf8");
-assert.match(indexSource, /퀴즈 정답으로 <strong>정복 포인트\(FP\)<\/strong>를 모은 뒤/, "quiz guide must explain the FP-to-capsule path");
-assert.match(indexSource, /새 스킬이나 성장 대상이 없으면 각성 정수로 바뀝니다/, "summon guide must explain exhausted-candidate conversion without internal terminology");
+assert.match(indexSource, /퀴즈 정답으로 <strong>정복 포인트\(FP\)<\/strong>를 모으세요/, "quiz guide must explain the FP-to-capsule path");
+assert.match(indexSource, /새 스킬이나 성장 대상이 없으면 남은 결과로 재배분되거나 각성 정수로 바뀝니다/, "summon guide must explain exhausted-candidate conversion without internal terminology");
 const skillUiLogicSource = await readFile(new URL("../js/skill-rework.js", import.meta.url), "utf8");
 assert.match(skillUiLogicSource, /pickGrowthSkill\(random, usedGrowthIds\)/, "a skill must grow at most once per ten-draw block");
+assert.match(skillUiLogicSource, /showForgeResult\(true, "일괄 연성 결과"/, "batch fusion must show a readable result summary");
+assert.doesNotMatch(skillUiLogicSource, /const details = groups\.map/, "batch fusion confirmation must not list every fusion row");
 assert.match(indexSource, /T1 5% · T2 25% · T3 70%/, "skill guide must expose tier rates");
 for (const expected of Object.values(gradePowerRanges)) {
     assert.match(indexSource, new RegExp(`지수 ×${expected.base} ~ ×${expected.max}`), `skill guide must show the ${expected.base}-${expected.max} cumulative power range`);

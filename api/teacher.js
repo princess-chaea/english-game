@@ -504,6 +504,7 @@ async function createGuild(uid, body) {
   return { id: ref.id, guildName: name, guildSubtitle, guildLogoUrl: null, grade, wordPackId: data.wordPackId, wordPackIds: data.wordPackIds, questionTypes: data.defaultQuestionTypes };
 }
 let teacherGuildRankCache = { expiresAt: 0, ranks: new Map() };
+let teacherGuildRankPromise = null;
 async function guildMemberSummary(guildRef) {
   const members = guildRef.collection('members');
   try {
@@ -534,33 +535,37 @@ async function guildMemberSummary(guildRef) {
 async function teacherGuildRankMap() {
   const now = Date.now();
   if (teacherGuildRankCache.expiresAt > now) return teacherGuildRankCache.ranks;
-  const guildSnaps = await classes.limit(100).get();
-  const rows = await Promise.all(guildSnaps.docs.map(async (guildSnap) => {
-    const totals = await guildMemberSummary(guildSnap.ref);
-    return { id: guildSnap.id, memberCount: totals.studentCount, guildPoints: totals.guildPoints, name: guildName(guildSnap.data()) };
-  }));
-  const ranked = rows.filter((row) => row.memberCount > 0).sort((a, b) => b.guildPoints - a.guildPoints || a.name.localeCompare(b.name));
-  const ranks = new Map(ranked.map((row, index) => [row.id, index + 1]));
-  teacherGuildRankCache = { expiresAt: now + 60_000, ranks };
-  return ranks;
+  if (teacherGuildRankPromise) return teacherGuildRankPromise;
+  teacherGuildRankPromise = (async () => {
+    const guildSnaps = await classes.limit(100).get();
+    const rows = await Promise.all(guildSnaps.docs.map(async (guildSnap) => {
+      const totals = await guildMemberSummary(guildSnap.ref);
+      return { id: guildSnap.id, memberCount: totals.studentCount, guildPoints: totals.guildPoints, name: guildName(guildSnap.data()) };
+    }));
+    const ranked = rows.filter((row) => row.memberCount > 0).sort((a, b) => b.guildPoints - a.guildPoints || a.name.localeCompare(b.name));
+    const ranks = new Map(ranked.map((row, index) => [row.id, index + 1]));
+    teacherGuildRankCache = { expiresAt: Date.now() + 60_000, ranks };
+    return ranks;
+  })().finally(() => { teacherGuildRankPromise = null; });
+  return teacherGuildRankPromise;
 }
 async function listClasses(uid) {
   const teacher = await teachers.doc(uid).get();
   const ids = (teacher.data()?.classIds || []).slice(0, 100);
-  const [snapshots, rankMap] = await Promise.all([
-    Promise.all(ids.map((id) => classes.doc(id).get())),
-    teacherGuildRankMap().catch((error) => {
-      console.warn('[TeacherGuildRank] Ranking unavailable during login', { code: error?.code || null, message: error?.message || String(error) });
-      return new Map();
-    })
-  ]);
+  const snapshots = await Promise.all(ids.map((id) => classes.doc(id).get()));
   const managedSnapshots = snapshots.filter((snap) => snap.exists && guildManagerIds(snap.data()).includes(uid));
   return Promise.all(managedSnapshots.map(async (snap) => {
     const data = snap.data();
     const totals = await guildMemberSummary(snap.ref);
     const ownerId = guildOwnerId(data);
-    return { id: snap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE), ownerId, isOwner: ownerId === uid, managerCount: guildCoManagerCount(data), ...totals, guildRank: rankMap.get(snap.id) || null, wordPackId: classPack(data.grade, data.wordPackIds || data.wordPackId), wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade), questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes) };
+    return { id: snap.id, guildName: guildName(data), guildSubtitle: normalizeGuildSubtitle(data.guildSubtitle), guildLogoUrl: safeGuildLogoUrl(data.guildLogoUrl), grade: safeInt(data.grade, 4, MIN_LEARNING_GRADE, MAX_LEARNING_GRADE), ownerId, isOwner: ownerId === uid, managerCount: guildCoManagerCount(data), ...totals, guildRank: null, wordPackId: classPack(data.grade, data.wordPackIds || data.wordPackId), wordPackIds: normalizeWordPackIds(data.wordPackIds || data.wordPackId, data.grade), questionTypes: normalizeQuestionTypes(data.defaultQuestionTypes) };
   }));
+}
+async function listGuildRanks(uid) {
+  const teacher = await teachers.doc(uid).get();
+  const ids = (teacher.data()?.classIds || []).slice(0, 100);
+  const rankMap = await teacherGuildRankMap();
+  return Object.fromEntries(ids.filter((id) => rankMap.has(id)).map((id) => [id, rankMap.get(id)]));
 }
 function safeQuestionTypeStats(value) {
   const result = {};
@@ -1780,6 +1785,7 @@ export default async function handler(req, res) {
     else if (body.action === 'reviewSchoolGuildJoin') response = { review: await reviewSchoolGuildJoin(token.uid, body) };
     else if (body.action === 'createGuild' || body.action === 'createClass') response = { classroom: await createGuild(token.uid, body) };
     else if (body.action === 'listClasses') response = { classes: await listClasses(token.uid) };
+    else if (body.action === 'listGuildRanks') response = { ranks: await listGuildRanks(token.uid) };
     else if (body.action === 'listWordPacks') response = { wordPacks: WORD_PACKS, questionTypes: [{ id: 'meaning-choice', label: '뜻 찾기 (4지선다)', default: true }, { id: 'fill-blank', label: '빈칸 넣기' }, { id: 'word-choice', label: '영어 단어 찾기 (4지선다)' }, { id: 'listen-meaning', label: '발음 듣고 뜻 찾기' }, { id: 'word-order', label: '철자 순서 맞추기' }, { id: 'short-answer', label: '영어 단답식' }] };
     else if (body.action === 'wordPackPreview') response = { wordPack: await wordPackPreview(body) };
     else if (body.action === 'guildMembers') response = { details: await listGuildMembers(token.uid, body) };

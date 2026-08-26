@@ -586,15 +586,58 @@
             while (pool.length >= 3) groups.push(pool.splice(0, 3));
         });
         if (!groups.length) return showToast("⚠️ 선택 등급에서 보호되지 않은 동일 등급 카드 3장 묶음이 없습니다.");
-        const details = groups.map((cards, index) => {
-            const preview = SkillRules.fusionPreview(cards, gameState.skillFusionPity[cards[0].grade]);
-            return `${index + 1}. ${SKILL_GRADES[cards[0].grade].name} 3장 → ${index === 0 ? fusionDistributionText(preview) : "앞선 결과에 따라 실패 보정 확률 변동"}`;
-        }).join("<br>");
-        showCombinePreviewModal(`<b>낮은 품질 카드부터 ${groups.length}회 일괄 합성합니다.</b><br><br>${details}<br><br>장착·잠금 카드는 제외됩니다.`, () => {
+        const sourceCounts = groups.reduce((counts, cards) => {
+            counts[cards[0].grade] = (counts[cards[0].grade] || 0) + 1;
+            return counts;
+        }, {});
+        const sourceSummary = allowed
+            .filter((grade) => sourceCounts[grade])
+            .map((grade) => `${SKILL_GRADES[grade].name} ${sourceCounts[grade]}회`)
+            .join(" · ");
+        const groupSourceGrades = groups.map((cards) => cards[0].grade);
+        const confirmHtml = `
+            <div class="space-y-2 text-center">
+                <b class="block text-base text-white">${groups.length}회 일괄 연성</b>
+                <span class="block text-violet-200">${sourceSummary}</span>
+                <span class="block text-gray-400">재료 ${groups.length * 3}장 · 장착·잠금 카드 제외</span>
+            </div>`;
+        showCombinePreviewModal(confirmHtml, () => {
             const results = groups.map((cards) => resolveFusion(cards));
             selectedCombineSkillIds = [];
-            showToast(`✨ 일괄 합성 ${results.length}회 완료!`);
             buildSkillTabUI(); renderSkillsUI(); refreshStateVisuals(); saveLocalCache();
+            playSoundEffect("levelup");
+
+            const transitions = new Map();
+            let promotions = 0;
+            results.forEach((resolved, index) => {
+                const fromGrade = groupSourceGrades[index];
+                const toGrade = resolved.resultGrade;
+                const key = `${fromGrade}:${toGrade}`;
+                transitions.set(key, (transitions.get(key) || 0) + 1);
+                if (SkillRules.gradeRank(toGrade) > SkillRules.gradeRank(fromGrade)) promotions += 1;
+            });
+            const resultRows = [...transitions.entries()].map(([key, count]) => {
+                const [fromGrade, toGrade] = key.split(":");
+                return `<div class="flex items-center justify-between gap-4 border-b border-white/10 py-1.5"><span>${SKILL_GRADES[fromGrade].name} → ${SKILL_GRADES[toGrade].name}</span><b class="text-yellow-300">${count}장</b></div>`;
+            }).join("");
+            const cardRows = results.map((resolved, index) => {
+                const fromGrade = groupSourceGrades[index];
+                return `<div class="batch-fusion-result-card flex items-center justify-between gap-3 border-b border-white/10 py-1.5"><b>${escapeSkillHtml(resolved.result.word)}</b><span class="text-gray-400">${SKILL_GRADES[fromGrade].name} → ${SKILL_GRADES[resolved.resultGrade].name}</span></div>`;
+            }).join("");
+            const resultHtml = `
+                <div class="min-w-[250px] text-left">
+                    <div class="mb-2 grid grid-cols-2 gap-2 text-center">
+                        <span class="border border-violet-800 bg-violet-950/40 p-2">승급 <b class="block text-yellow-300">${promotions}장</b></span>
+                        <span class="border border-gray-700 bg-black/40 p-2">등급 유지 <b class="block text-gray-200">${results.length - promotions}장</b></span>
+                    </div>
+                    ${resultRows}
+                    <p class="mt-2 text-center text-[10px] text-gray-400">재료 ${groups.length * 3}장으로 결과 카드 ${results.length}장을 획득했습니다.</p>
+                    <details class="mt-2 border border-violet-900/60 bg-black/30 p-2 text-[10px]">
+                        <summary class="cursor-pointer text-center font-bold text-violet-200">획득 카드 ${results.length}장 모두 보기</summary>
+                        <div class="mt-1 max-h-36 overflow-y-auto pr-1">${cardRows}</div>
+                    </details>
+                </div>`;
+            showForgeResult(true, "일괄 연성 결과", resultHtml, "#a855f7", 0);
         });
     };
 
@@ -637,7 +680,7 @@
         sanitizeSelectedCombineSkillIds();
         syncSkillEssenceUI();
         const deckInfo = document.getElementById("skillDeckInfo");
-        if (deckInfo) deckInfo.textContent = `현재 누적 단어팩 전체에서 새 스킬을 고르게 얻습니다. 보유 스킬 성장은 장착한 4개가 자동 집중 대상으로 5배 자주 선택되며, 7회 연속 빗나가면 다음 성장에서 보장됩니다. 중복 카드는 등급만큼 EXP를 주고, 정수 성급 비용은 일반 500·희귀 1,200·영웅 2,500·전설 4,500·신화 7,500개입니다.`;
+        if (deckInfo) deckInfo.textContent = "100회 기준 · 새 스킬 약 40회 · 보유 스킬 성장 약 50회 · 각성 정수 약 10회";
         const count = document.getElementById("selectedCombineCountText");
         if (count) count.textContent = String(selectedCombineSkillIds.length);
         const manualGroup = document.getElementById("selectedManualCombineGroup");

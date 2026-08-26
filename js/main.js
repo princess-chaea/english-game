@@ -1493,7 +1493,10 @@
                 element.innerHTML = `${total.toFixed(3)}% <span class="block text-[7px] font-bold text-red-400">(기본 ${rate.base.toFixed(2)}% · ${addedText})</span>`;
             });
             document.querySelectorAll('[data-guild-luck-source]').forEach((element) => {
-                element.innerHTML = `행운 적용 · 길드 효과 <b class="text-red-400">+${rates.sources.guildBonus.toFixed(2)}%p</b> · 외형/도감 <b class="text-red-400">+${rates.sources.cosmeticBonus.toFixed(3)}%p</b><br><span class="text-gray-500">잠재력·유물·마법 카드에만 적용되며 차원 영웅 소환 확률은 고정입니다.</span>`;
+                const skillScope = element.dataset.guildLuckSource === 'skill'
+                    ? '<b class="text-cyan-300">스킬 적용 범위:</b> 새 스킬 40% · 보유 성장 50% · 각성 정수 10%의 분기 비율은 바뀌지 않습니다.<br>새 스킬 또는 성장 카드가 나온 뒤 <b>카드 등급을 정할 때만</b> 행운이 적용됩니다.<br>'
+                    : '';
+                element.innerHTML = `${skillScope}<b>행운 효과:</b> 길드 <b class="text-red-400">+${rates.sources.guildBonus.toFixed(3)}%p</b> · 외형/도감 <b class="text-red-400">+${rates.sources.cosmeticBonus.toFixed(3)}%p</b> · 실제 적용 합계 <b class="text-red-400">${rates.sources.appliedBonus.toFixed(3)}%p</b><br><span class="text-gray-400">일반 확률을 ${rates.sources.appliedBonus.toFixed(3)}%p 낮추고, 희귀 +${rates.rare.added.toFixed(3)}%p · 영웅 +${rates.hero.added.toFixed(3)}%p · 전설 +${rates.legendary.added.toFixed(3)}%p · 신화 +${rates.mythic.added.toFixed(3)}%p로 나누어 올립니다.</span><br><span class="text-gray-500">잠재력·유물·스킬 카드에 적용됩니다. 차원 영웅 소환 확률은 고정입니다.</span>`;
             });
         }
 
@@ -2753,7 +2756,7 @@
                 const evolvedName = getPetEvolutionName(petKey, petLevel);
 
                 html += `
-                    <div class="bg-[#0d0d0d] border ${isActive ? 'border-white' : 'border-[#262626]'} p-4 rounded-none-forced flex flex-col justify-between items-stretch">
+                    <div class="pet-lab-card bg-[#0d0d0d] border ${isActive ? 'border-white' : 'border-[#262626]'} p-4 rounded-none-forced flex flex-col justify-between items-stretch" data-pet-active="${isActive}" data-pet-max="${isMax}">
                         <div class="text-center">
                             <span class="text-3xl block mb-2">${getPetEmoji(petKey)}</span>
                             <h4 class="font-bold text-white text-xs uppercase tracking-wider">${evolvedName}</h4>

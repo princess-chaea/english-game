@@ -674,6 +674,30 @@
         if (essence) essence.textContent = Number(gameState.skillEssence || 0).toLocaleString();
     }
 
+    let skillInventoryResizeFrame = 0;
+    function syncSkillInventoryHeight() {
+        const grid = document.getElementById("skillsInventoryGrid");
+        const arena = document.getElementById("battleArena");
+        if (!grid || !arena) return;
+        if (window.innerWidth < 768) {
+            grid.style.removeProperty("height");
+            grid.style.removeProperty("max-height");
+            return;
+        }
+        const arenaHeight = Math.round(arena.getBoundingClientRect().height);
+        if (arenaHeight < 1) return;
+        const targetHeight = Math.max(440, Math.min(1100, arenaHeight));
+        grid.style.height = `${targetHeight}px`;
+        grid.style.maxHeight = `${targetHeight}px`;
+    }
+    function scheduleSkillInventoryHeightSync() {
+        cancelAnimationFrame(skillInventoryResizeFrame);
+        skillInventoryResizeFrame = requestAnimationFrame(syncSkillInventoryHeight);
+    }
+    if (typeof window.addEventListener === "function") {
+        window.addEventListener("resize", scheduleSkillInventoryHeightSync);
+    }
+
     buildSkillTabUI = function buildSkillTabUIReworked() {
         normalizeSkillSystemState();
         ensureActiveSkillDeck();
@@ -699,11 +723,13 @@
         if (!invGrid) return;
         if (!gameState.skillsInventory.length) {
             invGrid.innerHTML = `<p class="col-span-4 py-8 text-center text-xs text-[#7e7e7e]">아직 획득한 스킬이 없습니다.</p>`;
+            scheduleSkillInventoryHeightSync();
             return;
         }
         const inventory = sortSkillInventory(gameState.skillsInventory);
         invGrid.innerHTML = inventory.map((skill) => {
             const grade = SKILL_GRADES[skill.grade] || SKILL_GRADES.normal;
+            const isMax = SkillRules.isMaxSkill(skill);
             const selected = selectedCombineSkillIds.includes(skill.id);
             const equipped = gameState.equippedSkills.includes(skill.id);
             const locked = gameState.skillLockedWords.includes(wordKey(skill.word));
@@ -713,12 +739,13 @@
             const id = safeSkillId(skill.id);
             return `<article data-skill-card data-skill-id="${id}" data-selected="${selected}" role="button" tabindex="0" aria-pressed="${selected}" onclick="toggleSelectCombineSkill('${id}')" onkeydown="handleSkillCardKeydown(event,'${id}')" class="theme-dark-card skill-inventory-card group relative flex min-h-[190px] cursor-pointer flex-col justify-between border-2 ${equipped ? "border-white" : "border-[#262626]"} ${grade.colorClass} bg-[#0d0d0d] p-2 text-center">
                 ${selected ? `<span class="absolute -left-1 -top-2 z-20 bg-yellow-400 px-1.5 py-0.5 text-[8px] font-black text-black">합성 선택</span>` : ""}
-                <div><div class="flex items-center justify-between text-[8px] font-bold"><span>${grade.name} T${skill.tier}</span><span class="text-yellow-400">★${skill.stars}${SkillRules.isMaxSkill(skill) ? " MAX" : ""}</span></div><b class="mt-1 block truncate text-xs text-white">${escapeSkillHtml(capitalizeFirstLetter(skill.word))}</b><span class="block truncate text-[9px] text-[#bbb]">${escapeSkillHtml(skill.meaning)}</span><span class="mt-1 block text-[9px] font-black text-pink-300">지수 ×${getSkillMultiplier(skill)}</span></div>
+                <div><div class="flex items-center justify-between text-[8px] font-bold"><span>${grade.name} T${skill.tier}</span><span class="text-yellow-400">★${skill.stars}${isMax ? " MAX" : ""}</span></div><b class="mt-1 block truncate text-xs text-white">${escapeSkillHtml(capitalizeFirstLetter(skill.word))}</b><span class="block truncate text-[9px] text-[#bbb]">${escapeSkillHtml(skill.meaning)}</span><span class="mt-1 block text-[9px] font-black text-pink-300">지수 ×${getSkillMultiplier(skill)}</span></div>
                 <div class="mt-1.5"><div class="h-1.5 w-full overflow-hidden border border-[#3c3c3c] bg-[#111]"><div class="h-full bg-yellow-500" style="width:${pct}%"></div></div><div class="mb-1 flex justify-between text-[7px] text-gray-400"><span>${skillProgressLabel(skill)}</span><span>${skill.exp}/${maxExp}</span></div>
-                    <div class="grid grid-cols-3 gap-1"><button type="button" data-skill-action="lock" onclick="event.stopPropagation();toggleSkillLock('${id}')" class="border border-gray-700 bg-black py-1 text-[8px] font-bold text-gray-300">${locked ? "🔒 잠금 해제" : "🔓 잠금"}</button><button type="button" data-skill-action="essence" onclick="event.stopPropagation();applyEssenceToSkill('${id}')" class="border border-amber-800 bg-amber-950/30 py-1 text-[8px] font-bold text-amber-200">정수 ${essenceCost.toLocaleString()}</button><button type="button" data-skill-action="dismantle" onclick="event.stopPropagation();dismantleSkill('${id}')" class="border border-red-900 bg-red-950/30 py-1 text-[8px] font-bold text-red-300">분해 +${SkillRules.dismantleYield(skill)}</button></div>
+                    <div class="grid grid-cols-3 gap-1"><button type="button" data-skill-action="lock" onclick="event.stopPropagation();toggleSkillLock('${id}')" class="border border-gray-700 bg-black py-1 text-[8px] font-bold text-gray-300">${locked ? "🔒 잠금 해제" : "🔓 잠금"}</button>${isMax ? '<button type="button" data-skill-action="essence" disabled title="T1 6성 최종 성장 완료" class="cursor-not-allowed border border-gray-700 bg-gray-900 py-1 text-[8px] font-bold text-gray-500">성장 완료</button>' : `<button type="button" data-skill-action="essence" onclick="event.stopPropagation();applyEssenceToSkill('${id}')" class="border border-amber-800 bg-amber-950/30 py-1 text-[8px] font-bold text-amber-200">정수 ${essenceCost.toLocaleString()}</button>`}<button type="button" data-skill-action="dismantle" onclick="event.stopPropagation();dismantleSkill('${id}')" class="border border-red-900 bg-red-950/30 py-1 text-[8px] font-bold text-red-300">분해 +${SkillRules.dismantleYield(skill)}</button></div>
                     <button type="button" data-skill-action="equip" onclick="event.stopPropagation();${equipped ? `unequipSkill('${id}')` : `equipSkill('${id}')`}" class="mt-1 w-full py-1 text-[9px] font-black ${equipped ? "bg-red-600 text-white" : "bg-white text-black"}">${equipped ? "장착 해제" : "장착하기"}</button>
                 </div></article>`;
         }).join("");
+        scheduleSkillInventoryHeightSync();
     };
 
     Object.assign(window.__vocaHeroTestHooks = window.__vocaHeroTestHooks || {}, {

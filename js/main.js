@@ -4280,39 +4280,46 @@
         }
 
         function createSkillDrawSnapshot(word, meaning, rolledGrade, rolledTier, alreadyOwned = false) {
+            const normalizedGrade = SKILL_GRADES[rolledGrade] ? rolledGrade : "normal";
+            const normalizedTier = Math.max(1, Math.min(3, Number(rolledTier) || 3));
             const snapshot = {
                 word: String(word || ""),
                 meaning: String(meaning || ""),
-                grade: SKILL_GRADES[rolledGrade] ? rolledGrade : "normal",
-                tier: Math.max(1, Math.min(3, Number(rolledTier) || 3)),
+                grade: normalizedGrade,
+                tier: normalizedTier,
                 stars: 0,
                 exp: 0,
                 maxExp: getRequiredExpForStar(rolledGrade),
-                alreadyOwned: Boolean(alreadyOwned)
+                rolledGrade: normalizedGrade,
+                rolledTier: normalizedTier,
+                alreadyOwned: Boolean(alreadyOwned),
+                resultType: alreadyOwned ? "growth" : "new",
+                applicationText: alreadyOwned ? "보유 스킬에 성장 적용" : "신규 스킬로 보관"
             };
             snapshot.drawMultiplier = getSkillMultiplier(snapshot);
             return snapshot;
         }
 
         function renderSkillDrawResultCard(drawResult) {
-            const gradeInfo = SKILL_GRADES[drawResult.grade] || SKILL_GRADES.normal;
-            const tier = Math.max(1, Math.min(3, Number(drawResult.tier) || 3));
+            const acquiredGrade = SKILL_GRADES[drawResult.rolledGrade] ? drawResult.rolledGrade : (SKILL_GRADES[drawResult.grade] ? drawResult.grade : "normal");
+            const gradeInfo = SKILL_GRADES[acquiredGrade] || SKILL_GRADES.normal;
+            const tier = Math.max(1, Math.min(3, Number(drawResult.rolledTier ?? drawResult.tier) || 3));
             const multiplier = Number(drawResult.drawMultiplier || getSkillMultiplier(drawResult));
-            const acquisitionLabel = drawResult.alreadyOwned ? "중복" : "신규";
+            const applicationText = drawResult.applicationText || (drawResult.alreadyOwned ? "보유 스킬에 성장 적용" : "신규 스킬로 보관");
             return `
-                <div class="border-2 ${gradeInfo.colorClass} p-2 text-center flex flex-col justify-between min-h-[90px] rounded-none-forced"
-                     data-draw-grade="${drawResult.grade}" data-draw-tier="${tier}">
+                <div class="border-2 ${gradeInfo.colorClass} p-2 text-center flex flex-col justify-between min-h-[106px] rounded-none-forced"
+                     data-draw-grade="${acquiredGrade}" data-draw-tier="${tier}">
                     <div>
                         <div class="flex items-center justify-between text-[9px] font-black">
-                            <span>${gradeInfo.name}</span>
+                            <span>획득 ${gradeInfo.name}</span>
                             <span class="text-yellow-300">T${tier}</span>
                         </div>
                         <p class="text-[11px] font-bold text-white truncate mt-0.5">${capitalizeFirstLetter(drawResult.word)}</p>
                     </div>
-                    <div>
+                    <div class="mt-1 border-t border-white/15 pt-1">
                         <span class="text-[9px] truncate block text-[#dddddd]">${drawResult.meaning}</span>
-                        <span class="text-[8px] font-bold text-gray-300 block">${acquisitionLabel}</span>
-                        <span class="text-[9px] font-bold text-pink-300 block">×${multiplier}배</span>
+                        <span class="text-[8px] font-bold text-cyan-200 block">${applicationText}</span>
+                        <span class="text-[8px] font-bold text-pink-300 block">획득 카드 기본 지수 ×${multiplier}</span>
                     </div>
                 </div>
             `;
@@ -4587,43 +4594,31 @@
         function showSkillDraw100ResultModal(acquiredList, drawSummary = {}) {
             const counts = { mythic: 0, legendary: 0, hero: 0, rare: 0, normal: 0 };
             acquiredList.forEach(s => {
-                if (counts[s.grade] !== undefined) counts[s.grade]++;
+                const grade = s.rolledGrade || s.grade;
+                if (counts[grade] !== undefined) counts[grade]++;
             });
-
-            // 상위 획득 스킬 카드를 스킬 지수순 정렬
-            const topList = [...acquiredList].sort((a, b) => getSkillMultiplier(b) - getSkillMultiplier(a)).slice(0, 8);
-
-            let topHtml = "";
-            topList.forEach(s => {
-                const gradeInfo = SKILL_GRADES[s.grade] || SKILL_GRADES.normal;
-                const mult = getSkillMultiplier(s);
-                topHtml += `
-                    <div class="border ${gradeInfo.colorClass} bg-black/80 p-2 text-center flex flex-col justify-between rounded-none-forced min-h-[75px]">
-                        <div class="flex justify-between items-center text-[8px] font-bold">
-                            <span class="text-yellow-300">${gradeInfo.name}</span>
-                            <span class="text-yellow-300">T${Math.max(1, Math.min(3, Number(s.tier) || 3))}</span>
-                        </div>
-                        <div class="text-[10px] sm:text-[11px] font-black text-white  tracking-tighter truncate my-0.5">${capitalizeFirstLetter(s.word)}</div>
-                        <div class="text-[9px] text-pink-400 font-bold">지수 ×${mult}</div>
-                    </div>
-                `;
-            });
+            const allResultsHtml = acquiredList.map(renderSkillDrawResultCard).join("");
 
             const summaryEl = document.getElementById("gacha100SummaryText");
             if (summaryEl) {
                 summaryEl.innerHTML = `
                     <span class="text-emerald-300 font-black">새 스킬 ${drawSummary.newCards || 0}장</span> |
                     <span class="text-yellow-300 font-bold">중복 강화 ${drawSummary.duplicates || 0}회</span><br>
-                    <span class="text-rose-400 font-black">신화 ${counts.mythic}개</span> | 
-                    <span class="text-amber-300 font-bold">전설 ${counts.legendary}개</span> | 
-                    <span class="text-purple-300 font-bold">영웅 ${counts.hero}개</span> | 
-                    <span class="text-sky-300 font-bold">희귀 ${counts.rare}개</span> | 
+                    <span class="text-rose-400 font-black">이번 획득: 신화 ${counts.mythic}개</span> |
+                    <span class="text-amber-300 font-bold">전설 ${counts.legendary}개</span> |
+                    <span class="text-purple-300 font-bold">영웅 ${counts.hero}개</span> |
+                    <span class="text-sky-300 font-bold">희귀 ${counts.rare}개</span> |
                     <span class="text-gray-400">일반 ${counts.normal}개</span><br>
-                    <span class="text-[10px] text-gray-500">모든 결과는 비기 연구소에 보관됩니다. 이 창은 상위 8장만 미리 보여 줍니다. (${drawSummary.inventoryCount || 0}/${drawSummary.packSize || 0}종 수집)</span>
+                    <span class="text-[10px] text-gray-500">카드 색·등급은 이번 소환 결과 기준이며, 아래 문장은 보유 카드 적용 결과입니다. (${drawSummary.inventoryCount || 0}/${drawSummary.packSize || 0}종 수집)</span>
                 `;
             }
             const gridEl = document.getElementById("gacha100TopGrid");
-            if (gridEl) gridEl.innerHTML = topHtml;
+            if (gridEl) {
+                gridEl.innerHTML = allResultsHtml;
+                gridEl.scrollTop = 0;
+            }
+            const resultLabel = document.getElementById("gacha100ResultLabel");
+            if (resultLabel) resultLabel.textContent = `✨ 이번 100회 전체 획득 결과 (${acquiredList.length}개 · 스크롤)`;
 
             const modal = document.getElementById("gacha100xResultModal");
             if (modal) {
@@ -9501,26 +9496,36 @@
             const modal = document.getElementById("skillAcquireModal");
             const box = document.getElementById("skillAcquireBox");
             const gradeEl = document.getElementById("skillAcquireGrade");
-            
-            gradeEl.innerText = `${gradeInfo.name} (T${skill.tier || 3})`;
-            gradeEl.className = `text-xs font-bold px-3 py-1 mb-2 uppercase tracking-widest ${gradeInfo.colorClass}`;
+            const isDrawResult = Boolean(skill?.rolledGrade || skill?.resultType);
+            const acquiredGrade = isDrawResult && SKILL_GRADES[skill.rolledGrade] ? skill.rolledGrade : (SKILL_GRADES[skill.grade] ? skill.grade : "normal");
+            const acquiredTier = Math.max(1, Math.min(3, Number(isDrawResult ? (skill.rolledTier ?? skill.tier) : skill.tier) || 3));
+            const acquiredGradeInfo = SKILL_GRADES[acquiredGrade] || gradeInfo || SKILL_GRADES.normal;
+
+            gradeEl.innerText = isDrawResult ? `이번 획득 · ${acquiredGradeInfo.name} (T${acquiredTier})` : `${acquiredGradeInfo.name} (T${acquiredTier})`;
+            gradeEl.className = `text-xs font-bold px-3 py-1 mb-2 uppercase tracking-widest ${acquiredGradeInfo.colorClass}`;
             
             document.getElementById("skillAcquireWord").innerText = capitalizeFirstLetter(skill.word);
-            document.getElementById("skillAcquireWord").className = `text-4xl font-bold  tracking-wider mb-1 ${gradeInfo.colorClass.includes('animate-pulse') ? 'animate-pulse text-[#ff8080]' : 'text-white'} text-center`;
+            document.getElementById("skillAcquireWord").className = `text-4xl font-bold  tracking-wider mb-1 ${acquiredGradeInfo.colorClass.includes('animate-pulse') ? 'animate-pulse text-[#ff8080]' : 'text-white'} text-center`;
             document.getElementById("skillAcquireMeaning").innerText = skill.meaning;
 
-            const starsCount = skill.stars || 0;
-            const starsHtml = starsCount > 0 ? "⭐".repeat(starsCount) : "<span class='text-xs text-[#7e7e7e] font-normal'>⭐ 0성 · 성장 바를 완성하면 성급 상승</span>";
-            document.getElementById("skillAcquireStarsArea").innerHTML = starsHtml;
-
-            const exp = skill.exp || 0;
-            const maxExp = skill.maxExp || getRequiredExpForStar(skill.grade);
-            document.getElementById("skillAcquireExpInfo").innerText = `현재 성장 바: ${exp} / ${maxExp}`;
-
-            const mult = getSkillMultiplier(skill);
-            document.getElementById("skillAcquireDesc").innerText = `💥 스킬 지수 ×${mult} · 실제 피해는 공격력·DPS·보너스·보스 보정에 따라 계산`;
+            if (isDrawResult) {
+                document.getElementById("skillAcquireStarsArea").innerHTML = "<span class='text-xs font-black text-yellow-300'>✨ 이번에 뽑힌 카드 정보</span>";
+                document.getElementById("skillAcquireExpInfo").innerText = skill.applicationText || (skill.alreadyOwned ? "보유 스킬에 성장 적용" : "신규 스킬로 보관");
+                const acquiredCard = { grade: acquiredGrade, tier: acquiredTier, stars: 0, exp: 0, maxExp: getRequiredExpForStar(acquiredGrade) };
+                const mult = Number(skill.drawMultiplier) || getSkillMultiplier(acquiredCard);
+                document.getElementById("skillAcquireDesc").innerText = `💥 획득 카드 기본 지수 ×${mult} · 실제 적용 결과와 보유 상태는 스킬 탭에서 확인`;
+            } else {
+                const starsCount = skill.stars || 0;
+                const starsHtml = starsCount > 0 ? "⭐".repeat(starsCount) : "<span class='text-xs text-[#7e7e7e] font-normal'>⭐ 0성 · 성장 바를 완성하면 성급 상승</span>";
+                document.getElementById("skillAcquireStarsArea").innerHTML = starsHtml;
+                const exp = skill.exp || 0;
+                const maxExp = skill.maxExp || getRequiredExpForStar(skill.grade);
+                document.getElementById("skillAcquireExpInfo").innerText = `현재 성장 바: ${exp} / ${maxExp}`;
+                const mult = getSkillMultiplier(skill);
+                document.getElementById("skillAcquireDesc").innerText = `💥 스킬 지수 ×${mult} · 실제 피해는 공격력·DPS·보너스·보스 보정에 따라 계산`;
+            }
             
-            box.className = `relative flex flex-col items-center justify-center p-8 border-2 rounded-none-forced transition-all duration-500 scale-100 ${gradeInfo.colorClass}`;
+            box.className = `relative flex flex-col items-center justify-center p-8 border-2 rounded-none-forced transition-all duration-500 scale-100 ${acquiredGradeInfo.colorClass}`;
             
             modal.classList.remove("hidden");
             modal.classList.add("flex");

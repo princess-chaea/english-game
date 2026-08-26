@@ -151,17 +151,36 @@ if (
   || !mainJs.includes('globalThis.VocaSkillSystem.getSkillPowerMultiplier(skill, baseGrade.multiplier)')
 ) throw new Error('Skill power, dismantling, and fusion must share the cumulative-star multiplier rules.');
 const skillSnapshotStart = skillRework.indexOf('createSkillDrawSnapshot = function');
-const skillSnapshotEnd = skillRework.indexOf('const SKILL_RESULT_LABELS', skillSnapshotStart);
+const skillSnapshotEnd = skillRework.indexOf('renderSkillDrawResultCard = function', skillSnapshotStart);
 const skillSnapshotBlock = skillSnapshotStart >= 0 && skillSnapshotEnd > skillSnapshotStart ? skillRework.slice(skillSnapshotStart, skillSnapshotEnd) : '';
 if (
   !skillSnapshotBlock.includes('const actual = ownedSkill ? SkillRules.normalizeSkill(ownedSkill) : null;')
   || !skillSnapshotBlock.includes('stars: Number(actual?.stars) || 0, exp: Number(actual?.exp) || 0,')
+  || !skillSnapshotBlock.includes('rolledGrade: acquiredGrade, rolledTier: acquiredTier,')
+  || !skillSnapshotBlock.includes('snapshot.applicationText = getSkillDrawApplicationText(snapshot);')
   || (skillRework.match(/outcome\.skill, outcome\.essenceGained, outcome\.experienceGained\)/g) || []).length < 2
-  || !skillRework.includes('"max-essence": "MAX 정수 +100"')
+  || !skillRework.includes('"max-essence": "MAX 정수 전환"')
   || !skillRework.includes('Number(result.essenceAmount) || 100')
   || !skillRework.includes('pickGrowthSkill(random, usedGrowthIds)')
   || !indexHtml.includes('새 스킬이나 성장 대상이 없으면 각성 정수로 바뀝니다')
 ) throw new Error('Skill draw results must show final owned growth, MAX +100 essence, one-growth-per-block protection, and candidate conversion guidance.');
+const skillResultCardStart = skillRework.indexOf('renderSkillDrawResultCard = function');
+const skillResultCardEnd = skillRework.indexOf('function executeSkillDrawBatch', skillResultCardStart);
+const skillResultCardBlock = skillResultCardStart >= 0 && skillResultCardEnd > skillResultCardStart ? skillRework.slice(skillResultCardStart, skillResultCardEnd) : '';
+const skill100ResultStart = skillRework.indexOf('showSkillDraw100ResultModal = function');
+const skill100ResultEnd = skillRework.indexOf('function finishSkillDraw', skill100ResultStart);
+const skill100ResultBlock = skill100ResultStart >= 0 && skill100ResultEnd > skill100ResultStart ? skillRework.slice(skill100ResultStart, skill100ResultEnd) : '';
+if (
+  !skillResultCardBlock.includes('drawResult.rolledGrade || drawResult.grade')
+  || !skillResultCardBlock.includes('data-owned-grade=')
+  || !skillResultCardBlock.includes('applicationText')
+  || !skillResultCardBlock.includes('획득 카드 기본 지수')
+  || !skill100ResultBlock.includes('acquiredList.map(renderSkillDrawResultCard)')
+  || !skill100ResultBlock.includes('gridEl.scrollTop = 0;')
+  || skill100ResultBlock.includes('.slice(0, 8)')
+  || !indexHtml.includes('이번 100회 전체 획득 결과 (스크롤)')
+  || !indexHtml.includes('overflow-y-auto overscroll-contain')
+) throw new Error('Skill result cards must lead with the rolled card and show all 100 results in a scrollable list.');
 if (
   !skillSystem.includes('const DIRECT_ESSENCE_AMOUNT = 25;')
   || !skillSystem.includes('normal: 500')
@@ -444,7 +463,7 @@ if (!mainJs.includes('const tierFactor = 1 + (3 - tier) * 0.10') || !mainJs.incl
 const skillDrawStart = mainJs.indexOf('function createSkillDrawSnapshot');
 const skillDrawEnd = mainJs.indexOf('function getSkillSourcePool', skillDrawStart);
 const skillDrawBlock = skillDrawStart >= 0 && skillDrawEnd > skillDrawStart ? mainJs.slice(skillDrawStart, skillDrawEnd) : '';
-if (!skillDrawBlock.includes('grade: SKILL_GRADES[rolledGrade] ? rolledGrade : "normal"') || !skillDrawBlock.includes('tier: Math.max(1, Math.min(3, Number(rolledTier) || 3))') || !skillDrawBlock.includes('data-draw-grade=') || !skillDrawBlock.includes('data-draw-tier=') || !mainJs.includes('createSkillDrawSnapshot(picked.word, picked.meaning, rolledGrade, rolledTier, alreadyOwned)')) {
+if (!skillDrawBlock.includes('const normalizedGrade = SKILL_GRADES[rolledGrade] ? rolledGrade : "normal"') || !skillDrawBlock.includes('const normalizedTier = Math.max(1, Math.min(3, Number(rolledTier) || 3))') || !skillDrawBlock.includes('rolledGrade: normalizedGrade') || !skillDrawBlock.includes('drawResult.rolledGrade') || !skillDrawBlock.includes('drawResult.rolledTier') || !skillDrawBlock.includes('data-draw-grade=') || !skillDrawBlock.includes('data-draw-tier=') || !mainJs.includes('createSkillDrawSnapshot(picked.word, picked.meaning, rolledGrade, rolledTier, alreadyOwned)')) {
   throw new Error('Skill summon results must preserve and render the grade and tier rolled in the current draw.');
 }
 if (!indexHtml.includes('id="gameMainLayout"') || !indexHtml.includes('#gameMainLayout.full-panel-tab-active') || !mainJs.includes('mainLayout?.classList.toggle("full-panel-tab-active", isFullPanelTab)')) {
